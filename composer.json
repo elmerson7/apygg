@@ -7,17 +7,24 @@
     "license": "MIT",
     "require": {
         "php": "^8.4",
+        "http-interop/http-factory-guzzle": "^1.2",
         "laravel/framework": "12.23.1",
         "laravel/horizon": "^5.33",
         "laravel/octane": "^2.12",
         "laravel/reverb": "^1.5",
-        "laravel/tinker": "^2.10.1"
+        "laravel/scout": "^10.17",
+        "laravel/socialite": "^5.23",
+        "laravel/tinker": "^2.10.1",
+        "meilisearch/meilisearch-php": "^1.15",
+        "php-open-source-saver/jwt-auth": "^2.8",
+        "sentry/sentry-laravel": "^4.15"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.13",
         "laravel/sail": "^1.41",
+        "laravel/telescope": "^5.11",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
         "phpunit/phpunit": "^11.5.3"
