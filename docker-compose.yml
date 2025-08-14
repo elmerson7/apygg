@@ -1,0 +1,94 @@
+version: "3.9"
+
+x-app-base: &app_base
+  build:
+    context: .
+    dockerfile: docker/app/Dockerfile
+  working_dir: /app
+  env_file:
+    - env/${APP_ENV}.env     # <— usamos env/dev.env, env/staging.env, env/prod.env
+  volumes:
+    - ./:/app
+  restart: unless-stopped
+
+services:
+  app:
+    <<: *app_base
+    container_name: apygg_app
+    profiles: ["dev","staging","prod"]
+    ports:
+      - "8010:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/up || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  reverb:
+    <<: *app_base
+    container_name: apygg_reverb
+    profiles: ["dev","staging","prod"]
+    command: php artisan reverb:start --host=0.0.0.0 --port=8080
+    ports:
+      - "8012:8080"
+
+  horizon:
+    <<: *app_base
+    container_name: apygg_horizon
+    profiles: ["dev","staging","prod"]
+    command: php artisan horizon
+
+  scheduler:
+    <<: *app_base
+    container_name: apygg_scheduler
+    profiles: ["dev","staging","prod"]
+    command: php artisan schedule:work
+
+  postgres:
+    image: postgres:17
+    container_name: apygg_pg
+    profiles: ["dev","staging"]
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-apygg}
+      POSTGRES_USER: ${DB_USERNAME:-apygg}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+    ports:
+      - "8011:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7.4
+    container_name: apygg_redis
+    profiles: ["dev","staging"]
+    command: ["redis-server","--appendonly","yes"]
+    ports:
+      - "8014:6379"
+    volumes:
+      - redisdata:/data
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.16
+    container_name: apygg_meili
+    profiles: ["dev","staging"]
+    environment:
+      MEILI_MASTER_KEY: ${MEILISEARCH_KEY:-masterKey}
+    ports:
+      - "8013:7700"
+    volumes:
+      - meilidata:/meili_data
+    healthcheck:
+      test: ["CMD-SHELL","curl -fsS http://localhost:7700/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
+  redisdata:
+  meilidata:
