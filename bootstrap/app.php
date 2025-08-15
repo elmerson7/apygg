@@ -1,10 +1,14 @@
 <?php
 
+use \Throwable;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use PHPOpenSourceSaver\JWTAuth\Http\Middleware\Authenticate as JwtAuthenticate;
 use PHPOpenSourceSaver\JWTAuth\Http\Middleware\RefreshToken as JwtRefresh;
+use App\Http\Middleware\Idempotency;
+use App\Http\Middleware\ForceJson;
+
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -18,14 +22,14 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->throttleWithRedis();
         $middleware->alias([
-            'jwt' => JwtAuthenticate::class,
-            'jwt.refresh' => JwtRefresh::class,
+            'jwt'          => JwtAuthenticate::class,
+            'jwt.refresh'  => JwtRefresh::class,
+            'force.json'    => ForceJson::class,
+            'idempotency'  => Idempotency::class,
         ]);
         $middleware->api(append: [
             'throttle:api',
-        ]);
-        $middleware->alias([
-            'idempotency' => \App\Http\Middleware\Idempotency::class,
+            'force.json'
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -38,7 +42,9 @@ return Application::configure(basePath: dirname(__DIR__))
                 'title'  => $e->getMessage() ?: 'Unexpected error',
                 'status' => $status,
                 'detail' => method_exists($e, 'getHint') ? $e->getHint() : null,
-                'instance' => (string) $request->fullUrl(),
+                'instance' => method_exists($request, 'fullUrl')
+                    ? $request->fullUrl()
+                    : (request()?->fullUrl() ?? null),
             ];
     
             return response()->json($problem, $status, [
