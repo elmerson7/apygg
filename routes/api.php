@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/users', fn() => 'hola');
+Route::get('/test', fn() => 'hola mundo');
 
 require __DIR__.'/api/auth.php';
 require __DIR__.'/api/users.php';

@@ -24,23 +24,26 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(append: [
             'throttle:api',
         ]);
+        $middleware->alias([
+            'idempotency' => \App\Http\Middleware\Idempotency::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // $exceptions->respond(function ($request, Throwable $e) {
-        //     $status = $e instanceof \Symfony\Component\HttpKernel\Exception\HttpException
-        //         ? $e->getStatusCode() : 500;
+        $exceptions->respond(function ($request, Throwable $e) {
+            $status = $e instanceof \Symfony\Component\HttpKernel\Exception\HttpException
+                ? $e->getStatusCode() : 500;
     
-        //     $problem = [
-        //         'type'   => 'https://damblix.dev/errors/'.class_basename($e),
-        //         'title'  => $e->getMessage() ?: 'Unexpected error',
-        //         'status' => $status,
-        //         'detail' => method_exists($e, 'getHint') ? $e->getHint() : null,
-        //         'instance' => (string) $request->fullUrl(),
-        //     ];
+            $problem = [
+                'type'   => 'https://damblix.dev/errors/'.class_basename($e),
+                'title'  => $e->getMessage() ?: 'Unexpected error',
+                'status' => $status,
+                'detail' => method_exists($e, 'getHint') ? $e->getHint() : null,
+                'instance' => (string) $request->fullUrl(),
+            ];
     
-        //     return response()->json($problem, $status, [
-        //         'Content-Type' => 'application/problem+json'
-        //     ]);
-        // });
+            return response()->json($problem, $status, [
+                'Content-Type' => 'application/problem+json'
+            ]);
+        });
     })
     ->create();
