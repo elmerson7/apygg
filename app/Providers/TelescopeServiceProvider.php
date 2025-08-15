@@ -18,15 +18,25 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
 
         $this->hideSensitiveRequestDetails();
 
-        $isLocal = $this->app->environment('local');
+	$isLocal = $this->app->environment('local', 'dev', 'staging');
 
         Telescope::filter(function (IncomingEntry $entry) use ($isLocal) {
-            return $isLocal ||
-                   $entry->isReportableException() ||
-                   $entry->isFailedRequest() ||
-                   $entry->isFailedJob() ||
-                   $entry->isScheduledTask() ||
-                   $entry->hasMonitoredTag();
+            if ($entry->type === 'request') {
+                $uri = $entry->content['uri'] ?? '';
+                $ip = $entry->content['ip_address'] ?? '';
+                // Filtrar solo las requests a /up, pero solo ignorar la IP 127.0.0.1 si la request es a /up
+                if (
+                    $uri === 'up' ||
+                    $uri === '/up' ||
+                    str_starts_with($uri, '/up')
+                ) {
+                    // Si la IP es 127.0.0.1 y la URI es /up, no registrar
+                    if ($ip === '127.0.0.1') {
+                        return false;
+                    }
+                }
+            }
+            return true;
         });
     }
 

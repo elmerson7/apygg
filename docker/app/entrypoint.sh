@@ -27,7 +27,7 @@ if [ "$APP_ENV" = "dev" ]; then
         --host=0.0.0.0 \
         --port=8000 \
         --workers=auto \
-        --watch-path="app,bootstrap,config,database,lang,routes,resources/views"
+        --watch
 else
     exec php artisan octane:start \
         --server=frankenphp \
