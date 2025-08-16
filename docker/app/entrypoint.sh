@@ -8,8 +8,20 @@ if [ ! -d vendor ]; then
 fi
 
 # Generar APP_KEY si falta
-if ! grep -q ^APP_KEY= .env || [ -z "$(grep ^APP_KEY= .env | cut -d= -f2)" ]; then
-    php artisan key:generate
+if [ -z "${APP_KEY:-}" ]; then
+    if [ "${APP_ENV:-dev}" = "dev" ]; then
+        APP_KEY="$(php artisan key:generate --show 2>/dev/null || true)"
+        if [ -n "$APP_KEY" ]; then
+            export APP_KEY
+            echo "[dev] APP_KEY generado en memoria."
+        else
+            echo "ERROR: No se pudo generar APP_KEY en dev. Revisa vendor y permisos."
+            exit 1
+        fi
+    else
+        echo "ERROR: APP_KEY no está definido. Inyéctalo vía env_file (staging/prod)."
+        exit 1
+    fi
 fi
 
 # Cache/optimize (seguro aunque falten algunos paquetes aún)

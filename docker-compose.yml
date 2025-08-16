@@ -5,6 +5,9 @@ x-app-base: &app_base
   working_dir: /app
   env_file:
     - env/${APP_ENV}.env     # <— usamos env/dev.env, env/staging.env, env/prod.env
+  environment:
+    APP_ENV: ${APP_ENV:-dev}
+    APP_TIMEZONE: America/Lima
   volumes:
     - ./:/app
   restart: unless-stopped

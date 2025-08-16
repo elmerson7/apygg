@@ -2,6 +2,7 @@ FROM dunglas/frankenphp:php8.4-bookworm
 
 # Composer bin
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+ENV COMPOSER_ALLOW_SUPERUSER=1
 
 # Paquetes del SO + extensiones PHP típicas de Laravel + curl para healthcheck
 RUN apt-get update && apt-get install -y git unzip curl libicu-dev libpq-dev libzip-dev \
@@ -11,10 +12,10 @@ RUN apt-get update && apt-get install -y git unzip curl libicu-dev libpq-dev lib
 
 WORKDIR /app
 
-# Config PHP (ruta corregida)
+# Config PHP
 COPY docker/app/php.ini /usr/local/etc/php/conf.d/zz-custom.ini
 
-# Copiamos el proyecto (en dev también montaremos volume)
+# Copiamos el proyecto
 COPY . /app
 
 # Entrypoint para preparar y lanzar Octane/FrankenPHP
