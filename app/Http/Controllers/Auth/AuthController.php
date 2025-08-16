@@ -9,13 +9,6 @@ use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
 use Symfony\Component\HttpFoundation\Response;
 
-// app/Http/Controllers/Auth/LoginController.php
-// app/Http/Controllers/Auth/RegisterController.php
-// app/Http/Controllers/Auth/AuthController.php
-// app/Http/Controllers/User/ProfileController.php
-// app/Http/Controllers/Match/MatchController.php
-// app/Http/Controllers/Payment/SubscriptionController.php
-
 class AuthController extends Controller
 {
     /**
@@ -43,13 +36,16 @@ class AuthController extends Controller
         $accessTtl  = (int) config('jwt.ttl');          // minutos
         $refreshTtl = (int) config('jwt.refresh_ttl');  // minutos
 
-        // Crear access token con TTL personalizado
-        $accessToken = JWTAuth::customClaims(['typ' => 'access'])
-            ->fromUser($user, ['exp' => now()->addMinutes($accessTtl)->timestamp]);
+        // Crear access token con TTL personalizado usando factory
+        JWTAuth::factory()->setTTL($accessTtl);
+        $accessToken = JWTAuth::claims(['typ' => 'access'])->fromUser($user);
 
-        // Crear refresh token con TTL personalizado  
-        $refreshToken = JWTAuth::customClaims(['typ' => 'refresh'])
-            ->fromUser($user, ['exp' => now()->addMinutes($refreshTtl)->timestamp]);
+        // Crear refresh token con TTL personalizado usando factory
+        JWTAuth::factory()->setTTL($refreshTtl);
+        $refreshToken = JWTAuth::claims(['typ' => 'refresh'])->fromUser($user);
+
+        // Restaurar TTL por defecto
+        JWTAuth::factory()->setTTL((int) config('jwt.ttl'));
 
         return response()->json([
             'token_type'           => 'Bearer',
@@ -95,13 +91,16 @@ class AuthController extends Controller
             $accessTtl  = (int) config('jwt.ttl');
             $refreshTtl = (int) config('jwt.refresh_ttl');
 
-            // Crear nuevo access token con TTL personalizado
-            $newAccess = JWTAuth::customClaims(['typ' => 'access'])
-                ->fromUser($user, ['exp' => now()->addMinutes($accessTtl)->timestamp]);
+            // Crear nuevo access token con TTL personalizado usando factory
+            JWTAuth::factory()->setTTL($accessTtl);
+            $newAccess = JWTAuth::claims(['typ' => 'access'])->fromUser($user);
 
-            // Crear nuevo refresh token con TTL personalizado
-            $newRefresh = JWTAuth::customClaims(['typ' => 'refresh'])
-                ->fromUser($user, ['exp' => now()->addMinutes($refreshTtl)->timestamp]);
+            // Crear nuevo refresh token con TTL personalizado usando factory
+            JWTAuth::factory()->setTTL($refreshTtl);
+            $newRefresh = JWTAuth::claims(['typ' => 'refresh'])->fromUser($user);
+
+            // Restaurar TTL por defecto
+            JWTAuth::factory()->setTTL((int) config('jwt.ttl'));
 
             return response()->json([
                 'token_type'           => 'Bearer',
