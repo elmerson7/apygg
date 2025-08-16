@@ -28,7 +28,9 @@ art:
 	$(DC) exec app php artisan $(cmd)
 
 key:
-	$(DC) exec app php artisan key:generate
+	@echo "Generando clave de aplicación..."
+	$(DC) exec app php artisan key:generate --show
+	@echo "Clave generada, guardala en env/$(ENV).env"
 
 migrate:
 	$(DC) exec app php artisan migrate --force
@@ -37,7 +39,9 @@ seed:
 	$(DC) exec app php artisan db:seed --force
 
 jwt:
-	$(DC) exec app php artisan jwt:secret -f
+	@echo "Generando clave JWT..."
+	$(DC) exec app php artisan jwt:secret -f --show
+	@echo "Clave JWT generada, guardala en env/$(ENV).env"
 
 scout:
 	$(DC) exec app php artisan scout:sync-index-settings
