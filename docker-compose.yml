@@ -24,26 +24,48 @@ services:
       interval: 10s
       timeout: 3s
       retries: 10
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
 
   reverb:
     <<: *app_base
     container_name: apygg_reverb
     profiles: ["dev","staging","prod"]
-    command: php artisan reverb:start --host=0.0.0.0 --port=8080
+    command: >
+      sh -lc 'until getent hosts redis >/dev/null 2>&1; do sleep 0.5; done;
+              php artisan reverb:start --host=0.0.0.0 --port=8080'
     ports:
       - "8012:8080"
+    depends_on:
+      redis:
+        condition: service_healthy
 
   horizon:
     <<: *app_base
     container_name: apygg_horizon
     profiles: ["dev","staging","prod"]
-    command: php artisan horizon
+    command: >
+      sh -lc 'until getent hosts redis >/dev/null 2>&1; do sleep 0.5; done;
+              php artisan horizon'
+    depends_on:
+      redis:
+        condition: service_healthy
 
   scheduler:
     <<: *app_base
     container_name: apygg_scheduler
-    profiles: ["dev","staging","prod"]
-    command: php artisan schedule:work
+    profiles: ["dev","staging","prod"]  
+    command: >
+      sh -lc 'until getent hosts redis >/dev/null 2>&1; do sleep 0.5; done;
+              php artisan schedule:work'
+    depends_on:
+      redis:
+        condition: service_healthy
 
   postgres:
     image: postgres:17
@@ -72,6 +94,11 @@ services:
       - "8014:6379"
     volumes:
       - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   meilisearch:
     image: getmeili/meilisearch:v1.16
