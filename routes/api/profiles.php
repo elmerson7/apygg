@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Profiles\ProfileController;
 
 Route::prefix('profiles')->name('profiles.')
     ->middleware(['jwt','throttle:users'])
