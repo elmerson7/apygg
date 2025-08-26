@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\MessageController;
+use App\Http\Controllers\Messages\MessageController;
 
 Route::prefix('chats')->name('chats.')
     ->middleware(['jwt','throttle:users'])

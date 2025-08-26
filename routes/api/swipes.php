@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\SwipeController;
+use App\Http\Controllers\Swipes\SwipeController;
 
 Route::prefix('swipes')->name('swipes.')
     ->middleware(['jwt','throttle:matches','idempotency'])

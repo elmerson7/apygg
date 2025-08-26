@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Users\UserController;
 
 Route::prefix('users')->name('users.')->group(function () {
     Route::middleware(['jwt', 'throttle:users'])->group(function () {
