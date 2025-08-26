@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Middleware\HandleCors;
 use PHPOpenSourceSaver\JWTAuth\Http\Middleware\Authenticate as JwtAuthenticate;
 use PHPOpenSourceSaver\JWTAuth\Http\Middleware\RefreshToken as JwtRefresh;
 use App\Http\Middleware\Idempotency;
@@ -26,7 +27,14 @@ return Application::configure(basePath: dirname(__DIR__))
             'force.json'    => ForceJson::class,
             'idempotency'  => Idempotency::class,
         ]);
+        
+        // Habilitar CORS para todas las rutas
+        $middleware->web(append: [
+            HandleCors::class,
+        ]);
+        
         $middleware->api(append: [
+            HandleCors::class,
             'throttle:api',
             'force.json'
         ]);
