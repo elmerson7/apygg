@@ -28,13 +28,18 @@ class DateLogger
         // Crear el handler con la ruta generada
         $handler = new StreamHandler($logPath, $config['level'] ?? Logger::DEBUG);
         
-        // Configurar el formatter
+        // Configurar el formatter para mostrar stack traces completos
         $formatter = new LineFormatter(
             $config['format'] ?? "[%datetime%] %channel%.%level_name%: %message% %context% %extra%\n",
             $config['date_format'] ?? 'Y-m-d H:i:s',
-            true,
-            true
+            true,  // allowInlineLineBreaks: permite saltos de línea en el mensaje
+            true   // ignoreEmptyContextAndExtra: ignora contexto vacío
         );
+        
+        // Configurar para mostrar stack traces completos sin truncar
+        $formatter->includeStacktraces(true);
+        $formatter->setMaxNormalizeDepth(10);        // Profundidad máxima de normalización
+        $formatter->setMaxNormalizeItemCount(10000); // Máximo número de items
         
         $handler->setFormatter($formatter);
         $logger->pushHandler($handler);
