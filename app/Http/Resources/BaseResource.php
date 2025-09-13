@@ -9,8 +9,12 @@ abstract class BaseResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
+     * Override this method in child classes.
      */
-    abstract public function toArray(Request $request): array;
+    public function toArray(Request $request): array
+    {
+        return parent::toArray($request);
+    }
 
     /**
      * Get additional data that should be returned with the resource array.
