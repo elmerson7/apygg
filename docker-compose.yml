@@ -29,6 +29,8 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
+      postgres_logs:
+        condition: service_healthy
       meilisearch:
         condition: service_healthy
 
@@ -85,6 +87,24 @@ services:
       timeout: 3s
       retries: 10
 
+  postgres_logs:
+    image: postgres:17
+    container_name: apygg_pg_logs
+    profiles: ["dev","staging"]
+    environment:
+      POSTGRES_DB: ${DB_LOGS_DATABASE:-apygg_logs}
+      POSTGRES_USER: ${DB_USERNAME:-apygg_logs}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret_logs}
+    ports:
+      - "8015:5432"
+    volumes:
+      - pglogsdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
   redis:
     image: redis:7.4
     container_name: apygg_redis
@@ -116,7 +136,29 @@ services:
       timeout: 3s
       retries: 10
 
+  pgadmin:
+    image: dpage/pgadmin4:9.8
+    container_name: apygg_pgadmin
+    profiles: ["dev","staging"]
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin123}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    ports:
+      - "8016:80"
+    volumes:
+      - pgadmindata:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+      postgres_logs:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   pgdata:
+  pglogsdata:
   redisdata:
   meilidata:
+  pgadmindata:
