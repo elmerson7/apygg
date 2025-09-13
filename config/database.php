@@ -112,6 +112,20 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        'logs' => [
+            'driver' => env('DB_LOGS_CONNECTION', 'pgsql'),
+            'host' => env('DB_LOGS_HOST', '127.0.0.1'),
+            'port' => env('DB_LOGS_PORT', '5432'),
+            'database' => env('DB_LOGS_DATABASE', 'apygg_logs'),
+            'username' => env('DB_LOGS_USERNAME', 'apygg_logs'),
+            'password' => env('DB_LOGS_PASSWORD', ''),
+            'charset' => env('DB_CHARSET', 'utf8'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => 'prefer',
+        ],
+
     ],
 
     /*
