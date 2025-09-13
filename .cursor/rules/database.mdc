@@ -1,0 +1,14 @@
+---
+description: Reglas para bases de datos apygg y apygg_logs
+alwaysApply: true
+---
+
+# Bases de datos
+- Existen dos bases:
+  - `apygg` (principal)
+  - `apygg_logs` (para auditoría y registros)
+
+## Convenciones
+- Migraciones apuntan a `apygg` por defecto.
+- Para tablas de logs, usar conexión `apygg_logs`.
+

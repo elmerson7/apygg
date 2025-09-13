@@ -1,0 +1,11 @@
+---
+description: Estructura de controladores y organización de código
+alwaysApply: true
+---
+
+# Estructura
+- Controladores organizados por feature:
+  - `Auth/AuthController.php`
+  - `Auth/RegisterController.php`
+- No usar carpeta `Api/` para los `Controllers`.
+- Mantener servicios, repositorios y requests agrupados por feature.

@@ -1,0 +1,10 @@
+---
+description: Siempre usar Docker o make sh para ejecutar comandos de Laravel
+alwaysApply: true
+---
+
+# Reglas de comandos
+- Nunca ejecutar `php artisan` directamente.
+- Siempre usar:
+  - `make sh` y luego `php artisan <comando>`
+  - o `docker compose exec ... <comando>`
