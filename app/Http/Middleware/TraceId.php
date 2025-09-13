@@ -19,14 +19,15 @@ class TraceId
         // Generar o usar trace_id existente del header
         $traceId = $request->header('X-Request-Id') 
                 ?? $request->header('X-Trace-Id') 
-                ?? Str::uuid()->toString();
+                ?? Str::ulid()->toString();
         
         // Almacenar en request para uso posterior
         $request->attributes->set('trace_id', $traceId);
         
         $response = $next($request);
         
-        // Agregar header en respuesta para facilitar debugging
+        // Agregar ambos headers en respuesta para compatibilidad y debugging
+        $response->headers->set('X-Request-Id', $traceId);
         $response->headers->set('X-Trace-Id', $traceId);
         
         return $response;
