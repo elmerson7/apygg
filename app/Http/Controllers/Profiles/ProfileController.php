@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Profiles;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -18,19 +19,18 @@ class ProfileController extends Controller
 
         if (!$user) {
             return response()->json([
-                'type'   => 'about:blank',
+                'type'   => 'https://damblix.dev/errors/Unauthenticated',
                 'title'  => 'Usuario no autenticado',
                 'status' => Response::HTTP_UNAUTHORIZED,
-            ], Response::HTTP_UNAUTHORIZED);
+                'detail' => 'Debes estar autenticado para acceder a este recurso.',
+                'instance' => $request->fullUrl(),
+            ], Response::HTTP_UNAUTHORIZED, [
+                'Content-Type' => 'application/problem+json'
+            ]);
         }
 
-        return response()->json([
-            'id'    => $user->id,
-            'name'  => $user->name,
-            'email' => $user->email,
-            'email_verified_at' => $user->email_verified_at,
-            'created_at' => $user->created_at,
-            'updated_at' => $user->updated_at,
-        ], Response::HTTP_OK);
+        return UserResource::make($user)
+            ->response()
+            ->setStatusCode(Response::HTTP_OK);
     }
 }
