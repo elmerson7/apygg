@@ -18,7 +18,7 @@ return [
     |
     */
 
-    'default' => env('LOG_CHANNEL', 'stack'),
+    'default' => env('LOG_CHANNEL', 'daily_directory'),
 
     /*
     |--------------------------------------------------------------------------
@@ -54,7 +54,7 @@ return [
 
         'stack' => [
             'driver' => 'stack',
-            'channels' => explode(',', (string) env('LOG_STACK', 'single')),
+            'channels' => explode(',', (string) env('LOG_STACK', 'daily_directory')),
             'ignore_exceptions' => false,
         ],
 
@@ -127,6 +127,14 @@ return [
 
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
+        ],
+
+        'daily_directory' => [
+            'driver' => 'custom',
+            'via' => App\Logging\DateLogger::class,
+            'level' => env('LOG_LEVEL', 'debug'),
+            'replace_placeholders' => true,
+            'processors' => [App\Logging\AddTraceIdProcessor::class],
         ],
 
     ],
