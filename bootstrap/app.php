@@ -8,6 +8,7 @@ use PHPOpenSourceSaver\JWTAuth\Http\Middleware\Authenticate as JwtAuthenticate;
 use PHPOpenSourceSaver\JWTAuth\Http\Middleware\RefreshToken as JwtRefresh;
 use App\Http\Middleware\Idempotency;
 use App\Http\Middleware\ForceJson;
+use App\Http\Middleware\TraceId;
 
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -26,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'jwt.refresh'  => JwtRefresh::class,
             'force.json'    => ForceJson::class,
             'idempotency'  => Idempotency::class,
+            'trace.id'     => TraceId::class,
         ]);
         
         // Habilitar CORS para todas las rutas
@@ -36,6 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(append: [
             HandleCors::class,
             'throttle:api',
+            'trace.id',
             'force.json'
         ]);
     })
@@ -45,6 +48,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 ? $e->getStatusCode() : 500;
     
             $problem = [
+                'success' => false,
                 'type'   => 'https://damblix.dev/errors/'.class_basename($e),
                 'title'  => $e->getMessage() ?: 'Unexpected error',
                 'status' => $status,
@@ -52,6 +56,11 @@ return Application::configure(basePath: dirname(__DIR__))
                 'instance' => method_exists($request, 'fullUrl')
                     ? $request->fullUrl()
                     : (request()?->fullUrl() ?? null),
+                'meta' => [
+                    'trace_id' => $request->attributes->get('trace_id'),
+                    'timestamp' => now()->toISOString(),
+                    'version' => '1.0',
+                ],
             ];
     
             return response()->json($problem, $status, [

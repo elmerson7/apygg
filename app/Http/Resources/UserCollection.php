@@ -28,7 +28,9 @@ class UserCollection extends ResourceCollection
     public function with(Request $request): array
     {
         return [
+            'success' => true,
             'meta' => [
+                'trace_id' => $request->attributes->get('trace_id'),
                 'timestamp' => now()->toISOString(),
                 'version' => '1.0',
                 'total' => $this->collection->count(),

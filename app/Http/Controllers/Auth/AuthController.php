@@ -26,11 +26,17 @@ class AuthController extends Controller
 
         if (!$token = auth('api')->attempt($data)) {
             return response()->json([
+                'success' => false,
                 'type'   => 'https://damblix.dev/errors/InvalidCredentials',
                 'title'  => 'Credenciales inválidas',
                 'status' => Response::HTTP_UNAUTHORIZED,
                 'detail' => 'El email o la contraseña son incorrectos.',
                 'instance' => $request->fullUrl(),
+                'meta' => [
+                    'trace_id' => $request->attributes->get('trace_id'),
+                    'timestamp' => now()->toISOString(),
+                    'version' => '1.0',
+                ],
             ], Response::HTTP_UNAUTHORIZED, [
                 'Content-Type' => 'application/problem+json'
             ]);
@@ -85,11 +91,17 @@ class AuthController extends Controller
             $payload = JWTAuth::setToken($rawToken)->getPayload();
             if (($payload->get('typ') ?? null) !== 'refresh') {
                 return response()->json([
+                    'success' => false,
                     'type' => 'https://damblix.dev/errors/InvalidTokenType',
                     'title' => 'Tipo de token inválido',
                     'status' => Response::HTTP_UNAUTHORIZED,
                     'detail' => 'Debes enviar un refresh_token.',
                     'instance' => $request->fullUrl(),
+                    'meta' => [
+                        'trace_id' => $request->attributes->get('trace_id'),
+                        'timestamp' => now()->toISOString(),
+                        'version' => '1.0',
+                    ],
                 ], Response::HTTP_UNAUTHORIZED, [
                     'Content-Type' => 'application/problem+json'
                 ]);
@@ -127,11 +139,17 @@ class AuthController extends Controller
 
         } catch (JWTException $e) {
             return response()->json([
+                'success' => false,
                 'type' => 'https://damblix.dev/errors/InvalidToken',
                 'title' => 'Token inválido',
                 'status' => Response::HTTP_UNAUTHORIZED,
                 'detail' => 'Refresh inválido o expirado.',
                 'instance' => $request->fullUrl(),
+                'meta' => [
+                    'trace_id' => $request->attributes->get('trace_id'),
+                    'timestamp' => now()->toISOString(),
+                    'version' => '1.0',
+                ],
             ], Response::HTTP_UNAUTHORIZED, [
                 'Content-Type' => 'application/problem+json'
             ]);
@@ -168,9 +186,8 @@ class AuthController extends Controller
             auth('api')->logout();
         } catch (\Throwable $e) {}
 
-        return response()->json([
+        return response()->apiJson([
             'message' => 'Logout exitoso',
-            'timestamp' => now()->toISOString(),
         ], Response::HTTP_OK);
     }
 }

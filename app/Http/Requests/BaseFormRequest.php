@@ -26,12 +26,18 @@ abstract class BaseFormRequest extends FormRequest
         
         // Formato RFC 7807 Problem Details consistente con tu middleware
         $problem = [
+            'success' => false,
             'type' => 'https://damblix.dev/errors/ValidationException',
             'title' => 'Validation failed',
             'status' => Response::HTTP_UNPROCESSABLE_ENTITY,
             'detail' => 'The given data was invalid.',
             'instance' => $this->fullUrl(),
             'errors' => $errors,
+            'meta' => [
+                'trace_id' => $this->attributes->get('trace_id'),
+                'timestamp' => now()->toISOString(),
+                'version' => '1.0',
+            ],
         ];
 
         throw new HttpResponseException(

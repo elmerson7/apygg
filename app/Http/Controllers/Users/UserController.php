@@ -21,11 +21,17 @@ class UserController extends Controller
 
         if (!$user) {
             return response()->json([
+                'success' => false,
                 'type'   => 'https://damblix.dev/errors/Unauthenticated',
                 'title'  => 'Usuario no autenticado',
                 'status' => Response::HTTP_UNAUTHORIZED,
                 'detail' => 'Debes estar autenticado para acceder a este recurso.',
                 'instance' => $request->fullUrl(),
+                'meta' => [
+                    'trace_id' => $request->attributes->get('trace_id'),
+                    'timestamp' => now()->toISOString(),
+                    'version' => '1.0',
+                ],
             ], Response::HTTP_UNAUTHORIZED, [
                 'Content-Type' => 'application/problem+json'
             ]);
@@ -56,11 +62,17 @@ class UserController extends Controller
         // Verificar que el usuario puede actualizar este perfil
         if ($request->user()->id !== $user->id) {
             return response()->json([
+                'success' => false,
                 'type'   => 'https://damblix.dev/errors/Forbidden',
                 'title'  => 'Acceso denegado',
                 'status' => Response::HTTP_FORBIDDEN,
                 'detail' => 'No tienes permisos para actualizar este usuario.',
                 'instance' => $request->fullUrl(),
+                'meta' => [
+                    'trace_id' => $request->attributes->get('trace_id'),
+                    'timestamp' => now()->toISOString(),
+                    'version' => '1.0',
+                ],
             ], Response::HTTP_FORBIDDEN, [
                 'Content-Type' => 'application/problem+json'
             ]);

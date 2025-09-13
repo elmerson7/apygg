@@ -13,7 +13,9 @@ abstract class BaseResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            'data' => parent::toArray($request),
+        ];
     }
 
     /**
@@ -22,7 +24,9 @@ abstract class BaseResource extends JsonResource
     public function with(Request $request): array
     {
         return [
+            'success' => true,
             'meta' => [
+                'trace_id' => $request->attributes->get('trace_id'),
                 'timestamp' => now()->toISOString(),
                 'version' => '1.0',
             ],
