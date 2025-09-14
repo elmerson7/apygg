@@ -43,7 +43,7 @@ class FileAccessLog extends Model
     protected $casts = [
         'meta' => 'array',
         'created_at' => 'datetime',
-        'user_id' => 'integer',
+        'user_id' => 'string', // Cambiado a string para ULIDs
         'file_id' => 'integer',
     ];
 

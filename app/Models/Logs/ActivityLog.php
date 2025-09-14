@@ -45,7 +45,7 @@ class ActivityLog extends Model
     protected $casts = [
         'meta' => 'array',
         'created_at' => 'datetime',
-        'user_id' => 'integer',
+        'user_id' => 'string', // Cambiado a string para ULIDs
         'subject_id' => 'integer',
     ];
 

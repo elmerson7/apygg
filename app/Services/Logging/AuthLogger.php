@@ -124,7 +124,7 @@ class AuthLogger
      * Core method to log authentication events.
      */
     private static function logAuthEvent(
-        ?int $userId,
+        $userId,
         string $event,
         string $result,
         Request $request,
@@ -158,7 +158,7 @@ class AuthLogger
     /**
      * Get recent auth events for a user.
      */
-    public static function getRecentEventsForUser(int $userId, int $limit = 10): \Illuminate\Database\Eloquent\Collection
+    public static function getRecentEventsForUser($userId, int $limit = 10): \Illuminate\Database\Eloquent\Collection
     {
         return AuthEvent::forUser($userId)
             ->orderBy('created_at', 'desc')

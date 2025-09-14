@@ -44,8 +44,8 @@ class RbacAuditLog extends Model
     protected $casts = [
         'meta' => 'array',
         'created_at' => 'datetime',
-        'actor_id' => 'integer',
-        'user_id' => 'integer',
+        'actor_id' => 'string', // Cambiado a string para ULIDs
+        'user_id' => 'string', // Cambiado a string para ULIDs
     ];
 
     /**

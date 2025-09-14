@@ -3,11 +3,10 @@
 namespace App\Models\Logs;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Support\Str;
 
 class AuthEvent extends Model
 {
-    use HasUlids;
 
     /**
      * The connection name for the model.
@@ -23,6 +22,16 @@ class AuthEvent extends Model
      * Indicates if the model should be timestamped.
      */
     public $timestamps = false;
+
+    /**
+     * Indicates if the IDs are auto-incrementing.
+     */
+    public $incrementing = false;
+
+    /**
+     * The "type" of the primary key ID.
+     */
+    protected $keyType = 'string';
 
     /**
      * The attributes that are mass assignable.
@@ -46,7 +55,7 @@ class AuthEvent extends Model
     protected $casts = [
         'meta' => 'array',
         'created_at' => 'datetime',
-        'user_id' => 'integer',
+        'user_id' => 'string', // Cambiado a string para ULIDs
     ];
 
     /**
@@ -57,6 +66,9 @@ class AuthEvent extends Model
         parent::boot();
 
         static::creating(function ($model) {
+            if (empty($model->id)) {
+                $model->id = (string) Str::uuid();
+            }
             if (empty($model->created_at)) {
                 $model->created_at = now();
             }

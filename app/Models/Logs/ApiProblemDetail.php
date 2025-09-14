@@ -47,7 +47,7 @@ class ApiProblemDetail extends Model
     protected $casts = [
         'context' => 'array',
         'created_at' => 'datetime',
-        'user_id' => 'integer',
+        'user_id' => 'string', // Cambiado a string para ULIDs
         'status' => 'integer',
     ];
 
