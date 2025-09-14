@@ -1,8 +1,13 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\HealthController;
 
 Route::get('/test', fn() => 'hola mundo');
+
+// Health check endpoints
+Route::get('/health', [HealthController::class, 'health'])->name('health.detailed');
+Route::get('/status', [HealthController::class, 'up'])->name('health.basic');
 
 Route::get('/', function () {
     return response()->json([
