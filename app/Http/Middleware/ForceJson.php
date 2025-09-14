@@ -15,11 +15,11 @@ class ForceJson
      */
     public function handle(Request $request, Closure $next): Response
     {
-        
+
         $request->headers->set('Accept', 'application/json');
 
-        if (!in_array($request->method(), ['GET','HEAD','OPTIONS'])
-            && !str_starts_with($request->header('Content-Type', ''), 'application/json')) {
+        if (! in_array($request->method(), ['GET', 'HEAD', 'OPTIONS'])
+            && ! str_starts_with($request->header('Content-Type', ''), 'application/json')) {
             return response()->json([
                 'type' => 'https://damblix.dev/errors/UnsupportedMediaType',
                 'title' => 'Unsupported Media Type',

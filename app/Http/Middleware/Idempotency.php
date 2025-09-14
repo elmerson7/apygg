@@ -4,8 +4,8 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Cache;
+use Symfony\Component\HttpFoundation\Response;
 
 class Idempotency
 {
@@ -17,10 +17,10 @@ class Idempotency
     public function handle(Request $request, Closure $next, $ttlSeconds = 120): Response
     {
         if (! $request->isMethodSafe() && ($key = $request->header('Idempotency-Key'))) {
-            $cacheKey = 'idemp:' . sha1(
-                $request->method() .
-                $request->path() .
-                $key .
+            $cacheKey = 'idemp:'.sha1(
+                $request->method().
+                $request->path().
+                $key.
                 ($request->user()->id ?? 'guest')
             );
 
@@ -32,9 +32,9 @@ class Idempotency
             $response = $next($request);
 
             Cache::store('redis')->put($cacheKey, [
-                'status'  => $response->getStatusCode(),
+                'status' => $response->getStatusCode(),
                 'headers' => ['Content-Type' => $response->headers->get('Content-Type')],
-                'body'    => $response->getContent(),
+                'body' => $response->getContent(),
             ], $ttlSeconds);
 
             return $response;

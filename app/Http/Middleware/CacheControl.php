@@ -17,12 +17,12 @@ class CacheControl
     public function handle(Request $request, Closure $next, string $directive = 'private, no-cache'): Response
     {
         $response = $next($request);
-        
+
         // Solo aplicar si no existe ya una cabecera Cache-Control
-        if (!$response->headers->has('Cache-Control')) {
+        if (! $response->headers->has('Cache-Control')) {
             $response->headers->set('Cache-Control', $directive);
         }
-        
+
         return $response;
     }
 }

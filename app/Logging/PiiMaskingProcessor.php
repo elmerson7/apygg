@@ -15,7 +15,7 @@ class PiiMaskingProcessor
         'authorization', 'x-api-key', 'email', 'phone', 'phone_number',
         'address', 'credit_card', 'card_number', 'cvv', 'ssn',
         'social_security', 'passport', 'dni', 'cedula', 'license',
-        'iban', 'account_number'
+        'iban', 'account_number',
     ];
 
     /**
@@ -41,7 +41,7 @@ class PiiMaskingProcessor
     private function maskArray(array $data): array
     {
         $maskedData = [];
-        
+
         foreach ($data as $key => $value) {
             if (is_array($value)) {
                 $maskedData[$key] = $this->maskArray($value);
@@ -66,13 +66,13 @@ class PiiMaskingProcessor
     {
         // Emails
         $string = preg_replace('/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/', '[EMAIL]', $string);
-        
+
         // Tokens Bearer
         $string = preg_replace('/Bearer\s+[A-Za-z0-9\-._~+\/]+=*/', 'Bearer [TOKEN]', $string);
-        
+
         // Tarjetas de crédito (formato básico)
         $string = preg_replace('/\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/', '[CARD]', $string);
-        
+
         // SSN
         $string = preg_replace('/\b\d{3}-\d{2}-\d{4}\b/', '[SSN]', $string);
 
@@ -88,7 +88,7 @@ class PiiMaskingProcessor
     private function isPiiField(string $field): bool
     {
         $field = strtolower($field);
-        
+
         foreach ($this->piiFields as $piiField) {
             if (str_contains($field, $piiField)) {
                 return true;

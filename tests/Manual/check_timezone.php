@@ -6,11 +6,11 @@ $app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
 
 echo "=== Verificación de Timezone ===\n\n";
 
-echo "Timezone configurado: " . config('app.timezone') . "\n";
-echo "Fecha actual (PHP): " . date('Y-m-d H:i:s T') . "\n";
-echo "Fecha actual (Carbon): " . \Carbon\Carbon::now() . "\n";
-echo "Fecha actual (Carbon UTC): " . \Carbon\Carbon::now('UTC') . "\n";
-echo "ISO String: " . \Carbon\Carbon::now()->toISOString() . "\n";
+echo 'Timezone configurado: '.config('app.timezone')."\n";
+echo 'Fecha actual (PHP): '.date('Y-m-d H:i:s T')."\n";
+echo 'Fecha actual (Carbon): '.\Carbon\Carbon::now()."\n";
+echo 'Fecha actual (Carbon UTC): '.\Carbon\Carbon::now('UTC')."\n";
+echo 'ISO String: '.\Carbon\Carbon::now()->toISOString()."\n";
 
 echo "\n=== Test de logs ===\n";
 
@@ -25,10 +25,10 @@ $event = new AuthEvent([
     'trace_id' => 'test-trace-id',
 ]);
 
-echo "Timestamp before save: " . ($event->created_at ?? 'null') . "\n";
+echo 'Timestamp before save: '.($event->created_at ?? 'null')."\n";
 $event->save();
-echo "Timestamp after save: " . $event->created_at . "\n";
-echo "Timestamp ISO: " . $event->created_at->toISOString() . "\n";
+echo 'Timestamp after save: '.$event->created_at."\n";
+echo 'Timestamp ISO: '.$event->created_at->toISOString()."\n";
 
 // Contar eventos
 $count = AuthEvent::count();
