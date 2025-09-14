@@ -9,6 +9,8 @@ use App\Http\Requests\Auth\LogoutRequest;
 use App\Http\Resources\Auth\AuthTokenResource;
 use App\Http\Resources\Auth\RefreshTokenResource;
 use App\Http\Resources\UserResource;
+use App\Services\Logging\AuthLogger;
+use App\Services\Logging\SecurityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
@@ -27,6 +29,17 @@ class AuthController extends Controller
         $data = $request->validated();
 
         if (!$token = auth('api')->attempt($data)) {
+            // Log failed login attempt
+            AuthLogger::logLoginFailed($request, 'Invalid credentials');
+            
+            // Check for potential brute force
+            if (AuthLogger::isSuspiciousIp($request->ip())) {
+                SecurityLogger::logBruteForceAttempt(context: [
+                    'email' => $data['email'] ?? null,
+                    'failed_attempts' => AuthLogger::getFailedAttemptsFromIp($request->ip())
+                ], request: $request);
+            }
+            
             return response()->json([
                 'success' => false,
                 'type'   => 'https://damblix.dev/errors/InvalidCredentials',
@@ -60,6 +73,10 @@ class AuthController extends Controller
         // Restaurar TTL por defecto
         JWTAuth::factory()->setTTL((int) config('jwt.ttl'));
 
+        // Log successful login
+        $accessPayload = JWTAuth::setToken($accessToken)->getPayload();
+        AuthLogger::logLogin($user->id, $request, $accessPayload->get('jti'));
+
         $tokenData = [
             'access_token' => $accessToken,
             'expires_in' => $accessTtl * 60,        // en segundos
@@ -92,6 +109,9 @@ class AuthController extends Controller
             // Debe ser un refresh (claim typ=refresh)
             $payload = JWTAuth::setToken($rawToken)->getPayload();
             if (($payload->get('typ') ?? null) !== 'refresh') {
+                // Log failed refresh attempt
+                AuthLogger::logRefreshFailed($request, 'Invalid token type');
+                
                 return response()->json([
                     'success' => false,
                     'type' => 'https://damblix.dev/errors/InvalidTokenType',
@@ -110,6 +130,7 @@ class AuthController extends Controller
             }
 
             $user = JWTAuth::setToken($rawToken)->authenticate();
+            $oldJti = $payload->get('jti');
 
             // Invalida (blacklist) el refresh usado — ROTACIÓN
             JWTAuth::invalidate($rawToken);
@@ -128,6 +149,10 @@ class AuthController extends Controller
             // Restaurar TTL por defecto
             JWTAuth::factory()->setTTL((int) config('jwt.ttl'));
 
+            // Log successful refresh
+            $newRefreshPayload = JWTAuth::setToken($newRefresh)->getPayload();
+            AuthLogger::logRefresh($user->id, $request, $oldJti, $newRefreshPayload->get('jti'));
+
             $tokenData = [
                 'access_token' => $newAccess,
                 'expires_in' => $accessTtl * 60,
@@ -140,6 +165,9 @@ class AuthController extends Controller
                 ->setStatusCode(Response::HTTP_OK);
 
         } catch (JWTException $e) {
+            // Log failed refresh attempt
+            AuthLogger::logRefreshFailed($request, 'Invalid or expired token');
+            
             return response()->json([
                 'success' => false,
                 'type' => 'https://damblix.dev/errors/InvalidToken',
@@ -165,9 +193,14 @@ class AuthController extends Controller
      */
     public function logout(LogoutRequest $request)
     {
+        $user = auth('api')->user();
+        $accessJti = null;
+        
         // Invalida access actual (si llega)
         if ($request->bearerToken()) {
             try {
+                $accessPayload = JWTAuth::setToken($request->bearerToken())->getPayload();
+                $accessJti = $accessPayload->get('jti');
                 JWTAuth::invalidate($request->bearerToken());
             } catch (\Throwable $e) {
                 // ya inválido/expirado; continuar
@@ -187,6 +220,11 @@ class AuthController extends Controller
         try {
             auth('api')->logout();
         } catch (\Throwable $e) {}
+
+        // Log logout event
+        if ($user) {
+            AuthLogger::logLogout($user->id, $request, $accessJti);
+        }
 
         return response()->apiJson([
             'message' => 'Logout exitoso',
