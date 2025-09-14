@@ -43,6 +43,23 @@ jwt:
 	$(DC) exec app php artisan jwt:secret -f --show
 	@echo "Clave JWT generada, guardala en env/$(ENV).env"
 
+# Solo sync configuración
+scout-sync:
+	$(DC) exec app php artisan scout:manage sync --force
+
+# Importar todos los modelos
+scout-import:
+	$(DC) exec app php artisan scout:manage import --force
+
+# Limpiar todos los índices
+scout-flush:
+	$(DC) exec app php artisan scout:manage flush --force
+
+# Resetear todos los índices
+scout-reset:
+	$(DC) exec app php artisan scout:manage reset --force
+
+# Comando legacy para compatibilidad
 scout:
 	$(DC) exec app php artisan scout:sync-index-settings
 
