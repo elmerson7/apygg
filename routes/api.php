@@ -10,7 +10,7 @@ Route::get('/health', [HealthController::class, 'health'])->name('health.detaile
 Route::get('/status', [HealthController::class, 'up'])->name('health.basic');
 
 Route::get('/', function () {
-    return response()->json([
+    return response()->apiJson([
         'name' => 'APYGG',
         'version' => '1.0.0',
         'status' => 'online',

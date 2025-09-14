@@ -45,7 +45,7 @@ class HealthController extends Controller
             'unhealthy' => 503  // Service Unavailable
         };
 
-        return response()->json($response, $statusCode);
+        return response()->apiJson($response, $statusCode);
     }
 
     /**
@@ -53,7 +53,7 @@ class HealthController extends Controller
      */
     public function up(): JsonResponse
     {
-        return response()->json([
+        return response()->apiJson([
             'status' => 'up',
             'timestamp' => now()->toISOString()
         ]);
