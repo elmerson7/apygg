@@ -68,7 +68,7 @@ class AuthLogger
     /**
      * Log a logout event.
      */
-    public static function logLogout(int $userId, Request $request, ?string $jti = null): void
+    public static function logLogout($userId, Request $request, ?string $jti = null): void
     {
         self::logAuthEvent(
             userId: $userId,
@@ -96,7 +96,7 @@ class AuthLogger
     /**
      * Log a 2FA success event.
      */
-    public static function log2FASuccess(int $userId, Request $request): void
+    public static function log2FASuccess($userId, Request $request): void
     {
         self::logAuthEvent(
             userId: $userId,
@@ -109,7 +109,7 @@ class AuthLogger
     /**
      * Log a 2FA failure event.
      */
-    public static function log2FAFailed(int $userId, Request $request, string $reason = 'Invalid 2FA code'): void
+    public static function log2FAFailed($userId, Request $request, string $reason = 'Invalid 2FA code'): void
     {
         self::logAuthEvent(
             userId: $userId,

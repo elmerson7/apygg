@@ -9,6 +9,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Async Logging
+    |--------------------------------------------------------------------------
+    |
+    | Determines if logging should be asynchronous (using queues) or synchronous.
+    | Async is recommended for production to avoid blocking requests.
+    |
+    */
+
+    'async' => env('LOG_ASYNC', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | Default Log Channel
     |--------------------------------------------------------------------------
     |
