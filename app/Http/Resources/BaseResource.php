@@ -41,6 +41,11 @@ abstract class BaseResource extends JsonResource
         // Agregar headers consistentes
         $response->header('Content-Type', 'application/json');
         
+        // Agregar Cache-Control por defecto (datos privados, no cachear)
+        if (!$response->headers->has('Cache-Control')) {
+            $response->header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+        }
+        
         // Agregar Vary headers para caching
         $existing = $response->headers->get('Vary');
         $vary = array_filter(array_unique(array_merge(

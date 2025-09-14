@@ -9,6 +9,7 @@ use PHPOpenSourceSaver\JWTAuth\Http\Middleware\RefreshToken as JwtRefresh;
 use App\Http\Middleware\Idempotency;
 use App\Http\Middleware\ForceJson;
 use App\Http\Middleware\TraceId;
+use App\Http\Middleware\CacheControl;
 
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -28,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'force.json'    => ForceJson::class,
             'idempotency'  => Idempotency::class,
             'trace.id'     => TraceId::class,
+            'cache.control' => CacheControl::class,
         ]);
         
         // Habilitar CORS para todas las rutas
