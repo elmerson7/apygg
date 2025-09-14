@@ -63,6 +63,10 @@ scout-reset:
 scout:
 	$(DC) exec app php artisan scout:sync-index-settings
 
+# Verificar configuración CORS
+cors-check:
+	$(DC) exec app php artisan cors:check --fix
+
 horizon:
 	$(DC) exec horizon php artisan horizon:terminate || true
 
