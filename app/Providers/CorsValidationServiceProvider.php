@@ -42,8 +42,8 @@ class CorsValidationServiceProvider extends ServiceProvider
         $this->validateCredentialsWithWildcard($allowedOrigins, $supportsCredentials);
         $this->validateOriginsFormat($allowedOrigins);
 
-        // Log configuración en desarrollo
-        if ($environment === 'local' || $environment === 'dev') {
+        // Log configuración en desarrollo (controlado por variable de entorno)
+        if (($environment === 'local' || $environment === 'dev') && env('CORS_DEBUG_LOG', false)) {
             $this->logCorsConfiguration($allowedOrigins, $supportsCredentials);
         }
     }
@@ -142,7 +142,7 @@ class CorsValidationServiceProvider extends ServiceProvider
      */
     private function logCorsConfiguration(array $allowedOrigins, bool $supportsCredentials): void
     {
-        Log::info('CORS Configuration:', [
+        Log::debug('CORS Configuration:', [
             'allowed_origins' => $allowedOrigins,
             'supports_credentials' => $supportsCredentials,
             'environment' => app()->environment(),
