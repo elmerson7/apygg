@@ -57,7 +57,9 @@ return Application::configure(basePath: dirname(__DIR__))
                     ? $request->fullUrl()
                     : (request()?->fullUrl() ?? null),
                 'meta' => [
-                    'trace_id' => $request->attributes->get('trace_id'),
+                    'trace_id' => method_exists($request, 'attributes') && $request->attributes 
+                        ? $request->attributes->get('trace_id') 
+                        : (request()?->attributes?->get('trace_id') ?? null),
                     'timestamp' => now()->toISOString(),
                     'version' => '1.0',
                 ],
