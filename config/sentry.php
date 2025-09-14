@@ -39,7 +39,9 @@ return [
     'send_default_pii' => env('SENTRY_SEND_DEFAULT_PII', false),
 
     // @see: https://docs.sentry.io/platforms/php/guides/laravel/configuration/options/#before-send
-    'before_send' => App\Services\SentryPiiScrubber::class,
+    'before_send' => function ($event, $hint) {
+        return app(App\Services\SentryPiiScrubber::class)($event, $hint);
+    },
 
     // @see: https://docs.sentry.io/platforms/php/guides/laravel/configuration/options/#ignore-exceptions
     // 'ignore_exceptions' => [],
