@@ -70,6 +70,12 @@ return [
             'ignore_exceptions' => false,
         ],
 
+        'production_stack' => [
+            'driver' => 'stack',
+            'channels' => ['json_daily', 'daily_directory'],
+            'ignore_exceptions' => false,
+        ],
+
         'single' => [
             'driver' => 'single',
             'path' => storage_path('logs/laravel.log'),
