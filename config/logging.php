@@ -146,7 +146,35 @@ return [
             'via' => App\Logging\DateLogger::class,
             'level' => env('LOG_LEVEL', 'debug'),
             'replace_placeholders' => true,
-            'processors' => [App\Logging\AddTraceIdProcessor::class],
+            'processors' => [
+                App\Logging\AddTraceIdProcessor::class,
+                App\Logging\PiiMaskingProcessor::class,
+            ],
+        ],
+
+        'json_daily' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/app.json'),
+            'level' => env('LOG_LEVEL', 'warning'),
+            'days' => env('LOG_DAILY_DAYS', 30),
+            'replace_placeholders' => true,
+            'formatter' => App\Logging\JsonFormatter::class,
+            'processors' => [
+                App\Logging\AddTraceIdProcessor::class,
+                App\Logging\PiiMaskingProcessor::class,
+            ],
+        ],
+
+        'json_single' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/app.json'),
+            'level' => env('LOG_LEVEL', 'warning'),
+            'replace_placeholders' => true,
+            'formatter' => App\Logging\JsonFormatter::class,
+            'processors' => [
+                App\Logging\AddTraceIdProcessor::class,
+                App\Logging\PiiMaskingProcessor::class,
+            ],
         ],
 
     ],
