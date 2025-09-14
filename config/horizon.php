@@ -85,6 +85,8 @@ return [
 
     'waits' => [
         'redis:default' => 60,
+        'redis:mail' => 30,
+        'redis:critical' => 15,
     ],
 
     /*
@@ -180,33 +182,126 @@ return [
     */
 
     'defaults' => [
-        'supervisor-1' => [
+        'supervisor-default' => [
             'connection' => 'redis',
             'queue' => ['default'],
             'balance' => 'auto',
             'autoScalingStrategy' => 'time',
-            'maxProcesses' => 1,
+            'maxProcesses' => 3,
+            'minProcesses' => 1,
             'maxTime' => 0,
-            'maxJobs' => 0,
+            'maxJobs' => 100,
             'memory' => 128,
-            'tries' => 1,
-            'timeout' => 60,
+            'tries' => 3,
+            'timeout' => 90,
             'nice' => 0,
+        ],
+        'supervisor-mail' => [
+            'connection' => 'redis',
+            'queue' => ['mail'],
+            'balance' => 'auto',
+            'autoScalingStrategy' => 'time',
+            'maxProcesses' => 2,
+            'minProcesses' => 1,
+            'maxTime' => 0,
+            'maxJobs' => 50,
+            'memory' => 128,
+            'tries' => 2,
+            'timeout' => 120,
+            'nice' => 0,
+        ],
+        'supervisor-critical' => [
+            'connection' => 'redis',
+            'queue' => ['critical'],
+            'balance' => 'simple',
+            'autoScalingStrategy' => 'size',
+            'maxProcesses' => 5,
+            'minProcesses' => 2,
+            'maxTime' => 0,
+            'maxJobs' => 20,
+            'memory' => 256,
+            'tries' => 1,
+            'timeout' => 30,
+            'nice' => -10,
         ],
     ],
 
     'environments' => [
         'production' => [
-            'supervisor-1' => [
+            'supervisor-default' => [
+                'maxProcesses' => 8,
+                'minProcesses' => 2,
+                'balanceMaxShift' => 2,
+                'balanceCooldown' => 3,
+            ],
+            'supervisor-mail' => [
+                'maxProcesses' => 4,
+                'minProcesses' => 1,
+                'balanceMaxShift' => 1,
+                'balanceCooldown' => 5,
+            ],
+            'supervisor-critical' => [
                 'maxProcesses' => 10,
+                'minProcesses' => 3,
+                'balanceMaxShift' => 3,
+                'balanceCooldown' => 1,
+            ],
+        ],
+
+        'staging' => [
+            'supervisor-default' => [
+                'maxProcesses' => 4,
+                'minProcesses' => 1,
+                'balanceMaxShift' => 1,
+                'balanceCooldown' => 5,
+            ],
+            'supervisor-mail' => [
+                'maxProcesses' => 2,
+                'minProcesses' => 1,
+                'balanceMaxShift' => 1,
+                'balanceCooldown' => 5,
+            ],
+            'supervisor-critical' => [
+                'maxProcesses' => 5,
+                'minProcesses' => 2,
+                'balanceMaxShift' => 2,
+                'balanceCooldown' => 2,
+            ],
+        ],
+
+        'dev' => [
+            'supervisor-default' => [
+                'maxProcesses' => 2,
+                'minProcesses' => 1,
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
+            ],
+            'supervisor-mail' => [
+                'maxProcesses' => 1,
+                'minProcesses' => 1,
+                'balanceMaxShift' => 0,
+                'balanceCooldown' => 10,
+            ],
+            'supervisor-critical' => [
+                'maxProcesses' => 2,
+                'minProcesses' => 1,
+                'balanceMaxShift' => 1,
+                'balanceCooldown' => 1,
             ],
         ],
 
         'local' => [
-            'supervisor-1' => [
-                'maxProcesses' => 3,
+            'supervisor-default' => [
+                'maxProcesses' => 1,
+                'minProcesses' => 1,
+            ],
+            'supervisor-mail' => [
+                'maxProcesses' => 1,
+                'minProcesses' => 1,
+            ],
+            'supervisor-critical' => [
+                'maxProcesses' => 1,
+                'minProcesses' => 1,
             ],
         ],
     ],
