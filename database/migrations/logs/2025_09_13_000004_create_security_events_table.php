@@ -23,7 +23,7 @@ return new class extends Migration
             $table->id();
             $table->string('severity', 20)->index(); // "low", "medium", "high", "critical"
             $table->string('event', 100)->index(); // "rate_limit_exceeded", "invalid_webhook_signature", "upload_blocked", etc.
-            $table->unsignedBigInteger('user_id')->nullable()->index(); // FK reference to main DB users table
+            $table->string('user_id', 26)->nullable()->index(); // FK reference to main DB users table (ULID)
             $table->string('ip', 45)->nullable()->index();
             $table->text('user_agent')->nullable();
             $table->json('context')->nullable(); // Contexto específico del evento de seguridad

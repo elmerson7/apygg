@@ -21,7 +21,7 @@ return new class extends Migration
     {
         Schema::connection('logs')->create('activity_logs', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id')->nullable()->index(); // FK reference to main DB users table
+            $table->string('user_id', 26)->nullable()->index(); // FK reference to main DB users table (ULID)
             $table->string('event', 100)->index(); // Tipo de evento (ej: "user.created", "post.updated")
             $table->string('subject_type', 100)->nullable()->index(); // Tipo de entidad afectada
             $table->unsignedBigInteger('subject_id')->nullable()->index(); // ID de la entidad afectada

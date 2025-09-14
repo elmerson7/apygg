@@ -21,7 +21,7 @@ return new class extends Migration
     {
         Schema::connection('logs')->create('file_access_logs', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id')->nullable()->index(); // FK reference to main DB users table
+            $table->string('user_id', 26)->nullable()->index(); // FK reference to main DB users table (ULID)
             $table->unsignedBigInteger('file_id')->nullable()->index(); // ID del archivo en el sistema
             $table->string('action', 50)->index(); // "upload", "download", "delete", "view"
             $table->string('ip', 45)->nullable();
