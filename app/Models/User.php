@@ -74,8 +74,12 @@ class User extends Authenticatable implements JWTSubject
             'id' => $this->id,
             'first_name' => $this->first_name,
             'last_name' => $this->last_name,
+            'full_name' => trim($this->first_name . ' ' . $this->last_name),
             'email' => $this->email,
+            'email_domain' => $this->email ? explode('@', $this->email)[1] ?? null : null,
             'created_at' => $this->created_at?->timestamp,
+            'email_verified_at' => $this->email_verified_at?->timestamp,
+            'is_verified' => !is_null($this->email_verified_at),
         ];
     }
 

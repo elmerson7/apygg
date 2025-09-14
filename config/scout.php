@@ -141,9 +141,20 @@ return [
         'key' => env('MEILISEARCH_KEY'),
         'index-settings' => [
             'users_index' => [
-                'searchableAttributes' => ['name', 'email'],
-                'filterableAttributes' => ['id', 'created_at'],
-                'sortableAttributes' => ['created_at', 'name'],
+                'searchableAttributes' => ['full_name', 'first_name', 'last_name', 'email'],
+                'filterableAttributes' => ['id', 'email_domain', 'created_at', 'email_verified_at', 'is_verified'],
+                'sortableAttributes' => ['created_at', 'first_name', 'last_name', 'email_verified_at'],
+                'displayedAttributes' => ['id', 'first_name', 'last_name', 'full_name', 'email', 'is_verified', 'created_at'],
+                'searchCutoffMs' => 1000,
+                'rankingRules' => [
+                    'words',
+                    'typo',
+                    'proximity',
+                    'attribute',
+                    'sort',
+                    'exactness',
+                    'created_at:desc'
+                ],
             ],
         ],
     ],
