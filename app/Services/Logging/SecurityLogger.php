@@ -22,7 +22,7 @@ class SecurityLogger
     public static function log(
         string $severity,
         string $event,
-        ?int $userId = null,
+        ?string $userId = null,
         ?array $context = null,
         ?Request $request = null
     ): void {
@@ -52,7 +52,7 @@ class SecurityLogger
     /**
      * Log rate limit exceeded.
      */
-    public static function logRateLimitExceeded(?int $userId = null, ?array $context = null, ?Request $request = null): void
+    public static function logRateLimitExceeded(?string $userId = null, ?array $context = null, ?Request $request = null): void
     {
         self::log(
             severity: self::SEVERITY_MEDIUM,
@@ -86,7 +86,7 @@ class SecurityLogger
     /**
      * Log blocked file upload.
      */
-    public static function logUploadBlocked(int $userId, string $reason, ?array $context = null, ?Request $request = null): void
+    public static function logUploadBlocked(string $userId, string $reason, ?array $context = null, ?Request $request = null): void
     {
         self::log(
             severity: self::SEVERITY_MEDIUM,
@@ -103,7 +103,7 @@ class SecurityLogger
     /**
      * Log suspicious login pattern.
      */
-    public static function logSuspiciousLogin(int $userId, string $reason, ?array $context = null, ?Request $request = null): void
+    public static function logSuspiciousLogin(string $userId, string $reason, ?array $context = null, ?Request $request = null): void
     {
         self::log(
             severity: self::SEVERITY_HIGH,
@@ -119,7 +119,7 @@ class SecurityLogger
     /**
      * Log unauthorized access attempt.
      */
-    public static function logUnauthorizedAccess(?int $userId = null, ?array $context = null, ?Request $request = null): void
+    public static function logUnauthorizedAccess(?string $userId = null, ?array $context = null, ?Request $request = null): void
     {
         self::log(
             severity: self::SEVERITY_HIGH,
@@ -136,7 +136,7 @@ class SecurityLogger
     /**
      * Log potential SQL injection attempt.
      */
-    public static function logSqlInjectionAttempt(?int $userId = null, ?array $context = null, ?Request $request = null): void
+    public static function logSqlInjectionAttempt(?string $userId = null, ?array $context = null, ?Request $request = null): void
     {
         self::log(
             severity: self::SEVERITY_CRITICAL,
@@ -153,7 +153,7 @@ class SecurityLogger
     /**
      * Log potential XSS attempt.
      */
-    public static function logXssAttempt(?int $userId = null, ?array $context = null, ?Request $request = null): void
+    public static function logXssAttempt(?string $userId = null, ?array $context = null, ?Request $request = null): void
     {
         self::log(
             severity: self::SEVERITY_HIGH,
@@ -170,7 +170,7 @@ class SecurityLogger
     /**
      * Log brute force attempt.
      */
-    public static function logBruteForceAttempt(?int $userId = null, ?array $context = null, ?Request $request = null): void
+    public static function logBruteForceAttempt(?string $userId = null, ?array $context = null, ?Request $request = null): void
     {
         self::log(
             severity: self::SEVERITY_CRITICAL,
@@ -186,7 +186,7 @@ class SecurityLogger
     /**
      * Log account lockout.
      */
-    public static function logAccountLockout(int $userId, string $reason, ?array $context = null, ?Request $request = null): void
+    public static function logAccountLockout(string $userId, string $reason, ?array $context = null, ?Request $request = null): void
     {
         self::log(
             severity: self::SEVERITY_HIGH,

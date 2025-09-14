@@ -13,7 +13,7 @@ class ActivityLogger
      */
     public static function log(
         string $event,
-        ?int $userId = null,
+        ?string $userId = null,
         ?string $subjectType = null,
         ?int $subjectId = null,
         ?array $meta = null,
@@ -46,7 +46,7 @@ class ActivityLogger
     /**
      * Log user creation.
      */
-    public static function logUserCreated(int $userId, ?int $createdBy = null, ?Request $request = null): void
+    public static function logUserCreated(string $userId, ?string $createdBy = null, ?Request $request = null): void
     {
         self::log(
             event: 'user.created',
@@ -61,7 +61,7 @@ class ActivityLogger
     /**
      * Log user update.
      */
-    public static function logUserUpdated(int $userId, ?int $updatedBy = null, ?array $changes = null, ?Request $request = null): void
+    public static function logUserUpdated(string $userId, ?string $updatedBy = null, ?array $changes = null, ?Request $request = null): void
     {
         self::log(
             event: 'user.updated',
@@ -76,7 +76,7 @@ class ActivityLogger
     /**
      * Log user deletion.
      */
-    public static function logUserDeleted(int $userId, ?int $deletedBy = null, ?Request $request = null): void
+    public static function logUserDeleted(string $userId, ?string $deletedBy = null, ?Request $request = null): void
     {
         self::log(
             event: 'user.deleted',
@@ -91,7 +91,7 @@ class ActivityLogger
     /**
      * Log profile changes.
      */
-    public static function logProfileUpdated(int $userId, ?array $changes = null, ?Request $request = null): void
+    public static function logProfileUpdated(string $userId, ?array $changes = null, ?Request $request = null): void
     {
         self::log(
             event: 'profile.updated',
@@ -106,7 +106,7 @@ class ActivityLogger
     /**
      * Log settings changes.
      */
-    public static function logSettingsChanged(int $userId, string $setting, $oldValue, $newValue, ?Request $request = null): void
+    public static function logSettingsChanged(string $userId, string $setting, $oldValue, $newValue, ?Request $request = null): void
     {
         self::log(
             event: 'settings.changed',
@@ -125,7 +125,7 @@ class ActivityLogger
     /**
      * Log password changes.
      */
-    public static function logPasswordChanged(int $userId, ?Request $request = null): void
+    public static function logPasswordChanged(string $userId, ?Request $request = null): void
     {
         self::log(
             event: 'password.changed',
@@ -140,7 +140,7 @@ class ActivityLogger
     /**
      * Log email changes.
      */
-    public static function logEmailChanged(int $userId, string $oldEmail, string $newEmail, ?Request $request = null): void
+    public static function logEmailChanged(string $userId, string $oldEmail, string $newEmail, ?Request $request = null): void
     {
         self::log(
             event: 'email.changed',
@@ -158,7 +158,7 @@ class ActivityLogger
     /**
      * Get recent activity for a user.
      */
-    public static function getRecentActivityForUser(int $userId, int $limit = 20): \Illuminate\Database\Eloquent\Collection
+    public static function getRecentActivityForUser(string $userId, int $limit = 20): \Illuminate\Database\Eloquent\Collection
     {
         return ActivityLog::forUser($userId)
             ->orderBy('created_at', 'desc')
