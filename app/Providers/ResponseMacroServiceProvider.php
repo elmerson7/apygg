@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Http\Response;
+use Illuminate\Routing\ResponseFactory;
 
 class ResponseMacroServiceProvider extends ServiceProvider
 {
@@ -20,10 +21,10 @@ class ResponseMacroServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Response::macro('apiJson', function ($data, $status = 200) {
+        ResponseFactory::macro('apiJson', function ($data, $status = 200) {
             $request = request();
             
-            return response()->json([
+            return $this->json([
                 'success' => $status >= 200 && $status < 300,
                 'data' => $data,
                 'meta' => [

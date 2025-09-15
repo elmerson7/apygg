@@ -3,14 +3,14 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HealthController;
 
-Route::get('/test', fn() => 'hola mundo');
+Route::get('/test', fn() => response()->apiJson(['hello' => 'world']));
 
 // Health check endpoints
 Route::get('/health', [HealthController::class, 'health'])->name('health.detailed');
 Route::get('/status', [HealthController::class, 'up'])->name('health.basic');
 
 Route::get('/', function () {
-    return response()->apiJson([
+    return response()->json([
         'name' => 'APYGG',
         'version' => '1.0.0',
         'status' => 'online',
