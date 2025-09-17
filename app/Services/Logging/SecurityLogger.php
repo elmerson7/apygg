@@ -243,4 +243,104 @@ class SecurityLogger
 
         return $count >= $threshold;
     }
+
+    /**
+     * Log exceptions with security relevance.
+     */
+    public static function logException(\Throwable $exception, ?Request $request = null, ?int $statusCode = null): void
+    {
+        $request = $request ?? request();
+        $statusCode = $statusCode ?? 500;
+        
+        // Determinar severidad basada en el tipo de excepción y código de estado
+        $severity = self::determineSeverityForException($exception, $statusCode);
+        $eventType = self::getEventTypeForException($exception);
+        
+        self::log(
+            severity: $severity,
+            event: $eventType,
+            userId: $request?->user()?->id,
+            context: [
+                'exception_class' => get_class($exception),
+                'exception_message' => $exception->getMessage(),
+                'status_code' => $statusCode,
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+                'endpoint' => $request?->getPathInfo(),
+                'method' => $request?->getMethod(),
+                'stack_trace_preview' => self::getStackTracePreview($exception)
+            ],
+            request: $request
+        );
+    }
+
+    /**
+     * Determine severity for exceptions.
+     */
+    private static function determineSeverityForException(\Throwable $exception, int $statusCode): string
+    {
+        // Excepciones críticas
+        if ($exception instanceof \Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException ||
+            $statusCode === 429) {
+            return self::SEVERITY_HIGH;
+        }
+        
+        // Errores de autenticación/autorización
+        if ($statusCode === 401 || $statusCode === 403) {
+            return self::SEVERITY_MEDIUM;
+        }
+        
+        // Errores de validación/cliente
+        if ($statusCode >= 400 && $statusCode < 500) {
+            return self::SEVERITY_LOW;
+        }
+        
+        // Errores del servidor
+        if ($statusCode >= 500) {
+            return self::SEVERITY_MEDIUM;
+        }
+        
+        return self::SEVERITY_LOW;
+    }
+
+    /**
+     * Get event type based on exception.
+     */
+    private static function getEventTypeForException(\Throwable $exception): string
+    {
+        $className = class_basename($exception);
+        
+        $eventMap = [
+            'TooManyRequestsHttpException' => 'rate_limit_exception',
+            'AuthenticationException' => 'authentication_exception',
+            'AuthorizationException' => 'authorization_exception',
+            'ValidationException' => 'validation_exception',
+            'ModelNotFoundException' => 'resource_not_found',
+            'QueryException' => 'database_exception',
+            'HttpException' => 'http_exception',
+        ];
+        
+        return $eventMap[$className] ?? 'general_exception';
+    }
+
+    /**
+     * Get a preview of the stack trace for logging.
+     */
+    private static function getStackTracePreview(\Throwable $exception): array
+    {
+        $trace = $exception->getTrace();
+        $preview = [];
+        
+        // Solo tomar los primeros 3 frames del stack trace
+        for ($i = 0; $i < min(3, count($trace)); $i++) {
+            $frame = $trace[$i];
+            $preview[] = [
+                'file' => $frame['file'] ?? 'unknown',
+                'line' => $frame['line'] ?? 'unknown',
+                'function' => ($frame['class'] ?? '') . ($frame['type'] ?? '') . ($frame['function'] ?? ''),
+            ];
+        }
+        
+        return $preview;
+    }
 }

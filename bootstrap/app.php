@@ -10,6 +10,9 @@ use App\Http\Middleware\Idempotency;
 use App\Http\Middleware\ForceJson;
 use App\Http\Middleware\TraceId;
 use App\Http\Middleware\CacheControl;
+use App\Http\Middleware\SecurityLogger;
+use App\Http\Middleware\RateLimitLogger;
+use App\Http\Middleware\WebhookSecurityLogger;
 
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -30,6 +33,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'idempotency'  => Idempotency::class,
             'trace.id'     => TraceId::class,
             'cache.control' => CacheControl::class,
+            'security.logger' => SecurityLogger::class,
+            'rate.limit.logger' => RateLimitLogger::class,
+            'webhook.security' => WebhookSecurityLogger::class,
         ]);
         
         // Habilitar CORS para todas las rutas
@@ -39,7 +45,9 @@ return Application::configure(basePath: dirname(__DIR__))
         
         $middleware->api(append: [
             HandleCors::class,
+            'security.logger',
             'throttle:api',
+            'rate.limit.logger',
             'trace.id',
             'force.json'
         ]);
@@ -48,6 +56,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->respond(function ($request, Throwable $e) {
             $status = $e instanceof \Symfony\Component\HttpKernel\Exception\HttpException
                 ? $e->getStatusCode() : 500;
+    
+            // Log security-relevant exceptions
+            if ($status >= 400) {
+                \App\Services\Logging\SecurityLogger::logException($e, $request, $status);
+            }
     
             $problem = [
                 'success' => false,
