@@ -20,8 +20,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::connection('logs')->create('auth_events', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->text('user_id')->nullable()->index(); // FK reference to main DB users table (ULID)
+            $table->id();
+            $table->string('user_id', 26)->nullable()->index(); // FK reference to main DB users table (ULID)
             $table->string('event', 50)->index(); // "login", "logout", "refresh", "2fa_success", "2fa_failed", etc.
             $table->string('result', 20)->index(); // "success", "failed", "blocked"
             $table->string('reason', 100)->nullable(); // Razón del fallo o bloqueo

@@ -22,7 +22,7 @@ return new class extends Migration
         Schema::connection('logs')->create('file_access_logs', function (Blueprint $table) {
             $table->id();
             $table->string('user_id', 26)->nullable()->index(); // FK reference to main DB users table (ULID)
-            $table->unsignedBigInteger('file_id')->nullable()->index(); // ID del archivo en el sistema
+            $table->string('file_id', 26)->nullable()->index(); // ID del archivo en el sistema (ULID)
             $table->string('action', 50)->index(); // "upload", "download", "delete", "view"
             $table->string('ip', 45)->nullable();
             $table->json('meta')->nullable(); // Metadatos (tamaño, tipo MIME, URL firmada, etc.)

@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('user_id', 26)->nullable()->index(); // FK reference to main DB users table (ULID)
             $table->string('event', 100)->index(); // Tipo de evento (ej: "user.created", "post.updated")
             $table->string('subject_type', 100)->nullable()->index(); // Tipo de entidad afectada
-            $table->unsignedBigInteger('subject_id')->nullable()->index(); // ID de la entidad afectada
+            $table->string('subject_id', 26)->nullable()->index(); // ID de la entidad afectada (ULID)
             $table->string('ip', 45)->nullable(); // IPv4 o IPv6
             $table->text('user_agent')->nullable();
             $table->json('meta')->nullable(); // Datos adicionales del evento

@@ -3,11 +3,9 @@
 namespace App\Models\Logs;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Concerns\HasUlids;
 
 class RbacAuditLog extends Model
 {
-    use HasUlids;
 
     /**
      * The connection name for the model.
