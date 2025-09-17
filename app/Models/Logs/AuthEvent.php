@@ -3,7 +3,6 @@
 namespace App\Models\Logs;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
 
 class AuthEvent extends Model
 {
@@ -26,12 +25,12 @@ class AuthEvent extends Model
     /**
      * Indicates if the IDs are auto-incrementing.
      */
-    public $incrementing = false;
+    public $incrementing = true;
 
     /**
      * The "type" of the primary key ID.
      */
-    protected $keyType = 'string';
+    protected $keyType = 'int';
 
     /**
      * The attributes that are mass assignable.
@@ -66,9 +65,6 @@ class AuthEvent extends Model
         parent::boot();
 
         static::creating(function ($model) {
-            if (empty($model->id)) {
-                $model->id = (string) Str::uuid();
-            }
             if (empty($model->created_at)) {
                 $model->created_at = now();
             }
