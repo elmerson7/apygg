@@ -25,5 +25,9 @@ class RateLimitServiceProvider extends ServiceProvider
         RateLimiter::for('matches', fn (Request $r) => [Limit::perSecond(5)->by($r->user()?->id ?? $r->ip())]);
         RateLimiter::for('users', fn (Request $r) => [Limit::perMinute(60)->by($r->user()?->id ?? $r->ip())]);
         RateLimiter::for('uploads', fn (Request $r) => [Limit::perMinute(20)->by($r->user()?->id ?? $r->ip())]);
+        
+        // Rate limiters para archivos
+        RateLimiter::for('files', fn (Request $r) => [Limit::perMinute(100)->by($r->user()?->id ?? $r->ip())]);
+        RateLimiter::for('public-files', fn (Request $r) => [Limit::perMinute(30)->by($r->ip())]);
     }
 }
