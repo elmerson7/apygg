@@ -24,9 +24,6 @@ abstract class BaseFormRequest extends FormRequest
     {
         $errors = $validator->errors()->toArray();
         
-        // Log the validation error to api_problem_details
-        \App\Services\Logging\ApiProblemLogger::logValidationError($errors, $this);
-        
         // Formato RFC 7807 Problem Details consistente con tu middleware
         $problem = [
             'success' => false,

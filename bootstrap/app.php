@@ -53,16 +53,13 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->respond(function ($response, Throwable $e) {
+        $exceptions->respond(function ($request, Throwable $e) {
             $status = $e instanceof \Symfony\Component\HttpKernel\Exception\HttpException
                 ? $e->getStatusCode() : 500;
     
-            // Log security-relevant exceptions and API problem details
+            // Log security-relevant exceptions
             if ($status >= 400) {
-                // Get the actual request from the global helper since $response is a JsonResponse
-                $request = request();
                 \App\Services\Logging\SecurityLogger::logException($e, $request, $status);
-                \App\Services\Logging\ApiProblemLogger::logFromException($e, $request, $status);
             }
     
             $problem = [

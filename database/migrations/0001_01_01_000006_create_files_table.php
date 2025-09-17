@@ -18,7 +18,6 @@ return new class extends Migration
             $table->bigInteger('size')->unsigned(); // Tamaño en bytes
             $table->char('checksum', 64)->index(); // SHA256
             $table->enum('visibility', ['private', 'public'])->default('private');
-            $table->enum('status', ['uploading', 'scanning', 'verified', 'infected', 'failed'])->default('uploading');
             $table->jsonb('meta')->nullable(); // Metadatos adicionales
             $table->timestamp('created_at', 0);
             $table->timestamp('updated_at', 0);

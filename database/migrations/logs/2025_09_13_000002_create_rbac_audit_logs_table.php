@@ -21,7 +21,7 @@ return new class extends Migration
     {
         Schema::connection('logs')->create('rbac_audit_logs', function (Blueprint $table) {
             $table->id();
-            $table->string('actor_id', 26)->nullable()->index(); // FK reference to main DB users table (ULID)
+            $table->unsignedBigInteger('actor_id')->nullable()->index(); // FK reference to main DB users table
             $table->string('user_id', 26)->nullable()->index(); // FK reference to main DB users table (ULID)
             $table->string('action', 50)->index(); // "grant", "revoke", "assign", "remove"
             $table->string('role', 100)->nullable()->index(); // Nombre del rol

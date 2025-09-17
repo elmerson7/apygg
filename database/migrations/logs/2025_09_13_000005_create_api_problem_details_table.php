@@ -26,9 +26,6 @@ return new class extends Migration
             $table->integer('status')->index(); // Código de estado HTTP
             $table->text('detail')->nullable(); // Descripción detallada del problema
             $table->string('instance', 200)->nullable(); // URI de la instancia específica
-            $table->string('user_id', 26)->nullable()->index(); // FK reference to main DB users table (ULID)
-            $table->string('ip', 45)->nullable()->index(); // IP address
-            $table->text('user_agent')->nullable(); // User agent string
             $table->string('trace_id', 36)->nullable()->index(); // Para correlación con Sentry
             $table->json('context')->nullable(); // Contexto adicional del error
             $table->timestamp('created_at');
@@ -37,8 +34,6 @@ return new class extends Migration
             $table->index(['status', 'created_at']);
             $table->index(['type', 'status']);
             $table->index(['title', 'created_at']);
-            $table->index(['user_id', 'status', 'created_at']);
-            $table->index(['ip', 'status', 'created_at']);
         });
     }
 
