@@ -21,6 +21,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Activity Logging
+    |--------------------------------------------------------------------------
+    |
+    | Determines if activity logging to the logs database should be enabled.
+    | This affects ActivityLogger but not other logging services like AuthLogger
+    | or SecurityLogger. Useful for testing environments or when you need to
+    | disable activity tracking temporarily.
+    |
+    */
+
+    'activity_enabled' => env('ACTIVITY_LOGGING', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | Default Log Channel
     |--------------------------------------------------------------------------
     |

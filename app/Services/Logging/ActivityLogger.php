@@ -6,10 +6,29 @@ use App\Models\Logs\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Queue;
 
+/**
+ * Activity Logger Service
+ * 
+ * Registra cualquier actividad importante del sistema que requiera auditoría.
+ * No solo para usuarios y perfiles, sino para cualquier entidad del negocio.
+ * 
+ * Ejemplos de uso:
+ * - ActivityLogger::log('compra.created', $userId, 'Compra', $compraId, ['monto' => 1500])
+ * - ActivityLogger::log('supervisor.updated', $userId, 'Supervisor', $supervisorId, $changes)
+ * - ActivityLogger::log('producto.deleted', $userId, 'Producto', $productoId, ['razon' => 'Discontinuado'])
+ * - ActivityLogger::log('inventario.adjusted', $userId, 'Inventario', $itemId, ['cantidad_anterior' => 100, 'cantidad_nueva' => 85])
+ */
 class ActivityLogger
 {
     /**
      * Log a general activity event.
+     * 
+     * @param string $event Tipo de evento (ej: 'compra.created', 'supervisor.updated')
+     * @param string|null $userId ID del usuario que realizó la acción
+     * @param string|null $subjectType Tipo de entidad afectada (ej: 'Compra', 'Supervisor')
+     * @param int|null $subjectId ID específico del registro afectado
+     * @param array|null $meta Datos adicionales relevantes (cambios, montos, etc.)
+     * @param Request|null $request Request HTTP (opcional, se toma automáticamente)
      */
     public static function log(
         string $event,
@@ -19,6 +38,11 @@ class ActivityLogger
         ?array $meta = null,
         ?Request $request = null
     ): void {
+        // Verificar si el activity logging está habilitado
+        if (!config('logging.activity_enabled', true)) {
+            return;
+        }
+
         $request = $request ?? request();
         
         $data = [
