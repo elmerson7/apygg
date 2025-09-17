@@ -30,5 +30,6 @@ require __DIR__.'/api/gifts.php';
 require __DIR__.'/api/store.php';
 require __DIR__.'/api/achievements.php';
 require __DIR__.'/api/webhooks.php';
+require __DIR__.'/api/files.php';
 require __DIR__.'/api/logs.php';
 require __DIR__.'/api/admin.php';
