@@ -57,9 +57,10 @@ return Application::configure(basePath: dirname(__DIR__))
             $status = $e instanceof \Symfony\Component\HttpKernel\Exception\HttpException
                 ? $e->getStatusCode() : 500;
     
-            // Log security-relevant exceptions
+            // Log security-relevant exceptions and API problem details
             if ($status >= 400) {
                 \App\Services\Logging\SecurityLogger::logException($e, $request, $status);
+                \App\Services\Logging\ApiProblemLogger::logFromException($e, $request, $status);
             }
     
             $problem = [

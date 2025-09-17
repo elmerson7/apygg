@@ -54,6 +54,9 @@ class RateLimitLogger
             ],
             request: $request
         );
+
+        // Also log to API problem details
+        \App\Services\Logging\ApiProblemLogger::logRateLimitExceeded($request);
     }
 
     /**

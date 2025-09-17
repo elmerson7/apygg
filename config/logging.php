@@ -35,6 +35,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | API Problem Details Logging
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for RFC-7807 Problem Details logging to the api_problem_details
+    | table. This helps with API error analysis and debugging.
+    |
+    */
+
+    'api_problem_enabled' => env('API_PROBLEM_LOGGING_ENABLED', true),
+    'api_problem_log_404' => env('API_PROBLEM_LOG_404_ERRORS', false),
+    'api_problem_log_validation' => env('API_PROBLEM_LOG_VALIDATION_ERRORS', true),
+    'api_problem_log_auth' => env('API_PROBLEM_LOG_AUTH_ERRORS', true),
+    'api_problem_ignored_types' => array_filter(explode(',', env('API_PROBLEM_IGNORED_TYPES', ''))),
+
+    /*
+    |--------------------------------------------------------------------------
     | Default Log Channel
     |--------------------------------------------------------------------------
     |
