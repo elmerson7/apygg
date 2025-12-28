@@ -4,9 +4,14 @@ x-app-base: &app_base
   build:
     context: .
     dockerfile: docker/app/Dockerfile
+    network: host  # Usar red del host durante build para evitar problemas DNS
   working_dir: /app
   env_file:
     - env/${APP_ENV}.env     # <— usamos env/dev.env, env/staging.env, env/prod.env
+  dns:
+    - 8.8.8.8
+    - 8.8.4.4
+    - 1.1.1.1
   volumes:
     - ./:/app
   restart: unless-stopped

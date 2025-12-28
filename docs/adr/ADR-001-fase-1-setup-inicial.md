@@ -117,7 +117,39 @@ docker compose --profile prod up -d
 
 **Referencia**: `docker-compose.yml` - servicios con perfiles `dev` y `prod`
 
-#### Decisión 1.1.7: Separación de Variables de Entorno Docker vs Laravel
+#### Decisión 1.1.7: Configuración DNS para Build de Docker
+
+**Decisión**: Agregar configuración DNS explícita en `docker-compose.yml` para resolver problemas de DNS durante el build en entornos WSL.
+
+**Razones**:
+- En algunos entornos WSL, Docker tiene problemas resolviendo DNS durante el build (`Temporary failure resolving 'deb.debian.org'`)
+- El build fallaba en el paso `apt-get update` impidiendo construir la imagen
+- Necesario para garantizar builds exitosos independientemente de la configuración DNS del sistema
+
+**Implementación**:
+- `network: host` en la sección `build` para usar la red del host durante el build
+- DNS explícitos (`8.8.8.8`, `8.8.4.4`, `1.1.1.1`) en la configuración del servicio `app`
+- Esto permite que el build acceda a repositorios Debian sin problemas de DNS
+
+**Referencia**: `docker-compose.yml` - sección `x-app-base` con `build.network: host` y `dns`
+
+#### Decisión 1.1.8: Entrypoint que Maneja Instalación Pendiente de Laravel
+
+**Decisión**: Modificar `entrypoint.sh` para manejar el caso cuando Laravel aún no está instalado (Fase 1.1).
+
+**Razones**:
+- En la Fase 1.1 solo se configura Docker, Laravel se instala en Fase 1.2
+- El entrypoint original intentaba ejecutar `composer install` y `php artisan` sin tener `composer.json`
+- Esto causaba que el contenedor se reiniciara continuamente con errores
+
+**Implementación**:
+- Verificar si `composer.json` existe antes de ejecutar comandos de Laravel
+- Si no existe, mostrar mensaje informativo y mantener el contenedor corriendo con `tail -f /dev/null`
+- Esto permite que el contenedor esté disponible para instalar Laravel en la Fase 1.2
+
+**Referencia**: `docker/app/entrypoint.sh`
+
+#### Decisión 1.1.9: Separación de Variables de Entorno Docker vs Laravel
 
 **Decisión**: Separar las variables de entorno en dos tipos de archivos: `.env.example` en la raíz para Laravel y `env/*.env.example` solo para variables específicas de Docker Compose.
 
@@ -208,3 +240,11 @@ apygg/
 - Staging puede usar el perfil `prod` con diferentes variables de entorno según el plan
 - Si en el futuro se requiere BD separada para logs, se puede agregar el servicio `postgres_logs` fácilmente
 - La imagen `dunglas/frankenphp:php8.4-bookworm` usa versión específica para mayor estabilidad
+
+### Problemas Resueltos
+- **DNS durante build de Docker**: Resuelto agregando configuración DNS explícita en `docker-compose.yml`
+  - **Solución implementada**: 
+    - `network: host` en la sección `build` para usar la red del host durante el build
+    - DNS explícitos (`8.8.8.8`, `8.8.4.4`, `1.1.1.1`) en la configuración del servicio
+  - **Resultado**: Build exitoso, todos los servicios corriendo correctamente
+  - **Entrypoint mejorado**: Maneja el caso cuando Laravel aún no está instalado (Fase 1.1)

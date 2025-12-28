@@ -11,7 +11,12 @@
 - [x] Crear `docker/app/Dockerfile` optimizado para desarrollo
 - [x] ~~Crear `docker-compose.override.yml` para desarrollo local~~ (Eliminado - se usan perfiles dev/prod)
 - [x] Crear `.dockerignore` para optimización
-- [ ] Probar que todos los servicios inicien correctamente: `docker compose --profile dev up -d`
+- [x] Probar que todos los servicios inicien correctamente: `docker compose --profile dev up -d`
+  - ✅ **Build exitoso**: Configuración DNS en docker-compose.yml (`network: host` y DNS explícitos) resolvió el problema
+  - ✅ **Servicios corriendo**: `apygg_app`, `apygg_postgres`, `apygg_redis` están activos
+  - ✅ **Postgres y Redis**: Healthy y funcionando correctamente
+  - ✅ **App**: Corriendo (esperando instalación de Laravel en Fase 1.2)
+  - ✅ **Networks y Volumes**: Creados correctamente (`apygg_network`, `apygg_pgdata`, `apygg_redisdata`)
 
 ### 1.2 Instalación del Proyecto Laravel
 - [ ] Crear proyecto Laravel 12 usando contenedor PHP:

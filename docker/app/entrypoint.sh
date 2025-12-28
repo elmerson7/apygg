@@ -2,6 +2,14 @@
 set -e
 cd /app
 
+# Verificar si Laravel está instalado (composer.json existe)
+if [ ! -f composer.json ]; then
+    echo "Laravel no está instalado aún. Esperando instalación..."
+    echo "Para instalar Laravel, ejecuta: docker compose exec app composer create-project laravel/laravel ."
+    # Mantener el contenedor corriendo para permitir instalación manual
+    exec tail -f /dev/null
+fi
+
 # Instalar vendors si faltan
 if [ ! -d vendor ]; then
     composer install --no-interaction --prefer-dist
