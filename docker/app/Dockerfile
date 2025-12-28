@@ -36,12 +36,15 @@ RUN groupadd -g ${GROUP_ID} appuser || true && \
     useradd -u ${USER_ID} -g ${GROUP_ID} -m -s /bin/bash appuser || true && \
     usermod -aG www-data appuser || true
 
-# Copiar entrypoint (el código del proyecto se monta como volumen en desarrollo)
+# Instalar gosu para cambiar de usuario de forma segura
+RUN apt-get update && apt-get install -y gosu && rm -rf /var/lib/apt/lists/*
+
+# Copiar entrypoint y wrapper (el código del proyecto se monta como volumen en desarrollo)
 COPY docker/app/entrypoint.sh /app/docker/app/entrypoint.sh
-RUN chmod +x /app/docker/app/entrypoint.sh && \
-    chown -R appuser:appuser /app/docker/app/entrypoint.sh
+COPY docker/app/entrypoint-wrapper.sh /app/docker/app/entrypoint-wrapper.sh
+RUN chmod +x /app/docker/app/entrypoint.sh /app/docker/app/entrypoint-wrapper.sh
 
-# Ejecutar como usuario del host (mismo UID/GID)
-USER appuser
+# Ejecutar como root para poder ajustar permisos, luego cambiar a appuser
+USER root
 
-CMD ["/app/docker/app/entrypoint.sh"]
+CMD ["/app/docker/app/entrypoint-wrapper.sh"]

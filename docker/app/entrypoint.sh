@@ -2,12 +2,21 @@
 set -e
 cd /app
 
-# Ajustar permisos de archivos críticos para que sean editables desde el IDE
-# Solo ajusta si el directorio existe y pertenece a otro usuario
+# Ajustar permisos de archivos críticos para que sean editables desde el IDE y el contenedor
+# Esto asegura que storage y bootstrap/cache sean escribibles por el usuario del contenedor
 if [ -d "storage" ] && [ -d "bootstrap/cache" ]; then
-    # Ajustar permisos de storage y cache (solo si no pertenecen al usuario actual)
-    find storage bootstrap/cache -type d -exec chmod 775 {} + 2>/dev/null || true
-    find storage bootstrap/cache -type f -exec chmod 664 {} + 2>/dev/null || true
+    # Ajustar permisos de storage y cache
+    # Usar sudo si está disponible, sino intentar sin sudo (puede fallar si no hay permisos)
+    if command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+        sudo chown -R $(id -u):$(id -g) storage bootstrap/cache 2>/dev/null || true
+        sudo find storage bootstrap/cache -type d -exec chmod 775 {} + 2>/dev/null || true
+        sudo find storage bootstrap/cache -type f -exec chmod 664 {} + 2>/dev/null || true
+    else
+        # Intentar sin sudo (puede funcionar si el usuario tiene permisos)
+        chown -R $(id -u):$(id -g) storage bootstrap/cache 2>/dev/null || true
+        find storage bootstrap/cache -type d -exec chmod 775 {} + 2>/dev/null || true
+        find storage bootstrap/cache -type f -exec chmod 664 {} + 2>/dev/null || true
+    fi
 fi
 
 # Verificar si Laravel está instalado (composer.json existe)
