@@ -3,14 +3,14 @@
 ## Fase 1: Setup Inicial y Configuración Base (Semana 1-2)
 
 ### 1.1 Preparación del Entorno con Docker
-- [ ] Crear `docker-compose.yml` básico con servicios:
-  - [ ] Servicio PHP 8.4 con extensiones (pdo_pgsql, redis, opcache, gd, intl, zip)
-  - [ ] Servicio PostgreSQL 18 para desarrollo
-  - [ ] Servicio Redis 7 para cache y colas
-  - [ ] Networks y volumes básicos
-- [ ] Crear `docker/app/Dockerfile` optimizado para desarrollo
-- [ ] Crear `docker-compose.override.yml` para desarrollo local
-- [ ] Crear `.dockerignore` para optimización
+- [x] Crear `docker-compose.yml` básico con servicios:
+  - [x] Servicio PHP 8.4 con extensiones (pdo_pgsql, redis, opcache, gd, intl, zip)
+  - [x] Servicio PostgreSQL 18 para desarrollo
+  - [x] Servicio Redis 7 para cache y colas
+  - [x] Networks y volumes básicos
+- [x] Crear `docker/app/Dockerfile` optimizado para desarrollo
+- [x] ~~Crear `docker-compose.override.yml` para desarrollo local~~ (Eliminado - se usan perfiles dev/prod)
+- [x] Crear `.dockerignore` para optimización
 - [ ] Probar que todos los servicios inicien correctamente: `docker compose --profile dev up -d`
 
 ### 1.2 Instalación del Proyecto Laravel

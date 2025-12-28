@@ -4,7 +4,8 @@
 - **Fase**: 1 - Setup Inicial y Configuración Base
 - **Estado**: En progreso
 - **Fecha inicio**: 2026-01-XX
-- **Última actualización**: 2026-01-XX
+- **Última actualización**: 2026-01-28
+- **Subfase 1.1**: Completada (pendiente pruebas finales)
 
 ## Contexto
 
@@ -116,6 +117,37 @@ docker compose --profile prod up -d
 
 **Referencia**: `docker-compose.yml` - servicios con perfiles `dev` y `prod`
 
+#### Decisión 1.1.7: Separación de Variables de Entorno Docker vs Laravel
+
+**Decisión**: Separar las variables de entorno en dos tipos de archivos: `.env.example` en la raíz para Laravel y `env/*.env.example` solo para variables específicas de Docker Compose.
+
+**Razones**:
+- Laravel busca `.env` en la raíz por defecto, no en subdirectorios
+- Docker Compose usa `env/${APP_ENV}.env` para seleccionar archivos según el entorno
+- Separación clara de responsabilidades: variables Laravel vs configuración Docker
+- Facilita el uso sin Docker (solo `.env` en raíz)
+- Los archivos `env/*.env.example` solo contienen variables específicas de servicios Docker (nombres de servicios, puertos internos)
+
+**Implementación**:
+- `.env.example` en raíz: Contiene todas las variables que Laravel necesita (APP_*, DB_*, REDIS_*, JWT_*, etc.) con valores genéricos (127.0.0.1, localhost)
+- `env/dev.env.example`: Solo variables Docker (APP_ENV, DB_HOST=postgres, REDIS_HOST=redis, nombres de servicios Docker)
+- `env/prod.env.example`: Solo variables Docker para producción
+- `env/staging.env.example`: Solo variables Docker para staging
+
+**Estructura**:
+```
+apygg/
+├── .env                    # Para Laravel (todos los ambientes)
+├── .env.example            # Template Laravel (todas las variables Laravel)
+├── env/
+│   ├── dev.env            # Docker Compose dev (todas las variables)
+│   ├── dev.env.example    # Solo variables Docker
+│   ├── prod.env.example   # Solo variables Docker
+│   └── staging.env.example # Solo variables Docker
+```
+
+**Referencia**: `.env.example` (raíz) y `env/*.env.example`
+
 ### Subfase 1.2 - Instalación del Proyecto Laravel
 
 *Decisiones de esta subfase se documentarán cuando se complete.*
@@ -138,6 +170,10 @@ docker compose --profile prod up -d
 - `docker/app/Dockerfile`: Dockerfile con imagen base `dunglas/frankenphp:php8.4-bookworm`
 - `docker/app/entrypoint.sh`: Script de entrada para Octane/FrankenPHP
 - `docker/app/php.ini`: Configuración PHP personalizada
+- `.env.example`: Template con todas las variables de Laravel (raíz)
+- `env/dev.env.example`: Template con solo variables Docker para desarrollo
+- `env/prod.env.example`: Template con solo variables Docker para producción
+- `env/staging.env.example`: Template con solo variables Docker para staging
 - `docs/adr/ADR-001-fase-1-setup-inicial.md`: Este documento
 
 ### Archivos Modificados (Subfase 1.1)
