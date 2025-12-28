@@ -19,14 +19,14 @@
   - ✅ **Networks y Volumes**: Creados correctamente (`apygg_network`, `apygg_pgdata`, `apygg_redisdata`)
 
 ### 1.2 Instalación del Proyecto Laravel
-- [ ] Crear proyecto Laravel 12 usando contenedor PHP:
-  - [ ] `docker compose exec app composer create-project laravel/laravel apygg`
-  - [ ] Mover archivos al directorio correcto
-- [ ] Configurar nombre del proyecto como `apygg` en `composer.json`
-- [ ] Establecer namespaces base: `App\Core`, `App\Modules`, `App\Infrastructure`, `App\Helpers`
-- [ ] Configurar autoloading PSR-4 en `composer.json`
-- [ ] Generar APP_KEY con `php artisan key:generate`
-- [ ] Verificar que la aplicación funcione en `http://localhost:8000`
+- [x] Crear proyecto Laravel 12 usando contenedor PHP:
+  - [x] Instalado en directorio temporal y movido preservando archivos existentes
+- [x] Configurar nombre del proyecto como `apygg` en `composer.json`
+- [x] Establecer namespaces base: `App\Core`, `App\Modules`, `App\Infrastructure`, `App\Helpers`
+- [x] Configurar autoloading PSR-4 en `composer.json`
+- [x] Generar APP_KEY con `php artisan key:generate`
+- [x] Instalar Laravel Octane con FrankenPHP
+- [x] Verificar que la aplicación funcione en `http://localhost:8010`
 
 ### 1.3 Estructura de Directorios
 - [ ] Crear directorio `app/Core/`

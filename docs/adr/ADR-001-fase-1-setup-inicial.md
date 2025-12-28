@@ -151,7 +151,7 @@ docker compose --profile prod up -d
 
 #### Decisión 1.1.9: Separación de Variables de Entorno Docker vs Laravel
 
-**Decisión**: Separar las variables de entorno en dos tipos de archivos: `.env.example` en la raíz para Laravel y `env/*.env.example` solo para variables específicas de Docker Compose.
+**Decisión**: Separar las variables de entorno en dos tipos de archivos: `.env.example` en la raíz para Laravel y `env/*.env.example` solo para variables específicas de Docker Compose. Usar `env_file` en Docker Compose para cargar solo variables Docker, permitiendo que Laravel lea su `.env` desde la raíz.
 
 **Razones**:
 - Laravel busca `.env` en la raíz por defecto, no en subdirectorios
@@ -159,26 +159,80 @@ docker compose --profile prod up -d
 - Separación clara de responsabilidades: variables Laravel vs configuración Docker
 - Facilita el uso sin Docker (solo `.env` en raíz)
 - Los archivos `env/*.env.example` solo contienen variables específicas de servicios Docker (nombres de servicios, puertos internos)
+- Las variables de entorno del sistema (cargadas por Docker) tienen prioridad sobre `.env`, pero solo se cargan variables Docker necesarias
 
 **Implementación**:
 - `.env.example` en raíz: Contiene todas las variables que Laravel necesita (APP_*, DB_*, REDIS_*, JWT_*, etc.) con valores genéricos (127.0.0.1, localhost)
-- `env/dev.env.example`: Solo variables Docker (APP_ENV, DB_HOST=postgres, REDIS_HOST=redis, nombres de servicios Docker)
+- `.env` en raíz: Copia de `.env.example` con valores reales (incluyendo `APP_KEY` generado)
+- `env/dev.env`: Solo variables Docker (APP_ENV, DB_HOST=postgres, REDIS_HOST=redis, nombres de servicios Docker)
+- `env/dev.env.example`: Template con solo variables Docker para desarrollo
 - `env/prod.env.example`: Solo variables Docker para producción
 - `env/staging.env.example`: Solo variables Docker para staging
 
 **Estructura**:
 ```
 apygg/
-├── .env                    # Para Laravel (todos los ambientes)
+├── .env                    # Para Laravel (todos los ambientes) - generado desde .env.example
 ├── .env.example            # Template Laravel (todas las variables Laravel)
 ├── env/
-│   ├── dev.env            # Docker Compose dev (todas las variables)
+│   ├── dev.env            # Docker Compose dev (solo variables Docker)
 │   ├── dev.env.example    # Solo variables Docker
 │   ├── prod.env.example   # Solo variables Docker
 │   └── staging.env.example # Solo variables Docker
 ```
 
-**Referencia**: `.env.example` (raíz) y `env/*.env.example`
+**Flujo de Variables de Entorno**:
+
+```
+┌─────────────────────────────────────┐
+│  docker-compose.yml                  │
+│  env_file: env/dev.env               │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│  env/dev.env                        │
+│  - DB_HOST=postgres                 │
+│  - REDIS_HOST=redis                 │
+│  - DB_PORT=5432                     │
+│  - REDIS_PORT=6379                  │
+│  - (solo variables Docker)          │
+└──────────────┬──────────────────────┘
+               │
+               │ Docker carga estas variables
+               │ como variables de entorno del sistema
+               ▼
+┌─────────────────────────────────────┐
+│  Contenedor Laravel                 │
+│                                     │
+│  Variables de entorno (prioridad): │
+│  1. Sistema (env/dev.env)          │
+│     → DB_HOST, REDIS_HOST, etc.    │
+│  2. .env en /app                   │
+│     → APP_KEY, APP_NAME, etc.       │
+│                                     │
+│  Resultado:                         │
+│  - Variables Docker sobrescriben   │
+│    las del .env (DB_HOST, etc.)    │
+│  - Variables solo en .env se usan  │
+│    normalmente (APP_KEY, etc.)      │
+└─────────────────────────────────────┘
+```
+
+**Cómo funciona**:
+1. Docker Compose carga `env/dev.env` como variables de entorno del sistema dentro del contenedor
+2. Laravel lee `.env` desde `/app/.env` (montado como volumen)
+3. Si una variable existe en ambos lugares, la variable del sistema (`env/dev.env`) tiene prioridad
+4. Variables que solo existen en `.env` (como `APP_KEY`) se usan normalmente
+5. Esto permite que `DB_HOST=postgres` (Docker) sobrescriba `DB_HOST=127.0.0.1` (`.env`), mientras que `APP_KEY` solo existe en `.env` y funciona correctamente
+
+**Ventajas de esta implementación**:
+- ✅ Separación clara: Docker solo maneja conexiones a servicios, Laravel maneja su configuración
+- ✅ Escalable: Fácil agregar nuevas variables Docker sin tocar `docker-compose.yml`
+- ✅ Estándar de la industria: Patrón común en proyectos Docker
+- ✅ Mantenible: Un solo lugar para variables Docker por entorno (`env/dev.env`)
+
+**Referencia**: `.env.example` (raíz), `env/dev.env`, `env/*.env.example`, `docker-compose.yml` (línea 9-10)
 
 ### Subfase 1.2 - Instalación del Proyecto Laravel
 
