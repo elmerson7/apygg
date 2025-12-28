@@ -33,11 +33,12 @@ La Fase 1 establece la base del proyecto APYGG Laravel 12, incluyendo la configu
 
 #### Decisión 1.1.2: Imagen Base FrankenPHP Específica
 
-**Decisión**: Usar `dunglas/frankenphp:latest` como imagen base en lugar de construir desde `php:8.4-fpm-bookworm`.
+**Decisión**: Usar `dunglas/frankenphp:php8.4-bookworm` como imagen base en lugar de construir desde `php:8.4-fpm-bookworm`.
 
 **Razones**:
 - El plan mencionaba `php:8.4-fpm-bookworm` pero FrankenPHP/Octane requiere CLI, no FPM
-- La imagen oficial `dunglas/frankenphp` ya incluye PHP 8.4 + FrankenPHP preconfigurado
+- La imagen oficial `dunglas/frankenphp:php8.4-bookworm` ya incluye PHP 8.4 + FrankenPHP preconfigurado
+- Versión específica (`php8.4-bookworm`) en lugar de `latest` para mayor estabilidad
 - Simplifica el Dockerfile al evitar instalación manual de FrankenPHP
 - Optimizada específicamente para Laravel Octane
 
@@ -55,17 +56,21 @@ La Fase 1 establece la base del proyecto APYGG Laravel 12, incluyendo la configu
 
 **Referencia**: Comandos actualizados en TASKS.md y PLAN_ACCION.md
 
-#### Decisión 1.1.4: Profile Simplificado para Fase 1.1
+#### Decisión 1.1.4: Perfiles Dev y Prod desde el Inicio
 
-**Decisión**: El servicio `app` usa solo profile `dev` en lugar de `["dev","staging","prod"]` para la Fase 1.1.
+**Decisión**: Implementar perfiles `dev` y `prod` desde la Fase 1.1 en lugar de solo `dev` inicialmente.
 
 **Razones**:
-- Seguir principio de minimalismo para la fase inicial
-- Reducir complejidad innecesaria al inicio
-- Los otros profiles se agregarán cuando se necesiten en fases posteriores
-- Facilita el desarrollo inicial sin configuraciones adicionales
+- El plan mencionaba perfiles `dev` y `prod` pero inicialmente se implementó solo `dev`
+- Facilita el despliegue en producción desde el inicio
+- Estructura clara y preparada para ambos entornos
+- Evita refactorización posterior cuando se necesite producción
 
-**Referencia**: `docker-compose.yml` - servicio `app`
+**Implementación**:
+- Servicios con perfil `dev`: `app`, `postgres`, `redis` (con configuraciones de desarrollo)
+- Servicios con perfil `prod`: `app-prod`, `postgres-prod`, `redis-prod` (con configuraciones de producción)
+
+**Referencia**: `docker-compose.yml` - servicios con perfiles `dev` y `prod`
 
 #### Decisión 1.1.5: Eliminación Temprana de Servicio postgres_logs
 
@@ -79,21 +84,37 @@ La Fase 1 establece la base del proyecto APYGG Laravel 12, incluyendo la configu
 
 **Referencia**: `docker-compose.yml` - servicio `postgres_logs` eliminado
 
-#### Decisión 1.1.6: Docker Compose Override para Desarrollo
+#### Decisión 1.1.6: Perfiles Dev y Prod en lugar de Override
 
-**Decisión**: Crear `docker-compose.override.yml` para configuraciones específicas de desarrollo local.
+**Decisión**: Eliminar `docker-compose.override.yml` y usar perfiles `dev` y `prod` directamente en `docker-compose.yml` para gestionar configuraciones por entorno.
 
 **Razones**:
-- No estaba explícitamente mencionado en el plan
-- Permite personalizar configuración sin modificar `docker-compose.yml` principal
-- Se carga automáticamente por docker-compose
-- Facilita diferentes configuraciones por entorno sin duplicar código
+- El plan mencionaba perfiles pero inicialmente se usó override para desarrollo
+- Los perfiles son más explícitos y claros sobre qué servicios se ejecutan en cada entorno
+- Evita confusión sobre qué archivo se está usando
+- Mejor alineación con el PLAN_ACCION.md que menciona perfiles `dev` y `prod`
+- Facilita el despliegue en diferentes entornos con comandos simples
 
-**Contenido**:
-- Variables de entorno de debugging (`APP_DEBUG`, `LOG_LEVEL`)
-- Configuraciones adicionales para PostgreSQL y Redis en desarrollo
+**Implementación**:
+- Perfil `dev`: Servicios con configuraciones de desarrollo
+  - `app`: `APP_DEBUG=true`, `LOG_LEVEL=debug`
+  - `postgres`: `POSTGRES_INITDB_ARGS` con encoding UTF8
+  - `redis`: `maxmemory=256mb`, política `allkeys-lru`
+- Perfil `prod`: Servicios con configuraciones de producción
+  - `app-prod`: `APP_DEBUG=false`, `LOG_LEVEL=info`
+  - `postgres-prod`: Sin configuraciones adicionales de desarrollo
+  - `redis-prod`: Sin límites de memoria (configuración por defecto)
 
-**Referencia**: `docker-compose.override.yml`
+**Uso**:
+```bash
+# Desarrollo
+docker compose --profile dev up -d
+
+# Producción
+docker compose --profile prod up -d
+```
+
+**Referencia**: `docker-compose.yml` - servicios con perfiles `dev` y `prod`
 
 ### Subfase 1.2 - Instalación del Proyecto Laravel
 
@@ -114,14 +135,18 @@ La Fase 1 establece la base del proyecto APYGG Laravel 12, incluyendo la configu
 ## Archivos Creados/Modificados
 
 ### Archivos Creados (Subfase 1.1)
-- `docker/app/Dockerfile`: Dockerfile con imagen base `dunglas/frankenphp:latest`
-- `docker-compose.override.yml`: Configuraciones de desarrollo local
+- `docker/app/Dockerfile`: Dockerfile con imagen base `dunglas/frankenphp:php8.4-bookworm`
+- `docker/app/entrypoint.sh`: Script de entrada para Octane/FrankenPHP
+- `docker/app/php.ini`: Configuración PHP personalizada
 - `docs/adr/ADR-001-fase-1-setup-inicial.md`: Este documento
 
 ### Archivos Modificados (Subfase 1.1)
-- `docker-compose.yml`: Actualizado con convención de nombres `apygg_`, profile simplificado, eliminación de `postgres_logs`
+- `docker-compose.yml`: Actualizado con convención de nombres `apygg_`, perfiles `dev` y `prod`, eliminación de `postgres_logs`
 - `TASKS.md`: Comandos actualizados a sintaxis moderna de Docker Compose
 - `PLAN_ACCION.md`: Comandos básicos actualizados a sintaxis moderna de Docker Compose
+
+### Archivos Eliminados (Subfase 1.1)
+- `docker-compose.override.yml`: Eliminado en favor de usar perfiles `dev` y `prod` directamente en `docker-compose.yml`
 
 ## Referencias
 
@@ -143,5 +168,7 @@ La Fase 1 establece la base del proyecto APYGG Laravel 12, incluyendo la configu
 ### Consideraciones
 - Los servicios comentados deben descomentarse y configurarse cuando se necesiten en fases posteriores
 - El healthcheck `/api/health` fallará hasta que se implemente en Fase 11 (puede ajustarse temporalmente si es necesario)
-- La imagen `dunglas/frankenphp:latest` puede cambiar de versión; considerar fijar versión específica en producción
+- Los perfiles `dev` y `prod` usan servicios separados (`app` vs `app-prod`) para evitar conflictos de container_name cuando se ejecutan simultáneamente
+- Staging puede usar el perfil `prod` con diferentes variables de entorno según el plan
 - Si en el futuro se requiere BD separada para logs, se puede agregar el servicio `postgres_logs` fácilmente
+- La imagen `dunglas/frankenphp:php8.4-bookworm` usa versión específica para mayor estabilidad

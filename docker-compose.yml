@@ -1,3 +1,5 @@
+name: apygg
+
 x-app-base: &app_base
   build:
     context: .
@@ -5,18 +7,63 @@ x-app-base: &app_base
   working_dir: /app
   env_file:
     - env/${APP_ENV}.env     # <— usamos env/dev.env, env/staging.env, env/prod.env
-  environment:
-    APP_ENV: ${APP_ENV:-dev}
-    APP_TIMEZONE: UTC
   volumes:
     - ./:/app
   restart: unless-stopped
   networks:
     - apygg_network
 
+x-app-dev: &app_dev
+  <<: *app_base
+  environment:
+    APP_ENV: ${APP_ENV:-dev}
+    APP_TIMEZONE: UTC
+    APP_DEBUG: "true"
+    LOG_LEVEL: "debug"
+
+x-app-prod: &app_prod
+  <<: *app_base
+  environment:
+    APP_ENV: ${APP_ENV:-prod}
+    APP_TIMEZONE: UTC
+    APP_DEBUG: "false"
+    LOG_LEVEL: "info"
+
+x-postgres-base: &postgres_base
+  image: postgres:18-alpine
+  container_name: apygg_postgres
+  ports:
+    - "8011:5432"
+  volumes:
+    - apygg_pgdata:/var/lib/postgresql/data
+  healthcheck:
+    test: ["CMD-SHELL","pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB || exit 1"]
+    interval: 10s
+    timeout: 3s
+    retries: 10
+  networks:
+    - apygg_network
+  restart: unless-stopped
+
+x-redis-base: &redis_base
+  image: redis:7.4-alpine
+  container_name: apygg_redis
+  ports:
+    - "8014:6379"
+  volumes:
+    - apygg_redisdata:/data
+  healthcheck:
+    test: ["CMD", "redis-cli", "ping"]
+    interval: 5s
+    timeout: 3s
+    retries: 20
+  networks:
+    - apygg_network
+  restart: unless-stopped
+
 services:
   app:
-    <<: *app_base
+    <<: *app_dev
     container_name: apygg_app
     profiles: ["dev"]
     ports:
@@ -30,6 +77,23 @@ services:
       redis:
         condition: service_healthy
       postgres:
+        condition: service_healthy
+
+  app-prod:
+    <<: *app_prod
+    container_name: apygg_app
+    profiles: ["prod"]
+    ports:
+      - "8010:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/api/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    depends_on:
+      redis-prod:
+        condition: service_healthy
+      postgres-prod:
         condition: service_healthy
 
   # Servicios opcionales - se agregarán en fases posteriores
@@ -69,25 +133,22 @@ services:
   #       condition: service_healthy
 
   postgres:
-    image: postgres:18-alpine
-    container_name: apygg_postgres
+    <<: *postgres_base
     profiles: ["dev"]
     environment:
       POSTGRES_DB: ${DB_DATABASE:-apygg}
       POSTGRES_USER: ${DB_USERNAME:-apygg}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
-    ports:
-      - "8011:5432"
-    volumes:
-      - apygg_pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL","pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB || exit 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 10
-    networks:
-      - apygg_network
-    restart: unless-stopped
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+
+  postgres-prod:
+    <<: *postgres_base
+    container_name: apygg_postgres
+    profiles: ["prod"]
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-apygg}
+      POSTGRES_USER: ${DB_USERNAME:-apygg}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
 
   # postgres_logs eliminado - los logs van en la misma BD apygg con particionamiento
   # postgres_logs:
@@ -109,22 +170,15 @@ services:
   #     retries: 10
 
   redis:
-    image: redis:7.4-alpine
-    container_name: apygg_redis
+    <<: *redis_base
     profiles: ["dev"]
+    command: ["redis-server","--appendonly","yes","--maxmemory","256mb","--maxmemory-policy","allkeys-lru"]
+
+  redis-prod:
+    <<: *redis_base
+    container_name: apygg_redis
+    profiles: ["prod"]
     command: ["redis-server","--appendonly","yes"]
-    ports:
-      - "8014:6379"
-    volumes:
-      - apygg_redisdata:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-    networks:
-      - apygg_network
-    restart: unless-stopped
 
   # meilisearch:
   #   image: getmeili/meilisearch:v1.16
