@@ -234,6 +234,56 @@ apygg/
 
 **Referencia**: `.env.example` (raíz), `env/dev.env`, `env/*.env.example`, `docker-compose.yml` (línea 9-10)
 
+#### Decisión 1.1.10: Gestión de Permisos Docker para Compatibilidad con IDE y Git
+
+**Decisión**: Configurar el contenedor Docker para usar el mismo UID/GID del usuario del host, creando un usuario `appuser` dentro del contenedor con estos valores.
+
+**Razones**:
+- Los archivos creados por Docker (como `composer.lock`, `bootstrap/cache/.gitignore`) tenían permisos de `root` o `www-data`, causando problemas al:
+  - Editar archivos desde el IDE (VS Code/Cursor)
+  - Usar Git desde el IDE (archivos aparecían como modificados por cambios de permisos)
+  - Ejecutar comandos desde el host sin `sudo`
+- Al clonar el repositorio, otros desarrolladores tendrían problemas similares
+- Necesidad de una solución que funcione tanto desde el contenedor como desde el IDE
+
+**Implementación**:
+- **Dockerfile**: Crea usuario `appuser` con UID/GID pasados como build args (`USER_ID`, `GROUP_ID`)
+- **docker-compose.yml**: Pasa UID/GID del host como build args y variables de entorno
+- **Makefile**: Detecta automáticamente UID/GID del usuario actual (`id -u`, `id -g`)
+- **entrypoint.sh**: Ajusta permisos de `storage` y `bootstrap/cache` al iniciar
+- **fix-permissions.sh**: Script helper para corregir permisos manualmente si es necesario
+
+**Flujo**:
+1. Makefile detecta UID/GID del usuario del host automáticamente
+2. Al construir (`make build`), pasa estos valores como build args al Dockerfile
+3. Dockerfile crea usuario `appuser` con estos UID/GID
+4. Contenedor ejecuta comandos como `appuser` (no `root`)
+5. Archivos creados tienen permisos del usuario del host
+6. IDE y Git funcionan correctamente sin conflictos
+
+**Ventajas**:
+- ✅ Archivos editables desde el IDE sin problemas de permisos
+- ✅ Git funciona correctamente desde el IDE
+- ✅ No requiere `sudo` para editar archivos creados por Docker
+- ✅ Funciona al clonar el repositorio (cada desarrollador usa su propio UID/GID)
+- ✅ Compatible con diferentes sistemas operativos (Linux, macOS, WSL)
+
+**Uso**:
+```bash
+# Construir con permisos correctos (automático)
+make build
+
+# Si hay problemas de permisos, corregir manualmente
+make fix-permissions
+```
+
+**Referencia**: 
+- `docker/app/Dockerfile` (creación de usuario `appuser`)
+- `docker-compose.yml` (build args `USER_ID`, `GROUP_ID`)
+- `Makefile` (detección automática de UID/GID)
+- `docker/app/fix-permissions.sh` (script helper)
+- `docs/PERMISOS_DOCKER.md` (documentación completa)
+
 ### Subfase 1.2 - Instalación del Proyecto Laravel
 
 *Decisiones de esta subfase se documentarán cuando se complete.*
@@ -256,14 +306,20 @@ apygg/
 - `docker/app/Dockerfile`: Dockerfile con imagen base `dunglas/frankenphp:php8.4-bookworm`
 - `docker/app/entrypoint.sh`: Script de entrada para Octane/FrankenPHP
 - `docker/app/php.ini`: Configuración PHP personalizada
+- `docker/app/fix-permissions.sh`: Script helper para corregir permisos de archivos Docker
 - `.env.example`: Template con todas las variables de Laravel (raíz)
 - `env/dev.env.example`: Template con solo variables Docker para desarrollo
 - `env/prod.env.example`: Template con solo variables Docker para producción
 - `env/staging.env.example`: Template con solo variables Docker para staging
 - `docs/adr/ADR-001-fase-1-setup-inicial.md`: Este documento
+- `docs/PERMISOS_DOCKER.md`: Documentación sobre gestión de permisos con Docker
 
 ### Archivos Modificados (Subfase 1.1)
-- `docker-compose.yml`: Actualizado con convención de nombres `apygg_`, perfiles `dev` y `prod`, eliminación de `postgres_logs`
+- `docker-compose.yml`: Actualizado con convención de nombres `apygg_`, perfiles `dev` y `prod`, eliminación de `postgres_logs`, build args para UID/GID
+- `docker/app/Dockerfile`: Crea usuario `appuser` con UID/GID del host para evitar problemas de permisos
+- `docker/app/entrypoint.sh`: Ajusta permisos de storage/cache al iniciar
+- `Makefile`: Detecta automáticamente UID/GID del usuario y pasa como build args, comando `fix-permissions` agregado
+- `env/dev.env`: Comentarios sobre USER_ID/GROUP_ID agregados
 - `TASKS.md`: Comandos actualizados a sintaxis moderna de Docker Compose
 - `PLAN_ACCION.md`: Comandos básicos actualizados a sintaxis moderna de Docker Compose
 

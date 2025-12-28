@@ -28,11 +28,20 @@ WORKDIR /app
 # Config PHP
 COPY docker/app/php.ini /usr/local/etc/php/conf.d/zz-custom.ini
 
+# Crear usuario con mismo UID/GID del host para evitar problemas de permisos
+# Esto permite que los archivos creados por el contenedor sean editables desde el IDE
+ARG USER_ID=1000
+ARG GROUP_ID=1000
+RUN groupadd -g ${GROUP_ID} appuser || true && \
+    useradd -u ${USER_ID} -g ${GROUP_ID} -m -s /bin/bash appuser || true && \
+    usermod -aG www-data appuser || true
+
 # Copiar entrypoint (el código del proyecto se monta como volumen en desarrollo)
 COPY docker/app/entrypoint.sh /app/docker/app/entrypoint.sh
-RUN chmod +x /app/docker/app/entrypoint.sh
+RUN chmod +x /app/docker/app/entrypoint.sh && \
+    chown -R appuser:appuser /app/docker/app/entrypoint.sh
 
-# Ejecutar como usuario no privilegiado por seguridad
-USER www-data
+# Ejecutar como usuario del host (mismo UID/GID)
+USER appuser
 
 CMD ["/app/docker/app/entrypoint.sh"]

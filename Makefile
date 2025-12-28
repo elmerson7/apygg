@@ -1,10 +1,17 @@
 ENV ?= dev
 DC := docker compose --project-name apygg --profile $(ENV)
 
-.PHONY: build up down logs ps sh composer art key migrate seed jwt scout horizon reverb tinker
+# Detectar UID/GID del usuario actual del host para permisos correctos
+USER_ID ?= $(shell id -u)
+GROUP_ID ?= $(shell id -g)
+
+export USER_ID
+export GROUP_ID
+
+.PHONY: build up down logs ps sh composer art key migrate seed jwt scout horizon reverb tinker fix-permissions
 
 build:
-	$(DC) build
+	USER_ID=$(USER_ID) GROUP_ID=$(GROUP_ID) $(DC) build --build-arg USER_ID=$(USER_ID) --build-arg GROUP_ID=$(GROUP_ID)
 
 up:
 	APP_ENV=$(ENV) $(DC) up -d
@@ -72,3 +79,13 @@ horizon:
 
 reverb:
 	$(DC) exec reverb php artisan reverb:restart || true
+
+# Corregir permisos de archivos creados por Docker
+fix-permissions:
+	@echo "Corrigiendo permisos con UID: $(USER_ID), GID: $(GROUP_ID)"
+	sudo chown -R $(USER_ID):$(GROUP_ID) .
+	find . -type d -exec chmod 775 {} + 2>/dev/null || true
+	find . -type f -exec chmod 664 {} + 2>/dev/null || true
+	find . -name "*.sh" -exec chmod +x {} + 2>/dev/null || true
+	chmod +x artisan 2>/dev/null || true
+	@echo "Permisos corregidos correctamente"

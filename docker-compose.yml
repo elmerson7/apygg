@@ -5,6 +5,10 @@ x-app-base: &app_base
     context: .
     dockerfile: docker/app/Dockerfile
     network: host  # Usar red del host durante build para evitar problemas DNS
+    args:
+      # Pasar UID/GID del host para crear usuario con mismos permisos
+      USER_ID: ${USER_ID:-1000}
+      GROUP_ID: ${GROUP_ID:-1000}
   working_dir: /app
   env_file:
     - env/${APP_ENV}.env     # <— usamos env/dev.env, env/staging.env, env/prod.env
@@ -17,6 +21,10 @@ x-app-base: &app_base
   restart: unless-stopped
   networks:
     - apygg_network
+  # Variables de entorno para pasar UID/GID al contenedor (opcional, ya se pasan en build args)
+  environment:
+    USER_ID: ${USER_ID:-1000}
+    GROUP_ID: ${GROUP_ID:-1000}
 
 x-app-dev: &app_dev
   <<: *app_base

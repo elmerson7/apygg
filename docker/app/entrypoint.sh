@@ -2,6 +2,14 @@
 set -e
 cd /app
 
+# Ajustar permisos de archivos críticos para que sean editables desde el IDE
+# Solo ajusta si el directorio existe y pertenece a otro usuario
+if [ -d "storage" ] && [ -d "bootstrap/cache" ]; then
+    # Ajustar permisos de storage y cache (solo si no pertenecen al usuario actual)
+    find storage bootstrap/cache -type d -exec chmod 775 {} + 2>/dev/null || true
+    find storage bootstrap/cache -type f -exec chmod 664 {} + 2>/dev/null || true
+fi
+
 # Verificar si Laravel está instalado (composer.json existe)
 if [ ! -f composer.json ]; then
     echo "Laravel no está instalado aún. Esperando instalación..."
