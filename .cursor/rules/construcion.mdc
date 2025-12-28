@@ -1,0 +1,47 @@
+---
+alwaysApply: false
+---
+# Guía de Ejecución - APYGG Laravel 12
+
+## Contexto del Proyecto
+**APYGG** - Boilerplate API Laravel 12 production-ready. Stack: Laravel 12 + PHP 8.4 + FrankenPHP (Octane) + PostgreSQL 18 + Redis 7. Arquitectura modular: `Core`, `Modules`, `Infrastructure`, `Helpers`. Base de datos única `apygg` con particionamiento de logs. **NO usar Nginx** - FrankenPHP maneja todo directamente.
+
+## Convenciones Establecidas
+- **snake_case**: Columnas BD, atributos modelos, claves arrays/config
+- **camelCase**: Métodos, variables PHP, parámetros funciones  
+- **PascalCase**: Clases, namespaces, traits
+- **UUIDs**: Todos los modelos usan UUID como PK (no auto-increment)
+- **JSON API**: snake_case en respuestas
+
+## Instrucciones
+1. **Consultar antes de implementar**: Leer `TASKS.md` para tareas detalladas y `PLAN_ACCION.md` para especificaciones técnicas
+2. **Marcar progreso**: Actualizar checkboxes en `TASKS.md` cuando completes una tarea
+3. **Documentar por fase**: **OBLIGATORIO** - Crear un archivo ADR por cada fase completada en `docs/adr/` (formato: `ADR-XXX-fase-N-titulo.md`). Incluir decisiones tomadas, problemas encontrados y soluciones implementadas
+4. **Documentar decisiones importantes**: Agregar ADRs adicionales en `docs/adr/` cuando tomes decisiones importantes fuera del flujo normal (formato: `ADR-XXX-titulo.md`)
+5. **NO repetir información**: Este contexto ya contiene lo necesario, no preguntes por lo mismo
+6. **Seguir orden**: Ejecutar fases secuencialmente (Fase 1 → Fase 33)
+
+## Archivos de Referencia
+- `TASKS.md` - Lista de tareas por fase (marcar aquí el progreso)
+- `PLAN_ACCION.md` - Especificaciones técnicas completas
+- `TECH_STACK.md` - Stack tecnológico y versiones
+- `docs/adr/` - Architecture Decision Records
+  - **OBLIGATORIO**: Un archivo por fase completada (`ADR-XXX-fase-N-titulo.md`)
+  - Opcional: ADRs adicionales para decisiones importantes (`ADR-XXX-titulo.md`)
+
+## Estructura de Documentación por Fase
+Cada vez que se complete una fase, **DEBE** crearse un archivo ADR en `docs/adr/` con:
+
+**Formato del nombre**: `ADR-XXX-fase-N-titulo.md` (ejemplo: `ADR-001-fase-1-setup-inicial.md`)
+
+**Contenido mínimo**:
+- Fase completada y fecha
+- Decisiones arquitectónicas tomadas
+- Problemas encontrados y soluciones
+- Cambios respecto al plan original (si los hay)
+- Referencias a código implementado
+
+## Estado Actual
+**Fase en curso**: [Actualizar aquí]  
+**Última fase completada**: [Actualizar aquí]  
+**Último ADR creado**: [Actualizar aquí]

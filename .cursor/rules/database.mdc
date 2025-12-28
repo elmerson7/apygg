@@ -6,7 +6,6 @@ alwaysApply: true
 # Bases de datos
 - Existen dos bases:
   - `apygg` (principal)
-  - `apygg_logs` (para auditoría y registros)
 
 ## Convenciones
 - Migraciones apuntan a `apygg` por defecto.
