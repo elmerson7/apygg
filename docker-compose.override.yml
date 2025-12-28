@@ -1,0 +1,25 @@
+# Configuraciones específicas para desarrollo local
+# Este archivo se carga automáticamente por docker-compose
+# y sobrescribe configuraciones del docker-compose.yml principal
+
+version: '3.8'
+
+services:
+  app:
+    # Variables de entorno adicionales para desarrollo
+    environment:
+      APP_DEBUG: "true"
+      LOG_LEVEL: "debug"
+    # Volúmenes adicionales para desarrollo si es necesario
+    # volumes:
+    #   - ./storage:/app/storage
+
+  postgres:
+    # Configuraciones adicionales de PostgreSQL para desarrollo
+    environment:
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+
+  redis:
+    # Configuraciones adicionales de Redis para desarrollo
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+

@@ -11,16 +11,18 @@ x-app-base: &app_base
   volumes:
     - ./:/app
   restart: unless-stopped
+  networks:
+    - apygg_network
 
 services:
   app:
     <<: *app_base
     container_name: apygg_app
-    profiles: ["dev","staging","prod"]
+    profiles: ["dev"]
     ports:
       - "8010:8000"
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/up || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/api/health || exit 1"]
       interval: 10s
       timeout: 3s
       retries: 10
@@ -29,50 +31,47 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
-      postgres_logs:
-        condition: service_healthy
-      meilisearch:
-        condition: service_healthy
 
-  reverb:
-    <<: *app_base
-    container_name: apygg_reverb
-    profiles: ["dev","staging","prod"]
-    command: >
-      sh -lc 'until getent hosts redis >/dev/null 2>&1; do sleep 0.5; done;
-              php artisan reverb:start --host=0.0.0.0 --port=8080'
-    ports:
-      - "8012:8080"
-    depends_on:
-      redis:
-        condition: service_healthy
+  # Servicios opcionales - se agregarán en fases posteriores
+  # reverb:
+  #   <<: *app_base
+  #   container_name: apygg_reverb
+  #   profiles: ["dev","staging","prod"]
+  #   command: >
+  #     sh -lc 'until getent hosts redis >/dev/null 2>&1; do sleep 0.5; done;
+  #             php artisan reverb:start --host=0.0.0.0 --port=8080'
+  #   ports:
+  #     - "8012:8080"
+  #   depends_on:
+  #     redis:
+  #       condition: service_healthy
 
-  horizon:
-    <<: *app_base
-    container_name: apygg_horizon
-    profiles: ["dev","staging","prod"]
-    command: >
-      sh -lc 'until getent hosts redis >/dev/null 2>&1; do sleep 0.5; done;
-              php artisan horizon'
-    depends_on:
-      redis:
-        condition: service_healthy
+  # horizon:
+  #   <<: *app_base
+  #   container_name: apygg_horizon
+  #   profiles: ["dev","staging","prod"]
+  #   command: >
+  #     sh -lc 'until getent hosts redis >/dev/null 2>&1; do sleep 0.5; done;
+  #             php artisan horizon'
+  #   depends_on:
+  #     redis:
+  #       condition: service_healthy
 
-  scheduler:
-    <<: *app_base
-    container_name: apygg_scheduler
-    profiles: ["dev","staging","prod"]  
-    command: >
-      sh -lc 'until getent hosts redis >/dev/null 2>&1; do sleep 0.5; done;
-              php artisan schedule:work'
-    depends_on:
-      redis:
-        condition: service_healthy
+  # scheduler:
+  #   <<: *app_base
+  #   container_name: apygg_scheduler
+  #   profiles: ["dev","staging","prod"]  
+  #   command: >
+  #     sh -lc 'until getent hosts redis >/dev/null 2>&1; do sleep 0.5; done;
+  #             php artisan schedule:work'
+  #   depends_on:
+  #     redis:
+  #       condition: service_healthy
 
   postgres:
-    image: postgres:17
-    container_name: apygg_pg
-    profiles: ["dev","staging"]
+    image: postgres:18-alpine
+    container_name: apygg_postgres
+    profiles: ["dev"]
     environment:
       POSTGRES_DB: ${DB_DATABASE:-apygg}
       POSTGRES_USER: ${DB_USERNAME:-apygg}
@@ -80,85 +79,95 @@ services:
     ports:
       - "8011:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - apygg_pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL","pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB || exit 1"]
       interval: 10s
       timeout: 3s
       retries: 10
+    networks:
+      - apygg_network
+    restart: unless-stopped
 
-  postgres_logs:
-    image: postgres:17
-    container_name: apygg_pg_logs
-    profiles: ["dev","staging"]
-    environment:
-      POSTGRES_DB: ${DB_LOGS_DATABASE:-apygg_logs}
-      POSTGRES_USER: ${DB_USERNAME:-apygg_logs}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret_logs}
-    ports:
-      - "8015:5432"
-    volumes:
-      - pglogsdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL","pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB || exit 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 10
+  # postgres_logs eliminado - los logs van en la misma BD apygg con particionamiento
+  # postgres_logs:
+  #   image: postgres:18-alpine
+  #   container_name: apygg_pg_logs
+  #   profiles: ["dev","staging"]
+  #   environment:
+  #     POSTGRES_DB: ${DB_LOGS_DATABASE:-apygg_logs}
+  #     POSTGRES_USER: ${DB_USERNAME:-apygg_logs}
+  #     POSTGRES_PASSWORD: ${DB_PASSWORD:-secret_logs}
+  #   ports:
+  #     - "8015:5432"
+  #   volumes:
+  #     - pglogsdata:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL","pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB || exit 1"]
+  #     interval: 10s
+  #     timeout: 3s
+  #     retries: 10
 
   redis:
-    image: redis:7.4
+    image: redis:7.4-alpine
     container_name: apygg_redis
-    profiles: ["dev","staging"]
+    profiles: ["dev"]
     command: ["redis-server","--appendonly","yes"]
     ports:
       - "8014:6379"
     volumes:
-      - redisdata:/data
+      - apygg_redisdata:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 20
-
-  meilisearch:
-    image: getmeili/meilisearch:v1.16
-    container_name: apygg_meili
-    profiles: ["dev","staging"]
-    environment:
-      MEILI_MASTER_KEY: ${MEILISEARCH_KEY:-masterKey}
-    ports:
-      - "8013:7700"
-    volumes:
-      - meilidata:/meili_data
-    healthcheck:
-      test: ["CMD-SHELL","curl -fsS http://localhost:7700/health || exit 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 10
-
-  pgadmin:
-    image: dpage/pgadmin4:9.8
-    container_name: apygg_pgadmin
-    profiles: ["dev","staging"]
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin123}
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
-      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
-    ports:
-      - "8016:80"
-    volumes:
-      - pgadmindata:/var/lib/pgadmin
-    depends_on:
-      postgres:
-        condition: service_healthy
-      postgres_logs:
-        condition: service_healthy
+    networks:
+      - apygg_network
     restart: unless-stopped
 
+  # meilisearch:
+  #   image: getmeili/meilisearch:v1.16
+  #   container_name: apygg_meili
+  #   profiles: ["dev","staging"]
+  #   environment:
+  #     MEILI_MASTER_KEY: ${MEILISEARCH_KEY:-masterKey}
+  #   ports:
+  #     - "8013:7700"
+  #   volumes:
+  #     - meilidata:/meili_data
+  #   healthcheck:
+  #     test: ["CMD-SHELL","curl -fsS http://localhost:7700/health || exit 1"]
+  #     interval: 10s
+  #     timeout: 3s
+  #     retries: 10
+
+  # pgadmin:
+  #   image: dpage/pgadmin4:9.8
+  #   container_name: apygg_pgadmin
+  #   profiles: ["dev","staging"]
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+  #     PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin123}
+  #     PGADMIN_CONFIG_SERVER_MODE: 'False'
+  #     PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+  #   ports:
+  #     - "8016:80"
+  #   volumes:
+  #     - pgadmindata:/var/lib/pgadmin
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   restart: unless-stopped
+
+networks:
+  apygg_network:
+    driver: bridge
+
 volumes:
-  pgdata:
-  pglogsdata:
-  redisdata:
-  meilidata:
-  pgadmindata:
+  apygg_pgdata:
+  apygg_redisdata:
+  # Volumes no usados en Fase 1.1 - se agregarán en fases posteriores
+  # apygg_pglogsdata:
+  # apygg_meilidata:
+  # apygg_pgadmindata:

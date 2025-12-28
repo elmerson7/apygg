@@ -63,19 +63,19 @@ Este documento describe el plan de acción completo para construir el boilerplat
 
 ```bash
 # Levantar todos los servicios
-docker-compose up -d
+docker compose --profile dev up -d
 
 # Levantar servicios específicos
-docker-compose up -d app postgres redis
+docker compose --profile dev up -d app postgres redis
 
 # Ejecutar migraciones
-docker-compose exec app php artisan migrate
+docker compose exec app php artisan migrate
 
 # Ver logs
-docker-compose logs -f app
+docker compose logs -f app
 
 # Acceder al shell del contenedor
-docker-compose exec app bash
+docker compose exec app bash
 ```
 
 ---

@@ -11,11 +11,11 @@
 - [ ] Crear `docker/app/Dockerfile` optimizado para desarrollo
 - [ ] Crear `docker-compose.override.yml` para desarrollo local
 - [ ] Crear `.dockerignore` para optimización
-- [ ] Probar que todos los servicios inicien correctamente: `docker-compose up -d`
+- [ ] Probar que todos los servicios inicien correctamente: `docker compose --profile dev up -d`
 
 ### 1.2 Instalación del Proyecto Laravel
 - [ ] Crear proyecto Laravel 12 usando contenedor PHP:
-  - [ ] `docker-compose exec app composer create-project laravel/laravel apygg`
+  - [ ] `docker compose exec app composer create-project laravel/laravel apygg`
   - [ ] Mover archivos al directorio correcto
 - [ ] Configurar nombre del proyecto como `apygg` en `composer.json`
 - [ ] Establecer namespaces base: `App\Core`, `App\Modules`, `App\Infrastructure`, `App\Helpers`

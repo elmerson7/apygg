@@ -15,9 +15,11 @@ WORKDIR /app
 # Config PHP
 COPY docker/app/php.ini /usr/local/etc/php/conf.d/zz-custom.ini
 
-# Copiamos el proyecto
-COPY . /app
-
-# Entrypoint para preparar y lanzar Octane/FrankenPHP
+# Copiar entrypoint (el código del proyecto se monta como volumen en desarrollo)
+COPY docker/app/entrypoint.sh /app/docker/app/entrypoint.sh
 RUN chmod +x /app/docker/app/entrypoint.sh
+
+# Ejecutar como usuario no privilegiado por seguridad
+USER www-data
+
 CMD ["/app/docker/app/entrypoint.sh"]
