@@ -29,29 +29,52 @@
 - [x] Verificar que la aplicación funcione en `http://localhost:8010`
 
 ### 1.3 Estructura de Directorios
-- [ ] Crear directorio `app/Core/`
-  - [ ] `Controllers/`
-  - [ ] `Models/`
-  - [ ] `Requests/`
-  - [ ] `Resources/`
-  - [ ] `Repositories/`
-  - [ ] `Rules/`
-  - [ ] `Traits/`
-- [ ] Crear directorio `app/Modules/`
-  - [ ] `Auth/`
-  - [ ] `Users/`
-  - [ ] `System/`
-- [ ] Crear directorio `app/Infrastructure/`
-  - [ ] `Services/`
-  - [ ] `Logging/`
-  - [ ] `Logging/Models/`
-  - [ ] `Logging/Loggers/`
-- [ ] Crear directorio `app/Helpers/`
-- [ ] Crear directorio `routes/modules/`
+- [ ] Crear estructura base `app/Http/`
+  - [ ] `Controllers/Controller.php` (BaseController)
+  - [ ] `Controllers/Auth/` (AuthController, RegisterController)
+  - [ ] `Controllers/Users/` (UserController)
+  - [ ] `Controllers/Profiles/` (ProfileController)
+  - [ ] `Controllers/Logs/` (ApiErrorStatsController)
+  - [ ] `Controllers/Health/` (HealthController)
+  - [ ] `Requests/BaseFormRequest.php` (BaseRequest)
+  - [ ] `Requests/Auth/` (LoginRequest, LogoutRequest, RefreshRequest)
+  - [ ] `Requests/Users/` (UpdateUserRequest, StoreUserRequest)
+  - [ ] `Resources/BaseResource.php` (BaseResource)
+  - [ ] `Resources/Auth/` (AuthTokenResource, RefreshTokenResource)
+  - [ ] `Resources/Users/` (UserResource, UserCollection)
+  - [x] `Middleware/` (carpeta creada - ForceJson, TraceId, RateLimitLogger, SecurityLogger, CacheControl, Idempotency se crearán en fases posteriores)
+- [ ] Crear estructura `app/Models/`
+  - [x] `Model.php` (BaseModel)
+  - [ ] `User.php`
+  - [ ] `Logs/` (ActivityLog, AuthEvent, SecurityEvent, ApiProblemDetail, FileAccessLog, RbacAuditLog)
+- [ ] Crear directorio `app/Services/`
+  - [ ] `HealthCheckService.php`
+  - [ ] `Logging/ActivityLogger.php`
+  - [ ] `Logging/AuthLogger.php`
+  - [ ] `Logging/SecurityLogger.php`
+- [ ] Crear directorio `app/Traits/`
+  - [ ] `HasUuid.php`
+  - [ ] `LogsActivity.php`
+  - [ ] `SoftDeletesWithUser.php`
+- [ ] Crear directorio `app/Logging/`
+  - [ ] `JsonFormatter.php`
+  - [ ] `DateLogger.php`
+  - [ ] `AddTraceIdProcessor.php`
+  - [ ] `PiiMaskingProcessor.php`
+- [ ] Crear directorio `app/Listeners/Security/`
+  - [ ] `SuspiciousAuthListener.php`
+- [ ] Crear directorio `app/Providers/` (ya existe, verificar)
+- [ ] Crear estructura `routes/`
+  - [ ] `api.php` (rutas principales)
+  - [ ] `api/auth.php`
+  - [ ] `api/users.php`
+  - [ ] `api/profiles.php`
+  - [ ] `api/logs.php`
+  - [ ] `api/health.php`
 - [ ] Crear directorio `tests/Unit/`, `tests/Feature/`
 - [ ] Crear directorio `database/migrations/`, `database/seeders/`
-- [ ] Crear directorio `docker/`
-- [ ] Crear directorio `docs/`
+- [ ] Crear directorio `docker/` (ya existe)
+- [ ] Crear directorio `docs/` (ya existe)
 
 ### 1.4 Archivos de Configuración de Entornos
 - [ ] Crear `.env.example` base documentado

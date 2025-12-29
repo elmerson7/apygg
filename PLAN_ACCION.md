@@ -131,12 +131,18 @@ Cliente → FrankenPHP (Octane) / Laravel App
 **Creación del Proyecto:**
 - Crear nuevo proyecto Laravel 12 desde cero usando `composer create-project`
 - Establecer nombre del proyecto como `apygg` en `composer.json`
-- Configurar estructura de directorios según arquitectura modular definida:
-  - `app/Core/` - Componentes base reutilizables (Controllers, Models, Requests, Resources, Repositories)
-  - `app/Modules/` - Módulos de negocio (Auth, Users, etc.)
-  - `app/Infrastructure/` - Servicios de infraestructura (Logging, Cache, Notifications)
-  - `app/Helpers/` - Utilidades y helpers globales
-- Establecer namespaces base: `App\Core`, `App\Modules`, `App\Infrastructure`, `App\Helpers`
+- Configurar estructura de directorios simple y práctica (estilo Laravel estándar):
+  - `app/Http/Controllers/` - BaseController y controladores organizados por dominio (Auth, Users, Profiles, Logs, Health)
+  - `app/Http/Requests/` - BaseRequest y requests organizados por dominio
+  - `app/Http/Resources/` - BaseResource y resources organizados por dominio
+  - `app/Http/Middleware/` - Middleware comunes (ForceJson, TraceId, RateLimitLogger, SecurityLogger, etc.)
+  - `app/Models/` - BaseModel y modelos organizados (incluyendo Logs/)
+  - `app/Services/` - Servicios reutilizables (HealthCheckService, Logging services)
+  - `app/Traits/` - Traits reutilizables (HasUuid, LogsActivity, SoftDeletesWithUser)
+  - `app/Logging/` - Clases de logging (JsonFormatter, DateLogger, Processors)
+  - `app/Listeners/` - Event listeners organizados por dominio
+  - `routes/api/` - Rutas organizadas por dominio (auth.php, users.php, profiles.php, logs.php, health.php)
+- Establecer namespaces estándar de Laravel: `App\Http\Controllers`, `App\Models`, `App\Services`, etc.
 - Configurar autoloading PSR-4 en `composer.json`
 
 **Configuración de Entornos:**
@@ -164,12 +170,12 @@ Cliente → FrankenPHP (Octane) / Laravel App
 - Crear directorios de tests: `tests/Unit/`, `tests/Feature/`
 - Crear estructura Docker: `docker/`, `docker-compose.yml`
 - Crear directorios de bases de datos: `database/migrations/`, `database/seeders/`
-- Organizar rutas por módulo: `routes/modules/`
+- Organizar rutas por dominio en `routes/api/`: `auth.php`, `users.php`, `profiles.php`, `logs.php`, `health.php`
 
 **Convenciones de Naming (camelCase vs snake_case):**
 - **snake_case** para: columnas de BD (`email_verified_at`, `last_login_at`), atributos de modelos, claves de arrays/config, nombres de tablas, variables de entorno
 - **camelCase** para: métodos de clases (`sendSuccess()`, `loadRelations()`), variables en código PHP (`$userId`, `$requestData`), parámetros de funciones
-- **PascalCase** para: nombres de clases (`BaseController`, `UserService`), namespaces (`App\Core`), traits (`HasUuid`, `LogsActivity`)
+- **PascalCase** para: nombres de clases (`BaseController`, `UserService`), namespaces (`App\Http\Controllers`, `App\Models`, `App\Services`), traits (`HasUuid`, `LogsActivity`)
 - **JSON API**: usar snake_case en respuestas JSON para mantener consistencia con estándares REST
 - Seguir convenciones estándar de Laravel y PSR-12 para máxima compatibilidad con el ecosistema
 
@@ -209,7 +215,7 @@ Cliente → FrankenPHP (Octane) / Laravel App
 
 ### 2.1 Clases Base del Sistema
 
-**BaseController (`App\Core\Controllers\BaseController`):**
+**BaseController (`App\Http\Controllers\Controller`):**
 - Implementar métodos comunes CRUD: `index()`, `show()`, `store()`, `update()`, `destroy()`
 - Métodos de respuesta estándar: `sendSuccess()`, `sendError()`, `sendPaginated()`, `withMeta()`
 - Manejo centralizado de respuestas API con formato consistente
@@ -218,7 +224,7 @@ Cliente → FrankenPHP (Octane) / Laravel App
 - Filtrado y ordenamiento base mediante query parameters
 - Autorización base mediante traits reutilizables
 
-**BaseRequest (`App\Core\Requests\BaseRequest`):**
+**BaseRequest (`App\Http\Requests\BaseFormRequest`):**
 - Extender `Illuminate\Foundation\Http\FormRequest`
 - Implementar validaciones comunes reutilizables (UUIDs, emails, fechas)
 - Métodos helper para validación de UUIDs: `validateUuid()`, `validateUuidArray()`
@@ -228,7 +234,7 @@ Cliente → FrankenPHP (Octane) / Laravel App
 - Método `getValidationRules()` sobrescribible para flexibilidad
 - Mensajes de error personalizados y consistentes en español
 
-**BaseResource (`App\Core\Resources\BaseResource`):**
+**BaseResource (`App\Http\Resources\BaseResource`):**
 - Implementar formato RFC 7807 para respuestas de error
 - Formato estándar para respuestas exitosas: `{success: true, data: {}, message: ""}`
 - Métodos helper para transformación de datos: `transform()`, `transformCollection()`
@@ -236,7 +242,7 @@ Cliente → FrankenPHP (Octane) / Laravel App
 - Inclusión condicional de metadatos y timestamps
 - Soporte para relaciones opcionales mediante query parameters
 
-**BaseModel (`App\Core\Models\BaseModel`):**
+**BaseModel (`App\Models\Model`):**
 - Extender `Illuminate\Database\Eloquent\Model`
 - Configuración común de timestamps (created_at, updated_at)
 - Soft deletes configurado por defecto (deleted_at)
@@ -245,7 +251,7 @@ Cliente → FrankenPHP (Octane) / Laravel App
 - Scopes comunes: `active()`, `inactive()`, `recent()`, `oldest()`
 - Todos los modelos (incluyendo logs) usan la conexión principal `apygg` por defecto
 
-**BaseRepository (`App\Core\Repositories\BaseRepository`) - Opcional:**
+**BaseRepository (`App\Repositories\BaseRepository`) - Opcional:**
 - Implementar patrón Repository como clase opcional para casos específicos
 - Útil cuando se necesita abstracción de múltiples fuentes de datos o lógica compleja
 - Para la mayoría de casos, usar Eloquent directamente en servicios es suficiente
@@ -256,13 +262,13 @@ Cliente → FrankenPHP (Octane) / Laravel App
 
 ### 2.2 Traits Reutilizables
 
-**HasUuid (`App\Core\Traits\HasUuid`):**
+**HasUuid (`App\Traits\HasUuid`):**
 - Generación automática de UUID v4 en evento `creating` del modelo
 - Configuración de primary key como UUID (no auto-incrementing)
 - Validación de formato UUID en validaciones
 - Método helper `isUuid()` para verificación
 
-**LogsActivity (`App\Core\Traits\LogsActivity`):**
+**LogsActivity (`App\Traits\LogsActivity`):**
 - Registro automático de cambios en modelos mediante Observers
 - Captura de valores antes/después del cambio en JSON
 - Asociación automática con usuario autenticado que realiza el cambio
@@ -270,14 +276,14 @@ Cliente → FrankenPHP (Octane) / Laravel App
 - Filtrado de campos sensibles (passwords, tokens) antes de guardar
 - Configuración de modelos a auditar mediante propiedad `$auditable`
 
-**SoftDeletesWithUser (`App\Core\Traits\SoftDeletesWithUser`):**
+**SoftDeletesWithUser (`App\Traits\SoftDeletesWithUser`):**
 - Extiende soft deletes nativo de Laravel
 - Registro de usuario que eliminó el registro en campo `deleted_by`
 - Timestamp de eliminación con información de usuario
 - Restauración con auditoría del usuario que restaura
 - Métodos helper: `restore()`, `forceDelete()`
 
-**Searchable (`App\Core\Traits\Searchable`):**
+**Searchable (`App\Traits\Searchable`):**
 - Integración con Meilisearch mediante Laravel Scout
 - Indexación automática en eventos `created`, `updated`, `deleted`
 - Búsqueda full-text configurada con filtros y facetas
@@ -285,7 +291,7 @@ Cliente → FrankenPHP (Octane) / Laravel App
 - Método `toSearchableArray()` para definir campos indexables
 - Configuración de filtros y ranking personalizado
 
-**HasApiTokens (`App\Core\Traits\HasApiTokens`):**
+**HasApiTokens (`App\Traits\HasApiTokens`):**
 - Soporte para API keys personales de usuarios
 - Métodos para crear, revocar, listar tokens: `createToken()`, `revokeToken()`, `tokens()`
 - Scope para filtrar por token activo: `whereToken()`
@@ -294,7 +300,7 @@ Cliente → FrankenPHP (Octane) / Laravel App
 
 ### 2.3 Servicios Base
 
-**CacheService (`App\Infrastructure\Services\CacheService`):**
+**CacheService (`App\Services\CacheService`):**
 - Abstracción sobre Redis/Cache de Laravel
 - Métodos principales: `get()`, `set()`, `forget()`, `remember()`
 - Tags para invalidación selectiva: `tag()`, `forgetTag()`
@@ -303,7 +309,7 @@ Cliente → FrankenPHP (Octane) / Laravel App
 - Método `getAllMetrics()` para monitoreo de hit rate y uso de memoria
 - Invalidación inteligente basada en eventos de modelos
 
-**LogService (`App\Infrastructure\Services\LogService`):**
+**LogService (`App\Services\Logging\ActivityLogger`, `App\Services\Logging\AuthLogger`, `App\Services\Logging\SecurityLogger`):**
 - Logging centralizado con niveles: debug, info, warning, error, critical
 - Método genérico `log()` con contexto enriquecido
 - Métodos específicos: `logApi()`, `logActivity()`, `logSecurity()`, `logError()`
@@ -312,7 +318,7 @@ Cliente → FrankenPHP (Octane) / Laravel App
 - Integración con Sentry para errores críticos (severity >= error)
 - Limpieza automática de logs antiguos según TTL configurado usando particiones
 
-**NotificationService (`App\Infrastructure\Services\NotificationService`):**
+**NotificationService (`App\Services\NotificationService`):**
 - Servicio centralizado de notificaciones multi-canal
 - Métodos para email, SMS, push notifications, database
 - Implementación de colas para notificaciones asíncronas
@@ -321,7 +327,7 @@ Cliente → FrankenPHP (Octane) / Laravel App
 - Configuración de canales por tipo de notificación
 - Retry automático en caso de fallo
 
-**SecurityService (`App\Infrastructure\Services\SecurityService`):**
+**SecurityService (`App\Services\SecurityService`):**
 - Encriptación/desencriptación de datos sensibles usando Laravel Crypt
 - Hashing de contraseñas usando bcrypt con configuración de rounds
 - Validación de IP contra whitelist configurable
@@ -410,7 +416,7 @@ Cliente → FrankenPHP (Octane) / Laravel App
 - Configurar blacklist de tokens revocados en tabla `jwt_blacklist`
 - Configurar claims estándar: iss (issuer), aud (audience), exp (expiration), iat (issued at), sub (subject)
 
-**AuthController (`App\Modules\Auth\Controllers\AuthController`):**
+**AuthController (`App\Http\Controllers\Auth\AuthController`):**
 - Endpoint `POST /api/v1/auth/login` - Login con email/contraseña, retorna JWT y refresh token
 - Endpoint `POST /api/v1/auth/register` - Registro de nuevos usuarios (si está habilitado)
 - Endpoint `POST /api/v1/auth/logout` - Cerrar sesión y revocar token agregándolo a blacklist
@@ -421,7 +427,7 @@ Cliente → FrankenPHP (Octane) / Laravel App
 - Registro de intentos de login (exitosos y fallidos) en SecurityLog
 - Generación de JWT con claims: user_id, roles, permissions, exp
 
-**TokenService (`App\Modules\Auth\Services\TokenService`):**
+**TokenService (`App\Services\Auth\TokenService`):**
 - Generación de access tokens con expiración corta
 - Generación de refresh tokens con expiración larga
 - Validación de tokens (integridad, expiración, blacklist)
@@ -429,7 +435,7 @@ Cliente → FrankenPHP (Octane) / Laravel App
 - Renovación automática con rotación de refresh tokens
 - Extracción de claims del token para autorización
 
-**AuthService (`App\Modules\Auth\Services\AuthService`):**
+**AuthService (`App\Services\Auth\AuthService`):**
 - Lógica de negocio de autenticación separada del controlador
 - Método `authenticate($credentials)` - Valida credenciales y retorna usuario
 - Método `generateTokens($user)` - Genera JWT y refresh token
@@ -440,7 +446,7 @@ Cliente → FrankenPHP (Octane) / Laravel App
 
 ### 3.2 Recuperación de Contraseña
 
-**PasswordController (`App\Modules\Auth\Controllers\PasswordController`):**
+**PasswordController (`App\Http\Controllers\Auth\PasswordController`):**
 - Endpoint `POST /api/v1/auth/forgot-password` - Solicitar reset, envía email con token
 - Endpoint `POST /api/v1/auth/reset-password` - Resetear contraseña con token válido
 - Endpoint `POST /api/v1/auth/change-password` - Cambiar contraseña si está autenticado
@@ -457,8 +463,8 @@ Cliente → FrankenPHP (Octane) / Laravel App
 ### 3.3 Sistema RBAC (Role-Based Access Control)
 
 **Modelos:**
-- Modelo `Role` (`App\Modules\Users\Models\Role`) con campos: name (único), display_name, description
-- Modelo `Permission` (`App\Modules\Users\Models\Permission`) con campos: name (único), display_name, resource, action, description
+- Modelo `Role` (`App\Models\Role`) con campos: name (único), display_name, description
+- Modelo `Permission` (`App\Models\Permission`) con campos: name (único), display_name, resource, action, description
 - Tabla pivot `role_permission` para asignación muchos-a-muchos
 - Tabla pivot `user_role` para asignación de roles a usuarios
 - Tabla `user_permission` para permisos directos que sobrescriben roles
@@ -550,7 +556,7 @@ if (Feature::enabled('experimental-feature', false)) {
 
 ### 4.1 Gestión de Usuarios
 
-**UserController (`App\Modules\Users\Controllers\UserController`):**
+**UserController (`App\Http\Controllers\Users\UserController`):**
 - `GET /api/v1/users` - Listar usuarios con paginación, filtrado y ordenamiento usando Query Filters
 - `GET /api/v1/users/{id}` - Obtener usuario específico con relaciones opcionales
 - `POST /api/v1/users` - Crear nuevo usuario (solo admin)
@@ -1949,24 +1955,39 @@ php artisan db:seed --class=TestDataSeeder --only=users,roles
 
 ### 27.2 Estructura del Proyecto APYGG
 
-El proyecto seguirá una arquitectura modular clara:
+El proyecto seguirá una estructura simple y práctica (estilo Laravel estándar):
 
 ```
 apygg/
 ├── app/
-│   ├── Core/           # Componentes base reutilizables
-│   ├── Modules/        # Módulos de negocio (Auth, Users, etc.)
-│   ├── Infrastructure/ # Servicios de infraestructura
-│   └── Helpers/        # Utilidades globales
-├── config/             # Configuraciones
+│   ├── Http/
+│   │   ├── Controllers/        # BaseController + controladores por dominio
+│   │   │   ├── Controller.php  # BaseController
+│   │   │   ├── Auth/          # AuthController, RegisterController
+│   │   │   ├── Users/         # UserController
+│   │   │   ├── Profiles/      # ProfileController
+│   │   │   ├── Logs/          # ApiErrorStatsController
+│   │   │   └── Health/         # HealthController
+│   │   ├── Requests/          # BaseRequest + requests por dominio
+│   │   ├── Resources/         # BaseResource + resources por dominio
+│   │   └── Middleware/        # Middleware comunes
+│   ├── Models/                # BaseModel + modelos organizados
+│   │   └── Logs/              # Modelos de logs
+│   ├── Services/              # Servicios reutilizables
+│   │   └── Logging/           # Servicios de logging
+│   ├── Traits/                # Traits reutilizables
+│   ├── Logging/               # Clases de logging
+│   ├── Listeners/             # Event listeners
+│   └── Providers/             # Service providers
+├── config/                     # Configuraciones
 ├── database/
-│   ├── migrations/     # Migraciones DB principal (incluye logs con particionamiento)
-│   └── seeders/        # Seeders
-├── docker/             # Configuración Docker
+│   ├── migrations/             # Migraciones DB principal (incluye logs con particionamiento)
+│   └── seeders/                # Seeders
+├── docker/                     # Configuración Docker
 ├── routes/
-│   └── modules/        # Rutas por módulo
-├── tests/              # Tests
-└── docs/               # Documentación
+│   └── api/                    # Rutas por dominio (auth.php, users.php, etc.)
+├── tests/                      # Tests
+└── docs/                       # Documentación
 ```
 
 ### 27.3 Próximos Pasos
