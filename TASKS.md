@@ -77,11 +77,11 @@
 - [ ] Crear directorio `docs/` (ya existe)
 
 ### 1.4 Archivos de Configuración de Entornos
-- [ ] Crear `.env.example` base documentado
-- [ ] Crear `dev.env.example` con debugging habilitado
-- [ ] Crear `staging.env.example` con valores cercanos a producción
-- [ ] Crear `prod.env.example` con optimizaciones de seguridad
-- [ ] Crear `.env` local para desarrollo
+- [x] Crear `.env.example` base documentado (183 líneas, todas las variables necesarias documentadas)
+- [x] Crear `dev.env.example` con debugging habilitado (solo variables Docker)
+- [x] Crear `staging.env.example` con valores cercanos a producción (solo variables Docker)
+- [x] Crear `prod.env.example` con optimizaciones de seguridad (solo variables Docker)
+- [x] Crear `.env` local para desarrollo (existe con APP_KEY generado)
 
 ### 1.5 Instalación de Dependencias Esenciales (Solo las Críticas)
 - [ ] Instalar dependencias mínimas para desarrollo inicial:
