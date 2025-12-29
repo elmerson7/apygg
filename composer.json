@@ -10,7 +10,7 @@
         "http-interop/http-factory-guzzle": "^1.2",
         "laravel/framework": "12.23.1",
         "laravel/horizon": "^5.33",
-        "laravel/octane": "^2.12",
+        "laravel/octane": "^2.13.3",
         "laravel/reverb": "^1.5",
         "laravel/scout": "^10.17",
         "laravel/socialite": "^5.23",
