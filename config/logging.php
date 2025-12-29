@@ -9,32 +9,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Async Logging
-    |--------------------------------------------------------------------------
-    |
-    | Determines if logging should be asynchronous (using queues) or synchronous.
-    | Async is recommended for production to avoid blocking requests.
-    |
-    */
-
-    'async' => env('LOG_ASYNC', true),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Activity Logging
-    |--------------------------------------------------------------------------
-    |
-    | Determines if activity logging to the logs database should be enabled.
-    | This affects ActivityLogger but not other logging services like AuthLogger
-    | or SecurityLogger. Useful for testing environments or when you need to
-    | disable activity tracking temporarily.
-    |
-    */
-
-    'activity_enabled' => env('ACTIVITY_LOGGING', true),
-
-    /*
-    |--------------------------------------------------------------------------
     | Default Log Channel
     |--------------------------------------------------------------------------
     |
@@ -44,7 +18,7 @@ return [
     |
     */
 
-    'default' => env('LOG_CHANNEL', 'daily_directory'),
+    'default' => env('LOG_CHANNEL', 'stack'),
 
     /*
     |--------------------------------------------------------------------------
@@ -80,13 +54,7 @@ return [
 
         'stack' => [
             'driver' => 'stack',
-            'channels' => explode(',', (string) env('LOG_STACK', 'daily_directory')),
-            'ignore_exceptions' => false,
-        ],
-
-        'production_stack' => [
-            'driver' => 'stack',
-            'channels' => ['json_daily', 'daily_directory'],
+            'channels' => explode(',', (string) env('LOG_STACK', 'single')),
             'ignore_exceptions' => false,
         ],
 
@@ -95,7 +63,6 @@ return [
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'replace_placeholders' => true,
-            'processors' => [App\Logging\AddTraceIdProcessor::class],
         ],
 
         'daily' => [
@@ -104,7 +71,6 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
-            'processors' => [App\Logging\AddTraceIdProcessor::class],
         ],
 
         'slack' => [
@@ -159,42 +125,6 @@ return [
 
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
-        ],
-
-        'daily_directory' => [
-            'driver' => 'custom',
-            'via' => App\Logging\DateLogger::class,
-            'level' => env('LOG_LEVEL', 'debug'),
-            'replace_placeholders' => true,
-            'processors' => [
-                App\Logging\AddTraceIdProcessor::class,
-                App\Logging\PiiMaskingProcessor::class,
-            ],
-        ],
-
-        'json_daily' => [
-            'driver' => 'daily',
-            'path' => storage_path('logs/app.json'),
-            'level' => env('LOG_LEVEL', 'warning'),
-            'days' => env('LOG_DAILY_DAYS', 30),
-            'replace_placeholders' => true,
-            'formatter' => App\Logging\JsonFormatter::class,
-            'processors' => [
-                App\Logging\AddTraceIdProcessor::class,
-                App\Logging\PiiMaskingProcessor::class,
-            ],
-        ],
-
-        'json_single' => [
-            'driver' => 'single',
-            'path' => storage_path('logs/app.json'),
-            'level' => env('LOG_LEVEL', 'warning'),
-            'replace_placeholders' => true,
-            'formatter' => App\Logging\JsonFormatter::class,
-            'processors' => [
-                App\Logging\AddTraceIdProcessor::class,
-                App\Logging\PiiMaskingProcessor::class,
-            ],
         ],
 
     ],
