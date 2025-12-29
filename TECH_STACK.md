@@ -8,7 +8,7 @@
 - **FrankenPHP (Octane)** - Servidor HTTP moderno production-ready basado en Caddy para desarrollo y PaaS
 
 ### Autenticación y Seguridad
-- **tymon/jwt-auth v2.x** - Autenticación mediante JSON Web Tokens (JWT)
+- **php-open-source-saver/jwt-auth v2.8.x** - Autenticación mediante JSON Web Tokens (JWT)
 - **Laravel Sanctum** - Autenticación de API tokens (alternativa incorporada)
 - **bcrypt** - Hashing seguro de contraseñas
 

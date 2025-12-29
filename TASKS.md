@@ -241,7 +241,7 @@
 ## Fase 5: Sistema de Autenticación (Semana 5)
 
 ### 5.1 Configuración de JWT
-- [ ] Instalar y publicar configuración de `tymon/jwt-auth`
+- [ ] Instalar y publicar configuración de `php-open-source-saver/jwt-auth`
 - [ ] Generar `JWT_SECRET` seguro
 - [ ] Configurar tiempos de expiración (access: 15 min, refresh: 7 días)
 - [ ] Crear migración y tabla `jwt_blacklist`

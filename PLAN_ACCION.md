@@ -155,7 +155,7 @@ Cliente → FrankenPHP (Octane) / Laravel App
 
 **Gestión de Dependencias:**
 - Configurar `composer.json` con dependencias esenciales:
-  - `tymon/jwt-auth` para autenticación JWT
+  - `php-open-source-saver/jwt-auth` para autenticación JWT
   - `laravel/octane` (FrankenPHP) para servidor HTTP de alto rendimiento
   - `laravel/horizon` para procesamiento de colas (opcional)
   - `laravel/telescope` para observabilidad en desarrollo
@@ -409,7 +409,7 @@ Cliente → FrankenPHP (Octane) / Laravel App
 ### 3.1 Autenticación JWT
 
 **Instalación y Configuración:**
-- Instalar y configurar `tymon/jwt-auth` para autenticación JWT
+- Instalar y configurar `php-open-source-saver/jwt-auth` para autenticación JWT
 - Configurar secretos en `.env` (`JWT_SECRET`)
 - Configurar tiempos de expiración: access token (15 minutos), refresh token (7 días)
 - Implementar refresh tokens con rotación automática

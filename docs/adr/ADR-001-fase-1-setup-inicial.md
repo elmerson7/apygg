@@ -298,7 +298,51 @@ make fix-permissions
 
 ### Subfase 1.5 - Instalación de Dependencias Esenciales
 
-*Decisiones de esta subfase se documentarán cuando se complete.*
+#### Decisión 1.5.1: Uso de php-open-source-saver/jwt-auth en lugar de tymon/jwt-auth
+
+**Decisión**: Usar `php-open-source-saver/jwt-auth` v2.8.3 en lugar de `tymon/jwt-auth` para autenticación JWT.
+
+**Razones**:
+- `tymon/jwt-auth` es un paquete que ya no se mantiene activamente
+- `php-open-source-saver/jwt-auth` es un fork mantenido activamente del paquete original
+- Compatible con Laravel 12 y PHP 8.4
+- API idéntica a `tymon/jwt-auth`, por lo que la migración es transparente
+- Mejor soporte y actualizaciones de seguridad
+
+**Implementación**:
+- Declarado en `composer.json`: `"php-open-source-saver/jwt-auth": "^2.8"`
+- Instalado vía `composer update`: v2.8.3 instalado correctamente
+- Configuración publicada: `config/jwt.php` existe y está completo
+- Guard configurado: `config/auth.php` tiene guard 'jwt' funcionando
+- Variables de entorno: Configuradas en `.env.example` (`JWT_SECRET`, `JWT_TTL`, `JWT_ALGO`, `JWT_REFRESH_TTL`)
+
+**Referencia**: 
+- `composer.json` (línea 19)
+- `config/jwt.php`
+- `config/auth.php` (línea 44)
+- `routes/api/auth.php` (usa middleware 'jwt')
+
+#### Decisión 1.5.2: Actualización de Laravel Octane a v2.13.3
+
+**Decisión**: Actualizar `laravel/octane` de `^2.12` a `^2.13.3` para obtener las últimas mejoras y correcciones.
+
+**Razones**:
+- Versión más reciente con mejoras de rendimiento y estabilidad
+- Correcciones de bugs de versiones anteriores
+- Mejor compatibilidad con FrankenPHP y PHP 8.4
+- Mantener el proyecto actualizado con las últimas versiones estables
+
+**Implementación**:
+- Actualizado en `composer.json`: `"laravel/octane": "^2.13.3"`
+- Instalado vía `composer update`: v2.13.3 instalado correctamente
+- Configuración existente compatible: `config/octane.php` funciona sin cambios
+- Docker configurado: `docker/app/entrypoint.sh` usa FrankenPHP correctamente
+
+**Referencia**:
+- `composer.json` (línea 13)
+- `config/octane.php`
+- `docker/app/entrypoint.sh` (líneas 45-56)
+- `.env.example` (`OCTANE_SERVER=frankenphp`)
 
 ## Archivos Creados/Modificados
 
@@ -314,14 +358,22 @@ make fix-permissions
 - `docs/adr/ADR-001-fase-1-setup-inicial.md`: Este documento
 - `docs/PERMISOS_DOCKER.md`: Documentación sobre gestión de permisos con Docker
 
+### Archivos Creados/Modificados (Subfase 1.5)
+- `composer.json`: Actualizado con `php-open-source-saver/jwt-auth` v2.8 y `laravel/octane` v2.13.3
+- `composer.lock`: Actualizado con todas las dependencias instaladas (php-open-source-saver/jwt-auth v2.8.3, laravel/octane v2.13.3)
+- `config/jwt.php`: Configuración publicada y completa para JWT
+- `app/Models/Model.php`: BaseModel creado
+- `app/Http/Middleware/`: Carpeta creada para middleware futuros
+
 ### Archivos Modificados (Subfase 1.1)
 - `docker-compose.yml`: Actualizado con convención de nombres `apygg_`, perfiles `dev` y `prod`, eliminación de `postgres_logs`, build args para UID/GID
 - `docker/app/Dockerfile`: Crea usuario `appuser` con UID/GID del host para evitar problemas de permisos
 - `docker/app/entrypoint.sh`: Ajusta permisos de storage/cache al iniciar
 - `Makefile`: Detecta automáticamente UID/GID del usuario y pasa como build args, comando `fix-permissions` agregado
 - `env/dev.env`: Comentarios sobre USER_ID/GROUP_ID agregados
-- `TASKS.md`: Comandos actualizados a sintaxis moderna de Docker Compose
-- `PLAN_ACCION.md`: Comandos básicos actualizados a sintaxis moderna de Docker Compose
+- `TASKS.md`: Comandos actualizados a sintaxis moderna de Docker Compose, referencias actualizadas a `php-open-source-saver/jwt-auth`
+- `PLAN_ACCION.md`: Comandos básicos actualizados a sintaxis moderna de Docker Compose, referencias actualizadas a `php-open-source-saver/jwt-auth`
+- `TECH_STACK.md`: Actualizado con `php-open-source-saver/jwt-auth` v2.8.x
 
 ### Archivos Eliminados (Subfase 1.1)
 - `docker-compose.override.yml`: Eliminado en favor de usar perfiles `dev` y `prod` directamente en `docker-compose.yml`
