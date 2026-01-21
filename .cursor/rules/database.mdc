@@ -1,5 +1,5 @@
 ---
-description: Reglas para bases de datos apygg y apygg_logs
+description: Reglas para bases de datos apygg
 alwaysApply: true
 ---
 
@@ -9,5 +9,5 @@ alwaysApply: true
 
 ## Convenciones
 - Migraciones apuntan a `apygg` por defecto.
-- Para tablas de logs, usar conexión `apygg_logs`.
+
 

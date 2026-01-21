@@ -14,6 +14,7 @@
 
 ### Base de Datos
 - **PostgreSQL 18** - Base de datos relacional con soporte a JSON, UUID, particionamiento
+- **PgBouncer** (Opcional) - Connection pooler para PostgreSQL, recomendado para producción con alta carga
 - **Laravel Migrations** - Versionado de schema de BD
 - **Laravel Eloquent ORM** - Abstracción de base de datos orientada a objetos
 
@@ -57,9 +58,9 @@
 - **docker:latest** - CLI de Docker
 
 ### Imágenes Base
-- **php:8.4-fpm-bookworm** - Runtime PHP
-
+- **dunglas/frankenphp:php8.4-bookworm** - Runtime PHP con FrankenPHP
 - **postgres:18-alpine** - Base de datos
+- **pgbouncer/pgbouncer:latest** (Opcional) - Connection pooler para PostgreSQL
 - **redis:7-alpine** - Cache
 - **getmeili/meilisearch:latest** (Opcional) - Búsqueda
 
@@ -175,6 +176,7 @@
 | PHP | 8.4 | Core |
 | Laravel | 12.x | Framework |
 | PostgreSQL | 18 | BD |
+| PgBouncer | Latest | Connection Pooler (Opcional) |
 | Redis | 7 | Cache |
 | Docker | Latest | Container |
 | Compose | 2.x | Orquestación |

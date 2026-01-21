@@ -184,8 +184,21 @@ Cliente → FrankenPHP (Octane) / Laravel App
 **Conexión Principal (apygg):**
 - Configurar conexión a PostgreSQL principal en `config/database.php`
 - Nombre de base de datos: `apygg`
-- Configurar pool de conexiones optimizado para producción
+- Configurar pool de conexiones básico con PDO (PDO::ATTR_PERSISTENT)
+- Establecer timeout de conexión (30 segundos por defecto)
 - Establecer migraciones en `database/migrations/` para esta conexión
+- Crear base de datos `apygg` y `apygg_test` en PostgreSQL Docker
+
+**PgBouncer (Connection Pooler) - Opcional pero Recomendado:**
+- PgBouncer es un connection pooler para PostgreSQL que reduce el número de conexiones directas
+- Útil para producción con alta carga y aplicaciones con muchas conexiones concurrentes
+- Configuración en Docker Compose como servicio separado
+- Modo `transaction` recomendado para Laravel (permite transacciones completas)
+- Configuración de pool: `default_pool_size=25`, `max_client_conn=100`
+- En desarrollo: conexión directa a PostgreSQL (sin PgBouncer)
+- En producción: conexión a través de PgBouncer (puerto 6432)
+- Variables de entorno: `DB_HOST=pgbouncer` para producción, `DB_HOST=postgres` para desarrollo
+- Documentar cuándo usar PgBouncer vs conexión directa
 
 **Particionamiento de Tablas de Logs:**
 - Implementar particionamiento por fecha en tablas de logs (api_logs, error_logs, security_logs, activity_logs)
@@ -1091,6 +1104,20 @@ readinessProbe:
 - Backups configurados mediante cron job
 - Configuración optimizada para producción
 - **Nota:** Los logs se almacenan en la misma base de datos `apygg` con particionamiento por mes para optimizar consultas y limpieza. Si en el futuro se requiere separar logs en otra base de datos, se puede migrar fácilmente siguiendo la documentación de migración.
+
+**PgBouncer (Connection Pooler) - Opcional:**
+- Imagen: `pgbouncer/pgbouncer:latest`
+- Puerto: 6432 (interno), 8017 (host) - Puerto estándar de PgBouncer
+- Modo: `transaction` (recomendado para Laravel)
+- Pool size: `default_pool_size=25`, `max_client_conn=100`
+- Configuración en `docker/pgbouncer/pgbouncer.ini`
+- Autenticación mediante variables de entorno o `userlist.txt`
+- Conexión a PostgreSQL: `postgres:5432` (servicio interno Docker)
+- Health check: `pgbouncer -c "SHOW POOLS"`
+- Perfiles: Solo `prod` (opcional en `dev` para pruebas)
+- **Uso:** En producción, Laravel se conecta a PgBouncer (puerto 6432) en lugar de PostgreSQL directo
+- **Ventajas:** Reduce conexiones directas a PostgreSQL, mejora rendimiento con alta carga
+- **Nota:** En desarrollo se puede usar conexión directa a PostgreSQL sin PgBouncer
 
 ### 11.3 Servicios de Cache y Colas
 

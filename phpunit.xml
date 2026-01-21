@@ -27,8 +27,12 @@
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_STORE" value="array"/>
-        <env name="DB_CONNECTION" value="sqlite"/>
-        <env name="DB_DATABASE" value=":memory:"/>
+        <env name="DB_CONNECTION" value="apygg_test"/>
+        <env name="DB_TEST_HOST" value="postgres"/>
+        <env name="DB_TEST_PORT" value="5432"/>
+        <env name="DB_TEST_DATABASE" value="apygg_test"/>
+        <env name="DB_TEST_USERNAME" value="apygg"/>
+        <env name="DB_TEST_PASSWORD" value="secret"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>

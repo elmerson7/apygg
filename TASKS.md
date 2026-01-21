@@ -81,15 +81,27 @@
 ## Fase 2: Configuración Inicial de Base de Datos (Semana 1-2)
 
 ### 2.1 Configuración de PostgreSQL Básica
-- [ ] Configurar conexión PostgreSQL principal en `config/database.php`
-- [ ] Nombre de base de datos: `apygg`
-- [ ] Configurar pool de conexiones optimizado
-- [ ] Establecer timeout de conexión
-- [ ] Crear base de datos `apygg` en servidor PostgreSQL (Docker)
-- [ ] Crear base de datos `apygg_test` para tests
-- [ ] Verificar conectividad desde el contenedor
+- [x] Configurar conexión PostgreSQL principal en `config/database.php`
+- [x] Nombre de base de datos: `apygg`
+- [x] Configurar pool de conexiones optimizado
+- [x] Establecer timeout de conexión
+- [x] Crear base de datos `apygg` en servidor PostgreSQL (Docker)
+- [x] Crear base de datos `apygg_test` para tests
+- [x] Verificar conectividad desde el contenedor
 
-### 2.2 Primeras Migraciones Base (Esenciales)
+### 2.2 Configuración de PgBouncer (Connection Pooler)
+- [ ] Agregar servicio `pgbouncer` en `docker-compose.yml` con imagen oficial
+- [ ] Configurar PgBouncer para modo `transaction` (recomendado para Laravel)
+- [ ] Configurar pool size: `default_pool_size=25`, `max_client_conn=100`
+- [ ] Crear archivo de configuración `docker/pgbouncer/pgbouncer.ini`
+- [ ] Configurar autenticación con `userlist.txt` o variables de entorno
+- [ ] Exponer puerto 6432 (PgBouncer) en lugar de 5432 (PostgreSQL directo) para producción
+- [ ] Actualizar variables de entorno: `DB_HOST=pgbouncer` para producción
+- [ ] Mantener conexión directa a PostgreSQL en desarrollo (sin PgBouncer)
+- [ ] Documentar cuándo usar PgBouncer vs conexión directa
+- [ ] NOTA: PgBouncer es opcional pero recomendado para producción con alta carga
+
+### 2.3 Primeras Migraciones Base (Esenciales)
 - [ ] Crear migración para tabla `users` con UUID como PK
 - [ ] Crear migración para tabla `roles`
 - [ ] Crear migración para tabla `permissions`
@@ -99,7 +111,7 @@
 - [ ] Ejecutar migraciones: `php artisan migrate`
 - [ ] Verificar que las tablas se crearon correctamente
 
-### 2.3 Configuración de Redis para Cache y Colas
+### 2.4 Configuración de Redis para Cache y Colas
 - [ ] Configurar Redis como driver en `config/cache.php`
 - [ ] Configurar Redis para sesiones en `config/session.php`
 - [ ] Configurar Redis como driver de colas en `config/queue.php`
@@ -108,7 +120,7 @@
 - [ ] Configurar reintentos (3 intentos con backoff exponencial)
 - [ ] Probar conectividad Redis desde Laravel
 
-### 2.4 Migraciones de Logs Básicas (Versión Simplificada)
+### 2.5 Migraciones de Logs Básicas (Versión Simplificada)
 - [ ] Crear migración para tabla `api_logs` (sin particionamiento por ahora)
 - [ ] Crear migración para tabla `error_logs` (sin particionamiento por ahora)
 - [ ] Crear migración para tabla `security_logs` (sin particionamiento por ahora)
@@ -117,7 +129,7 @@
 - [ ] NOTA: Particionamiento avanzado se implementará en Fase 9
 - [ ] Ejecutar migraciones
 
-### 2.5 Migraciones de Autenticación Básica
+### 2.6 Migraciones de Autenticación Básica
 - [ ] Crear migración para tabla `password_reset_tokens`
 - [ ] Crear migración para tabla `jwt_blacklist`
 - [ ] Crear migración para tabla `api_keys`
