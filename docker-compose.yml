@@ -109,30 +109,74 @@ services:
       pgbouncer:
         condition: service_healthy
 
-  # Servicios opcionales - se agregarán en fases posteriores
-  # reverb:
-  #   <<: *app_base
-  #   container_name: apygg_reverb
-  #   profiles: ["dev","staging","prod"]
-  #   command: >
-  #     sh -lc 'until getent hosts redis >/dev/null 2>&1; do sleep 0.5; done;
-  #             php artisan reverb:start --host=0.0.0.0 --port=8080'
-  #   ports:
-  #     - "8012:8080"
-  #   depends_on:
-  #     redis:
-  #       condition: service_healthy
+  # Servicios de procesamiento asíncrono
+  reverb:
+    <<: *app_base
+    container_name: apygg_reverb
+    profiles: ["dev", "staging"]
+    command: >
+      sh -lc 'until getent hosts redis >/dev/null 2>&1; do sleep 0.5; done;
+              php artisan reverb:start --host=0.0.0.0 --port=8080'
+    ports:
+      - "8012:8080"
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080 || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
 
-  # horizon:
-  #   <<: *app_base
-  #   container_name: apygg_horizon
-  #   profiles: ["dev","staging","prod"]
-  #   command: >
-  #     sh -lc 'until getent hosts redis >/dev/null 2>&1; do sleep 0.5; done;
-  #             php artisan horizon'
-  #   depends_on:
-  #     redis:
-  #       condition: service_healthy
+  reverb-prod:
+    <<: *app_prod
+    container_name: apygg_reverb
+    profiles: ["prod"]
+    command: >
+      sh -lc 'until getent hosts redis-prod >/dev/null 2>&1; do sleep 0.5; done;
+              php artisan reverb:start --host=0.0.0.0 --port=8080'
+    ports:
+      - "8012:8080"
+    depends_on:
+      redis-prod:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080 || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  horizon:
+    <<: *app_base
+    container_name: apygg_horizon
+    profiles: ["dev", "staging"]
+    command: >
+      sh -lc 'until getent hosts redis >/dev/null 2>&1; do sleep 0.5; done;
+              php artisan horizon'
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "php artisan horizon:status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  horizon-prod:
+    <<: *app_prod
+    container_name: apygg_horizon
+    profiles: ["prod"]
+    command: >
+      sh -lc 'until getent hosts redis-prod >/dev/null 2>&1; do sleep 0.5; done;
+              php artisan horizon'
+    depends_on:
+      redis-prod:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "php artisan horizon:status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # scheduler:
   #   <<: *app_base

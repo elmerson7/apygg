@@ -651,7 +651,7 @@
 - [ ] Instalar `laravel/reverb` para WebSockets nativo (si se necesita)
 - [ ] Instalar `laravel/scout` para búsqueda full-text (si se necesita)
 - [ ] Instalar `laravel/horizon` para gestión de colas avanzada (si se necesita)
-- [ ] Instalar `sentry/sentry-laravel` para logging de errores (opcional)
+- [x] Instalar `sentry/sentry-laravel` para logging de errores (opcional) (ya instalado: ^4.15, configurado en config/sentry.php)
 - [ ] Ejecutar `composer install`
 
 ### 2.5.3 Configuración de FrankenPHP
