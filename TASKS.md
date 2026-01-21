@@ -3,15 +3,14 @@
 ## Fase 1: Setup Inicial y Configuración Base (Semana 1-2)
 
 ### 1.1 Preparación del Entorno con Docker
-- [x] Crear `docker-compose.yml` básico con servicios:
-  - [x] Servicio PHP 8.4 con extensiones (pdo_pgsql, redis, opcache, gd, intl, zip)
-  - [x] Servicio PostgreSQL 18 para desarrollo
-  - [x] Servicio Redis 7 para cache y colas
-  - [x] Networks y volumes básicos
-- [x] Crear `docker/app/Dockerfile` optimizado para desarrollo
-- [x] ~~Crear `docker-compose.override.yml` para desarrollo local~~ (Eliminado - se usan perfiles dev/prod)
-- [x] Crear `.dockerignore` para optimización
-- [x] Probar que todos los servicios inicien correctamente: `docker compose --profile dev up -d`
+- [ ] Crear `docker-compose.yml` básico con servicios:
+  - [ ] Servicio PHP 8.4 con extensiones (pdo_pgsql, redis, opcache, gd, intl, zip)
+  - [ ] Servicio PostgreSQL 18 para desarrollo
+  - [ ] Servicio Redis 7 para cache y colas
+  - [ ] Networks y volumes básicos
+- [ ] Crear `docker/app/Dockerfile` optimizado para desarrollo
+- [ ] Crear `.dockerignore` para optimización
+- [ ] Probar que todos los servicios inicien correctamente: `docker compose --profile dev up -d`
   - ✅ **Build exitoso**: Configuración DNS en docker-compose.yml (`network: host` y DNS explícitos) resolvió el problema
   - ✅ **Servicios corriendo**: `apygg_app`, `apygg_postgres`, `apygg_redis` están activos
   - ✅ **Postgres y Redis**: Healthy y funcionando correctamente
@@ -19,87 +18,87 @@
   - ✅ **Networks y Volumes**: Creados correctamente (`apygg_network`, `apygg_pgdata`, `apygg_redisdata`)
 
 ### 1.2 Instalación del Proyecto Laravel
-- [x] Crear proyecto Laravel 12 usando contenedor PHP:
-  - [x] Instalado en directorio temporal y movido preservando archivos existentes
-- [x] Configurar nombre del proyecto como `apygg` en `composer.json`
-- [x] Establecer namespaces base: `App\Core`, `App\Modules`, `App\Infrastructure`, `App\Helpers`
-- [x] Configurar autoloading PSR-4 en `composer.json`
-- [x] Generar APP_KEY con `php artisan key:generate`
-- [x] Instalar Laravel Octane con FrankenPHP
-- [x] Verificar que la aplicación funcione en `http://localhost:8010`
+- [ ] Crear proyecto Laravel 12 usando contenedor PHP:
+  - [ ] Instalado en directorio temporal y movido preservando archivos existentes
+- [ ] Configurar nombre del proyecto como `apygg` en `composer.json`
+- [ ] Establecer namespaces base: `App\Core`, `App\Modules`, `App\Infrastructure`, `App\Helpers`
+- [ ] Configurar autoloading PSR-4 en `composer.json`
+- [ ] Generar APP_KEY con `php artisan key:generate`
+- [ ] Instalar Laravel Octane con FrankenPHP
+- [ ] Verificar que la aplicación funcione en `http://localhost:8010`
 
 ### 1.3 Estructura de Directorios
-- [x] Crear estructura base `app/Http/`
-  - [x] `Controllers/Controller.php` (BaseController - existe)
-  - [x] `Controllers/Auth/` (carpeta creada)
-  - [x] `Controllers/Users/` (carpeta creada)
-  - [x] `Controllers/Profiles/` (carpeta creada)
-  - [x] `Controllers/Logs/` (carpeta creada)
-  - [x] `Controllers/Health/` (carpeta creada)
-  - [x] `Requests/BaseFormRequest.php` (BaseRequest - existe)
-  - [x] `Requests/Auth/` (carpeta creada)
-  - [x] `Requests/Users/` (carpeta creada)
-  - [x] `Resources/BaseResource.php` (BaseResource - existe)
-  - [x] `Resources/Auth/` (carpeta creada)
-  - [x] `Resources/Users/` (carpeta creada)
-  - [x] `Middleware/` (carpeta creada - ForceJson, TraceId, RateLimitLogger, SecurityLogger, CacheControl, Idempotency se crearán en fases posteriores)
-- [x] Crear estructura `app/Models/`
-  - [x] `Model.php` (BaseModel - creado)
-  - [x] `User.php` (existe)
-  - [x] `Logs/` (carpeta creada)
-- [x] Crear directorio `app/Services/`
-  - [x] `Logging/` (carpeta creada)
-- [x] Crear directorio `app/Traits/` (carpeta creada)
-- [x] Crear directorio `app/Logging/` (carpeta creada)
-- [x] Crear directorio `app/Listeners/Security/` (carpeta creada)
-- [x] Crear directorio `app/Providers/` (ya existe)
-- [x] Crear estructura `routes/`
-  - [x] `api.php` (rutas principales - existe)
-  - [x] `api/auth.php` (existe)
-  - [x] `api/users.php` (existe)
-- [x] Crear directorio `tests/Unit/`, `tests/Feature/` (existen)
-- [x] Crear directorio `database/migrations/`, `database/seeders/` (existen)
-- [x] Crear directorio `docker/` (ya existe)
-- [x] Crear directorio `docs/` (ya existe)
+- [ ] Crear estructura base `app/Http/`
+  - [ ] `Controllers/Controller.php` (BaseController - existe)
+  - [ ] `Controllers/Auth/` (carpeta creada)
+  - [ ] `Controllers/Users/` (carpeta creada)
+  - [ ] `Controllers/Profiles/` (carpeta creada)
+  - [ ] `Controllers/Logs/` (carpeta creada)
+  - [ ] `Controllers/Health/` (carpeta creada)
+  - [ ] `Requests/BaseFormRequest.php` (BaseRequest - existe)
+  - [ ] `Requests/Auth/` (carpeta creada)
+  - [ ] `Requests/Users/` (carpeta creada)
+  - [ ] `Resources/BaseResource.php` (BaseResource - existe)
+  - [ ] `Resources/Auth/` (carpeta creada)
+  - [ ] `Resources/Users/` (carpeta creada)
+  - [ ] `Middleware/` (carpeta creada - ForceJson, TraceId, RateLimitLogger, SecurityLogger, CacheControl, Idempotency se crearán en fases posteriores)
+- [ ] Crear estructura `app/Models/`
+  - [ ] `Model.php` (BaseModel - creado)
+  - [ ] `User.php` (existe)
+  - [ ] `Logs/` (carpeta creada)
+- [ ] Crear directorio `app/Services/`
+  - [ ] `Logging/` (carpeta creada)
+- [ ] Crear directorio `app/Traits/` (carpeta creada)
+- [ ] Crear directorio `app/Logging/` (carpeta creada)
+- [ ] Crear directorio `app/Listeners/Security/` (carpeta creada)
+- [ ] Crear directorio `app/Providers/` (ya existe)
+- [ ] Crear estructura `routes/`
+  - [ ] `api.php` (rutas principales - existe)
+  - [ ] `api/auth.php` (existe)
+  - [ ] `api/users.php` (existe)
+- [ ] Crear directorio `tests/Unit/`, `tests/Feature/` (existen)
+- [ ] Crear directorio `database/migrations/`, `database/seeders/` (existen)
+- [ ] Crear directorio `docker/` (ya existe)
+- [ ] Crear directorio `docs/` (ya existe)
 
 ### 1.4 Archivos de Configuración de Entornos
-- [x] Crear `.env.example` base documentado (183 líneas, todas las variables necesarias documentadas)
-- [x] Crear `dev.env.example` con debugging habilitado (solo variables Docker)
-- [x] Crear `staging.env.example` con valores cercanos a producción (solo variables Docker)
-- [x] Crear `prod.env.example` con optimizaciones de seguridad (solo variables Docker)
-- [x] Crear `.env` local para desarrollo (existe con APP_KEY generado)
+- [ ] Crear `.env.example` base documentado (183 líneas, todas las variables necesarias documentadas)
+- [ ] Crear `dev.env.example` con debugging habilitado (solo variables Docker)
+- [ ] Crear `staging.env.example` con valores cercanos a producción (solo variables Docker)
+- [ ] Crear `prod.env.example` con optimizaciones de seguridad (solo variables Docker)
+- [ ] Crear `.env` local para desarrollo (existe con APP_KEY generado)
 
 ### 1.5 Instalación de Dependencias Esenciales (Solo las Críticas)
-- [x] Instalar dependencias mínimas para desarrollo inicial:
-  - [x] `php-open-source-saver/jwt-auth` v2.8.3 para autenticación JWT básica (instalado y configurado)
-  - [x] `laravel/octane` v2.13.3 con driver FrankenPHP (instalado y configurado)
-- [x] Ejecutar `composer install` dentro del contenedor (composer update ejecutado, todas las dependencias instaladas)
-- [x] NOTA: Otras dependencias (Reverb, Telescope, Scout, Horizon, etc.) se instalarán cuando sus servicios estén listos
+- [ ] Instalar dependencias mínimas para desarrollo inicial:
+  - [ ] `php-open-source-saver/jwt-auth` v2.8.3 para autenticación JWT básica (instalado y configurado)
+  - [ ] `laravel/octane` v2.13.3 con driver FrankenPHP (instalado y configurado)
+- [ ] Ejecutar `composer install` dentro del contenedor (composer update ejecutado, todas las dependencias instaladas)
+- [ ] NOTA: Otras dependencias (Reverb, Telescope, Scout, Horizon, etc.) se instalarán cuando sus servicios estén listos
 
 ---
 
 ## Fase 2: Configuración Inicial de Base de Datos (Semana 1-2)
 
 ### 2.1 Configuración de PostgreSQL Básica
-- [x] Configurar conexión PostgreSQL principal en `config/database.php`
-- [x] Nombre de base de datos: `apygg`
-- [x] Configurar pool de conexiones optimizado
-- [x] Establecer timeout de conexión
-- [x] Crear base de datos `apygg` en servidor PostgreSQL (Docker)
-- [x] Crear base de datos `apygg_test` para tests
-- [x] Verificar conectividad desde el contenedor
+- [ ] Configurar conexión PostgreSQL principal en `config/database.php`
+- [ ] Nombre de base de datos: `apygg`
+- [ ] Configurar pool de conexiones optimizado
+- [ ] Establecer timeout de conexión
+- [ ] Crear base de datos `apygg` en servidor PostgreSQL (Docker)
+- [ ] Crear base de datos `apygg_test` para tests
+- [ ] Verificar conectividad desde el contenedor
 
 ### 2.2 Configuración de PgBouncer (Connection Pooler)
-- [x] Agregar servicio `pgbouncer` en `docker-compose.yml` con imagen oficial
-- [x] Configurar PgBouncer para modo `transaction` (recomendado para Laravel)
-- [x] Configurar pool size: `default_pool_size=25`, `max_client_conn=100`
-- [x] Crear archivo de configuración `docker/pgbouncer/pgbouncer.ini`
-- [x] Configurar autenticación con `userlist.txt` o variables de entorno (usando variables de entorno)
-- [x] Exponer puerto 6432 (PgBouncer) en lugar de 5432 (PostgreSQL directo) para producción
-- [x] Actualizar variables de entorno: `DB_HOST=pgbouncer` para producción
-- [x] Mantener conexión directa a PostgreSQL en desarrollo (sin PgBouncer)
-- [x] Documentar cuándo usar PgBouncer vs conexión directa (README.md creado)
-- [x] NOTA: PgBouncer es opcional pero recomendado para producción con alta carga
+- [ ] Agregar servicio `pgbouncer` en `docker-compose.yml` con imagen oficial
+- [ ] Configurar PgBouncer para modo `transaction` (recomendado para Laravel)
+- [ ] Configurar pool size: `default_pool_size=25`, `max_client_conn=100`
+- [ ] Crear archivo de configuración `docker/pgbouncer/pgbouncer.ini`
+- [ ] Configurar autenticación con `userlist.txt` o variables de entorno (usando variables de entorno)
+- [ ] Exponer puerto 6432 (PgBouncer) en lugar de 5432 (PostgreSQL directo) para producción
+- [ ] Actualizar variables de entorno: `DB_HOST=pgbouncer` para producción
+- [ ] Mantener conexión directa a PostgreSQL en desarrollo (sin PgBouncer)
+- [ ] Documentar cuándo usar PgBouncer vs conexión directa (README.md creado)
+- [ ] NOTA: PgBouncer es opcional pero recomendado para producción con alta carga
 
 ### 2.3 Primeras Migraciones Base (Esenciales)
 - [ ] Crear migración para tabla `users` con UUID como PK
@@ -112,13 +111,13 @@
 - [ ] Verificar que las tablas se crearon correctamente
 
 ### 2.4 Configuración de Redis para Cache y Colas
-- [x] Configurar Redis como driver en `config/cache.php` (default: redis)
-- [x] Configurar Redis para sesiones en `config/session.php` (default: redis)
-- [x] Configurar Redis como driver de colas en `config/queue.php` (default: redis)
-- [x] Crear colas con prioridades: high, default, low (conexiones: redis-high, redis-default, redis-low)
-- [x] Configurar timeout (60 segundos) (retry_after: 60)
-- [x] Configurar reintentos (3 intentos con backoff exponencial) (max_retries: 3, decorrelated_jitter)
-- [x] Probar conectividad Redis desde Laravel (comando: php artisan redis:test)
+- [ ] Configurar Redis como driver en `config/cache.php` (default: redis)
+- [ ] Configurar Redis para sesiones en `config/session.php` (default: redis)
+- [ ] Configurar Redis como driver de colas en `config/queue.php` (default: redis)
+- [ ] Crear colas con prioridades: high, default, low (conexiones: redis-high, redis-default, redis-low)
+- [ ] Configurar timeout (60 segundos) (retry_after: 60)
+- [ ] Configurar reintentos (3 intentos con backoff exponencial) (max_retries: 3, decorrelated_jitter)
+- [ ] Probar conectividad Redis desde Laravel (comando: php artisan redis:test)
 
 ### 2.5 Migraciones de Logs Básicas (Versión Simplificada)
 - [ ] Crear migración para tabla `api_logs` (sin particionamiento por ahora)
@@ -466,13 +465,13 @@
   - [ ] Limpieza de inputs
 
 ### 10.2 Configuración de CORS
-- [x] Crear `config/cors.php`
-  - [x] `allowed_origins` por entorno (desarrollo: *, producción: desde env)
-  - [x] `allowed_methods`, `allowed_headers` (GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD)
-  - [x] `exposed_headers`, `max_age` (3600 segundos por defecto)
-  - [x] `supports_credentials` (true por defecto)
-- [x] Crear middleware `HandleCors` en `app/Http/Middleware/`
-- [x] Registrar middleware en `bootstrap/app.php`
+- [ ] Crear `config/cors.php`
+  - [ ] `allowed_origins` por entorno (desarrollo: *, producción: desde env)
+  - [ ] `allowed_methods`, `allowed_headers` (GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD)
+  - [ ] `exposed_headers`, `max_age` (3600 segundos por defecto)
+  - [ ] `supports_credentials` (true por defecto)
+- [ ] Crear middleware `HandleCors` en `app/Http/Middleware/`
+- [ ] Registrar middleware en `bootstrap/app.php`
 
 ### 10.3 Rate Limiting Adaptativo
 - [ ] Crear `config/rate-limiting.php`
@@ -621,10 +620,10 @@
 ## Fase 15: Búsqueda con Meilisearch (Opcional, Semana 12)
 
 ### 15.1 Configuración de Meilisearch
-- [x] Instalar Meilisearch en Docker (si está disponible) (servicio configurado en docker-compose.yml)
-- [x] Instalar Laravel Scout y driver (ya instalados: laravel/scout ^10.17, meilisearch/meilisearch-php ^1.15)
-- [x] Configurar en `config/scout.php` (driver: meilisearch, batch size: 500)
-- [x] Configurar batch size y sincronización (chunk.searchable: 500, chunk.unsearchable: 500)
+- [ ] Instalar Meilisearch en Docker (si está disponible) (servicio configurado en docker-compose.yml)
+- [ ] Instalar Laravel Scout y driver (ya instalados: laravel/scout ^10.17, meilisearch/meilisearch-php ^1.15)
+- [ ] Configurar en `config/scout.php` (driver: meilisearch, batch size: 500)
+- [ ] Configurar batch size y sincronización (chunk.searchable: 500, chunk.unsearchable: 500)
 
 ### 15.2 Modelos Searchable
 - [ ] Aplicar trait `Searchable` a User
@@ -651,7 +650,7 @@
 - [ ] Instalar `laravel/reverb` para WebSockets nativo (si se necesita)
 - [ ] Instalar `laravel/scout` para búsqueda full-text (si se necesita)
 - [ ] Instalar `laravel/horizon` para gestión de colas avanzada (si se necesita)
-- [x] Instalar `sentry/sentry-laravel` para logging de errores (opcional) (ya instalado: ^4.15, configurado en config/sentry.php)
+- [ ] Instalar `sentry/sentry-laravel` para logging de errores (opcional) (ya instalado: ^4.15, configurado en config/sentry.php)
 - [ ] Ejecutar `composer install`
 
 ### 2.5.3 Configuración de FrankenPHP

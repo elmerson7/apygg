@@ -1,4 +1,4 @@
-FROM dunglas/frankenphp:php8.4-bookworm
+FROM dunglas/frankenphp:1.11-php8.5-bookworm
 
 # Composer bin
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
