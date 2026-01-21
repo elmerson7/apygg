@@ -43,20 +43,20 @@ fi
 echo "Skipping cache optimization for now..."
 
 # Iniciar servidor
-# TEMPORALMENTE usando php artisan serve hasta resolver problema con octane:start
+# Usando el servidor PHP integrado directamente para evitar el bug de Laravel 12.23.1
+# El bug causa "Call to a member function make() on null" en Command.php:171
+# Afecta a todos los comandos de Artisan (serve, octane:start, etc.)
 if [ "$APP_ENV" = "dev" ]; then
-    echo "Starting Laravel development server (temporary, until octane:start is fixed)..."
-    exec php artisan serve --host=0.0.0.0 --port=8000
-    # exec php artisan octane:start \
-    #     --server=frankenphp \
-    #     --host=0.0.0.0 \
-    #     --port=8000 \
-    #     --workers=auto \
-    #     --watch
+    echo "Starting PHP built-in server (workaround for Laravel 12.23.1 bug)..."
+    exec php -S 0.0.0.0:8000 -t public public/index.php
 else
+    # En producción, intentar usar Octane (puede fallar con el mismo bug)
+    echo "Starting Laravel Octane server (FrankenPHP) in production mode..."
     exec php artisan octane:start \
         --server=frankenphp \
         --host=0.0.0.0 \
         --port=8000 \
-        --workers=auto
+        --workers=auto || \
+    # Fallback al servidor PHP integrado si Octane falla
+    php -S 0.0.0.0:8000 -t public public/index.php
 fi
