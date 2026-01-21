@@ -34,20 +34,25 @@ fi
 
 # Cache/optimize (seguro aunque falten algunos paquetes aún)
 # Limpia caches en dev para ver cambios al instante
-if [ "$APP_ENV" = "dev" ]; then
-    php artisan optimize:clear || true
-else
-    php artisan optimize || true
-fi
+# TEMPORALMENTE DESHABILITADO para diagnosticar problemas de inicialización
+# if [ "$APP_ENV" = "dev" ]; then
+#     php artisan optimize:clear 2>&1 || echo "Warning: optimize:clear failed, continuing anyway..."
+# else
+#     php artisan optimize 2>&1 || echo "Warning: optimize failed, continuing anyway..."
+# fi
+echo "Skipping cache optimization for now..."
 
-# Iniciar Octane con FrankenPHP
+# Iniciar servidor
+# TEMPORALMENTE usando php artisan serve hasta resolver problema con octane:start
 if [ "$APP_ENV" = "dev" ]; then
-    exec php artisan octane:start \
-        --server=frankenphp \
-        --host=0.0.0.0 \
-        --port=8000 \
-        --workers=auto \
-        --watch
+    echo "Starting Laravel development server (temporary, until octane:start is fixed)..."
+    exec php artisan serve --host=0.0.0.0 --port=8000
+    # exec php artisan octane:start \
+    #     --server=frankenphp \
+    #     --host=0.0.0.0 \
+    #     --port=8000 \
+    #     --workers=auto \
+    #     --watch
 else
     exec php artisan octane:start \
         --server=frankenphp \

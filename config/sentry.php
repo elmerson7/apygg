@@ -14,7 +14,7 @@ return [
     |
     */
 
-    'dsn' => env('SENTRY_LARAVEL_DSN', env('SENTRY_DSN')),
+    'dsn' => env('SENTRY_LARAVEL_DSN', env('SENTRY_DSN', null)),
 
     /*
     |--------------------------------------------------------------------------
@@ -89,12 +89,12 @@ return [
     | This callback allows you to filter or modify events before they are sent
     | to Sentry. Return null to prevent the event from being sent.
     |
+    | If you want to use the SentryPiiScrubber, uncomment the line below:
+    | 'before_send' => [\App\Services\SentryPiiScrubber::class],
+    |
     */
 
-    'before_send' => [
-        // Example: Filter out certain exceptions
-        // \App\Exceptions\Handler::class . '@beforeSend',
-    ],
+    // 'before_send' => null, // Removed: only include if you have a callback
 
     /*
     |--------------------------------------------------------------------------
@@ -105,7 +105,7 @@ return [
     |
     */
 
-    'ignored_exceptions' => [
+    'ignore_exceptions' => [
         \Illuminate\Auth\AuthenticationException::class,
         \Illuminate\Auth\Access\AuthorizationException::class,
         \Illuminate\Database\Eloquent\ModelNotFoundException::class,

@@ -289,7 +289,7 @@ services:
     ports:
       - "8013:7700"
     volumes:
-      - meilidata:/meili_data
+      - apygg_meilidata:/meili_data
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:7700/health || exit 1"]
       interval: 10s

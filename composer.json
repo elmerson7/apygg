@@ -44,9 +44,8 @@
     },
     "scripts": {
         "post-autoload-dump": [
-            "@php artisan config:clear",
-            "@php artisan clear-compiled",
-            "@php artisan package:discover --ansi"
+            "@php artisan clear-compiled || true",
+            "@php artisan package:discover --ansi || true"
         ],
         "post-update-cmd": [
             "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
@@ -70,7 +69,11 @@
     },
     "extra": {
         "laravel": {
-            "dont-discover": []
+            "dont-discover": [
+                "sentry/sentry-laravel",
+                "laravel/telescope",
+                "laravel/horizon"
+            ]
         }
     },
     "config": {
