@@ -4,7 +4,7 @@ alwaysApply: false
 # Guía de Ejecución - APYGG Laravel 12
 
 ## Contexto del Proyecto
-**APYGG** - Boilerplate API Laravel 12 production-ready. Stack: Laravel 12 + PHP 8.4 + FrankenPHP (Octane) + PostgreSQL 18 + Redis 7. Arquitectura modular: `Core`, `Modules`, `Infrastructure`, `Helpers`. Base de datos única `apygg` con particionamiento de logs. **NO usar Nginx** - FrankenPHP maneja todo directamente.
+**APYGG** - Boilerplate API Laravel 12 production-ready. Stack: Laravel 12 + PHP 8.5 + FrankenPHP (Octane) + PostgreSQL 18 + Redis 7. Arquitectura modular: `Core`, `Modules`, `Infrastructure`, `Helpers`. Base de datos única `apygg` con particionamiento de logs. **NO usar Nginx** - FrankenPHP maneja todo directamente.
 
 ## Convenciones Establecidas
 - **snake_case**: Columnas BD, atributos modelos, claves arrays/config

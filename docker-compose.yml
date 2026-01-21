@@ -1,0 +1,272 @@
+name: apygg
+
+x-app-base: &app_base
+  build:
+    context: .
+    dockerfile: docker/app/Dockerfile
+    network: host
+    args:
+      USER_ID: ${USER_ID:-1000}
+      GROUP_ID: ${GROUP_ID:-1000}
+  working_dir: /app
+  env_file:
+    - env/${APP_ENV}.env
+  dns:
+    - 8.8.8.8
+    - 8.8.4.4
+    - 1.1.1.1
+  volumes:
+    - ./:/app
+  restart: unless-stopped
+  networks:
+    - apygg_network
+  environment:
+    USER_ID: ${USER_ID:-1000}
+    GROUP_ID: ${GROUP_ID:-1000}
+
+x-app-dev: &app_dev
+  <<: *app_base
+  environment:
+    APP_ENV: ${APP_ENV:-dev}
+    APP_TIMEZONE: UTC
+    APP_DEBUG: "true"
+    LOG_LEVEL: "debug"
+
+x-app-prod: &app_prod
+  <<: *app_base
+  environment:
+    APP_ENV: ${APP_ENV:-prod}
+    APP_TIMEZONE: UTC
+    APP_DEBUG: "false"
+    LOG_LEVEL: "info"
+
+x-postgres-base: &postgres_base
+  image: postgres:18-alpine
+  container_name: apygg_postgres
+  ports:
+    - "8011:5432"
+  volumes:
+    - apygg_pgdata:/var/lib/postgresql/data
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB || exit 1"]
+    interval: 10s
+    timeout: 3s
+    retries: 10
+  networks:
+    - apygg_network
+  restart: unless-stopped
+
+x-redis-base: &redis_base
+  image: redis:7.4-alpine
+  container_name: apygg_redis
+  ports:
+    - "8014:6379"
+  volumes:
+    - apygg_redisdata:/data
+  healthcheck:
+    test: ["CMD", "redis-cli", "ping"]
+    interval: 5s
+    timeout: 3s
+    retries: 20
+  networks:
+    - apygg_network
+  restart: unless-stopped
+
+services:
+  app:
+    <<: *app_dev
+    container_name: apygg_app
+    profiles: ["dev"]
+    ports:
+      - "8010:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000 || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  app-prod:
+    <<: *app_prod
+    container_name: apygg_app
+    profiles: ["prod"]
+    ports:
+      - "8010:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000 || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    depends_on:
+      redis-prod:
+        condition: service_healthy
+      pgbouncer:
+        condition: service_healthy
+
+  reverb:
+    <<: *app_base
+    container_name: apygg_reverb
+    profiles: ["dev", "staging"]
+    command: >
+      sh -lc 'until getent hosts redis >/dev/null 2>&1; do sleep 0.5; done;
+              php artisan reverb:start --host=0.0.0.0 --port=8080'
+    ports:
+      - "8012:8080"
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080 || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  reverb-prod:
+    <<: *app_prod
+    container_name: apygg_reverb
+    profiles: ["prod"]
+    command: >
+      sh -lc 'until getent hosts redis-prod >/dev/null 2>&1; do sleep 0.5; done;
+              php artisan reverb:start --host=0.0.0.0 --port=8080'
+    ports:
+      - "8012:8080"
+    depends_on:
+      redis-prod:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080 || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  horizon:
+    <<: *app_base
+    container_name: apygg_horizon
+    profiles: ["dev", "staging"]
+    command: >
+      sh -lc 'until getent hosts redis >/dev/null 2>&1; do sleep 0.5; done;
+              php artisan horizon'
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "php artisan horizon:status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  horizon-prod:
+    <<: *app_prod
+    container_name: apygg_horizon
+    profiles: ["prod"]
+    command: >
+      sh -lc 'until getent hosts redis-prod >/dev/null 2>&1; do sleep 0.5; done;
+              php artisan horizon'
+    depends_on:
+      redis-prod:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "php artisan horizon:status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  postgres:
+    <<: *postgres_base
+    profiles: ["dev"]
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-apygg}
+      POSTGRES_USER: ${DB_USERNAME:-apygg}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+
+  postgres-prod:
+    <<: *postgres_base
+    container_name: apygg_postgres
+    profiles: ["prod"]
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-apygg}
+      POSTGRES_USER: ${DB_USERNAME:-apygg}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+
+  pgbouncer:
+    image: pgbouncer/pgbouncer:latest
+    container_name: apygg_pgbouncer
+    profiles: ["prod"]
+    ports:
+      - "8017:6432"
+    volumes:
+      - ./docker/pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+      - pgbouncer_logs:/var/log/pgbouncer
+      - pgbouncer_run:/var/run/pgbouncer
+    environment:
+      PGBOUNCER_DATABASES: "* = host=postgres-prod port=5432 dbname=${DB_DATABASE:-apygg} user=${DB_USERNAME:-apygg} password=${DB_PASSWORD:-secret}"
+      PGBOUNCER_POOL_MODE: transaction
+      PGBOUNCER_MAX_CLIENT_CONN: 100
+      PGBOUNCER_DEFAULT_POOL_SIZE: 25
+      PGBOUNCER_MIN_POOL_SIZE: 5
+      PGBOUNCER_RESERVE_POOL_SIZE: 5
+      PGBOUNCER_RESERVE_POOL_TIMEOUT: 3
+      PGBOUNCER_AUTH_TYPE: md5
+      PGBOUNCER_ADMIN_USERS: ${DB_USERNAME:-apygg}
+      PGBOUNCER_STATS_USERS: ${DB_USERNAME:-apygg}
+      PGBOUNCER_LOGFILE: /var/log/pgbouncer/pgbouncer.log
+      PGBOUNCER_PIDFILE: /var/run/pgbouncer/pgbouncer.pid
+    healthcheck:
+      test: ["CMD-SHELL", "pgbouncer -c 'SHOW POOLS' || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    networks:
+      - apygg_network
+    restart: unless-stopped
+    depends_on:
+      postgres-prod:
+        condition: service_healthy
+
+  redis:
+    <<: *redis_base
+    profiles: ["dev"]
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+
+  redis-prod:
+    <<: *redis_base
+    container_name: apygg_redis
+    profiles: ["prod"]
+    command: ["redis-server", "--appendonly", "yes"]
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.16
+    container_name: apygg_meili
+    profiles: ["dev", "staging", "prod"]
+    environment:
+      MEILI_MASTER_KEY: ${MEILISEARCH_KEY:-masterKey}
+      MEILI_ENV: ${APP_ENV:-production}
+      MEILI_NO_ANALYTICS: ${MEILISEARCH_NO_ANALYTICS:-true}
+    ports:
+      - "8013:7700"
+    volumes:
+      - apygg_meilidata:/meili_data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:7700/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    networks:
+      - apygg_network
+    restart: unless-stopped
+
+networks:
+  apygg_network:
+    driver: bridge
+
+volumes:
+  apygg_pgdata:
+  apygg_redisdata:
+  apygg_pgbouncer_logs:
+  apygg_pgbouncer_run:
+  apygg_meilidata:

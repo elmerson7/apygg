@@ -4,7 +4,7 @@
 
 ### 1.1 Preparación del Entorno con Docker
 - [ ] Crear `docker-compose.yml` básico con servicios:
-  - [ ] Servicio PHP 8.4 con extensiones (pdo_pgsql, redis, opcache, gd, intl, zip)
+  - [ ] Servicio PHP 8.5 con extensiones (pdo_pgsql, redis, opcache, gd, intl, zip)
   - [ ] Servicio PostgreSQL 18 para desarrollo
   - [ ] Servicio Redis 7 para cache y colas
   - [ ] Networks y volumes básicos

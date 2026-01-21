@@ -2,6 +2,31 @@
 set -e
 cd /app
 
+# Copiar archivos de entorno si no existen
+if [ ! -f .env ] && [ -f .env.example ]; then
+    echo "Copiando .env.example → .env..."
+    cp .env.example .env
+fi
+
+if [ ! -f env/dev.env ] && [ -f env/dev.env.example ]; then
+    echo "Copiando env/dev.env.example → env/dev.env..."
+    cp env/dev.env.example env/dev.env
+fi
+
+# Verificar si Laravel está instalado (composer.json existe)
+if [ ! -f composer.json ]; then
+    echo "Laravel no está instalado aún. Esperando instalación..."
+    echo "Para instalar Laravel, ejecuta: docker compose exec app composer create-project laravel/laravel . --prefer-dist --no-interaction"
+    # Mantener el contenedor corriendo para permitir instalación manual
+    exec tail -f /dev/null
+fi
+
+# Instalar vendors si faltan
+if [ ! -d vendor ]; then
+    echo "Instalando dependencias de Composer..."
+    composer install --no-interaction --prefer-dist
+fi
+
 # Ajustar permisos de archivos críticos para que sean editables desde el IDE y el contenedor
 # Esto asegura que storage y bootstrap/cache sean escribibles por el usuario del contenedor
 if [ -d "storage" ] && [ -d "bootstrap/cache" ]; then
@@ -19,19 +44,6 @@ if [ -d "storage" ] && [ -d "bootstrap/cache" ]; then
     fi
 fi
 
-# Verificar si Laravel está instalado (composer.json existe)
-if [ ! -f composer.json ]; then
-    echo "Laravel no está instalado aún. Esperando instalación..."
-    echo "Para instalar Laravel, ejecuta: docker compose exec app composer create-project laravel/laravel ."
-    # Mantener el contenedor corriendo para permitir instalación manual
-    exec tail -f /dev/null
-fi
-
-# Instalar vendors si faltan
-if [ ! -d vendor ]; then
-    composer install --no-interaction --prefer-dist
-fi
-
 # Cache/optimize (seguro aunque falten algunos paquetes aún)
 # Limpia caches en dev para ver cambios al instante
 # TEMPORALMENTE DESHABILITADO para diagnosticar problemas de inicialización
@@ -43,20 +55,27 @@ fi
 echo "Skipping cache optimization for now..."
 
 # Iniciar servidor
-# Usando el servidor PHP integrado directamente para evitar el bug de Laravel 12.23.1
-# El bug causa "Call to a member function make() on null" en Command.php:171
-# Afecta a todos los comandos de Artisan (serve, octane:start, etc.)
+# Intentar usar Octane con FrankenPHP primero, fallback al servidor PHP integrado
 if [ "$APP_ENV" = "dev" ]; then
-    echo "Starting PHP built-in server (workaround for Laravel 12.23.1 bug)..."
-    exec php -S 0.0.0.0:8000 -t public public/index.php
+    echo "Starting Laravel Octane server (FrankenPHP) in development mode..."
+    php artisan octane:start \
+        --server=frankenphp \
+        --host=0.0.0.0 \
+        --port=8000 \
+        --workers=2 \
+        --watch || {
+        echo "Octane falló, usando servidor PHP integrado..."
+        exec php -S 0.0.0.0:8000 -t public public/index.php
+    }
 else
-    # En producción, intentar usar Octane (puede fallar con el mismo bug)
+    # En producción, usar Octane con más workers
     echo "Starting Laravel Octane server (FrankenPHP) in production mode..."
     exec php artisan octane:start \
         --server=frankenphp \
         --host=0.0.0.0 \
         --port=8000 \
-        --workers=auto || \
-    # Fallback al servidor PHP integrado si Octane falla
-    php -S 0.0.0.0:8000 -t public public/index.php
+        --workers=auto || {
+        echo "Octane falló, usando servidor PHP integrado..."
+        exec php -S 0.0.0.0:8000 -t public public/index.php
+    }
 fi

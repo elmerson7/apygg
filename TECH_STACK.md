@@ -4,7 +4,7 @@
 
 ### Framework y Servidor HTTP
 - **Laravel 12** - Framework web PHP moderno para aplicaciones robustas
-- **PHP 8.4** - Lenguaje de programación de última generación
+- **PHP 8.5** - Lenguaje de programación de última generación
 - **FrankenPHP (Octane)** - Servidor HTTP moderno production-ready basado en Caddy para desarrollo y PaaS
 
 ### Autenticación y Seguridad
@@ -173,7 +173,7 @@
 
 | Tecnología | Versión | Tipo |
 |---|---|---|
-| PHP | 8.4 | Core |
+| PHP | 8.5 | Core |
 | Laravel | 12.x | Framework |
 | PostgreSQL | 18 | BD |
 | PgBouncer | Latest | Connection Pooler (Opcional) |

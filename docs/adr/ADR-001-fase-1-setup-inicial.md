@@ -34,11 +34,11 @@ La Fase 1 establece la base del proyecto APYGG Laravel 12, incluyendo la configu
 
 #### Decisión 1.1.2: Imagen Base FrankenPHP Específica
 
-**Decisión**: Usar `dunglas/frankenphp:php8.4-bookworm` como imagen base en lugar de construir desde `php:8.4-fpm-bookworm`.
+**Decisión**: Usar `dunglas/frankenphp:php8.4-bookworm` como imagen base en lugar de construir desde `php:8.5-fpm-bookworm`.
 
 **Razones**:
-- El plan mencionaba `php:8.4-fpm-bookworm` pero FrankenPHP/Octane requiere CLI, no FPM
-- La imagen oficial `dunglas/frankenphp:php8.4-bookworm` ya incluye PHP 8.4 + FrankenPHP preconfigurado
+- El plan mencionaba `php:8.5-fpm-bookworm` pero FrankenPHP/Octane requiere CLI, no FPM
+- La imagen oficial `dunglas/frankenphp:php8.4-bookworm` ya incluye PHP 8.5 + FrankenPHP preconfigurado
 - Versión específica (`php8.4-bookworm`) en lugar de `latest` para mayor estabilidad
 - Simplifica el Dockerfile al evitar instalación manual de FrankenPHP
 - Optimizada específicamente para Laravel Octane
@@ -305,7 +305,7 @@ make fix-permissions
 **Razones**:
 - `tymon/jwt-auth` es un paquete que ya no se mantiene activamente
 - `php-open-source-saver/jwt-auth` es un fork mantenido activamente del paquete original
-- Compatible con Laravel 12 y PHP 8.4
+- Compatible con Laravel 12 y PHP 8.5
 - API idéntica a `tymon/jwt-auth`, por lo que la migración es transparente
 - Mejor soporte y actualizaciones de seguridad
 
@@ -329,7 +329,7 @@ make fix-permissions
 **Razones**:
 - Versión más reciente con mejoras de rendimiento y estabilidad
 - Correcciones de bugs de versiones anteriores
-- Mejor compatibilidad con FrankenPHP y PHP 8.4
+- Mejor compatibilidad con FrankenPHP y PHP 8.5
 - Mantener el proyecto actualizado con las últimas versiones estables
 
 **Implementación**:

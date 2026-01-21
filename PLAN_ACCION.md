@@ -14,7 +14,7 @@ Este documento describe el plan de acción completo para construir el boilerplat
 
 ### Stack Tecnológico
 
-- **Framework**: Laravel 12 + PHP 8.4
+- **Framework**: Laravel 12 + PHP 8.5
 - **Servidor HTTP**: FrankenPHP (Octane) para alto rendimiento y concurrencia
 - **Base de Datos**: PostgreSQL 18 (base principal `apygg` con particionamiento de logs)
 - **Cache/Colas**: Redis 7 (cache, sesiones, colas) + Laravel Horizon
@@ -50,7 +50,7 @@ Este documento describe el plan de acción completo para construir el boilerplat
 
 | Servicio | Descripción | Puerto |
 |----------|-------------|--------|
-| `app` | Contenedor PHP 8.4 + FrankenPHP (Octane). Aplicación Laravel | 8010 |
+| `app` | Contenedor PHP 8.5 + FrankenPHP (Octane). Aplicación Laravel | 8010 |
 | `postgres` | PostgreSQL 18 - Base de datos principal `apygg` | 8011 |
 | `redis` | Redis 7 - Cache, sesiones y driver de colas | 8014 |
 | `meilisearch` | Motor de búsqueda full-text (opcional) | 8013 |
@@ -1061,8 +1061,8 @@ readinessProbe:
 
 ### 11.1 Servicios de Aplicación
 
-**App Container (PHP 8.4 + Laravel):**
-- Dockerfile basado en `php:8.4-fpm-bookworm`
+**App Container (PHP 8.5 + Laravel):**
+- Dockerfile basado en `php:8.5-fpm-bookworm`
 - Extensiones instaladas: pdo_pgsql, redis, opcache, gd, intl, zip
 - Instalación de Composer desde imagen oficial
 - Copia de código de aplicación con optimización de layers
