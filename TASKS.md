@@ -466,11 +466,13 @@
   - [ ] Limpieza de inputs
 
 ### 10.2 Configuración de CORS
-- [ ] Crear `config/cors.php`
-  - [ ] `allowed_origins` por entorno
-  - [ ] `allowed_methods`, `allowed_headers`
-  - [ ] `exposed_headers`, `max_age`
-  - [ ] `supports_credentials`
+- [x] Crear `config/cors.php`
+  - [x] `allowed_origins` por entorno (desarrollo: *, producción: desde env)
+  - [x] `allowed_methods`, `allowed_headers` (GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD)
+  - [x] `exposed_headers`, `max_age` (3600 segundos por defecto)
+  - [x] `supports_credentials` (true por defecto)
+- [x] Crear middleware `HandleCors` en `app/Http/Middleware/`
+- [x] Registrar middleware en `bootstrap/app.php`
 
 ### 10.3 Rate Limiting Adaptativo
 - [ ] Crear `config/rate-limiting.php`
