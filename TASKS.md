@@ -90,16 +90,16 @@
 - [x] Verificar conectividad desde el contenedor
 
 ### 2.2 Configuración de PgBouncer (Connection Pooler)
-- [ ] Agregar servicio `pgbouncer` en `docker-compose.yml` con imagen oficial
-- [ ] Configurar PgBouncer para modo `transaction` (recomendado para Laravel)
-- [ ] Configurar pool size: `default_pool_size=25`, `max_client_conn=100`
-- [ ] Crear archivo de configuración `docker/pgbouncer/pgbouncer.ini`
-- [ ] Configurar autenticación con `userlist.txt` o variables de entorno
-- [ ] Exponer puerto 6432 (PgBouncer) en lugar de 5432 (PostgreSQL directo) para producción
-- [ ] Actualizar variables de entorno: `DB_HOST=pgbouncer` para producción
-- [ ] Mantener conexión directa a PostgreSQL en desarrollo (sin PgBouncer)
-- [ ] Documentar cuándo usar PgBouncer vs conexión directa
-- [ ] NOTA: PgBouncer es opcional pero recomendado para producción con alta carga
+- [x] Agregar servicio `pgbouncer` en `docker-compose.yml` con imagen oficial
+- [x] Configurar PgBouncer para modo `transaction` (recomendado para Laravel)
+- [x] Configurar pool size: `default_pool_size=25`, `max_client_conn=100`
+- [x] Crear archivo de configuración `docker/pgbouncer/pgbouncer.ini`
+- [x] Configurar autenticación con `userlist.txt` o variables de entorno (usando variables de entorno)
+- [x] Exponer puerto 6432 (PgBouncer) en lugar de 5432 (PostgreSQL directo) para producción
+- [x] Actualizar variables de entorno: `DB_HOST=pgbouncer` para producción
+- [x] Mantener conexión directa a PostgreSQL en desarrollo (sin PgBouncer)
+- [x] Documentar cuándo usar PgBouncer vs conexión directa (README.md creado)
+- [x] NOTA: PgBouncer es opcional pero recomendado para producción con alta carga
 
 ### 2.3 Primeras Migraciones Base (Esenciales)
 - [ ] Crear migración para tabla `users` con UUID como PK

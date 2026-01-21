@@ -106,7 +106,7 @@ services:
     depends_on:
       redis-prod:
         condition: service_healthy
-      postgres-prod:
+      pgbouncer:
         condition: service_healthy
 
   # Servicios opcionales - se agregarán en fases posteriores
@@ -162,6 +162,47 @@ services:
       POSTGRES_DB: ${DB_DATABASE:-apygg}
       POSTGRES_USER: ${DB_USERNAME:-apygg}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+
+  pgbouncer:
+    image: pgbouncer/pgbouncer:latest
+    container_name: apygg_pgbouncer
+    profiles: ["prod"]
+    ports:
+      - "8017:6432"
+    volumes:
+      - ./docker/pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+      - pgbouncer_logs:/var/log/pgbouncer
+      - pgbouncer_run:/var/run/pgbouncer
+    environment:
+      # Connection string para la base de datos backend
+      # Formato: "dbname=nombre host=host port=5432 user=usuario password=pass"
+      PGBOUNCER_DATABASES: "* = host=postgres-prod port=5432 dbname=${DB_DATABASE:-apygg} user=${DB_USERNAME:-apygg} password=${DB_PASSWORD:-secret}"
+      # Configuración de pool
+      PGBOUNCER_POOL_MODE: transaction
+      PGBOUNCER_MAX_CLIENT_CONN: 100
+      PGBOUNCER_DEFAULT_POOL_SIZE: 25
+      PGBOUNCER_MIN_POOL_SIZE: 5
+      PGBOUNCER_RESERVE_POOL_SIZE: 5
+      PGBOUNCER_RESERVE_POOL_TIMEOUT: 3
+      # Autenticación
+      PGBOUNCER_AUTH_TYPE: md5
+      # Admin y stats users
+      PGBOUNCER_ADMIN_USERS: ${DB_USERNAME:-apygg}
+      PGBOUNCER_STATS_USERS: ${DB_USERNAME:-apygg}
+      # Logging
+      PGBOUNCER_LOGFILE: /var/log/pgbouncer/pgbouncer.log
+      PGBOUNCER_PIDFILE: /var/run/pgbouncer/pgbouncer.pid
+    healthcheck:
+      test: ["CMD-SHELL", "pgbouncer -c 'SHOW POOLS' || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    networks:
+      - apygg_network
+    restart: unless-stopped
+    depends_on:
+      postgres-prod:
+        condition: service_healthy
 
   # postgres_logs eliminado - los logs van en la misma BD apygg con particionamiento
   # postgres_logs:
@@ -234,6 +275,8 @@ networks:
 volumes:
   apygg_pgdata:
   apygg_redisdata:
+  pgbouncer_logs:
+  pgbouncer_run:
   # Volumes no usados en Fase 1.1 - se agregarán en fases posteriores
   # apygg_pglogsdata:
   # apygg_meilidata:
