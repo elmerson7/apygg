@@ -8,15 +8,14 @@ return [
     |--------------------------------------------------------------------------
     |
     | This option controls the default search connection that gets used while
-    | using Laravel Scout. This connection is used when syncing all models
+    | using Laravel Scout. This connection is used when syncing your models
     | to the search service. You should adjust this based on your needs.
     |
-    | Supported: "algolia", "meilisearch", "typesense",
-    |            "database", "collection", "null"
+    | Supported: "algolia", "meilisearch", "collection", "database", "null"
     |
     */
 
-    'driver' => env('SCOUT_DRIVER', 'algolia'),
+    'driver' => env('SCOUT_DRIVER', 'meilisearch'),
 
     /*
     |--------------------------------------------------------------------------
@@ -49,9 +48,9 @@ return [
     | Database Transactions
     |--------------------------------------------------------------------------
     |
-    | This configuration option determines if your data will only be synced
-    | with your search indexes after every open database transaction has
-    | been committed, thus preventing any discarded data from syncing.
+    | This option determines if your model's data syncing operations will
+    | run within database transactions. This may be useful to disable if
+    | you're experiencing deadlocks when syncing.
     |
     */
 
@@ -63,8 +62,9 @@ return [
     |--------------------------------------------------------------------------
     |
     | These options allow you to control the maximum chunk size when you are
-    | mass importing data into the search engine. This allows you to fine
-    | tune each of these chunk sizes based on the power of the servers.
+    | importing a large number of records into your search engine. This allows
+    | you to fine-tune each of these chunk sizes based on the power of the
+    | servers hosting your search engine as well as the size of your models.
     |
     */
 
@@ -91,11 +91,9 @@ return [
     | Identify User
     |--------------------------------------------------------------------------
     |
-    | This option allows you to control whether to notify the search engine
-    | of the user performing the search. This is sometimes useful if the
-    | engine supports any analytics based on this application's users.
-    |
-    | Supported engines: "algolia"
+    | This option allows you to control whether notifications are sent about
+    | Scout operations, such as when indexes are being rebuilt or when
+    | records are being bulk imported.
     |
     */
 
@@ -117,8 +115,7 @@ return [
         'secret' => env('ALGOLIA_SECRET', ''),
         'index-settings' => [
             // 'users' => [
-            //     'searchableAttributes' => ['id', 'name', 'email'],
-            //     'attributesForFaceting'=> ['filterOnly(email)'],
+            //     'attributesToIndex' => ['name', 'email'],
             // ],
         ],
     ],
@@ -128,95 +125,41 @@ return [
     | Meilisearch Configuration
     |--------------------------------------------------------------------------
     |
-    | Here you may configure your Meilisearch settings. Meilisearch is an open
-    | source search engine with minimal configuration. Below, you can state
-    | the host and key information for your own Meilisearch installation.
-    |
-    | See: https://www.meilisearch.com/docs/learn/configuration/instance_options#all-instance-options
+    | Here you may configure your Meilisearch settings. Meilisearch is a
+    | blazing fast, open-source search engine. Scout's Meilisearch driver
+    | provides you with a simple way to integrate Meilisearch with your
+    | Laravel application.
     |
     */
 
     'meilisearch' => [
-        'host' => env('MEILISEARCH_HOST', 'http://localhost:7700'),
-        'key' => env('MEILISEARCH_KEY'),
+        'host' => env('MEILISEARCH_HOST', 'http://meilisearch:7700'),
+        'key' => env('MEILISEARCH_KEY', 'masterKey'),
         'index-settings' => [
-            'users_index' => [
-                'searchableAttributes' => ['full_name', 'first_name', 'last_name', 'email'],
-                'filterableAttributes' => ['id', 'email_domain', 'created_at', 'email_verified_at', 'is_verified'],
-                'sortableAttributes' => ['created_at', 'first_name', 'last_name', 'email_verified_at'],
-                'displayedAttributes' => ['id', 'first_name', 'last_name', 'full_name', 'email', 'is_verified', 'created_at'],
-                'searchCutoffMs' => 1000,
-                'rankingRules' => [
-                    'words',
-                    'typo',
-                    'proximity',
-                    'attribute',
-                    'sort',
-                    'exactness',
-                    'created_at:desc'
-                ],
-            ],
+            // Configuración de índices por modelo
+            // 'users' => [
+            //     'filterableAttributes' => ['role', 'status'],
+            //     'sortableAttributes' => ['created_at', 'updated_at'],
+            //     'searchableAttributes' => ['name', 'email'],
+            // ],
         ],
+        'index-settings-prefix' => env('MEILISEARCH_INDEX_SETTINGS_PREFIX', ''),
     ],
 
     /*
     |--------------------------------------------------------------------------
-    | Typesense Configuration
+    | Database Configuration
     |--------------------------------------------------------------------------
     |
-    | Here you may configure your Typesense settings. Typesense is an open
-    | source search engine using minimal configuration. Below, you will
-    | state the host, key, and schema configuration for the instance.
+    | Here you may configure your database search settings. This driver uses
+    | Laravel's database to store search indexes. This is useful for small
+    | applications or when you want to test Scout without external services.
     |
     */
 
-    'typesense' => [
-        'client-settings' => [
-            'api_key' => env('TYPESENSE_API_KEY', 'xyz'),
-            'nodes' => [
-                [
-                    'host' => env('TYPESENSE_HOST', 'localhost'),
-                    'port' => env('TYPESENSE_PORT', '8108'),
-                    'path' => env('TYPESENSE_PATH', ''),
-                    'protocol' => env('TYPESENSE_PROTOCOL', 'http'),
-                ],
-            ],
-            'nearest_node' => [
-                'host' => env('TYPESENSE_HOST', 'localhost'),
-                'port' => env('TYPESENSE_PORT', '8108'),
-                'path' => env('TYPESENSE_PATH', ''),
-                'protocol' => env('TYPESENSE_PROTOCOL', 'http'),
-            ],
-            'connection_timeout_seconds' => env('TYPESENSE_CONNECTION_TIMEOUT_SECONDS', 2),
-            'healthcheck_interval_seconds' => env('TYPESENSE_HEALTHCHECK_INTERVAL_SECONDS', 30),
-            'num_retries' => env('TYPESENSE_NUM_RETRIES', 3),
-            'retry_interval_seconds' => env('TYPESENSE_RETRY_INTERVAL_SECONDS', 1),
-        ],
-        // 'max_total_results' => env('TYPESENSE_MAX_TOTAL_RESULTS', 1000),
-        'model-settings' => [
-            // User::class => [
-            //     'collection-schema' => [
-            //         'fields' => [
-            //             [
-            //                 'name' => 'id',
-            //                 'type' => 'string',
-            //             ],
-            //             [
-            //                 'name' => 'name',
-            //                 'type' => 'string',
-            //             ],
-            //             [
-            //                 'name' => 'created_at',
-            //                 'type' => 'int64',
-            //             ],
-            //         ],
-            //         'default_sorting_field' => 'created_at',
-            //     ],
-            //     'search-parameters' => [
-            //         'query_by' => 'name'
-            //     ],
-            // ],
-        ],
+    'database' => [
+        'connection' => env('DB_CONNECTION', 'mysql'),
+        'table' => 'scout_index',
     ],
 
 ];

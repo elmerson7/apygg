@@ -234,21 +234,26 @@ services:
     profiles: ["prod"]
     command: ["redis-server","--appendonly","yes"]
 
-  # meilisearch:
-  #   image: getmeili/meilisearch:v1.16
-  #   container_name: apygg_meili
-  #   profiles: ["dev","staging"]
-  #   environment:
-  #     MEILI_MASTER_KEY: ${MEILISEARCH_KEY:-masterKey}
-  #   ports:
-  #     - "8013:7700"
-  #   volumes:
-  #     - meilidata:/meili_data
-  #   healthcheck:
-  #     test: ["CMD-SHELL","curl -fsS http://localhost:7700/health || exit 1"]
-  #     interval: 10s
-  #     timeout: 3s
-  #     retries: 10
+  meilisearch:
+    image: getmeili/meilisearch:v1.16
+    container_name: apygg_meili
+    profiles: ["dev", "staging", "prod"]
+    environment:
+      MEILI_MASTER_KEY: ${MEILISEARCH_KEY:-masterKey}
+      MEILI_ENV: ${APP_ENV:-production}
+      MEILI_NO_ANALYTICS: ${MEILISEARCH_NO_ANALYTICS:-true}
+    ports:
+      - "8013:7700"
+    volumes:
+      - meilidata:/meili_data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:7700/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    networks:
+      - apygg_network
+    restart: unless-stopped
 
   # pgadmin:
   #   image: dpage/pgadmin4:9.8
@@ -275,9 +280,9 @@ networks:
 volumes:
   apygg_pgdata:
   apygg_redisdata:
-  pgbouncer_logs:
-  pgbouncer_run:
+  apygg_pgbouncer_logs:
+  apygg_pgbouncer_run:
+  apygg_meilidata:
   # Volumes no usados en Fase 1.1 - se agregarán en fases posteriores
   # apygg_pglogsdata:
-  # apygg_meilidata:
   # apygg_pgadmindata:

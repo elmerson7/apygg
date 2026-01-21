@@ -621,10 +621,10 @@
 ## Fase 15: Búsqueda con Meilisearch (Opcional, Semana 12)
 
 ### 15.1 Configuración de Meilisearch
-- [ ] Instalar Meilisearch en Docker (si está disponible)
-- [ ] Instalar Laravel Scout y driver
-- [ ] Configurar en `config/scout.php`
-- [ ] Configurar batch size y sincronización
+- [x] Instalar Meilisearch en Docker (si está disponible) (servicio configurado en docker-compose.yml)
+- [x] Instalar Laravel Scout y driver (ya instalados: laravel/scout ^10.17, meilisearch/meilisearch-php ^1.15)
+- [x] Configurar en `config/scout.php` (driver: meilisearch, batch size: 500)
+- [x] Configurar batch size y sincronización (chunk.searchable: 500, chunk.unsearchable: 500)
 
 ### 15.2 Modelos Searchable
 - [ ] Aplicar trait `Searchable` a User
