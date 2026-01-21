@@ -112,13 +112,13 @@
 - [ ] Verificar que las tablas se crearon correctamente
 
 ### 2.4 Configuración de Redis para Cache y Colas
-- [ ] Configurar Redis como driver en `config/cache.php`
-- [ ] Configurar Redis para sesiones en `config/session.php`
-- [ ] Configurar Redis como driver de colas en `config/queue.php`
-- [ ] Crear colas con prioridades: high, default, low
-- [ ] Configurar timeout (60 segundos)
-- [ ] Configurar reintentos (3 intentos con backoff exponencial)
-- [ ] Probar conectividad Redis desde Laravel
+- [x] Configurar Redis como driver en `config/cache.php` (default: redis)
+- [x] Configurar Redis para sesiones en `config/session.php` (default: redis)
+- [x] Configurar Redis como driver de colas en `config/queue.php` (default: redis)
+- [x] Crear colas con prioridades: high, default, low (conexiones: redis-high, redis-default, redis-low)
+- [x] Configurar timeout (60 segundos) (retry_after: 60)
+- [x] Configurar reintentos (3 intentos con backoff exponencial) (max_retries: 3, decorrelated_jitter)
+- [x] Probar conectividad Redis desde Laravel (comando: php artisan redis:test)
 
 ### 2.5 Migraciones de Logs Básicas (Versión Simplificada)
 - [ ] Crear migración para tabla `api_logs` (sin particionamiento por ahora)
