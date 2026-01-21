@@ -8,12 +8,24 @@ GROUP_ID ?= $(shell id -g)
 export USER_ID
 export GROUP_ID
 
-.PHONY: build up down logs ps sh composer art key migrate seed jwt scout horizon reverb tinker fix-permissions
+.PHONY: build up down logs ps sh composer art key migrate seed jwt scout horizon reverb tinker fix-permissions ensure-env
 
-build:
+# Asegurar que env/${ENV}.env existe antes de build/up
+ensure-env:
+	@if [ ! -f env/$(ENV).env ]; then \
+		if [ -f env/$(ENV).env.example ]; then \
+			echo "Copiando env/$(ENV).env.example → env/$(ENV).env..."; \
+			cp env/$(ENV).env.example env/$(ENV).env; \
+		else \
+			echo "Error: env/$(ENV).env.example no existe"; \
+			exit 1; \
+		fi; \
+	fi
+
+build: ensure-env
 	USER_ID=$(USER_ID) GROUP_ID=$(GROUP_ID) $(DC) build --build-arg USER_ID=$(USER_ID) --build-arg GROUP_ID=$(GROUP_ID)
 
-up:
+up: ensure-env
 	APP_ENV=$(ENV) $(DC) up -d
 
 down:
