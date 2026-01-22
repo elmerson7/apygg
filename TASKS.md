@@ -120,20 +120,20 @@
 - [x] Probar conectividad Redis desde Laravel (comando: php artisan redis:test) (verificado: Redis funciona correctamente, ping exitoso)
 
 ### 2.5 Migraciones de Logs Básicas (Versión Simplificada)
-- [ ] Crear migración para tabla `api_logs` (sin particionamiento por ahora)
-- [ ] Crear migración para tabla `error_logs` (sin particionamiento por ahora)
-- [ ] Crear migración para tabla `security_logs` (sin particionamiento por ahora)
-- [ ] Crear migración para tabla `activity_logs` (sin particionamiento por ahora)
-- [ ] Crear índices básicos por created_at
-- [ ] NOTA: Particionamiento avanzado se implementará en Fase 9
-- [ ] Ejecutar migraciones
+- [x] Crear migración para tabla `api_logs` (sin particionamiento por ahora) (creada: 2024_01_01_000007_create_api_logs_table.php, ID como PK, trace_id UUID, user_id UUID, índices en trace_id, user_id, created_at)
+- [x] Crear migración para tabla `error_logs` (sin particionamiento por ahora) (creada: 2024_01_01_000008_create_error_logs_table.php, ID como PK, trace_id UUID, user_id UUID, severity enum, índices en trace_id, user_id, severity, created_at)
+- [x] Crear migración para tabla `security_logs` (sin particionamiento por ahora) (creada: 2024_01_01_000009_create_security_logs_table.php, ID como PK, trace_id UUID, user_id UUID, event_type enum, índices en trace_id, user_id, event_type, created_at)
+- [x] Crear migración para tabla `activity_logs` (sin particionamiento por ahora) (creada: 2024_01_01_000010_create_activity_logs_table.php, ID como PK, user_id UUID, model_type/model_id, action enum, índices en user_id, model_type/model_id, action, created_at)
+- [x] Crear índices básicos por created_at (índices creados en todas las tablas de logs: created_at, user_id, trace_id, y otros campos relevantes según tipo de log)
+- [x] NOTA: Particionamiento avanzado se implementará en Fase 9
+- [x] Ejecutar migraciones (todas las migraciones ejecutadas correctamente, batch [3], tablas creadas: api_logs, error_logs, security_logs, activity_logs)
 
 ### 2.6 Migraciones de Autenticación Básica
-- [ ] Crear migración para tabla `password_reset_tokens`
-- [ ] Crear migración para tabla `jwt_blacklist`
-- [ ] Crear migración para tabla `api_keys`
-- [ ] Crear migración para tabla `sessions` (si se usa)
-- [ ] Ejecutar migraciones
+- [x] Crear migración para tabla `password_reset_tokens` (creada en 2024_01_01_000001_create_users_table.php, tabla del sistema Laravel)
+- [x] Crear migración para tabla `jwt_blacklist` (creada: 2024_01_01_000011_create_jwt_blacklist_table.php, ID como PK, jti único, user_id UUID, expires_at, índices en jti, user_id, expires_at, created_at)
+- [x] Crear migración para tabla `api_keys` (creada: 2024_01_01_000012_create_api_keys_table.php, UUID como PK, user_id UUID FK, name, key único, scopes JSON, last_used_at, expires_at, soft deletes)
+- [x] Crear migración para tabla `sessions` (si se usa) (creada en 2024_01_01_000001_create_users_table.php, tabla del sistema Laravel)
+- [x] Ejecutar migraciones (todas las migraciones ejecutadas correctamente, batch [4], tablas creadas: jwt_blacklist, api_keys; password_reset_tokens y sessions ya existían)
 
 ---
 
