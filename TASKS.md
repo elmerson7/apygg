@@ -252,21 +252,23 @@
 ## Fase 5: Sistema de Autenticación (Semana 5)
 
 ### 5.1 Configuración de JWT
-- [ ] Instalar y publicar configuración de `php-open-source-saver/jwt-auth`
-- [ ] Generar `JWT_SECRET` seguro
-- [ ] Configurar tiempos de expiración (access: 15 min, refresh: 7 días)
-- [ ] Crear migración y tabla `jwt_blacklist`
-- [ ] Configurar claims estándar (iss, aud, exp, iat, sub)
+- [x] Instalar y publicar configuración de `php-open-source-saver/jwt-auth`
+- [x] Generar `JWT_SECRET` seguro
+- [x] Configurar tiempos de expiración (access: 15 min, refresh: 7 días)
+- [x] Crear migración y tabla `jwt_blacklist`
+- [x] Configurar claims estándar (iss, aud, exp, iat, sub)
+- [x] Implementar `JWTSubject` en modelo `User`
+- [x] Configurar guard `api` con driver `jwt` en `config/auth.php`
 
 ### 5.2 Autenticación JWT - AuthController
-- [ ] Crear `app/Modules/Auth/Controllers/AuthController.php`
-  - [ ] `POST /api/v1/auth/login` - Login con email/contraseña
-  - [ ] `POST /api/v1/auth/register` - Registro (si está habilitado)
-  - [ ] `POST /api/v1/auth/logout` - Logout y revocación
-  - [ ] `POST /api/v1/auth/refresh` - Renovar token
-  - [ ] `GET /api/v1/auth/me` - Datos del usuario autenticado
-- [ ] Crear `AuthRequest` y `RegisterRequest` con validaciones
-- [ ] Crear `AuthResource` para transformar respuestas
+- [x] Crear `app/Modules/Auth/Controllers/AuthController.php`
+  - [x] `POST /auth/login` - Login con email/contraseña
+  - [x] `POST /auth/register` - Registro (si está habilitado)
+  - [x] `POST /auth/logout` - Logout y revocación
+  - [x] `POST /auth/refresh` - Renovar token
+  - [x] `GET /auth/me` - Datos del usuario autenticado
+- [x] Crear `LoginRequest` y `RegisterRequest` con validaciones
+- [x] Crear `AuthResource` para transformar respuestas
 
 ### 5.3 Servicios de Autenticación
 - [ ] Crear `TokenService` en `app/Modules/Auth/Services/`

@@ -61,13 +61,22 @@ Route::get('/test-sentry', function () {
     ]);
 });
 
-// Rutas públicas (sin autenticación)
-// Route::prefix('auth')->group(function () {
-//     Route::post('/login', [AuthController::class, 'login']);
-//     Route::post('/register', [AuthController::class, 'register']);
-//     Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
-//     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
-// });
+// Rutas públicas de autenticación (sin autenticación requerida)
+use App\Modules\Auth\Controllers\AuthController;
+
+Route::prefix('auth')->group(function () {
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/register', [AuthController::class, 'register']);
+    // Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+    // Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+});
+
+// Rutas protegidas de autenticación (requieren autenticación JWT)
+Route::middleware(['auth:api'])->prefix('auth')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/refresh', [AuthController::class, 'refresh']);
+    Route::get('/me', [AuthController::class, 'me']);
+});
 
 // Rutas protegidas (requieren autenticación JWT)
 // Route::middleware(['auth:api'])->group(function () {
@@ -77,9 +86,6 @@ Route::get('/test-sentry', function () {
 //         Route::put('/{id}', [UserController::class, 'update']);
 //         Route::delete('/{id}', [UserController::class, 'destroy']);
 //     });
-//
-//     Route::post('/auth/logout', [AuthController::class, 'logout']);
-//     Route::get('/auth/me', [AuthController::class, 'me']);
 // });
 
 // Rutas con API Key (para servicios/integraciones)
