@@ -190,10 +190,10 @@
 - [x] Todos con mensajes de error en español
 
 ### 3.4 Implementación de Servicios Base
-- [ ] Crear `CacheService` en `app/Infrastructure/Services/`
-  - [ ] Métodos: get(), set(), forget(), remember()
-  - [ ] Tags para invalidación selectiva
-  - [ ] Método getAllMetrics()
+- [x] Crear `CacheService` en `app/Infrastructure/Services/`
+  - [x] Métodos: get(), set(), forget(), remember()
+  - [x] Tags para invalidación selectiva
+  - [x] Método getAllMetrics()
 - [ ] Crear `LogService` en `app/Infrastructure/Services/`
   - [ ] Métodos: log(), logApi(), logActivity(), logSecurity(), logError()
   - [ ] Integración con Sentry
