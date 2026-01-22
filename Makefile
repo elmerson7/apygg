@@ -8,7 +8,7 @@ GROUP_ID ?= $(shell id -g)
 export USER_ID
 export GROUP_ID
 
-.PHONY: build up down logs ps sh composer art key migrate seed jwt scout horizon reverb tinker fix-permissions ensure-env
+.PHONY: build up down restart logs ps sh composer art key migrate seed jwt meilisearch-key scout horizon reverb tinker fix-permissions ensure-env
 
 # Asegurar que env/${ENV}.env existe antes de build/up
 ensure-env:
@@ -26,10 +26,21 @@ build: ensure-env
 	USER_ID=$(USER_ID) GROUP_ID=$(GROUP_ID) $(DC) build --build-arg USER_ID=$(USER_ID) --build-arg GROUP_ID=$(GROUP_ID)
 
 up: ensure-env
+	@export $$(grep -v '^#' env/$(ENV).env 2>/dev/null | grep -v '^$$' | xargs) && \
 	APP_ENV=$(ENV) $(DC) up -d
 
 down:
 	APP_ENV=$(ENV) $(DC) down
+
+restart:
+	@export $$(grep -v '^#' env/$(ENV).env 2>/dev/null | grep -v '^$$' | xargs) && \
+	if [ -z "$(service)" ]; then \
+		echo "Reiniciando todos los servicios..."; \
+		APP_ENV=$(ENV) $(DC) restart; \
+	else \
+		echo "Reiniciando servicio $(service)..."; \
+		APP_ENV=$(ENV) $(DC) restart $(service); \
+	fi
 
 logs:
 	$(DC) logs -f --tail=200
@@ -61,6 +72,16 @@ jwt:
 	@echo "Generando clave JWT..."
 	$(DC) exec app php artisan jwt:secret -f --show
 	@echo "Clave JWT generada, guardala en env/$(ENV).env"
+
+meilisearch-key:
+	@echo "Generando clave segura para Meilisearch..."
+	@KEY=$$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-32); \
+	echo "Clave generada: $$KEY"; \
+	echo ""; \
+	echo "Agrega esta línea en env/$(ENV).env:"; \
+	echo "MEILISEARCH_KEY=$$KEY"; \
+	echo ""; \
+	echo "Luego reinicia Meilisearch: make restart service=meilisearch"
 
 # Solo sync configuración
 scout-sync:

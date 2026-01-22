@@ -112,7 +112,8 @@ services:
     container_name: apygg_reverb
     profiles: ["dev", "staging"]
     command: >
-      sh -lc 'until getent hosts redis >/dev/null 2>&1; do sleep 0.5; done;
+      sh -lc 'if [ ! -d vendor ]; then composer install --no-interaction --prefer-dist; fi;
+              until getent hosts redis >/dev/null 2>&1; do sleep 0.5; done;
               php artisan reverb:start --host=0.0.0.0 --port=8080'
     ports:
       - "8012:8080"
@@ -130,7 +131,8 @@ services:
     container_name: apygg_reverb
     profiles: ["prod"]
     command: >
-      sh -lc 'until getent hosts redis-prod >/dev/null 2>&1; do sleep 0.5; done;
+      sh -lc 'if [ ! -d vendor ]; then composer install --no-interaction --prefer-dist; fi;
+              until getent hosts redis-prod >/dev/null 2>&1; do sleep 0.5; done;
               php artisan reverb:start --host=0.0.0.0 --port=8080'
     ports:
       - "8012:8080"
@@ -148,7 +150,8 @@ services:
     container_name: apygg_horizon
     profiles: ["dev", "staging"]
     command: >
-      sh -lc 'until getent hosts redis >/dev/null 2>&1; do sleep 0.5; done;
+      sh -lc 'if [ ! -d vendor ]; then composer install --no-interaction --prefer-dist; fi;
+              until getent hosts redis >/dev/null 2>&1; do sleep 0.5; done;
               php artisan horizon'
     depends_on:
       redis:
@@ -164,7 +167,8 @@ services:
     container_name: apygg_horizon
     profiles: ["prod"]
     command: >
-      sh -lc 'until getent hosts redis-prod >/dev/null 2>&1; do sleep 0.5; done;
+      sh -lc 'if [ ! -d vendor ]; then composer install --no-interaction --prefer-dist; fi;
+              until getent hosts redis-prod >/dev/null 2>&1; do sleep 0.5; done;
               php artisan horizon'
     depends_on:
       redis-prod:
@@ -243,9 +247,11 @@ services:
     image: getmeili/meilisearch:v1.16
     container_name: apygg_meili
     profiles: ["dev", "staging", "prod"]
+    env_file:
+      - env/${APP_ENV:-dev}.env
     environment:
       MEILI_MASTER_KEY: ${MEILISEARCH_KEY:-masterKey}
-      MEILI_ENV: ${APP_ENV:-production}
+      MEILI_ENV: ${MEILI_ENV:-development}
       MEILI_NO_ANALYTICS: ${MEILISEARCH_NO_ANALYTICS:-true}
     ports:
       - "8013:7700"
