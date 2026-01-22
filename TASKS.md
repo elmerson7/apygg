@@ -213,22 +213,22 @@
   - [x] Manejo de imágenes
 
 ### 3.5 Helpers y Utilidades
-- [ ] Crear `ApiResponse` en `app/Helpers/`
-  - [ ] Métodos estáticos para respuestas estándar
-  - [ ] Formato RFC 7807 para errores
-  - [ ] Headers estándar incluidos
-- [ ] Crear `DateHelper` en `app/Helpers/`
-  - [ ] Formateo de fechas
-  - [ ] Conversión de timezones
-  - [ ] Cálculo de diferencias
-- [ ] Crear `SecurityHelper` en `app/Helpers/`
-  - [ ] Generación de tokens seguros
-  - [ ] Validación de contraseñas
-  - [ ] Sanitización de HTML
-- [ ] Crear `StringHelper` en `app/Helpers/`
-  - [ ] Slugs, truncamiento
-  - [ ] Conversión de casos
-  - [ ] Enmascaramiento de datos sensibles
+- [x] Crear `ApiResponse` en `app/Helpers/`
+  - [x] Métodos estáticos para respuestas estándar
+  - [x] Formato RFC 7807 para errores
+  - [x] Headers estándar incluidos
+- [x] Crear `DateHelper` en `app/Helpers/`
+  - [x] Formateo de fechas
+  - [x] Conversión de timezones
+  - [x] Cálculo de diferencias
+- [x] Crear `SecurityHelper` en `app/Helpers/`
+  - [x] Generación de tokens seguros
+  - [x] Validación de contraseñas
+  - [x] Sanitización de HTML
+- [x] Crear `StringHelper` en `app/Helpers/`
+  - [x] Slugs, truncamiento
+  - [x] Conversión de casos
+  - [x] Enmascaramiento de datos sensibles
 
 ---
 
