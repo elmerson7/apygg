@@ -140,26 +140,26 @@
 ## Fase 3: Infraestructura Core - Componentes Base (Semana 3-4)
 
 ### 3.1 Implementación de Clases Base
-- [ ] Crear `BaseController` en `app/Core/Controllers/`
-  - [ ] Métodos CRUD base: index(), show(), store(), update(), destroy()
-  - [ ] Métodos de respuesta: sendSuccess(), sendError(), sendPaginated()
-  - [ ] Método loadRelations() para eager loading
-  - [ ] Manejo de paginación estándar
-  - [ ] Filtrado y ordenamiento
-- [ ] Crear `BaseRequest` en `app/Core/Requests/`
-  - [ ] Validación común de UUIDs, emails, fechas
-  - [ ] Método authorize() con políticas
-  - [ ] Sanitización automática
-  - [ ] Mensajes de error en español
-- [ ] Crear `BaseResource` en `app/Core/Resources/`
-  - [ ] Formato estándar de respuestas
-  - [ ] Método whenLoaded() para relaciones opcionales
-  - [ ] Manejo de metadatos
-- [ ] Crear `BaseModel` en `app/Core/Models/`
-  - [ ] Timestamps por defecto
-  - [ ] Soft deletes
-  - [ ] UUID como primary key
-  - [ ] Scopes comunes: active(), inactive(), recent(), oldest()
+- [x] Crear `BaseController` en `app/Core/Controllers/`
+  - [x] Métodos CRUD base: index(), show(), store(), update(), destroy()
+  - [x] Métodos de respuesta: sendSuccess(), sendError(), sendPaginated()
+  - [x] Método loadRelations() para eager loading
+  - [x] Manejo de paginación estándar
+  - [x] Filtrado y ordenamiento
+- [x] Crear `BaseRequest` en `app/Core/Requests/`
+  - [x] Validación común de UUIDs, emails, fechas
+  - [x] Método authorize() con políticas
+  - [x] Sanitización automática
+  - [x] Mensajes de error en español
+- [x] Crear `BaseResource` en `app/Core/Resources/`
+  - [x] Formato estándar de respuestas
+  - [x] Método whenLoaded() para relaciones opcionales
+  - [x] Manejo de metadatos
+- [x] Crear `BaseModel` en `app/Core/Models/`
+  - [x] Timestamps por defecto
+  - [x] Soft deletes
+  - [x] UUID como primary key
+  - [x] Scopes comunes: active(), inactive(), recent(), oldest()
 
 ### 3.2 Implementación de Traits Reutilizables
 - [ ] Crear trait `HasUuid` en `app/Core/Traits/`
