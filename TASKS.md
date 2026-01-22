@@ -62,18 +62,18 @@
 - [ ] Crear directorio `docs/` (ya existe)
 
 ### 1.4 Archivos de Configuración de Entornos
-- [ ] Crear `.env.example` base documentado (183 líneas, todas las variables necesarias documentadas)
-- [ ] Crear `dev.env.example` con debugging habilitado (solo variables Docker)
-- [ ] Crear `staging.env.example` con valores cercanos a producción (solo variables Docker)
-- [ ] Crear `prod.env.example` con optimizaciones de seguridad (solo variables Docker)
-- [ ] Crear `.env` local para desarrollo (existe con APP_KEY generado)
+- [x] Crear `.env.example` base documentado (182 líneas, 73 líneas de comentarios, todas las variables necesarias documentadas)
+- [x] Crear `dev.env.example` con debugging habilitado (40 líneas, solo variables Docker: DB_HOST, REDIS_HOST, MEILISEARCH_HOST, etc.)
+- [x] Crear `staging.env.example` con valores cercanos a producción (36 líneas, solo variables Docker)
+- [x] Crear `prod.env.example` con optimizaciones de seguridad (39 líneas, solo variables Docker, incluye PgBouncer)
+- [x] Crear `.env` local para desarrollo (existe con APP_KEY generado: base64:iCH/uJimLpT0lA5OjcmanhnilbrDIDaOPh18U9wxP+E=)
 
 ### 1.5 Instalación de Dependencias Esenciales (Solo las Críticas)
-- [ ] Instalar dependencias mínimas para desarrollo inicial:
-  - [ ] `php-open-source-saver/jwt-auth` v2.8.3 para autenticación JWT básica (instalado y configurado)
-  - [ ] `laravel/octane` v2.13.3 con driver FrankenPHP (instalado y configurado)
-- [ ] Ejecutar `composer install` dentro del contenedor (composer update ejecutado, todas las dependencias instaladas)
-- [ ] NOTA: Otras dependencias (Reverb, Telescope, Scout, Horizon, etc.) se instalarán cuando sus servicios estén listos
+- [x] Instalar dependencias mínimas para desarrollo inicial:
+  - [x] `php-open-source-saver/jwt-auth` v2.8.3 para autenticación JWT básica (instalado: v2.8.3, configuración publicada: config/jwt.php)
+  - [x] `laravel/octane` v2.13.3 con driver FrankenPHP (instalado: v2.13.4, configurado OCTANE_SERVER=frankenphp en .env)
+- [x] Ejecutar `composer install` dentro del contenedor (composer install ejecutado, vendor/autoload.php existe, todas las dependencias instaladas)
+- [x] NOTA: Otras dependencias (Reverb, Telescope, Scout, Horizon, etc.) se instalarán cuando sus servicios estén listos
 
 ---
 
