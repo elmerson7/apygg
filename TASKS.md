@@ -235,17 +235,17 @@
 ## Fase 4: Manejo Global de Excepciones (Semana 4)
 
 ### 4.1 Exception Handler Personalizado
-- [ ] Crear/Modificar `app/Exceptions/Handler.php`
-  - [ ] Método render() personalizado
-  - [ ] Transformación automática a RFC 7807
-  - [ ] Manejo específico de excepciones comunes (404, 422, 500, etc.)
-  - [ ] Logging automático en ErrorLog
-  - [ ] Integración con Sentry para errores críticos
-- [ ] Crear excepciones personalizadas en `app/Exceptions/`
-  - [ ] `ApiException`
-  - [ ] `BusinessLogicException`
-  - [ ] `ExternalServiceException`
-- [ ] Configurar formato estándar de errores
+- [x] Crear/Modificar `app/Exceptions/Handler.php`
+  - [x] Método render() personalizado (en bootstrap/app.php)
+  - [x] Transformación automática a RFC 7807
+  - [x] Manejo específico de excepciones comunes (404, 422, 500, etc.)
+  - [x] Logging automático en ErrorLog
+  - [x] Integración con Sentry para errores críticos
+- [x] Crear excepciones personalizadas en `app/Exceptions/`
+  - [x] `ApiException`
+  - [x] `BusinessLogicException`
+  - [x] `ExternalServiceException`
+- [x] Configurar formato estándar de errores
 
 ---
 

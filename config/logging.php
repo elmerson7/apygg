@@ -127,6 +127,20 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
+        'sentry' => [
+            'driver' => 'sentry',
+            'level' => env('LOG_LEVEL', 'error'), // Solo error y superior por defecto
+            'replace_placeholders' => true,
+        ],
+
+        'sentry_logs' => [
+            'driver' => 'sentry',
+            // The minimum logging level at which this handler will be triggered
+            // Available levels: debug, info, notice, warning, error, critical, alert, emergency
+            'level' => env('SENTRY_LOG_LEVEL', env('LOG_LEVEL', 'error')), // defaults to `error` if not set
+            'replace_placeholders' => true,
+        ],
+
     ],
 
 ];
