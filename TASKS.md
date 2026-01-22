@@ -100,23 +100,24 @@
 - [x] NOTA: PgBouncer es opcional pero recomendado para producción con alta carga
 
 ### 2.3 Primeras Migraciones Base (Esenciales)
-- [ ] Crear migración para tabla `users` con UUID como PK
-- [ ] Crear migración para tabla `roles`
-- [ ] Crear migración para tabla `permissions`
-- [ ] Crear migración para tabla `role_permission` (pivot)
-- [ ] Crear migración para tabla `user_role` (pivot)
-- [ ] Crear migración para tabla `user_permission`
-- [ ] Ejecutar migraciones: `php artisan migrate`
-- [ ] Verificar que las tablas se crearon correctamente
+- [x] Crear migración para tabla `users` con UUID como PK (creada: 2024_01_01_000001_create_users_table.php, UUID como PRIMARY KEY)
+  - ⚠️ **Nota**: `sessions.user_id` es `bigInteger` (tabla del sistema Laravel), por lo que no hay relación directa con `users.id` (UUID). La tabla `sessions` se mantiene con `bigInteger` para compatibilidad.
+- [x] Crear migración para tabla `roles` (creada: 2024_01_01_000002_create_roles_table.php, UUID como PRIMARY KEY)
+- [x] Crear migración para tabla `permissions` (creada: 2024_01_01_000003_create_permissions_table.php, UUID como PRIMARY KEY)
+- [x] Crear migración para tabla `role_permission` (pivot) (creada: 2024_01_01_000004_create_role_permission_table.php, ID como PK con FKs UUID)
+- [x] Crear migración para tabla `user_role` (pivot) (creada: 2024_01_01_000005_create_user_role_table.php, ID como PK con FKs UUID)
+- [x] Crear migración para tabla `user_permission` (creada: 2024_01_01_000006_create_user_permission_table.php, ID como PK con FKs UUID)
+- [x] Ejecutar migraciones: `php artisan migrate` (todas las migraciones ejecutadas correctamente, batch [2])
+- [x] Verificar que las tablas se crearon correctamente (todas las tablas existen: users con UUID, roles con UUID, permissions con UUID, role_permission, user_role, user_permission)
 
 ### 2.4 Configuración de Redis para Cache y Colas
-- [ ] Configurar Redis como driver en `config/cache.php` (default: redis)
-- [ ] Configurar Redis para sesiones en `config/session.php` (default: redis)
-- [ ] Configurar Redis como driver de colas en `config/queue.php` (default: redis)
-- [ ] Crear colas con prioridades: high, default, low (conexiones: redis-high, redis-default, redis-low)
-- [ ] Configurar timeout (60 segundos) (retry_after: 60)
-- [ ] Configurar reintentos (3 intentos con backoff exponencial) (max_retries: 3, decorrelated_jitter)
-- [ ] Probar conectividad Redis desde Laravel (comando: php artisan redis:test)
+- [x] Configurar Redis como driver en `config/cache.php` (default: redis) (configurado: CACHE_STORE=redis en .env, Redis disponible en stores)
+- [x] Configurar Redis para sesiones en `config/session.php` (default: redis) (configurado: SESSION_DRIVER=redis en .env)
+- [x] Configurar Redis como driver de colas en `config/queue.php` (default: redis) (configurado: QUEUE_CONNECTION=redis en .env)
+- [x] Crear colas con prioridades: high, default, low (conexiones: redis-high, redis-default, redis-low) (creadas en config/queue.php: redis-high, redis-default, redis-low)
+- [x] Configurar timeout (60 segundos) (retry_after: 60) (configurado: REDIS_QUEUE_RETRY_AFTER=60 en .env, aplicado a todas las conexiones Redis)
+- [x] Configurar reintentos (3 intentos con backoff exponencial) (max_retries: 3, decorrelated_jitter) (configurado: REDIS_MAX_RETRIES=3, REDIS_BACKOFF_ALGORITHM=decorrelated_jitter en .env y config/database.php)
+- [x] Probar conectividad Redis desde Laravel (comando: php artisan redis:test) (verificado: Redis funciona correctamente, ping exitoso)
 
 ### 2.5 Migraciones de Logs Básicas (Versión Simplificada)
 - [ ] Crear migración para tabla `api_logs` (sin particionamiento por ahora)

@@ -68,7 +68,34 @@ return [
             'driver' => 'redis',
             'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
             'queue' => env('REDIS_QUEUE', 'default'),
-            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 90),
+            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 60),
+            'block_for' => null,
+            'after_commit' => false,
+        ],
+
+        'redis-high' => [
+            'driver' => 'redis',
+            'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
+            'queue' => env('REDIS_QUEUE_HIGH', 'high'),
+            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 60),
+            'block_for' => null,
+            'after_commit' => false,
+        ],
+
+        'redis-default' => [
+            'driver' => 'redis',
+            'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
+            'queue' => env('REDIS_QUEUE_DEFAULT', 'default'),
+            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 60),
+            'block_for' => null,
+            'after_commit' => false,
+        ],
+
+        'redis-low' => [
+            'driver' => 'redis',
+            'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
+            'queue' => env('REDIS_QUEUE_LOW', 'low'),
+            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 60),
             'block_for' => null,
             'after_commit' => false,
         ],
