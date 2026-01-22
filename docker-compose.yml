@@ -209,8 +209,8 @@ services:
       - "8017:6432"
     volumes:
       - ./docker/pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
-      - pgbouncer_logs:/var/log/pgbouncer
-      - pgbouncer_run:/var/run/pgbouncer
+      - apygg_pgbouncer_logs:/var/log/pgbouncer
+      - apygg_pgbouncer_run:/var/run/pgbouncer
     environment:
       PGBOUNCER_DATABASES: "* = host=postgres-prod port=5432 dbname=${DB_DATABASE:-apygg} user=${DB_USERNAME:-apygg} password=${DB_PASSWORD:-secret}"
       PGBOUNCER_POOL_MODE: transaction

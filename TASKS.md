@@ -3,14 +3,14 @@
 ## Fase 1: Setup Inicial y Configuración Base (Semana 1-2)
 
 ### 1.1 Preparación del Entorno con Docker
-- [ ] Crear `docker-compose.yml` básico con servicios:
-  - [ ] Servicio PHP 8.5 con extensiones (pdo_pgsql, redis, opcache, gd, intl, zip)
-  - [ ] Servicio PostgreSQL 18 para desarrollo
-  - [ ] Servicio Redis 7 para cache y colas
-  - [ ] Networks y volumes básicos
-- [ ] Crear `docker/app/Dockerfile` optimizado para desarrollo
-- [ ] Crear `.dockerignore` para optimización
-- [ ] Probar que todos los servicios inicien correctamente: `docker compose --profile dev up -d`
+- [x] Crear `docker-compose.yml` básico con servicios:
+  - [x] Servicio PHP 8.5 con extensiones (pdo_pgsql, redis, opcache, gd, intl, zip)
+  - [x] Servicio PostgreSQL 18 para desarrollo
+  - [x] Servicio Redis 7 para cache y colas
+  - [x] Networks y volumes básicos
+- [x] Crear `docker/app/Dockerfile` optimizado para desarrollo
+- [x] Crear `.dockerignore` para optimización
+- [x] Probar que todos los servicios inicien correctamente: `docker compose --profile dev up -d`
   - ✅ **Build exitoso**: Configuración DNS en docker-compose.yml (`network: host` y DNS explícitos) resolvió el problema
   - ✅ **Servicios corriendo**: `apygg_app`, `apygg_postgres`, `apygg_redis` están activos
   - ✅ **Postgres y Redis**: Healthy y funcionando correctamente
@@ -18,14 +18,14 @@
   - ✅ **Networks y Volumes**: Creados correctamente (`apygg_network`, `apygg_pgdata`, `apygg_redisdata`)
 
 ### 1.2 Instalación del Proyecto Laravel
-- [ ] Crear proyecto Laravel 12 usando contenedor PHP:
-  - [ ] Instalado en directorio temporal y movido preservando archivos existentes
-- [ ] Configurar nombre del proyecto como `apygg` en `composer.json`
-- [ ] Establecer namespaces base: `App\Core`, `App\Modules`, `App\Infrastructure`, `App\Helpers`
-- [ ] Configurar autoloading PSR-4 en `composer.json`
-- [ ] Generar APP_KEY con `php artisan key:generate`
-- [ ] Instalar Laravel Octane con FrankenPHP
-- [ ] Verificar que la aplicación funcione en `http://localhost:8010`
+- [x] Crear proyecto Laravel 12 usando contenedor PHP:
+  - [x] Instalado en directorio temporal y movido preservando archivos existentes
+- [x] Configurar nombre del proyecto como `apygg` en `composer.json` (configurado: "apygg/apygg")
+- [x] Establecer namespaces base: `App\Core`, `App\Modules`, `App\Infrastructure`, `App\Helpers` (configurados en autoload PSR-4)
+- [x] Configurar autoloading PSR-4 en `composer.json` (configurado: App\\, App\\Core\\, App\\Modules\\, App\\Infrastructure\\, App\\Helpers\\, Database\\Factories\\, Database\\Seeders\\)
+- [x] Generar APP_KEY con `php artisan key:generate` (generado: base64:iCH/uJimLpT0lA5OjcmanhnilbrDIDaOPh18U9wxP+E=)
+- [x] Instalar Laravel Octane con FrankenPHP (instalado: v2.13.3, configurado OCTANE_SERVER=frankenphp en .env)
+- [x] Verificar que la aplicación funcione en `http://localhost:8010` (✅ funcionando correctamente)
 
 ### 1.3 Estructura de Directorios
 - [ ] Crear estructura base `app/Http/`
