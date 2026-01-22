@@ -194,23 +194,23 @@
   - [x] Métodos: get(), set(), forget(), remember()
   - [x] Tags para invalidación selectiva
   - [x] Método getAllMetrics()
-- [ ] Crear `LogService` en `app/Infrastructure/Services/`
-  - [ ] Métodos: log(), logApi(), logActivity(), logSecurity(), logError()
-  - [ ] Integración con Sentry
-  - [ ] Contexto enriquecido (trace_id, user_id, IP)
-- [ ] Crear `NotificationService` en `app/Infrastructure/Services/`
-  - [ ] Métodos para email, SMS, push, database
-  - [ ] Colas asíncronas
-  - [ ] Historial de notificaciones
-- [ ] Crear `SecurityService` en `app/Infrastructure/Services/`
-  - [ ] Encriptación/desencriptación
-  - [ ] Hashing de contraseñas
-  - [ ] Validación de IP whitelist
-  - [ ] Detección de comportamiento sospechoso
-- [ ] Crear `FileService` en `app/Infrastructure/Services/`
-  - [ ] Métodos: upload(), delete(), getUrl(), exists()
-  - [ ] Validación de archivos
-  - [ ] Manejo de imágenes
+- [x] Crear `LogService` en `app/Infrastructure/Services/`
+  - [x] Métodos: log(), logApi(), logActivity(), logSecurity(), logError()
+  - [x] Integración con Sentry
+  - [x] Contexto enriquecido (trace_id, user_id, IP)
+- [x] Crear `NotificationService` en `app/Infrastructure/Services/`
+  - [x] Métodos para email, SMS, push, database
+  - [x] Colas asíncronas
+  - [x] Historial de notificaciones
+- [x] Crear `SecurityService` en `app/Infrastructure/Services/`
+  - [x] Encriptación/desencriptación
+  - [x] Hashing de contraseñas
+  - [x] Validación de IP whitelist
+  - [x] Detección de comportamiento sospechoso
+- [x] Crear `FileService` en `app/Infrastructure/Services/`
+  - [x] Métodos: upload(), delete(), getUrl(), exists()
+  - [x] Validación de archivos
+  - [x] Manejo de imágenes
 
 ### 3.5 Helpers y Utilidades
 - [ ] Crear `ApiResponse` en `app/Helpers/`
