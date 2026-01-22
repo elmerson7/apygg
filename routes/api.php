@@ -33,6 +33,34 @@ Route::get('/health', function () {
     ]);
 });
 
+// Ruta de prueba de Sentry (solo para testing, eliminar en producción)
+Route::get('/test-sentry', function () {
+    if (!config('app.debug')) {
+        return response()->json(['error' => 'Not available in production'], 404);
+    }
+
+    // Prueba 1: Excepción manual
+    try {
+        throw new \Exception('Test exception for Sentry integration');
+    } catch (\Exception $e) {
+        \Sentry\captureException($e);
+    }
+
+    // Prueba 2: Mensaje manual
+    \Sentry\captureMessage('Test message for Sentry', \Sentry\Severity::info());
+
+    // Prueba 3: LogService
+    \App\Infrastructure\Services\LogService::error('Test error via LogService', [
+        'test' => true,
+        'route' => '/test-sentry',
+    ]);
+
+    return response()->json([
+        'message' => 'Sentry test events sent',
+        'check_sentry_dashboard' => true,
+    ]);
+});
+
 // Rutas públicas (sin autenticación)
 // Route::prefix('auth')->group(function () {
 //     Route::post('/login', [AuthController::class, 'login']);

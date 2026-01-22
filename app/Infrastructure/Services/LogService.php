@@ -354,7 +354,15 @@ class LogService
             // Agregar contexto adicional
             \Sentry\configureScope(function (\Sentry\State\Scope $scope) use ($context) {
                 foreach ($context as $key => $value) {
-                    $scope->setContext($key, $value);
+                    // setContext requiere un array, setTag para valores simples
+                    if (is_array($value)) {
+                        $scope->setContext($key, $value);
+                    } elseif (is_scalar($value)) {
+                        $scope->setTag($key, (string) $value);
+                    } else {
+                        // Para objetos u otros tipos, convertir a array
+                        $scope->setContext($key, ['value' => json_encode($value)]);
+                    }
                 }
             });
         } catch (\Exception $e) {
