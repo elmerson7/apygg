@@ -80,13 +80,13 @@
 ## Fase 2: Configuración Inicial de Base de Datos (Semana 1-2)
 
 ### 2.1 Configuración de PostgreSQL Básica
-- [ ] Configurar conexión PostgreSQL principal en `config/database.php`
-- [ ] Nombre de base de datos: `apygg`
-- [ ] Configurar pool de conexiones optimizado
-- [ ] Establecer timeout de conexión
-- [ ] Crear base de datos `apygg` en servidor PostgreSQL (Docker)
-- [ ] Crear base de datos `apygg_test` para tests
-- [ ] Verificar conectividad desde el contenedor
+- [x] Configurar conexión PostgreSQL principal en `config/database.php` (conexión 'pgsql' configurada)
+- [x] Nombre de base de datos: `apygg` (configurado en .env: DB_DATABASE=apygg)
+- [ ] Configurar pool de conexiones optimizado (agregar 'pool' => env('DB_POOL', 10) en config/database.php)
+- [ ] Establecer timeout de conexión (agregar 'timeout' => env('DB_TIMEOUT', 5) en config/database.php)
+- [x] Crear base de datos `apygg` en servidor PostgreSQL (Docker) (creada y verificada)
+- [ ] Crear base de datos `apygg_test` para tests (ejecutar: docker compose exec postgres psql -U apygg -d postgres -c "CREATE DATABASE apygg_test;")
+- [x] Verificar conectividad desde el contenedor (php artisan db:show funciona correctamente)
 
 ### 2.2 Configuración de PgBouncer (Connection Pooler)
 - [ ] Agregar servicio `pgbouncer` en `docker-compose.yml` con imagen oficial
