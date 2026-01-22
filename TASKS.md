@@ -162,32 +162,32 @@
   - [x] Scopes comunes: active(), inactive(), recent(), oldest()
 
 ### 3.2 Implementación de Traits Reutilizables
-- [ ] Crear trait `HasUuid` en `app/Core/Traits/`
-  - [ ] Generación automática de UUID en evento creating
-  - [ ] Configuración de primary key
-- [ ] Crear trait `LogsActivity` en `app/Core/Traits/`
-  - [ ] Registro automático mediante Observers
-  - [ ] Captura de antes/después
-  - [ ] Filtrado de campos sensibles
-- [ ] Crear trait `SoftDeletesWithUser` en `app/Core/Traits/`
-  - [ ] Extiende soft deletes nativo
-  - [ ] Registro de usuario que eliminó
-- [ ] Crear trait `Searchable` en `app/Core/Traits/`
-  - [ ] Integración con Meilisearch
-- [ ] Crear trait `HasApiTokens` en `app/Core/Traits/`
-  - [ ] Métodos para crear, revocar, listar tokens
+- [x] Crear trait `HasUuid` en `app/Core/Traits/`
+  - [x] Generación automática de UUID en evento creating
+  - [x] Configuración de primary key
+- [x] Crear trait `LogsActivity` en `app/Core/Traits/`
+  - [x] Registro automático mediante Observers
+  - [x] Captura de antes/después
+  - [x] Filtrado de campos sensibles
+- [x] Crear trait `SoftDeletesWithUser` en `app/Core/Traits/`
+  - [x] Extiende soft deletes nativo
+  - [x] Registro de usuario que eliminó
+- [x] Crear trait `Searchable` en `app/Core/Traits/`
+  - [x] Integración con Meilisearch
+- [x] Crear trait `HasApiTokens` en `app/Core/Traits/`
+  - [x] Métodos para crear, revocar, listar tokens
 
 ### 3.3 Reglas de Validación Reutilizables
-- [ ] Crear `ValidUuid` en `app/Core/Rules/`
-- [ ] Crear `ValidEmail` en `app/Core/Rules/`
-- [ ] Crear `ValidPhone` en `app/Core/Rules/`
-- [ ] Crear `ExistsInDatabase` en `app/Core/Rules/`
-- [ ] Crear `UniqueInDatabase` en `app/Core/Rules/`
-- [ ] Crear `StrongPassword` en `app/Core/Rules/`
-- [ ] Crear `ValidDateRange` en `app/Core/Rules/`
-- [ ] Crear `ValidJson` en `app/Core/Rules/`
-- [ ] Crear `ValidBase64Image` en `app/Core/Rules/`
-- [ ] Todos con mensajes de error en español
+- [x] Crear `ValidUuid` en `app/Core/Rules/`
+- [x] Crear `ValidEmail` en `app/Core/Rules/`
+- [x] Crear `ValidPhone` en `app/Core/Rules/`
+- [x] Crear `ExistsInDatabase` en `app/Core/Rules/`
+- [x] Crear `UniqueInDatabase` en `app/Core/Rules/`
+- [x] Crear `StrongPassword` en `app/Core/Rules/`
+- [x] Crear `ValidDateRange` en `app/Core/Rules/`
+- [x] Crear `ValidJson` en `app/Core/Rules/`
+- [x] Crear `ValidBase64Image` en `app/Core/Rules/`
+- [x] Todos con mensajes de error en español
 
 ### 3.4 Implementación de Servicios Base
 - [ ] Crear `CacheService` en `app/Infrastructure/Services/`
