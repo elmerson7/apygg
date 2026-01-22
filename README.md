@@ -7,55 +7,332 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
-## About Laravel
+# APYGG - API Boilerplate Laravel 12
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+API Boilerplate production-ready construido con Laravel 12, diseñado para aplicaciones modernas y escalables.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🚀 Stack Tecnológico
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Backend Core
+- **Laravel 12.40.0** - Framework PHP moderno
+- **PHP 8.5** - Lenguaje de programación
+- **FrankenPHP (Octane)** - Servidor HTTP de alto rendimiento basado en Caddy
 
-## Learning Laravel
+### Base de Datos y Cache
+- **PostgreSQL 18** - Base de datos relacional con soporte JSON, UUID y particionamiento
+- **PgBouncer** (Opcional) - Connection pooler para PostgreSQL en producción
+- **Redis 7** - Cache en memoria, sesiones y colas
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Autenticación y Seguridad
+- **php-open-source-saver/jwt-auth v2.8.3** - Autenticación JWT
+- **Laravel Sanctum** - Autenticación de API tokens
+- **bcrypt** - Hashing seguro de contraseñas
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### Colas y Procesamiento Asíncrono
+- **Laravel Queue** - Sistema de colas
+- **Laravel Horizon v5.33** - Dashboard para monitoreo de colas
+- **Laravel Reverb v1.5** - WebSockets nativo para tiempo real
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Búsqueda y Observabilidad
+- **Meilisearch 1.x** (Opcional) - Motor de búsqueda full-text
+- **Laravel Scout v10.17** - Abstracción de búsqueda
+- **Laravel Telescope v5.11** - Herramienta de debugging (desarrollo)
+- **Sentry v4.15** (Opcional) - Monitoreo de errores
 
-## Laravel Sponsors
+### Utilidades
+- **spatie/laravel-permission v6.21** - Sistema de permisos y roles
+- **dedoc/scramble** - Documentación automática de API
+- **Laravel Pint** - Formateador de código PSR-12
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Containerización
+- **Docker** - Containerización de la aplicación
+- **Docker Compose v2.x** - Orquestación de contenedores
+- **dunglas/frankenphp:1.11-php8.5-bookworm** - Imagen base PHP con FrankenPHP
 
-### Premium Partners
+## 📋 Requisitos
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+- Docker Engine 4.0+
+- Docker Compose 2.0+
+- Make (opcional, pero recomendado)
+- 8 GB RAM mínimo (16 GB recomendado)
+- 50 GB espacio en disco
 
-## Contributing
+## 🛠️ Instalación
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 1. Clonar el repositorio
 
-## Code of Conduct
+```bash
+git clone <repository-url>
+cd apygg
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 2. Construir y levantar servicios
 
-## Security Vulnerabilities
+```bash
+# Opción 1: Usando Make (recomendado)
+make build
+make up
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# Opción 2: Docker Compose directo
+docker compose --profile dev build
+docker compose --profile dev up -d
+```
 
-## License
+**Nota**: Los archivos de entorno (`.env` y `env/dev.env`) se crean automáticamente desde los archivos `.example` durante el build si no existen.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### 3. Generar claves de aplicación
+
+```bash
+# Generar APP_KEY
+make key
+# O directamente:
+docker compose exec app php artisan key:generate
+
+# Generar JWT_SECRET
+make jwt
+# O directamente:
+docker compose exec app php artisan jwt:secret -f
+```
+
+### 4. Ejecutar migraciones
+
+```bash
+make migrate
+# O directamente:
+docker compose exec app php artisan migrate
+```
+
+## 🚀 Comandos de Despliegue
+
+### Usando Make (Recomendado)
+
+El proyecto incluye un `Makefile` que simplifica los comandos más comunes:
+
+```bash
+# Construir contenedores
+make build
+
+# Levantar servicios
+make up
+
+# Detener servicios
+make down
+
+# Reiniciar servicios
+make restart
+
+# Ver logs
+make logs
+
+# Ver estado de servicios
+make ps
+
+# Acceder al shell del contenedor
+make sh
+
+# Generar APP_KEY
+make key
+
+# Generar JWT_SECRET
+make jwt
+
+# Ejecutar migraciones
+make migrate
+
+# Ejecutar seeders
+make seed
+
+# Ejecutar comandos artisan
+make art cmd="comando"
+
+# Ejecutar comandos composer
+make composer cmd="comando"
+```
+
+### Usando Docker Compose directamente
+
+```bash
+# Construir contenedores
+docker compose --profile dev build
+
+# Levantar servicios
+docker compose --profile dev up -d
+
+# Detener servicios
+docker compose --profile dev down
+
+# Ver logs
+docker compose --profile dev logs -f
+
+# Ver estado
+docker compose --profile dev ps
+
+# Acceder al shell del contenedor
+docker compose exec app bash
+
+# Generar APP_KEY
+docker compose exec app php artisan key:generate
+
+# Generar JWT_SECRET
+docker compose exec app php artisan jwt:secret -f
+
+# Ejecutar migraciones
+docker compose exec app php artisan migrate
+```
+
+### Desde dentro del contenedor (make sh)
+
+```bash
+# Acceder al contenedor
+make sh
+
+# Una vez dentro del contenedor, puedes ejecutar:
+php artisan key:generate
+php artisan jwt:secret -f
+php artisan migrate
+composer install
+composer update
+```
+
+### Desde la terminal del host
+
+Todos los comandos artisan y composer deben ejecutarse dentro del contenedor:
+
+```bash
+# Comandos artisan
+docker compose exec app php artisan <comando>
+
+# Comandos composer
+docker compose exec app composer <comando>
+```
+
+## 📝 Comandos Útiles
+
+### Gestión de Servicios
+
+```bash
+# Construir y levantar
+make build && make up
+
+# Reiniciar un servicio específico
+make restart service=app
+
+# Ver logs de un servicio específico
+docker compose logs -f app
+```
+
+### Base de Datos
+
+```bash
+# Ejecutar migraciones
+make migrate
+
+# Ejecutar seeders
+make seed
+
+# Rollback migraciones
+docker compose exec app php artisan migrate:rollback
+
+# Refrescar base de datos
+docker compose exec app php artisan migrate:fresh --seed
+```
+
+### Cache y Optimización
+
+```bash
+# Limpiar cache
+docker compose exec app php artisan cache:clear
+docker compose exec app php artisan config:clear
+docker compose exec app php artisan route:clear
+docker compose exec app php artisan view:clear
+
+# Optimizar para producción
+docker compose exec app php artisan config:cache
+docker compose exec app php artisan route:cache
+docker compose exec app php artisan view:cache
+```
+
+### Desarrollo
+
+```bash
+# Ejecutar tests
+docker compose exec app php artisan test
+
+# Formatear código
+docker compose exec app ./vendor/bin/pint
+
+# Tinker (REPL interactivo)
+docker compose exec app php artisan tinker
+```
+
+## 🌐 Puertos y Servicios
+
+| Servicio | Puerto | Descripción |
+|----------|--------|-------------|
+| App (Laravel) | 8010 | Aplicación principal |
+| PostgreSQL | 8011 | Base de datos |
+| Reverb (WebSockets) | 8012 | Servidor WebSocket |
+| Meilisearch | 8013 | Motor de búsqueda |
+| Redis | 8014 | Cache y colas |
+| PgBouncer (Prod) | 8017 | Connection pooler |
+
+## 📁 Estructura del Proyecto
+
+```
+apygg/
+├── app/
+│   ├── Core/           # Clases base del sistema
+│   ├── Modules/        # Módulos de la aplicación
+│   ├── Infrastructure/ # Servicios de infraestructura
+│   ├── Helpers/         # Helpers y utilidades
+│   └── ...
+├── config/             # Archivos de configuración
+├── database/           # Migraciones y seeders
+├── docker/             # Configuración Docker
+├── env/                # Variables de entorno por ambiente
+├── routes/             # Rutas de la aplicación
+└── tests/              # Tests
+```
+
+## 🔧 Configuración de Entornos
+
+El proyecto soporta múltiples entornos mediante perfiles de Docker Compose:
+
+- **dev** - Desarrollo (por defecto)
+- **staging** - Staging
+- **prod** - Producción
+
+```bash
+# Usar entorno específico
+ENV=staging make up
+ENV=prod make build
+```
+
+## 📚 Documentación Adicional
+
+- [TECH_STACK.md](./TECH_STACK.md) - Stack tecnológico detallado
+- [TASKS.md](./TASKS.md) - Lista de tareas y fases del proyecto
+- [PLAN_ACCION.md](./PLAN_ACCION.md) - Plan de acción y arquitectura
+- [docs/](./docs/) - Documentación adicional
+
+## 🤝 Contribuir
+
+Las contribuciones son bienvenidas. Por favor:
+
+1. Fork el proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para más detalles.
+
+## 👥 Autores
+
+- **APYGG Team**
+
+---
+
+**Nota**: Este es un boilerplate en desarrollo activo. Algunas características pueden estar en construcción.
