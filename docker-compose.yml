@@ -41,7 +41,9 @@ x-app-prod: &app_prod
     LOG_LEVEL: "info"
 
 x-postgres-base: &postgres_base
-  image: postgres:18-alpine
+  build:
+    context: .
+    dockerfile: docker/postgres/Dockerfile
   container_name: apygg_postgres
   ports:
     - "8011:5432"
@@ -57,7 +59,9 @@ x-postgres-base: &postgres_base
   restart: unless-stopped
 
 x-redis-base: &redis_base
-  image: redis:7.4-alpine
+  build:
+    context: .
+    dockerfile: docker/redis/Dockerfile
   container_name: apygg_redis
   ports:
     - "8014:6379"
@@ -244,7 +248,9 @@ services:
     command: ["redis-server", "--appendonly", "yes"]
 
   meilisearch:
-    image: getmeili/meilisearch:v1.16
+    build:
+      context: .
+      dockerfile: docker/meilisearch/Dockerfile
     container_name: apygg_meili
     profiles: ["dev", "staging", "prod"]
     env_file:
