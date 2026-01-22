@@ -82,23 +82,22 @@
 ### 2.1 Configuración de PostgreSQL Básica
 - [x] Configurar conexión PostgreSQL principal en `config/database.php` (conexión 'pgsql' configurada)
 - [x] Nombre de base de datos: `apygg` (configurado en .env: DB_DATABASE=apygg)
-- [ ] Configurar pool de conexiones optimizado (agregar 'pool' => env('DB_POOL', 10) en config/database.php)
-- [ ] Establecer timeout de conexión (agregar 'timeout' => env('DB_TIMEOUT', 5) en config/database.php)
+- [x] Configurar pool de conexiones optimizado (configurado: 'pool' => env('DB_POOL', 10) en config/database.php, DB_POOL=10 en .env)
+- [x] Establecer timeout de conexión (configurado: 'timeout' => env('DB_TIMEOUT', 5) en config/database.php, DB_TIMEOUT=5 en .env)
 - [x] Crear base de datos `apygg` en servidor PostgreSQL (Docker) (creada y verificada)
-- [ ] Crear base de datos `apygg_test` para tests (ejecutar: docker compose exec postgres psql -U apygg -d postgres -c "CREATE DATABASE apygg_test;")
 - [x] Verificar conectividad desde el contenedor (php artisan db:show funciona correctamente)
 
 ### 2.2 Configuración de PgBouncer (Connection Pooler)
-- [ ] Agregar servicio `pgbouncer` en `docker-compose.yml` con imagen oficial
-- [ ] Configurar PgBouncer para modo `transaction` (recomendado para Laravel)
-- [ ] Configurar pool size: `default_pool_size=25`, `max_client_conn=100`
-- [ ] Crear archivo de configuración `docker/pgbouncer/pgbouncer.ini`
-- [ ] Configurar autenticación con `userlist.txt` o variables de entorno (usando variables de entorno)
-- [ ] Exponer puerto 6432 (PgBouncer) en lugar de 5432 (PostgreSQL directo) para producción
-- [ ] Actualizar variables de entorno: `DB_HOST=pgbouncer` para producción
-- [ ] Mantener conexión directa a PostgreSQL en desarrollo (sin PgBouncer)
-- [ ] Documentar cuándo usar PgBouncer vs conexión directa (README.md creado)
-- [ ] NOTA: PgBouncer es opcional pero recomendado para producción con alta carga
+- [x] Agregar servicio `pgbouncer` en `docker-compose.yml` con imagen oficial (configurado: imagen pgbouncer/pgbouncer:latest, perfil "prod")
+- [x] Configurar PgBouncer para modo `transaction` (recomendado para Laravel) (configurado: PGBOUNCER_POOL_MODE=transaction)
+- [x] Configurar pool size: `default_pool_size=25`, `max_client_conn=100` (configurado: PGBOUNCER_DEFAULT_POOL_SIZE=25, PGBOUNCER_MAX_CLIENT_CONN=100)
+- [x] Crear archivo de configuración `docker/pgbouncer/pgbouncer.ini` (archivo creado y configurado)
+- [x] Configurar autenticación con `userlist.txt` o variables de entorno (usando variables de entorno) (configurado: PGBOUNCER_AUTH_TYPE=md5, usando variables de entorno)
+- [x] Exponer puerto 6432 (PgBouncer) en lugar de 5432 (PostgreSQL directo) para producción (puerto 8017:6432 configurado)
+- [x] Actualizar variables de entorno: `DB_HOST=pgbouncer` para producción (configurado en env/prod.env.example: DB_HOST=pgbouncer, DB_PORT=6432)
+- [x] Mantener conexión directa a PostgreSQL en desarrollo (sin PgBouncer) (configurado en env/dev.env.example: DB_HOST=postgres, DB_PORT=5432)
+- [x] Documentar cuándo usar PgBouncer vs conexión directa (README.md creado) (documentación completa en docker/pgbouncer/README.md)
+- [x] NOTA: PgBouncer es opcional pero recomendado para producción con alta carga
 
 ### 2.3 Primeras Migraciones Base (Esenciales)
 - [ ] Crear migración para tabla `users` con UUID como PK
@@ -718,7 +717,6 @@
 ### 19.1 Configuración de PHPUnit
 - [ ] Configurar `phpunit.xml`
   - [ ] Entorno de testing separado
-  - [ ] Base de datos: `apygg_test`
   - [ ] Conexión al trait RefreshDatabase
 - [ ] Crear `TestCase` base en `tests/TestCase.php`
   - [ ] Setup y teardown comunes

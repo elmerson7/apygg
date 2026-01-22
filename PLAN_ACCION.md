@@ -187,7 +187,7 @@ Cliente → FrankenPHP (Octane) / Laravel App
 - Configurar pool de conexiones básico con PDO (PDO::ATTR_PERSISTENT)
 - Establecer timeout de conexión (30 segundos por defecto)
 - Establecer migraciones en `database/migrations/` para esta conexión
-- Crear base de datos `apygg` y `apygg_test` en PostgreSQL Docker
+- Crear base de datos `apygg` en PostgreSQL Docker
 
 **PgBouncer (Connection Pooler) - Opcional pero Recomendado:**
 - PgBouncer es un connection pooler para PostgreSQL que reduce el número de conexiones directas
@@ -1292,7 +1292,6 @@ php artisan db:seed --class=TestDataSeeder --only=users,roles
 
 **PHPUnit:**
 - Configuración de `phpunit.xml` con entorno de testing separado
-- Base de datos de testing: `apygg_test` (separada de desarrollo)
 - Factories configuradas para todos los modelos principales
 - Cobertura de código configurada con enfoque pragmático:
   - Cobertura mínima 80% en código crítico (auth, usuarios, permisos)

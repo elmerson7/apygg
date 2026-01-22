@@ -96,6 +96,8 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+            'pool' => env('DB_POOL', 10),
+            'timeout' => env('DB_TIMEOUT', 5),
         ],
 
         'sqlsrv' => [
