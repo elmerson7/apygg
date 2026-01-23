@@ -123,4 +123,22 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Allowed Origins Whitelist
+    |--------------------------------------------------------------------------
+    |
+    | Lista de orígenes/URLs permitidos para consumir la API.
+    | Se usa para validar reset_url en recuperación de contraseña (Fase 5.4)
+    | y será usado para CORS en la Fase 10.
+    |
+    | Formato: URLs o hosts separados por comas.
+    | Ejemplo: "https://app.tudominio.com,panel.tudominio.com,localhost:8080"
+    |
+    */
+
+    'allowed_origins' => array_filter(
+        array_map('trim', explode(',', env('ALLOWED_ORIGINS', '')))
+    ),
+
 ];

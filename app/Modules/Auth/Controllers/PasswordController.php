@@ -31,7 +31,9 @@ class PasswordController
     public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
     {
         try {
-            $email = $request->validated()['email'];
+            $validated = $request->validated();
+            $email = $validated['email'];
+            $resetUrl = $validated['reset_url'] ?? null;
 
             // Buscar usuario
             $user = User::where('email', $email)->first();
@@ -47,13 +49,14 @@ class PasswordController
             // Generar token de reset
             $token = $this->passwordService->generateResetToken($user);
 
-            // Enviar notificación por email
-            $user->notify(new ResetPasswordNotification($token));
+            // Enviar notificación por email con URL personalizada si se proporcionó
+            $user->notify(new ResetPasswordNotification($token, $resetUrl));
 
             LogService::info('Solicitud de reset de contraseña enviada', [
                 'user_id' => $user->id,
                 'email' => $user->email,
                 'ip' => $request->ip(),
+                'reset_url_provided' => $resetUrl !== null,
             ], 'security');
 
             // Por seguridad, no revelar si el email existe o no

@@ -10,7 +10,8 @@ CORS (Cross-Origin Resource Sharing) permite que aplicaciones web en diferentes 
 
 ```env
 # Orígenes permitidos (separados por comas)
-CORS_ALLOWED_ORIGINS=https://example.com,https://www.example.com
+# Esta variable se usa para CORS y validación de reset_url en recuperación de contraseña
+ALLOWED_ORIGINS=https://example.com,https://www.example.com,localhost:8080,panel.tudominio.com
 
 # Tiempo de cache para preflight requests (segundos)
 CORS_MAX_AGE=3600
@@ -19,37 +20,56 @@ CORS_MAX_AGE=3600
 CORS_SUPPORTS_CREDENTIALS=true
 ```
 
+**Nota**: La variable `ALLOWED_ORIGINS` se usa para ambos propósitos:
+- ✅ Validación de `reset_url` en recuperación de contraseña (Fase 5.4 - Implementado)
+- ⏳ Configuración de CORS (Fase 10 - Pendiente de implementar)
+
+**Variable única**: Solo se usa `ALLOWED_ORIGINS` para ambos casos. No se usa `CORS_ALLOWED_ORIGINS`.
+
 ### Configuración por Entorno
 
 #### Desarrollo (local, dev, testing)
-- **Orígenes**: `*` (todos permitidos)
+- **Orígenes**: `*` (todos permitidos) o lista específica en `ALLOWED_ORIGINS`
 - **Credenciales**: `true`
 - **Max Age**: 3600 segundos
 
 #### Producción
-- **Orígenes**: Debe configurarse explícitamente en `CORS_ALLOWED_ORIGINS`
+- **Orígenes**: Debe configurarse explícitamente en `ALLOWED_ORIGINS`
 - **Credenciales**: `true` (configurable)
 - **Max Age**: 3600 segundos (configurable)
 
-⚠️ **IMPORTANTE**: En producción, nunca uses `*` como origen. Siempre especifica dominios exactos.
+⚠️ **IMPORTANTE**: En producción, nunca uses `*` como origen. Siempre especifica dominios exactos en `ALLOWED_ORIGINS`.
 
 ## Configuración Detallada
 
 ### Orígenes Permitidos
 
+**Variable centralizada**: `ALLOWED_ORIGINS`
+
+Esta variable se configura en `config/app.php` y se usa para múltiples propósitos:
+
 ```php
-// config/cors.php
-'allowed_origins' => [
-    'https://example.com',
-    'https://www.example.com',
-    'https://app.example.com',
-],
+// config/app.php
+'allowed_origins' => array_filter(
+    array_map('trim', explode(',', env('ALLOWED_ORIGINS', '')))
+),
 ```
 
-O desde variable de entorno:
+Configuración en `.env`:
 ```env
-CORS_ALLOWED_ORIGINS=https://example.com,https://www.example.com
+# Soporta URLs completas, hosts con puertos, o solo hosts
+ALLOWED_ORIGINS="https://example.com,https://www.example.com,localhost:8080,panel.tudominio.com,https://192.168.50.178:8081"
 ```
+
+**Formato soportado**:
+- URLs completas: `https://app.tudominio.com`
+- Hosts con puertos: `localhost:8080`, `192.168.50.178:8081`
+- Solo hosts: `panel.tudominio.com`
+- URLs con trailing slash: `http://localhost:8080/` (se normaliza)
+
+**Variable única**: Solo se usa `ALLOWED_ORIGINS` para CORS y reset password.
+
+**Nota**: La configuración completa de CORS usando `ALLOWED_ORIGINS` se implementará en la Fase 10. Actualmente solo se usa para validar `reset_url` en recuperación de contraseña.
 
 ### Métodos HTTP Permitidos
 
@@ -141,19 +161,19 @@ fetch('https://api.example.com/api/users/1', {
 2. **Especifica orígenes exactos**
    ```env
    # ✅ Correcto
-   CORS_ALLOWED_ORIGINS=https://example.com,https://www.example.com
+   ALLOWED_ORIGINS=https://example.com,https://www.example.com,localhost:8080
    
    # ❌ Incorrecto
-   CORS_ALLOWED_ORIGINS=*
+   ALLOWED_ORIGINS=*
    ```
 
 3. **Usa HTTPS en producción**
    ```env
    # ✅ Correcto
-   CORS_ALLOWED_ORIGINS=https://example.com
+   ALLOWED_ORIGINS=https://example.com,https://app.example.com
    
-   # ❌ Incorrecto
-   CORS_ALLOWED_ORIGINS=http://example.com
+   # ❌ Incorrecto (solo para desarrollo)
+   ALLOWED_ORIGINS=http://example.com
    ```
 
 4. **No incluyas localhost en producción**
@@ -181,16 +201,16 @@ El comando `cors:check` verifica:
 **Causa**: El origen no está en la lista de permitidos.
 
 **Solución**:
-1. Verificar `CORS_ALLOWED_ORIGINS` en `.env`
+1. Verificar `ALLOWED_ORIGINS` en `.env`
 2. Ejecutar `php artisan config:clear`
-3. Verificar con `php artisan cors:check`
+3. Verificar con `php artisan cors:check` (cuando esté implementado en Fase 10)
 
 ### Error: "Credentials flag is true, but Access-Control-Allow-Origin is *"
 
 **Causa**: No se pueden usar credenciales con origen `*`.
 
 **Solución**:
-1. Especificar orígenes exactos en `CORS_ALLOWED_ORIGINS`
+1. Especificar orígenes exactos en `ALLOWED_ORIGINS`
 2. O cambiar `CORS_SUPPORTS_CREDENTIALS=false`
 
 ### Preflight OPTIONS falla

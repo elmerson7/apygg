@@ -99,11 +99,12 @@ El servidor guarda estado (la sesión) y lo busca en cada request.
 
 **Configuración**:
 - Ya configurado en `bootstrap/app.php` con `HandleCors`
-- Variables de entorno: `CORS_ALLOWED_ORIGINS`, `CORS_MAX_AGE`, `CORS_SUPPORTS_CREDENTIALS`
+- Variables de entorno: `ALLOWED_ORIGINS` (whitelist única para CORS y reset password), `CORS_MAX_AGE`, `CORS_SUPPORTS_CREDENTIALS`
+- **Nota**: `ALLOWED_ORIGINS` se usa para validar `reset_url` en recuperación de contraseña (Fase 5.4) y se usará para CORS en la Fase 10
 
 **Importante**:
-- En desarrollo: `*` (todos los orígenes)
-- En producción: Solo orígenes específicos (nunca `*`)
+- En desarrollo: `*` (todos los orígenes) o lista específica en `ALLOWED_ORIGINS`
+- En producción: Solo orígenes específicos en `ALLOWED_ORIGINS` (nunca `*`)
 
 ### ForceJsonResponse
 

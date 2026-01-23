@@ -29,6 +29,11 @@ class ForgotPasswordRequest extends FormRequest
                 'max:255',
                 Rule::exists('users', 'email'),
             ],
+            'reset_url' => [
+                'nullable',
+                'url',
+                'max:500',
+            ],
         ];
     }
 
@@ -43,6 +48,8 @@ class ForgotPasswordRequest extends FormRequest
             'email.required' => 'El email es requerido.',
             'email.email' => 'El email debe ser una dirección válida.',
             'email.exists' => 'No encontramos una cuenta con ese email.',
+            'reset_url.url' => 'La URL de reset debe ser una URL válida.',
+            'reset_url.max' => 'La URL de reset no puede exceder 500 caracteres.',
         ];
     }
 }
