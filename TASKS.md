@@ -303,13 +303,17 @@
 ## Fase 6: Sistema RBAC (Semana 6)
 
 ### 6.1 Modelos de RBAC
-- [ ] Crear `Role` en `app/Modules/Users/Models/`
-  - [ ] Campos: id (UUID), name, display_name, description
-  - [ ] Relación con permissions (muchos-a-muchos)
-  - [ ] Relación con users (muchos-a-muchos)
-- [ ] Crear `Permission` en `app/Modules/Users/Models/`
-  - [ ] Campos: id (UUID), name, display_name, resource, action, description
-  - [ ] Relación con roles (muchos-a-muchos)
+- [x] Crear `Role` en `app/Modules/Users/Models/`
+  - [x] Campos: id (UUID), name, display_name, description
+  - [x] Relación con permissions (muchos-a-muchos)
+  - [x] Relación con users (muchos-a-muchos)
+  - [x] Métodos helper: hasPermission(), assignPermission(), removePermission()
+- [x] Crear `Permission` en `app/Modules/Users/Models/`
+  - [x] Campos: id (UUID), name, display_name, resource, action, description
+  - [x] Relación con roles (muchos-a-muchos)
+  - [x] Relación con users (muchos-a-muchos para permisos directos)
+  - [x] Scopes: forResource(), forAction(), forResourceAndAction()
+- [x] Agregar relaciones roles() y permissions() al modelo `User`
 
 ### 6.2 Servicios de RBAC
 - [ ] Crear `RoleService` en `app/Modules/Users/Services/`

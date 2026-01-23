@@ -3,8 +3,11 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Modules\Users\Models\Permission;
+use App\Modules\Users\Models\Role;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -81,5 +84,40 @@ class User extends Authenticatable implements JWTSubject
     public function getJWTCustomClaims()
     {
         return [];
+    }
+
+    /**
+     * Relación muchos-a-muchos con Role
+     *
+     * Un usuario puede tener múltiples roles.
+     *
+     * @return BelongsToMany
+     */
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Role::class,
+            'user_role',
+            'user_id',
+            'role_id'
+        )->withTimestamps();
+    }
+
+    /**
+     * Relación muchos-a-muchos con Permission (permisos directos)
+     *
+     * Un usuario puede tener permisos asignados directamente.
+     * Estos permisos sobrescriben los permisos heredados de roles.
+     *
+     * @return BelongsToMany
+     */
+    public function permissions(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Permission::class,
+            'user_permission',
+            'user_id',
+            'permission_id'
+        )->withTimestamps();
     }
 }
