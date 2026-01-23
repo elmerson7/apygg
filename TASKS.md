@@ -271,27 +271,27 @@
 - [x] Crear `AuthResource` para transformar respuestas
 
 ### 5.3 Servicios de Autenticación
-- [ ] Crear `TokenService` en `app/Modules/Auth/Services/`
-  - [ ] Generación de access tokens
-  - [ ] Generación de refresh tokens
-  - [ ] Validación de tokens
-  - [ ] Revocación de tokens
-  - [ ] Renovación con rotación
-- [ ] Crear `AuthService` en `app/Modules/Auth/Services/`
-  - [ ] Método authenticate($credentials)
-  - [ ] Método generateTokens($user)
-  - [ ] Método refreshToken($token)
-  - [ ] Método revokeToken($token)
-  - [ ] Manejo de intentos fallidos
+- [x] Crear `TokenService` en `app/Modules/Auth/Services/`
+  - [x] Generación de access tokens
+  - [x] Generación de refresh tokens
+  - [x] Validación de tokens
+  - [x] Revocación de tokens
+  - [x] Renovación con rotación
+- [x] Crear `AuthService` en `app/Modules/Auth/Services/`
+  - [x] Método authenticate($credentials)
+  - [x] Método generateTokens($user)
+  - [x] Método refreshToken($token)
+  - [x] Método revokeToken($token)
+  - [x] Manejo de intentos fallidos
 
 ### 5.4 Recuperación de Contraseña
-- [ ] Crear `PasswordController` en `app/Modules/Auth/Controllers/`
-  - [ ] `POST /api/v1/auth/forgot-password`
-  - [ ] `POST /api/v1/auth/reset-password`
-  - [ ] `POST /api/v1/auth/change-password`
-- [ ] Crear `PasswordRequest` con validaciones
-- [ ] Implementar lógica de tokens de reset con expiración
-- [ ] Crear notificación de recuperación de contraseña
+- [x] Crear `PasswordController` en `app/Modules/Auth/Controllers/`
+  - [x] `POST /api/auth/forgot-password`
+  - [x] `POST /api/auth/reset-password`
+  - [x] `POST /api/auth/change-password`
+- [x] Crear `PasswordRequest` con validaciones (ForgotPasswordRequest, ResetPasswordRequest, ChangePasswordRequest)
+- [x] Implementar lógica de tokens de reset con expiración (PasswordService)
+- [x] Crear notificación de recuperación de contraseña (ResetPasswordNotification)
 
 ### 5.5 Rutas de Autenticación
 - [ ] Crear `routes/modules/auth.php`
