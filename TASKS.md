@@ -294,9 +294,9 @@
 - [x] Crear notificación de recuperación de contraseña (ResetPasswordNotification)
 
 ### 5.5 Rutas de Autenticación
-- [ ] Crear `routes/modules/auth.php`
-- [ ] Registrar rutas en `routes/api.php`
-- [ ] Aplicar middleware de rate limiting a endpoints de auth
+- [x] Crear `routes/api/auth.php` con estructura modular
+- [x] Registrar rutas en `routes/api.php` usando `require`
+- [x] Aplicar middleware de rate limiting a endpoints de auth (5 req/min para públicos, 30 req/min para protegidos)
 
 ---
 
