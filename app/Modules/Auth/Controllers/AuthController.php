@@ -7,15 +7,21 @@ use App\Infrastructure\Services\LogService;
 use App\Modules\Auth\Requests\LoginRequest;
 use App\Modules\Auth\Requests\RegisterRequest;
 use App\Modules\Auth\Resources\AuthResource;
+use App\Modules\Auth\Services\AuthService;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
 
 class AuthController
 {
+    protected AuthService $authService;
+
+    public function __construct(AuthService $authService)
+    {
+        $this->authService = $authService;
+    }
     /**
      * Login de usuario
      *
@@ -27,51 +33,44 @@ class AuthController
         $credentials = $request->only(['email', 'password']);
 
         try {
-            // Intentar autenticación con JWT
-            if (!$token = JWTAuth::attempt($credentials)) {
-                LogService::warning('Intento de login fallido', [
-                    'email' => $credentials['email'],
-                    'ip' => $request->ip(),
-                ], 'security');
+            // Autenticar usando AuthService
+            $result = $this->authService->authenticate($credentials, $request->ip());
 
-                return ApiResponse::unauthorized('Credenciales inválidas');
+            if (!$result) {
+                $remainingAttempts = $this->authService->getRemainingAttempts(
+                    $credentials['email'],
+                    $request->ip()
+                );
+
+                return ApiResponse::unauthorized(
+                    'Credenciales inválidas' . ($remainingAttempts > 0 ? ". Intentos restantes: {$remainingAttempts}" : '')
+                );
             }
 
-            // Obtener usuario autenticado
-            $user = JWTAuth::user();
+            $user = $result['user'];
+            $tokens = $result['tokens'];
 
-            // Registrar login exitoso
-            LogService::info('Login exitoso', [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'ip' => $request->ip(),
-            ], 'security');
-
-            // Retornar respuesta con token
+            // Retornar respuesta con tokens
             return ApiResponse::success(
                 new AuthResource([
                     'user' => $user,
-                    'access_token' => $token,
+                    'access_token' => $tokens['access_token'],
+                    'refresh_token' => $tokens['refresh_token'],
                     'token_type' => 'bearer',
-                    'expires_in' => config('jwt.ttl') * 60, // En segundos
+                    'expires_in' => $this->authService->getTokenExpiration(),
                 ]),
                 'Login exitoso'
             );
-        } catch (\PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException $e) {
-            LogService::error('Error JWT en login', [
-                'email' => $credentials['email'],
-                'error' => $e->getMessage(),
-                'class' => get_class($e),
-            ]);
-
-            return ApiResponse::unauthorized('Error al generar token de autenticación');
         } catch (\Exception $e) {
+            // Manejar bloqueo por intentos fallidos
+            if (str_contains($e->getMessage(), 'Demasiados intentos')) {
+                return ApiResponse::unauthorized($e->getMessage());
+            }
+
             LogService::error('Error en login', [
-                'email' => $credentials['email'],
+                'email' => $credentials['email'] ?? null,
                 'error' => $e->getMessage(),
                 'class' => get_class($e),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
             ]);
 
             return ApiResponse::error('Error al procesar el login', 500);
@@ -94,8 +93,8 @@ class AuthController
                 'password' => Hash::make($request->password),
             ]);
 
-            // Generar token para el nuevo usuario
-            $token = JWTAuth::fromUser($user);
+            // Generar tokens para el nuevo usuario
+            $tokens = $this->authService->generateTokens($user);
 
             // Registrar registro exitoso
             LogService::info('Usuario registrado', [
@@ -104,16 +103,24 @@ class AuthController
                 'ip' => $request->ip(),
             ], 'security');
 
-            // Retornar respuesta con token
+            // Retornar respuesta con tokens
             return ApiResponse::created(
                 new AuthResource([
                     'user' => $user,
-                    'access_token' => $token,
+                    'access_token' => $tokens['access_token'],
+                    'refresh_token' => $tokens['refresh_token'],
                     'token_type' => 'bearer',
-                    'expires_in' => config('jwt.ttl') * 60, // En segundos
+                    'expires_in' => $this->authService->getTokenExpiration(),
                 ]),
                 'Usuario registrado exitosamente'
             );
+        } catch (JWTException $e) {
+            LogService::error('Error JWT en registro', [
+                'email' => $request->email,
+                'error' => $e->getMessage(),
+            ]);
+
+            return ApiResponse::error('Error al generar tokens de autenticación', 500);
         } catch (\Exception $e) {
             LogService::error('Error en registro', [
                 'email' => $request->email,
@@ -134,18 +141,16 @@ class AuthController
         try {
             $user = Auth::guard('api')->user();
 
-            // Invalidar token (agregar a blacklist)
-            JWTAuth::invalidate(JWTAuth::getToken());
-
-            // Registrar logout
-            if ($user) {
-                LogService::info('Logout exitoso', [
-                    'user_id' => $user->id,
-                    'email' => $user->email,
-                ], 'security');
-            }
+            // Revocar token usando AuthService
+            $this->authService->revokeToken();
 
             return ApiResponse::success(null, 'Logout exitoso');
+        } catch (JWTException $e) {
+            LogService::error('Error JWT en logout', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return ApiResponse::error('Error al procesar el logout', 500);
         } catch (\Exception $e) {
             LogService::error('Error en logout', [
                 'error' => $e->getMessage(),
@@ -163,34 +168,34 @@ class AuthController
     public function refresh(): JsonResponse
     {
         try {
+            // Renovar tokens usando AuthService (con rotación)
+            $tokens = $this->authService->refreshToken();
+
+            // Obtener usuario autenticado
             $user = Auth::guard('api')->user();
-
-            // Generar nuevo token
-            $token = JWTAuth::refresh(JWTAuth::getToken());
-
-            // Registrar refresh
-            if ($user) {
-                LogService::info('Token renovado', [
-                    'user_id' => $user->id,
-                    'email' => $user->email,
-                ], 'security');
-            }
 
             return ApiResponse::success(
                 new AuthResource([
                     'user' => $user,
-                    'access_token' => $token,
+                    'access_token' => $tokens['access_token'],
+                    'refresh_token' => $tokens['refresh_token'],
                     'token_type' => 'bearer',
-                    'expires_in' => config('jwt.ttl') * 60, // En segundos
+                    'expires_in' => $this->authService->getTokenExpiration(),
                 ]),
                 'Token renovado exitosamente'
             );
-        } catch (\Exception $e) {
+        } catch (JWTException $e) {
             LogService::error('Error al renovar token', [
                 'error' => $e->getMessage(),
             ]);
 
             return ApiResponse::unauthorized('Token inválido o expirado');
+        } catch (\Exception $e) {
+            LogService::error('Error al renovar token', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return ApiResponse::unauthorized('Error al renovar el token');
         }
     }
 

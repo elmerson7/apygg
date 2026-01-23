@@ -14,7 +14,7 @@ class AuthResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return [
+        $data = [
             'user' => [
                 'id' => $this->resource['user']->id,
                 'name' => $this->resource['user']->name,
@@ -25,5 +25,12 @@ class AuthResource extends JsonResource
             'token_type' => $this->resource['token_type'] ?? 'bearer',
             'expires_in' => $this->resource['expires_in'] ?? config('jwt.ttl') * 60, // En segundos
         ];
+
+        // Incluir refresh_token si está disponible
+        if (isset($this->resource['refresh_token'])) {
+            $data['refresh_token'] = $this->resource['refresh_token'];
+        }
+
+        return $data;
     }
 }
