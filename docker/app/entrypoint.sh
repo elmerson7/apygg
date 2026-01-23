@@ -18,8 +18,8 @@ if [ ! -f composer.json ]; then
     exec tail -f /dev/null
 fi
 
-# Instalar vendors si faltan
-if [ ! -d vendor ]; then
+# Instalar vendors si faltan o si autoload.php no existe
+if [ ! -d vendor ] || [ ! -f vendor/autoload.php ]; then
     echo "Instalando dependencias de Composer..."
     composer install --no-interaction --prefer-dist
 fi
