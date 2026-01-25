@@ -156,7 +156,7 @@ class DateHelper
 
             $fromCarbon->locale('es');
 
-            return $fromCarbon->diffForHumans($toCarbon, $absolute);
+            return $fromCarbon->diffForHumans($toCarbon, ['absolute' => $absolute]);
         } catch (\Exception $e) {
             return null;
         }
@@ -179,7 +179,7 @@ class DateHelper
             $fromCarbon = Carbon::parse($from);
             $toCarbon = $to ? Carbon::parse($to) : Carbon::now();
 
-            return $fromCarbon->diffInSeconds($toCarbon);
+            return (int) $fromCarbon->diffInSeconds($toCarbon);
         } catch (\Exception $e) {
             return null;
         }
@@ -202,7 +202,7 @@ class DateHelper
             $fromCarbon = Carbon::parse($from);
             $toCarbon = $to ? Carbon::parse($to) : Carbon::now();
 
-            return $fromCarbon->diffInMinutes($toCarbon);
+            return (int) $fromCarbon->diffInMinutes($toCarbon);
         } catch (\Exception $e) {
             return null;
         }
@@ -225,7 +225,7 @@ class DateHelper
             $fromCarbon = Carbon::parse($from);
             $toCarbon = $to ? Carbon::parse($to) : Carbon::now();
 
-            return $fromCarbon->diffInHours($toCarbon);
+            return (int) $fromCarbon->diffInHours($toCarbon);
         } catch (\Exception $e) {
             return null;
         }
@@ -248,7 +248,7 @@ class DateHelper
             $fromCarbon = Carbon::parse($from);
             $toCarbon = $to ? Carbon::parse($to) : Carbon::now();
 
-            return $fromCarbon->diffInDays($toCarbon);
+            return (int) $fromCarbon->diffInDays($toCarbon);
         } catch (\Exception $e) {
             return null;
         }

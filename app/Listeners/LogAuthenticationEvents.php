@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Models\User;
 use App\Services\Logging\AuthLogger;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
@@ -22,7 +23,9 @@ class LogAuthenticationEvents
     public function handleLogin(Login $event): void
     {
         try {
-            AuthLogger::logLoginSuccess($event->user);
+            if ($event->user instanceof User) {
+                AuthLogger::logLoginSuccess($event->user);
+            }
         } catch (\Exception $e) {
             Log::warning('Failed to log login success', [
                 'error' => $e->getMessage(),
@@ -56,7 +59,9 @@ class LogAuthenticationEvents
     {
         try {
             // Usar logTokenRevoked para logout (similar a revocar token)
-            AuthLogger::logTokenRevoked($event->user);
+            if ($event->user instanceof User) {
+                AuthLogger::logTokenRevoked($event->user);
+            }
         } catch (\Exception $e) {
             Log::warning('Failed to log logout', [
                 'error' => $e->getMessage(),
@@ -70,7 +75,9 @@ class LogAuthenticationEvents
     public function handlePasswordReset(PasswordReset $event): void
     {
         try {
-            AuthLogger::logPasswordChanged($event->user);
+            if ($event->user instanceof User) {
+                AuthLogger::logPasswordChanged($event->user);
+            }
         } catch (\Exception $e) {
             Log::warning('Failed to log password reset', [
                 'error' => $e->getMessage(),

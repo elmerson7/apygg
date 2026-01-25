@@ -454,9 +454,9 @@
 - [x] Nombres de rutas asignados (route names)
 
 ### 7.7 Tests de Usuarios
-- [ ] Tests unitarios de UserService
-- [ ] Tests de integración para endpoints CRUD
-- [ ] Tests de permisos y roles
+- [x] Tests unitarios de UserService
+- [x] Tests de integración para endpoints CRUD
+- [x] Tests de permisos y roles
 
 ---
 

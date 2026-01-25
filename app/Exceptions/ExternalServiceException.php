@@ -91,9 +91,14 @@ class ExternalServiceException extends ApiException
     }
 
     /**
-     * Crear excepción de servicio no disponible
+     * Crear excepción de servicio externo no disponible
+     *
+     * @param  string  $serviceName  Nombre del servicio
+     * @param  string|null  $serviceUrl  URL del servicio
+     * @param  string|null  $serviceErrorCode  Código de error del servicio
+     * @return self
      */
-    public static function serviceUnavailable(
+    public static function externalServiceUnavailable(
         string $serviceName,
         ?string $serviceUrl = null,
         ?string $serviceErrorCode = null
@@ -105,6 +110,23 @@ class ExternalServiceException extends ApiException
             $serviceErrorCode,
             $serviceUrl
         );
+    }
+
+    /**
+     * Crear excepción de servicio no disponible (compatible con ApiException)
+     *
+     * @param  string  $message  Mensaje de error
+     * @param  int|null  $retryAfter  Segundos hasta reintentar
+     * @return self
+     */
+    public static function serviceUnavailable(string $message = 'Servicio no disponible', ?int $retryAfter = null): self
+    {
+        $extensions = [];
+        if ($retryAfter !== null) {
+            $extensions['retry_after'] = $retryAfter;
+        }
+
+        return new self($message, null, 503, null, null, $extensions);
     }
 
     /**

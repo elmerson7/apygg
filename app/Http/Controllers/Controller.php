@@ -86,7 +86,9 @@ abstract class Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $validated = $request->validated();
+        // Nota: Este método debe ser sobrescrito en controladores específicos
+        // con FormRequest para validación adecuada
+        $validated = $request->all();
         $item = $this->getModel()::create($validated);
 
         return $this->sendSuccess($item, 'Recurso creado exitosamente', 201);
@@ -97,8 +99,10 @@ abstract class Controller
      */
     public function update(Request $request, string $id): JsonResponse
     {
+        // Nota: Este método debe ser sobrescrito en controladores específicos
+        // con FormRequest para validación adecuada
         $item = $this->getModelQuery()->findOrFail($id);
-        $validated = $request->validated();
+        $validated = $request->all();
 
         $item->update($validated);
 

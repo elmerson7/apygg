@@ -187,10 +187,10 @@ class AdaptiveRateLimitingMiddleware
         ], 429);
 
         // Agregar headers informativos
-        $response->headers->set('X-RateLimit-Limit', $maxAttempts);
-        $response->headers->set('X-RateLimit-Remaining', 0);
-        $response->headers->set('Retry-After', $seconds);
-        $response->headers->set('X-RateLimit-Reset', now()->addSeconds($seconds)->timestamp);
+        $response->headers->set('X-RateLimit-Limit', (string) $maxAttempts);
+        $response->headers->set('X-RateLimit-Remaining', '0');
+        $response->headers->set('Retry-After', (string) $seconds);
+        $response->headers->set('X-RateLimit-Reset', (string) now()->addSeconds($seconds)->timestamp);
 
         return $response;
     }
