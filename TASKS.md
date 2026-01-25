@@ -316,13 +316,17 @@
 - [x] Agregar relaciones roles() y permissions() al modelo `User`
 
 ### 6.2 Servicios de RBAC
-- [ ] Crear `RoleService` en `app/Modules/Users/Services/`
-  - [ ] Métodos CRUD para roles
-  - [ ] Método assignPermission()
-  - [ ] Método removePermission()
-- [ ] Crear `PermissionService` en `app/Modules/Users/Services/`
-  - [ ] Métodos CRUD para permisos
-  - [ ] Métodos de validación
+- [x] Crear `RoleService` en `app/Services/`
+  - [x] Métodos CRUD para roles
+  - [x] Método assignPermission()
+  - [x] Método removePermission()
+  - [x] Método syncPermissions()
+  - [x] Cache y auditoría integrados
+- [x] Crear `PermissionService` en `app/Services/`
+  - [x] Métodos CRUD para permisos
+  - [x] Métodos de validación (validateNameFormat, validateNameUnique, validateResourceAction)
+  - [x] Filtros por recurso y acción
+  - [x] Cache y auditoría integrados
 
 ### 6.3 Policies de Laravel
 - [ ] Crear `UserPolicy` en `app/Policies/`
