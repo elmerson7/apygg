@@ -116,6 +116,9 @@ reverb:
 clear:
 	$(DC) exec app php artisan optimize:clear
 
+storage-link:
+	$(DC) exec app php artisan storage:link
+
 # Corregir permisos de archivos creados por Docker
 fix-permissions:
 	@echo "Corrigiendo permisos con UID: $(USER_ID), GID: $(GROUP_ID)"
