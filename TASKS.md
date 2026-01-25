@@ -395,12 +395,12 @@
 ## Fase 8: Feature Flags (Semana 7)
 
 ### 8.1 Configuración de Feature Flags
-- [ ] Crear `config/features.php` con array de features
-  - [ ] Estructura simple: enabled, description
-- [ ] Crear helper `Feature` class
-  - [ ] Método estático `enabled()`
-  - [ ] Cache automático de configuración
-- [ ] Documentar cómo migrar a base de datos en el futuro
+- [x] Crear `config/features.php` con array de features
+  - [x] Estructura simple: enabled, description
+- [x] Crear helper `Feature` class
+  - [x] Método estático `enabled()`
+  - [x] Cache automático de configuración
+- [x] Documentar cómo migrar a base de datos en el futuro
 
 ---
 
