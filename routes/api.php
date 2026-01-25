@@ -1,7 +1,7 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TestSentryController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -37,8 +37,8 @@ Route::get('/health', function () {
 });
 
 // Cargar rutas modulares
-require __DIR__ . '/api/auth.php';
-require __DIR__ . '/api/users.php';
+require __DIR__.'/api/auth.php';
+require __DIR__.'/api/users.php';
 
 Route::prefix('test/sentry')->group(function () {
     Route::get('/info', [TestSentryController::class, 'info']);

@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Helpers\ApiResponse;
-use App\Services\LogService;
-use App\Notifications\ResetPasswordNotification;
 use App\Http\Requests\Auth\ChangePasswordRequest;
 use App\Http\Requests\Auth\ForgotPasswordRequest;
 use App\Http\Requests\Auth\ResetPasswordRequest;
-use App\Services\PasswordService;
 use App\Models\User;
+use App\Notifications\ResetPasswordNotification;
+use App\Services\LogService;
+use App\Services\PasswordService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 
@@ -24,9 +24,6 @@ class PasswordController
 
     /**
      * Solicitar reset de contraseña
-     *
-     * @param ForgotPasswordRequest $request
-     * @return JsonResponse
      */
     public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
     {
@@ -38,7 +35,7 @@ class PasswordController
             // Buscar usuario
             $user = User::where('email', $email)->first();
 
-            if (!$user) {
+            if (! $user) {
                 // Por seguridad, no revelar si el email existe o no
                 return ApiResponse::success(
                     null,
@@ -76,9 +73,6 @@ class PasswordController
 
     /**
      * Resetear contraseña usando token
-     *
-     * @param ResetPasswordRequest $request
-     * @return JsonResponse
      */
     public function resetPassword(ResetPasswordRequest $request): JsonResponse
     {
@@ -91,7 +85,7 @@ class PasswordController
             // Resetear contraseña usando el servicio
             $success = $this->passwordService->resetPassword($email, $token, $password);
 
-            if (!$success) {
+            if (! $success) {
                 LogService::warning('Intento de reset de contraseña fallido', [
                     'email' => $email,
                     'ip' => $request->ip(),
@@ -116,16 +110,13 @@ class PasswordController
 
     /**
      * Cambiar contraseña de usuario autenticado
-     *
-     * @param ChangePasswordRequest $request
-     * @return JsonResponse
      */
     public function changePassword(ChangePasswordRequest $request): JsonResponse
     {
         try {
             $user = Auth::guard('api')->user();
 
-            if (!$user) {
+            if (! $user) {
                 return ApiResponse::unauthorized('Usuario no autenticado');
             }
 
@@ -136,7 +127,7 @@ class PasswordController
             // Cambiar contraseña usando el servicio
             $success = $this->passwordService->changePassword($user, $currentPassword, $newPassword);
 
-            if (!$success) {
+            if (! $success) {
                 return ApiResponse::unauthorized('La contraseña actual es incorrecta o la nueva contraseña es igual a la actual');
             }
 

@@ -3,16 +3,13 @@
 namespace App\Traits;
 
 use App\Services\Logging\ActivityLogger;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 
 /**
  * Trait LogsActivity
- * 
+ *
  * Registra automáticamente las actividades (crear, actualizar, eliminar) de un modelo.
  * Usa ActivityLogger para guardar en la base de datos.
- * 
- * @package App\Traits
  */
 trait LogsActivity
 {

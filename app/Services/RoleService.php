@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\Role;
 use App\Models\Permission;
+use App\Models\Role;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -14,8 +14,6 @@ use Illuminate\Pagination\LengthAwarePaginator;
  * - CRUD completo de roles
  * - Asignación y remoción de permisos
  * - Validaciones y cache
- *
- * @package App\Services
  */
 class RoleService
 {
@@ -32,8 +30,8 @@ class RoleService
     /**
      * Crear un nuevo rol
      *
-     * @param array $data Datos del rol ['name', 'display_name', 'description']
-     * @return Role
+     * @param  array  $data  Datos del rol ['name', 'display_name', 'description']
+     *
      * @throws \Illuminate\Database\QueryException Si el nombre ya existe
      */
     public function create(array $data): Role
@@ -64,9 +62,9 @@ class RoleService
     /**
      * Actualizar un rol existente
      *
-     * @param string $roleId ID del rol
-     * @param array $data Datos a actualizar
-     * @return Role
+     * @param  string  $roleId  ID del rol
+     * @param  array  $data  Datos a actualizar
+     *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el rol no existe
      */
     public function update(string $roleId, array $data): Role
@@ -98,8 +96,8 @@ class RoleService
     /**
      * Eliminar un rol
      *
-     * @param string $roleId ID del rol
-     * @return bool
+     * @param  string  $roleId  ID del rol
+     *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el rol no existe
      * @throws \Exception Si el rol tiene usuarios asignados
      */
@@ -130,13 +128,13 @@ class RoleService
     /**
      * Buscar un rol por ID
      *
-     * @param string $roleId ID del rol
-     * @return Role
+     * @param  string  $roleId  ID del rol
+     *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el rol no existe
      */
     public function find(string $roleId): Role
     {
-        $cacheKey = self::CACHE_PREFIX . $roleId;
+        $cacheKey = self::CACHE_PREFIX.$roleId;
 
         return CacheService::remember($cacheKey, self::CACHE_TTL, function () use ($roleId) {
             return Role::with('permissions')->findOrFail($roleId);
@@ -146,12 +144,11 @@ class RoleService
     /**
      * Buscar un rol por nombre
      *
-     * @param string $name Nombre del rol
-     * @return Role|null
+     * @param  string  $name  Nombre del rol
      */
     public function findByName(string $name): ?Role
     {
-        $cacheKey = self::CACHE_PREFIX . 'name:' . $name;
+        $cacheKey = self::CACHE_PREFIX.'name:'.$name;
 
         return CacheService::remember($cacheKey, self::CACHE_TTL, function () use ($name) {
             return Role::where('name', $name)->first();
@@ -161,8 +158,7 @@ class RoleService
     /**
      * Listar todos los roles con paginación
      *
-     * @param array $filters Filtros ['search', 'per_page']
-     * @return LengthAwarePaginator
+     * @param  array  $filters  Filtros ['search', 'per_page']
      */
     public function list(array $filters = []): LengthAwarePaginator
     {
@@ -181,12 +177,10 @@ class RoleService
 
     /**
      * Obtener todos los roles sin paginación
-     *
-     * @return Collection
      */
     public function all(): Collection
     {
-        $cacheKey = self::CACHE_PREFIX . 'all';
+        $cacheKey = self::CACHE_PREFIX.'all';
 
         return CacheService::remember($cacheKey, self::CACHE_TTL, function () {
             return Role::with('permissions')->orderBy('name')->get();
@@ -196,9 +190,9 @@ class RoleService
     /**
      * Asignar un permiso a un rol
      *
-     * @param string $roleId ID del rol
-     * @param string $permissionId ID o nombre del permiso
-     * @return Role
+     * @param  string  $roleId  ID del rol
+     * @param  string  $permissionId  ID o nombre del permiso
+     *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el rol o permiso no existe
      */
     public function assignPermission(string $roleId, string $permissionId): Role
@@ -211,7 +205,7 @@ class RoleService
             : Permission::where('name', $permissionId)->firstOrFail();
 
         // Asignar permiso si no lo tiene
-        if (!$role->hasPermission($permission->name)) {
+        if (! $role->hasPermission($permission->name)) {
             $role->assignPermission($permission);
 
             // Limpiar cache
@@ -232,9 +226,9 @@ class RoleService
     /**
      * Remover un permiso de un rol
      *
-     * @param string $roleId ID del rol
-     * @param string $permissionId ID o nombre del permiso
-     * @return Role
+     * @param  string  $roleId  ID del rol
+     * @param  string  $permissionId  ID o nombre del permiso
+     *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el rol o permiso no existe
      */
     public function removePermission(string $roleId, string $permissionId): Role
@@ -266,9 +260,9 @@ class RoleService
     /**
      * Sincronizar permisos de un rol (reemplaza todos los permisos)
      *
-     * @param string $roleId ID del rol
-     * @param array $permissionIds Array de IDs o nombres de permisos
-     * @return Role
+     * @param  string  $roleId  ID del rol
+     * @param  array  $permissionIds  Array de IDs o nombres de permisos
+     *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el rol no existe
      */
     public function syncPermissions(string $roleId, array $permissionIds): Role
@@ -281,6 +275,7 @@ class RoleService
                 return $permissionId;
             }
             $permission = Permission::where('name', $permissionId)->first();
+
             return $permission ? $permission->id : null;
         }, $permissionIds);
 
@@ -306,47 +301,48 @@ class RoleService
     /**
      * Obtener permisos de un rol
      *
-     * @param string $roleId ID del rol
-     * @return Collection
+     * @param  string  $roleId  ID del rol
+     *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el rol no existe
      */
     public function getPermissions(string $roleId): Collection
     {
         $role = $this->find($roleId);
+
         return $role->permissions;
     }
 
     /**
      * Verificar si un rol tiene un permiso específico
      *
-     * @param string $roleId ID del rol
-     * @param string $permissionName Nombre del permiso
-     * @return bool
+     * @param  string  $roleId  ID del rol
+     * @param  string  $permissionName  Nombre del permiso
+     *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el rol no existe
      */
     public function hasPermission(string $roleId, string $permissionName): bool
     {
         $role = $this->find($roleId);
+
         return $role->hasPermission($permissionName);
     }
 
     /**
      * Limpiar cache de roles
      *
-     * @param string|null $roleId ID específico del rol o null para limpiar todo
-     * @return void
+     * @param  string|null  $roleId  ID específico del rol o null para limpiar todo
      */
     protected function clearCache(?string $roleId = null): void
     {
         if ($roleId) {
-            CacheService::forget(self::CACHE_PREFIX . $roleId);
+            CacheService::forget(self::CACHE_PREFIX.$roleId);
             $role = Role::find($roleId);
             if ($role) {
-                CacheService::forget(self::CACHE_PREFIX . 'name:' . $role->name);
+                CacheService::forget(self::CACHE_PREFIX.'name:'.$role->name);
             }
         }
 
         // Limpiar cache de lista completa
-        CacheService::forget(self::CACHE_PREFIX . 'all');
+        CacheService::forget(self::CACHE_PREFIX.'all');
     }
 }

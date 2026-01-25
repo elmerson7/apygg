@@ -2,17 +2,15 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
  * LogService
- * 
+ *
  * Servicio centralizado para logging con contexto enriquecido,
  * integración con Sentry y almacenamiento en base de datos.
- * 
- * @package App\Services
  */
 class LogService
 {
@@ -37,6 +35,7 @@ class LogService
         if (self::$traceId === null) {
             self::setTraceId();
         }
+
         return self::$traceId;
     }
 
@@ -59,18 +58,14 @@ class LogService
     /**
      * Log genérico con nivel especificado
      *
-     * @param string $level debug, info, warning, error, critical
-     * @param string $message
-     * @param array $context
-     * @param string|null $channel
-     * @return void
+     * @param  string  $level  debug, info, warning, error, critical
      */
     public static function log(string $level, string $message, array $context = [], ?string $channel = null): void
     {
         $enrichedContext = self::getContext($context);
-        
+
         $logger = $channel ? Log::channel($channel) : Log::getLogger();
-        
+
         $logger->{$level}($message, $enrichedContext);
 
         // Enviar a Sentry usando captura directa (más confiable que el canal)
@@ -86,7 +81,7 @@ class LogService
                 $shouldSendToSentry = true;
             }
         }
-        
+
         if ($shouldSendToSentry) {
             try {
                 // Usar captura directa de Sentry (más confiable que el canal)
@@ -153,7 +148,7 @@ class LogService
             'method' => $method,
             'endpoint' => $endpoint,
             'status_code' => $statusCode,
-            'response_time_ms' => request()->server('REQUEST_TIME_FLOAT') 
+            'response_time_ms' => request()->server('REQUEST_TIME_FLOAT')
                 ? round((microtime(true) - request()->server('REQUEST_TIME_FLOAT')) * 1000, 2)
                 : null,
         ], $context);
@@ -181,7 +176,7 @@ class LogService
             'model_id' => $modelId,
         ], $context);
 
-        self::info("Activity: {$action} on {$modelType}" . ($modelId ? " ({$modelId})" : ''), $context, 'activity');
+        self::info("Activity: {$action} on {$modelType}".($modelId ? " ({$modelId})" : ''), $context, 'activity');
 
         // Guardar en base de datos
         self::saveToDatabase('activity', [
@@ -248,8 +243,8 @@ class LogService
     {
         try {
             $context = self::getContext();
-            
-            match($type) {
+
+            match ($type) {
                 'api' => self::saveApiLog($data, $context),
                 'activity' => self::saveActivityLog($data, $context),
                 'security' => self::saveSecurityLog($data, $context),
@@ -270,7 +265,7 @@ class LogService
      */
     protected static function saveApiLog(array $data, array $context): void
     {
-        if (!class_exists(\App\Models\Logs\ApiLog::class)) {
+        if (! class_exists(\App\Models\Logs\ApiLog::class)) {
             return;
         }
 
@@ -292,7 +287,7 @@ class LogService
      */
     protected static function saveActivityLog(array $data, array $context): void
     {
-        if (!class_exists(\App\Models\Logs\ActivityLog::class)) {
+        if (! class_exists(\App\Models\Logs\ActivityLog::class)) {
             return;
         }
 
@@ -313,7 +308,7 @@ class LogService
      */
     protected static function saveSecurityLog(array $data, array $context): void
     {
-        if (!class_exists(\App\Models\Logs\SecurityLog::class)) {
+        if (! class_exists(\App\Models\Logs\SecurityLog::class)) {
             return;
         }
 
@@ -333,7 +328,7 @@ class LogService
      */
     protected static function saveErrorLog(array $data, array $context): void
     {
-        if (!class_exists(\App\Models\Logs\ErrorLog::class)) {
+        if (! class_exists(\App\Models\Logs\ErrorLog::class)) {
             return;
         }
 
@@ -356,12 +351,12 @@ class LogService
      */
     protected static function logToSentry(string $level, string $message, array $context, ?\Throwable $exception = null): void
     {
-        if (!class_exists(\Sentry\SentrySdk::class)) {
+        if (! class_exists(\Sentry\SentrySdk::class)) {
             return;
         }
 
         try {
-            $sentryLevel = match($level) {
+            $sentryLevel = match ($level) {
                 'debug' => \Sentry\Severity::debug(),
                 'info' => \Sentry\Severity::info(),
                 'warning' => \Sentry\Severity::warning(),

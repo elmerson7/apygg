@@ -46,16 +46,16 @@ class ResetPasswordNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         // Construir URL de reset
-        $resetUrl = $this->resetUrl ?? url("/reset-password?token={$this->token}&email=" . urlencode($notifiable->email));
+        $resetUrl = $this->resetUrl ?? url("/reset-password?token={$this->token}&email=".urlencode($notifiable->email));
 
         return (new MailMessage)
             ->subject('Restablecer Contraseña')
-            ->greeting('Hola ' . $notifiable->name . ',')
+            ->greeting('Hola '.$notifiable->name.',')
             ->line('Recibiste este email porque solicitaste restablecer tu contraseña.')
             ->action('Restablecer Contraseña', $resetUrl)
             ->line('Este enlace expirará en 60 minutos.')
             ->line('Si no solicitaste este cambio, ignora este email.')
-            ->salutation('Saludos, ' . config('app.name'));
+            ->salutation('Saludos, '.config('app.name'));
     }
 
     /**

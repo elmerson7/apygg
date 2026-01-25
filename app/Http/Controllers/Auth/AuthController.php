@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Helpers\ApiResponse;
-use App\Services\LogService;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Resources\Auth\AuthResource;
-use App\Services\AuthService;
 use App\Models\User;
+use App\Services\AuthService;
+use App\Services\LogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -22,11 +22,9 @@ class AuthController
     {
         $this->authService = $authService;
     }
+
     /**
      * Login de usuario
-     *
-     * @param LoginRequest $request
-     * @return JsonResponse
      */
     public function login(LoginRequest $request): JsonResponse
     {
@@ -36,14 +34,14 @@ class AuthController
             // Autenticar usando AuthService
             $result = $this->authService->authenticate($credentials, $request->ip());
 
-            if (!$result) {
+            if (! $result) {
                 $remainingAttempts = $this->authService->getRemainingAttempts(
                     $credentials['email'],
                     $request->ip()
                 );
 
                 return ApiResponse::unauthorized(
-                    'Credenciales inválidas' . ($remainingAttempts > 0 ? ". Intentos restantes: {$remainingAttempts}" : '')
+                    'Credenciales inválidas'.($remainingAttempts > 0 ? ". Intentos restantes: {$remainingAttempts}" : '')
                 );
             }
 
@@ -79,9 +77,6 @@ class AuthController
 
     /**
      * Registro de nuevo usuario
-     *
-     * @param RegisterRequest $request
-     * @return JsonResponse
      */
     public function register(RegisterRequest $request): JsonResponse
     {
@@ -133,8 +128,6 @@ class AuthController
 
     /**
      * Logout y revocación de token
-     *
-     * @return JsonResponse
      */
     public function logout(): JsonResponse
     {
@@ -162,8 +155,6 @@ class AuthController
 
     /**
      * Renovar access token usando refresh token
-     *
-     * @return JsonResponse
      */
     public function refresh(): JsonResponse
     {
@@ -201,15 +192,13 @@ class AuthController
 
     /**
      * Obtener datos del usuario autenticado
-     *
-     * @return JsonResponse
      */
     public function me(): JsonResponse
     {
         try {
             $user = Auth::guard('api')->user();
 
-            if (!$user) {
+            if (! $user) {
                 return ApiResponse::unauthorized('Usuario no autenticado');
             }
 

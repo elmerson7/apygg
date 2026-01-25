@@ -4,15 +4,12 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redis;
-use Illuminate\Support\Str;
 
 /**
  * CacheService
- * 
+ *
  * Servicio centralizado para operaciones de caché con soporte para tags,
  * invalidación selectiva y métricas.
- * 
- * @package App\Services
  */
 class CacheService
 {
@@ -41,23 +38,23 @@ class CacheService
      */
     public static function tag(string ...$tags): self
     {
-        $instance = new self();
+        $instance = new self;
         $instance->tags = $tags;
+
         return $instance;
     }
 
     /**
      * Obtener valor del caché
      *
-     * @param string $key
-     * @param mixed $default
+     * @param  mixed  $default
      * @return mixed
      */
     public static function get(string $key, $default = null)
     {
         $fullKey = self::buildKey($key);
-        
-        if (!empty(self::getActiveTags())) {
+
+        if (! empty(self::getActiveTags())) {
             return Cache::tags(self::getActiveTags())->get($fullKey, $default);
         }
 
@@ -67,17 +64,15 @@ class CacheService
     /**
      * Guardar valor en caché
      *
-     * @param string $key
-     * @param mixed $value
-     * @param int|null $ttl Tiempo de vida en segundos (null = usar default)
-     * @return bool
+     * @param  mixed  $value
+     * @param  int|null  $ttl  Tiempo de vida en segundos (null = usar default)
      */
     public static function set(string $key, $value, ?int $ttl = null): bool
     {
         $fullKey = self::buildKey($key);
         $ttl = $ttl ?? self::$defaultTtls['default'];
 
-        if (!empty(self::getActiveTags())) {
+        if (! empty(self::getActiveTags())) {
             return Cache::tags(self::getActiveTags())->put($fullKey, $value, $ttl);
         }
 
@@ -86,15 +81,12 @@ class CacheService
 
     /**
      * Eliminar valor del caché
-     *
-     * @param string $key
-     * @return bool
      */
     public static function forget(string $key): bool
     {
         $fullKey = self::buildKey($key);
 
-        if (!empty(self::getActiveTags())) {
+        if (! empty(self::getActiveTags())) {
             return Cache::tags(self::getActiveTags())->forget($fullKey);
         }
 
@@ -104,9 +96,6 @@ class CacheService
     /**
      * Obtener valor o calcularlo y guardarlo
      *
-     * @param string $key
-     * @param int|null $ttl
-     * @param callable $callback
      * @return mixed
      */
     public static function remember(string $key, ?int $ttl, callable $callback)
@@ -114,7 +103,7 @@ class CacheService
         $fullKey = self::buildKey($key);
         $ttl = $ttl ?? self::$defaultTtls['default'];
 
-        if (!empty(self::getActiveTags())) {
+        if (! empty(self::getActiveTags())) {
             return Cache::tags(self::getActiveTags())->remember($fullKey, $ttl, $callback);
         }
 
@@ -123,9 +112,6 @@ class CacheService
 
     /**
      * Invalidar todas las keys con un tag específico
-     *
-     * @param string $tag
-     * @return bool
      */
     public static function forgetTag(string $tag): bool
     {
@@ -139,9 +125,6 @@ class CacheService
 
     /**
      * Invalidar múltiples tags
-     *
-     * @param array $tags
-     * @return bool
      */
     public static function forgetTags(array $tags): bool
     {
@@ -152,17 +135,13 @@ class CacheService
             foreach ($tags as $tag) {
                 $success = $success && self::flushByTag($tag);
             }
+
             return $success;
         }
     }
 
     /**
      * Cache de usuario con tag automático
-     *
-     * @param string $userId
-     * @param callable $callback
-     * @param int|null $ttl
-     * @return mixed
      */
     public static function rememberUser(string $userId, callable $callback, ?int $ttl = null): mixed
     {
@@ -176,10 +155,7 @@ class CacheService
     /**
      * Cache de entidad (roles, permissions, etc.)
      *
-     * @param string $entity Nombre de la entidad (ej: 'roles', 'permissions')
-     * @param callable $callback
-     * @param int|null $ttl
-     * @return mixed
+     * @param  string  $entity  Nombre de la entidad (ej: 'roles', 'permissions')
      */
     public static function rememberEntity(string $entity, callable $callback, ?int $ttl = null): mixed
     {
@@ -193,16 +169,13 @@ class CacheService
     /**
      * Cache de búsqueda
      *
-     * @param string $query Término de búsqueda
-     * @param array $filters Filtros adicionales
-     * @param callable $callback
-     * @param int|null $ttl
-     * @return mixed
+     * @param  string  $query  Término de búsqueda
+     * @param  array  $filters  Filtros adicionales
      */
     public static function rememberSearch(string $query, array $filters, callable $callback, ?int $ttl = null): mixed
     {
         $ttl = $ttl ?? self::$defaultTtls['search'];
-        $hash = md5($query . serialize($filters));
+        $hash = md5($query.serialize($filters));
         $key = "search:{$hash}";
         $tag = 'searches';
 
@@ -211,8 +184,6 @@ class CacheService
 
     /**
      * Obtener todas las métricas del caché
-     *
-     * @return array
      */
     public static function getAllMetrics(): array
     {
@@ -230,10 +201,10 @@ class CacheService
             try {
                 $redis = Redis::connection('cache');
                 $info = $redis->info('memory');
-                
+
                 $metrics['memory_used'] = self::formatBytes($info['used_memory'] ?? 0);
                 $metrics['keys_count'] = $redis->dbsize();
-                
+
                 // Calcular hit rate (requiere monitoreo activo)
                 $metrics['hit_rate'] = self::calculateHitRate();
             } catch (\Exception $e) {
@@ -246,8 +217,6 @@ class CacheService
 
     /**
      * Limpiar todo el caché
-     *
-     * @return bool
      */
     public static function flush(): bool
     {
@@ -256,15 +225,12 @@ class CacheService
 
     /**
      * Verificar si una key existe en caché
-     *
-     * @param string $key
-     * @return bool
      */
     public static function has(string $key): bool
     {
         $fullKey = self::buildKey($key);
 
-        if (!empty(self::getActiveTags())) {
+        if (! empty(self::getActiveTags())) {
             return Cache::tags(self::getActiveTags())->has($fullKey);
         }
 
@@ -273,15 +239,12 @@ class CacheService
 
     /**
      * Obtener múltiples keys a la vez
-     *
-     * @param array $keys
-     * @return array
      */
     public static function getMultiple(array $keys): array
     {
-        $fullKeys = array_map(fn($key) => self::buildKey($key), $keys);
-        
-        if (!empty(self::getActiveTags())) {
+        $fullKeys = array_map(fn ($key) => self::buildKey($key), $keys);
+
+        if (! empty(self::getActiveTags())) {
             return Cache::tags(self::getActiveTags())->many($fullKeys);
         }
 
@@ -291,20 +254,18 @@ class CacheService
     /**
      * Guardar múltiples valores a la vez
      *
-     * @param array $values Array asociativo [key => value]
-     * @param int|null $ttl
-     * @return bool
+     * @param  array  $values  Array asociativo [key => value]
      */
     public static function setMultiple(array $values, ?int $ttl = null): bool
     {
         $ttl = $ttl ?? self::$defaultTtls['default'];
         $fullValues = [];
-        
+
         foreach ($values as $key => $value) {
             $fullValues[self::buildKey($key)] = $value;
         }
 
-        if (!empty(self::getActiveTags())) {
+        if (! empty(self::getActiveTags())) {
             return Cache::tags(self::getActiveTags())->putMany($fullValues, $ttl);
         }
 
@@ -313,19 +274,14 @@ class CacheService
 
     /**
      * Construir key completa con prefijo
-     *
-     * @param string $key
-     * @return string
      */
     protected static function buildKey(string $key): string
     {
-        return self::$prefix . ':' . $key;
+        return self::$prefix.':'.$key;
     }
 
     /**
      * Obtener tags activos del contexto actual
-     *
-     * @return array
      */
     protected static function getActiveTags(): array
     {
@@ -335,9 +291,6 @@ class CacheService
 
     /**
      * Invalidar por tag manualmente (fallback)
-     *
-     * @param string $tag
-     * @return bool
      */
     protected static function flushByTag(string $tag): bool
     {
@@ -349,8 +302,8 @@ class CacheService
             $redis = Redis::connection('cache');
             $pattern = self::buildKey("*:{$tag}:*");
             $keys = $redis->keys($pattern);
-            
-            if (!empty($keys)) {
+
+            if (! empty($keys)) {
                 $redis->del($keys);
             }
 
@@ -362,20 +315,18 @@ class CacheService
 
     /**
      * Calcular hit rate del caché
-     *
-     * @return float
      */
     protected static function calculateHitRate(): float
     {
         // Esto requiere implementar contadores de hits/misses
         // Por ahora retornamos un valor por defecto
         // Se puede implementar con Redis counters o métricas de Laravel
-        
+
         try {
             $redis = Redis::connection('cache');
             $hits = $redis->get('cache:hits') ?? 0;
             $misses = $redis->get('cache:misses') ?? 0;
-            
+
             $total = $hits + $misses;
             if ($total === 0) {
                 return 0.0;
@@ -389,9 +340,6 @@ class CacheService
 
     /**
      * Formatear bytes a formato legible
-     *
-     * @param int $bytes
-     * @return string
      */
     protected static function formatBytes(int $bytes): string
     {
@@ -401,15 +349,11 @@ class CacheService
         $pow = min($pow, count($units) - 1);
         $bytes /= pow(1024, $pow);
 
-        return round($bytes, 2) . $units[$pow];
+        return round($bytes, 2).$units[$pow];
     }
 
     /**
      * Configurar TTL por defecto para un tipo
-     *
-     * @param string $type
-     * @param int $ttl
-     * @return void
      */
     public static function setDefaultTtl(string $type, int $ttl): void
     {
@@ -418,9 +362,6 @@ class CacheService
 
     /**
      * Obtener TTL por defecto para un tipo
-     *
-     * @param string $type
-     * @return int
      */
     public static function getDefaultTtl(string $type): int
     {

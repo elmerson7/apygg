@@ -8,7 +8,7 @@ GROUP_ID ?= $(shell id -g)
 export USER_ID
 export GROUP_ID
 
-.PHONY: build up down restart logs ps sh composer art key migrate seed jwt meilisearch-key scout horizon reverb tinker fix-permissions ensure-env clear
+.PHONY: build up down restart logs ps sh composer art key migrate seed jwt meilisearch-key scout horizon reverb tinker fix-permissions ensure-env clear test test-watch test-parallel test-coverage pint pint-test phpstan
 
 # Asegurar que env/${ENV}.env existe antes de build/up
 ensure-env:
@@ -56,6 +56,18 @@ composer:
 
 art:
 	$(DC) exec app php artisan $(cmd)
+
+test:
+	$(DC) exec app composer test
+
+test-watch:
+	$(DC) exec app composer test:watch
+
+test-parallel:
+	$(DC) exec app composer test:parallel
+
+test-coverage:
+	$(DC) exec app php vendor/bin/pest --coverage
 
 key:
 	@echo "Generando clave de aplicación..."
@@ -118,6 +130,18 @@ clear:
 
 storage-link:
 	$(DC) exec app php artisan storage:link
+
+# Formatear código con Laravel Pint
+pint:
+	$(DC) exec app ./vendor/bin/pint
+
+# Ver qué se formatearía sin aplicar cambios
+pint-test:
+	$(DC) exec app ./vendor/bin/pint --test
+
+# Análisis estático con Larastan (PHPStan para Laravel)
+phpstan:
+	$(DC) exec app ./vendor/bin/phpstan analyse
 
 # Corregir permisos de archivos creados por Docker
 fix-permissions:

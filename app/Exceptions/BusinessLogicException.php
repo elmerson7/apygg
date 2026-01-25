@@ -2,15 +2,11 @@
 
 namespace App\Exceptions;
 
-use Exception;
-
 /**
  * BusinessLogicException
- * 
+ *
  * Excepción para errores de lógica de negocio.
  * Generalmente retorna código HTTP 422 (Unprocessable Entity).
- * 
- * @package App\Exceptions
  */
 class BusinessLogicException extends ApiException
 {
@@ -22,10 +18,10 @@ class BusinessLogicException extends ApiException
     /**
      * Constructor
      *
-     * @param string $message Mensaje de error
-     * @param string|null $businessCode Código de error de negocio (opcional)
-     * @param array $extensions Campos adicionales
-     * @param \Throwable|null $previous Excepción anterior
+     * @param  string  $message  Mensaje de error
+     * @param  string|null  $businessCode  Código de error de negocio (opcional)
+     * @param  array  $extensions  Campos adicionales
+     * @param  \Throwable|null  $previous  Excepción anterior
      */
     public function __construct(
         string $message = 'Error de lógica de negocio',

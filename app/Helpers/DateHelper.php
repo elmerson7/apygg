@@ -3,26 +3,22 @@
 namespace App\Helpers;
 
 use Carbon\Carbon;
-use Carbon\CarbonInterval;
 use DateTimeInterface;
-use InvalidArgumentException;
 
 /**
  * DateHelper
- * 
+ *
  * Helper estático para operaciones con fechas y timezones.
  * Utiliza Carbon para todas las operaciones de fecha.
- * 
- * @package App\Helpers
  */
 class DateHelper
 {
     /**
      * Formatear fecha según formato estándar
      *
-     * @param DateTimeInterface|string|null $date Fecha a formatear
-     * @param string $format Formato (default: 'Y-m-d H:i:s')
-     * @param string|null $timezone Timezone destino (opcional)
+     * @param  DateTimeInterface|string|null  $date  Fecha a formatear
+     * @param  string  $format  Formato (default: 'Y-m-d H:i:s')
+     * @param  string|null  $timezone  Timezone destino (opcional)
      * @return string|null Fecha formateada o null si es inválida
      */
     public static function format($date, string $format = 'Y-m-d H:i:s', ?string $timezone = null): ?string
@@ -33,7 +29,7 @@ class DateHelper
 
         try {
             $carbon = Carbon::parse($date);
-            
+
             if ($timezone) {
                 $carbon = $carbon->setTimezone($timezone);
             }
@@ -47,8 +43,8 @@ class DateHelper
     /**
      * Formatear fecha en formato ISO 8601
      *
-     * @param DateTimeInterface|string|null $date Fecha a formatear
-     * @param string|null $timezone Timezone destino (opcional)
+     * @param  DateTimeInterface|string|null  $date  Fecha a formatear
+     * @param  string|null  $timezone  Timezone destino (opcional)
      * @return string|null Fecha en formato ISO 8601
      */
     public static function toIso8601($date, ?string $timezone = null): ?string
@@ -59,9 +55,9 @@ class DateHelper
     /**
      * Formatear fecha en formato legible en español
      *
-     * @param DateTimeInterface|string|null $date Fecha a formatear
-     * @param bool $includeTime Si incluir hora
-     * @param string|null $timezone Timezone destino (opcional)
+     * @param  DateTimeInterface|string|null  $date  Fecha a formatear
+     * @param  bool  $includeTime  Si incluir hora
+     * @param  string|null  $timezone  Timezone destino (opcional)
      * @return string|null Fecha formateada en español
      */
     public static function toSpanish($date, bool $includeTime = false, ?string $timezone = null): ?string
@@ -72,7 +68,7 @@ class DateHelper
 
         try {
             $carbon = Carbon::parse($date);
-            
+
             if ($timezone) {
                 $carbon = $carbon->setTimezone($timezone);
             }
@@ -92,8 +88,8 @@ class DateHelper
     /**
      * Formatear fecha en formato corto (d/m/Y)
      *
-     * @param DateTimeInterface|string|null $date Fecha a formatear
-     * @param string|null $timezone Timezone destino (opcional)
+     * @param  DateTimeInterface|string|null  $date  Fecha a formatear
+     * @param  string|null  $timezone  Timezone destino (opcional)
      * @return string|null Fecha en formato corto
      */
     public static function toShort($date, ?string $timezone = null): ?string
@@ -104,8 +100,8 @@ class DateHelper
     /**
      * Formatear fecha con hora corta (d/m/Y H:i)
      *
-     * @param DateTimeInterface|string|null $date Fecha a formatear
-     * @param string|null $timezone Timezone destino (opcional)
+     * @param  DateTimeInterface|string|null  $date  Fecha a formatear
+     * @param  string|null  $timezone  Timezone destino (opcional)
      * @return string|null Fecha con hora en formato corto
      */
     public static function toShortWithTime($date, ?string $timezone = null): ?string
@@ -116,9 +112,9 @@ class DateHelper
     /**
      * Convertir fecha a otro timezone
      *
-     * @param DateTimeInterface|string|null $date Fecha a convertir
-     * @param string $toTimezone Timezone destino
-     * @param string|null $fromTimezone Timezone origen (opcional, usa el de la fecha si no se especifica)
+     * @param  DateTimeInterface|string|null  $date  Fecha a convertir
+     * @param  string  $toTimezone  Timezone destino
+     * @param  string|null  $fromTimezone  Timezone origen (opcional, usa el de la fecha si no se especifica)
      * @return Carbon|null Fecha convertida o null si es inválida
      */
     public static function convertTimezone($date, string $toTimezone, ?string $fromTimezone = null): ?Carbon
@@ -129,7 +125,7 @@ class DateHelper
 
         try {
             $carbon = Carbon::parse($date);
-            
+
             if ($fromTimezone) {
                 $carbon = $carbon->setTimezone($fromTimezone);
             }
@@ -143,9 +139,9 @@ class DateHelper
     /**
      * Obtener diferencia de tiempo en formato legible
      *
-     * @param DateTimeInterface|string|null $from Fecha inicial
-     * @param DateTimeInterface|string|null $to Fecha final (default: ahora)
-     * @param bool $absolute Si la diferencia debe ser absoluta
+     * @param  DateTimeInterface|string|null  $from  Fecha inicial
+     * @param  DateTimeInterface|string|null  $to  Fecha final (default: ahora)
+     * @param  bool  $absolute  Si la diferencia debe ser absoluta
      * @return string|null Diferencia en formato legible (ej: "2 horas", "3 días")
      */
     public static function diffForHumans($from, $to = null, bool $absolute = false): ?string
@@ -169,8 +165,8 @@ class DateHelper
     /**
      * Obtener diferencia de tiempo en segundos
      *
-     * @param DateTimeInterface|string|null $from Fecha inicial
-     * @param DateTimeInterface|string|null $to Fecha final (default: ahora)
+     * @param  DateTimeInterface|string|null  $from  Fecha inicial
+     * @param  DateTimeInterface|string|null  $to  Fecha final (default: ahora)
      * @return int|null Diferencia en segundos
      */
     public static function diffInSeconds($from, $to = null): ?int
@@ -192,8 +188,8 @@ class DateHelper
     /**
      * Obtener diferencia de tiempo en minutos
      *
-     * @param DateTimeInterface|string|null $from Fecha inicial
-     * @param DateTimeInterface|string|null $to Fecha final (default: ahora)
+     * @param  DateTimeInterface|string|null  $from  Fecha inicial
+     * @param  DateTimeInterface|string|null  $to  Fecha final (default: ahora)
      * @return int|null Diferencia en minutos
      */
     public static function diffInMinutes($from, $to = null): ?int
@@ -215,8 +211,8 @@ class DateHelper
     /**
      * Obtener diferencia de tiempo en horas
      *
-     * @param DateTimeInterface|string|null $from Fecha inicial
-     * @param DateTimeInterface|string|null $to Fecha final (default: ahora)
+     * @param  DateTimeInterface|string|null  $from  Fecha inicial
+     * @param  DateTimeInterface|string|null  $to  Fecha final (default: ahora)
      * @return int|null Diferencia en horas
      */
     public static function diffInHours($from, $to = null): ?int
@@ -238,8 +234,8 @@ class DateHelper
     /**
      * Obtener diferencia de tiempo en días
      *
-     * @param DateTimeInterface|string|null $from Fecha inicial
-     * @param DateTimeInterface|string|null $to Fecha final (default: ahora)
+     * @param  DateTimeInterface|string|null  $from  Fecha inicial
+     * @param  DateTimeInterface|string|null  $to  Fecha final (default: ahora)
      * @return int|null Diferencia en días
      */
     public static function diffInDays($from, $to = null): ?int
@@ -261,8 +257,8 @@ class DateHelper
     /**
      * Parsear fecha desde múltiples formatos
      *
-     * @param string $dateString String de fecha a parsear
-     * @param array $formats Formatos a intentar (opcional)
+     * @param  string  $dateString  String de fecha a parsear
+     * @param  array  $formats  Formatos a intentar (opcional)
      * @return Carbon|null Fecha parseada o null si falla
      */
     public static function parse(string $dateString, array $formats = []): ?Carbon
@@ -300,9 +296,9 @@ class DateHelper
     /**
      * Obtener rango de fechas
      *
-     * @param DateTimeInterface|string|null $start Fecha inicial
-     * @param DateTimeInterface|string|null $end Fecha final
-     * @param string $format Formato de salida
+     * @param  DateTimeInterface|string|null  $start  Fecha inicial
+     * @param  DateTimeInterface|string|null  $end  Fecha final
+     * @param  string  $format  Formato de salida
      * @return array|null Array con 'start' y 'end' o null si es inválido
      */
     public static function getDateRange($start, $end, string $format = 'Y-m-d'): ?array
@@ -331,10 +327,10 @@ class DateHelper
     /**
      * Verificar si una fecha está dentro de un rango
      *
-     * @param DateTimeInterface|string|null $date Fecha a verificar
-     * @param DateTimeInterface|string|null $start Fecha inicial del rango
-     * @param DateTimeInterface|string|null $end Fecha final del rango
-     * @param bool $inclusive Si incluir los límites
+     * @param  DateTimeInterface|string|null  $date  Fecha a verificar
+     * @param  DateTimeInterface|string|null  $start  Fecha inicial del rango
+     * @param  DateTimeInterface|string|null  $end  Fecha final del rango
+     * @param  bool  $inclusive  Si incluir los límites
      * @return bool|null true si está dentro del rango, false si no, null si es inválido
      */
     public static function isWithinRange($date, $start, $end, bool $inclusive = true): ?bool
@@ -361,14 +357,15 @@ class DateHelper
     /**
      * Validar formato de fecha
      *
-     * @param string $dateString String de fecha a validar
-     * @param string $format Formato esperado
+     * @param  string  $dateString  String de fecha a validar
+     * @param  string  $format  Formato esperado
      * @return bool true si el formato es válido
      */
     public static function validateFormat(string $dateString, string $format): bool
     {
         try {
             $date = Carbon::createFromFormat($format, $dateString);
+
             return $date && $date->format($format) === $dateString;
         } catch (\Exception $e) {
             return false;
@@ -378,48 +375,52 @@ class DateHelper
     /**
      * Obtener fecha actual en timezone específico
      *
-     * @param string|null $timezone Timezone (default: config('app.timezone'))
+     * @param  string|null  $timezone  Timezone (default: config('app.timezone'))
      * @return Carbon Fecha actual
      */
     public static function now(?string $timezone = null): Carbon
     {
         $timezone = $timezone ?? config('app.timezone', 'UTC');
+
         return Carbon::now($timezone);
     }
 
     /**
      * Obtener fecha de hoy (sin hora)
      *
-     * @param string|null $timezone Timezone (default: config('app.timezone'))
+     * @param  string|null  $timezone  Timezone (default: config('app.timezone'))
      * @return Carbon Fecha de hoy a las 00:00:00
      */
     public static function today(?string $timezone = null): Carbon
     {
         $timezone = $timezone ?? config('app.timezone', 'UTC');
+
         return Carbon::today($timezone);
     }
 
     /**
      * Obtener fecha de ayer
      *
-     * @param string|null $timezone Timezone (default: config('app.timezone'))
+     * @param  string|null  $timezone  Timezone (default: config('app.timezone'))
      * @return Carbon Fecha de ayer
      */
     public static function yesterday(?string $timezone = null): Carbon
     {
         $timezone = $timezone ?? config('app.timezone', 'UTC');
+
         return Carbon::yesterday($timezone);
     }
 
     /**
      * Obtener fecha de mañana
      *
-     * @param string|null $timezone Timezone (default: config('app.timezone'))
+     * @param  string|null  $timezone  Timezone (default: config('app.timezone'))
      * @return Carbon Fecha de mañana
      */
     public static function tomorrow(?string $timezone = null): Carbon
     {
         $timezone = $timezone ?? config('app.timezone', 'UTC');
+
         return Carbon::tomorrow($timezone);
     }
 }

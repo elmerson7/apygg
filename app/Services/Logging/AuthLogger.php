@@ -3,8 +3,8 @@
 namespace App\Services\Logging;
 
 use App\Models\Logs\SecurityLog;
-use App\Services\LogService;
 use App\Models\User;
+use App\Services\LogService;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -12,8 +12,6 @@ use Illuminate\Support\Facades\Cache;
  *
  * Logger especializado para registrar eventos de autenticación.
  * Registra intentos de login, fallos, cambios de contraseña, etc.
- *
- * @package App\Services\Logging
  */
 class AuthLogger
 {
@@ -29,11 +27,6 @@ class AuthLogger
 
     /**
      * Registrar login exitoso
-     *
-     * @param User $user
-     * @param string|null $ipAddress
-     * @param string|null $userAgent
-     * @return SecurityLog|null
      */
     public static function logLoginSuccess(
         User $user,
@@ -66,11 +59,8 @@ class AuthLogger
     /**
      * Registrar intento de login fallido
      *
-     * @param string $email Email o identificador usado
-     * @param string|null $ipAddress
-     * @param string|null $userAgent
-     * @param string|null $reason Razón del fallo
-     * @return SecurityLog|null
+     * @param  string  $email  Email o identificador usado
+     * @param  string|null  $reason  Razón del fallo
      */
     public static function logLoginFailure(
         string $email,
@@ -110,10 +100,6 @@ class AuthLogger
 
     /**
      * Registrar cambio de contraseña
-     *
-     * @param User $user
-     * @param string|null $ipAddress
-     * @return SecurityLog|null
      */
     public static function logPasswordChanged(User $user, ?string $ipAddress = null): ?SecurityLog
     {
@@ -140,10 +126,7 @@ class AuthLogger
     /**
      * Registrar revocación de token
      *
-     * @param User $user
-     * @param string|null $tokenId ID del token revocado
-     * @param string|null $ipAddress
-     * @return SecurityLog|null
+     * @param  string|null  $tokenId  ID del token revocado
      */
     public static function logTokenRevoked(User $user, ?string $tokenId = null, ?string $ipAddress = null): ?SecurityLog
     {
@@ -170,14 +153,10 @@ class AuthLogger
 
     /**
      * Verificar si hay actividad sospechosa desde una IP o email
-     *
-     * @param string $ipAddress
-     * @param string|null $email
-     * @return bool
      */
     public static function hasSuspiciousActivity(string $ipAddress, ?string $email = null): bool
     {
-        $cacheKey = "auth_failures:{$ipAddress}:" . ($email ?? 'unknown');
+        $cacheKey = "auth_failures:{$ipAddress}:".($email ?? 'unknown');
 
         $failures = Cache::get($cacheKey, 0);
 
@@ -186,14 +165,10 @@ class AuthLogger
 
     /**
      * Verificar y registrar actividad sospechosa
-     *
-     * @param string $ipAddress
-     * @param string|null $email
-     * @return void
      */
     protected static function checkSuspiciousActivity(string $ipAddress, ?string $email = null): void
     {
-        $cacheKey = "auth_failures:{$ipAddress}:" . ($email ?? 'unknown');
+        $cacheKey = "auth_failures:{$ipAddress}:".($email ?? 'unknown');
 
         // Incrementar contador de fallos
         $failures = Cache::increment($cacheKey);
@@ -228,28 +203,20 @@ class AuthLogger
 
     /**
      * Obtener número de intentos fallidos desde una IP
-     *
-     * @param string $ipAddress
-     * @param string|null $email
-     * @return int
      */
     public static function getFailedAttempts(string $ipAddress, ?string $email = null): int
     {
-        $cacheKey = "auth_failures:{$ipAddress}:" . ($email ?? 'unknown');
+        $cacheKey = "auth_failures:{$ipAddress}:".($email ?? 'unknown');
 
         return Cache::get($cacheKey, 0);
     }
 
     /**
      * Limpiar contador de intentos fallidos
-     *
-     * @param string $ipAddress
-     * @param string|null $email
-     * @return void
      */
     public static function clearFailedAttempts(string $ipAddress, ?string $email = null): void
     {
-        $cacheKey = "auth_failures:{$ipAddress}:" . ($email ?? 'unknown');
+        $cacheKey = "auth_failures:{$ipAddress}:".($email ?? 'unknown');
         Cache::forget($cacheKey);
     }
 }

@@ -2,8 +2,6 @@
 
 namespace App\Services;
 
-use App\Services\LogService;
-use App\Services\TokenService;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
@@ -18,8 +16,6 @@ use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
  * - Renovación de tokens
  * - Revocación de tokens
  * - Manejo de intentos fallidos
- *
- * @package App\Services
  */
 class AuthService
 {
@@ -43,9 +39,10 @@ class AuthService
     /**
      * Autenticar usuario con credenciales
      *
-     * @param array $credentials Credenciales ['email' => string, 'password' => string]
-     * @param string|null $ipAddress Dirección IP del cliente
+     * @param  array  $credentials  Credenciales ['email' => string, 'password' => string]
+     * @param  string|null  $ipAddress  Dirección IP del cliente
      * @return array ['user' => User, 'tokens' => array] o null si falla
+     *
      * @throws \Exception
      */
     public function authenticate(array $credentials, ?string $ipAddress = null): ?array
@@ -53,7 +50,7 @@ class AuthService
         $email = $credentials['email'] ?? null;
         $password = $credentials['password'] ?? null;
 
-        if (!$email || !$password) {
+        if (! $email || ! $password) {
             throw new \InvalidArgumentException('Email y contraseña son requeridos');
         }
 
@@ -64,13 +61,13 @@ class AuthService
                 'ip' => $ipAddress,
             ], 'security');
 
-            throw new \Exception('Demasiados intentos fallidos. Intenta nuevamente en ' . $this->lockoutTime . ' minutos.');
+            throw new \Exception('Demasiados intentos fallidos. Intenta nuevamente en '.$this->lockoutTime.' minutos.');
         }
 
         // Buscar usuario por email
         $user = User::where('email', $email)->first();
 
-        if (!$user) {
+        if (! $user) {
             $this->recordFailedAttempt($email, $ipAddress);
             LogService::warning('Intento de login fallido - Usuario no encontrado', [
                 'email' => $email,
@@ -81,7 +78,7 @@ class AuthService
         }
 
         // Verificar contraseña
-        if (!Hash::check($password, $user->password)) {
+        if (! Hash::check($password, $user->password)) {
             $this->recordFailedAttempt($email, $ipAddress);
             LogService::warning('Intento de login fallido - Contraseña incorrecta', [
                 'user_id' => $user->id,
@@ -122,9 +119,10 @@ class AuthService
     /**
      * Generar tokens para un usuario
      *
-     * @param User $user Usuario para el cual generar tokens
-     * @param array $customClaims Claims personalizados adicionales
+     * @param  User  $user  Usuario para el cual generar tokens
+     * @param  array  $customClaims  Claims personalizados adicionales
      * @return array ['access_token' => string, 'refresh_token' => string]
+     *
      * @throws JWTException
      */
     public function generateTokens(User $user, array $customClaims = []): array
@@ -135,8 +133,9 @@ class AuthService
     /**
      * Renovar access token usando refresh token
      *
-     * @param string|null $refreshToken Refresh token a usar
+     * @param  string|null  $refreshToken  Refresh token a usar
      * @return array ['access_token' => string, 'refresh_token' => string]
+     *
      * @throws JWTException
      */
     public function refreshToken(?string $refreshToken = null): array
@@ -165,8 +164,9 @@ class AuthService
     /**
      * Revocar token (logout)
      *
-     * @param string|null $token Token a revocar
+     * @param  string|null  $token  Token a revocar
      * @return bool True si se revocó exitosamente
+     *
      * @throws JWTException
      */
     public function revokeToken(?string $token = null): bool
@@ -194,22 +194,22 @@ class AuthService
     /**
      * Verificar si un email/IP está bloqueado por intentos fallidos
      *
-     * @param string $email Email del usuario
-     * @param string|null $ipAddress Dirección IP
+     * @param  string  $email  Email del usuario
+     * @param  string|null  $ipAddress  Dirección IP
      * @return bool True si está bloqueado
      */
     public function isLocked(string $email, ?string $ipAddress = null): bool
     {
         $key = $this->getLockoutKey($email, $ipAddress);
+
         return Cache::has($key);
     }
 
     /**
      * Registrar intento fallido
      *
-     * @param string $email Email del usuario
-     * @param string|null $ipAddress Dirección IP
-     * @return void
+     * @param  string  $email  Email del usuario
+     * @param  string|null  $ipAddress  Dirección IP
      */
     protected function recordFailedAttempt(string $email, ?string $ipAddress = null): void
     {
@@ -235,9 +235,8 @@ class AuthService
     /**
      * Limpiar intentos fallidos después de autenticación exitosa
      *
-     * @param string $email Email del usuario
-     * @param string|null $ipAddress Dirección IP
-     * @return void
+     * @param  string  $email  Email del usuario
+     * @param  string|null  $ipAddress  Dirección IP
      */
     protected function clearFailedAttempts(string $email, ?string $ipAddress = null): void
     {
@@ -251,34 +250,36 @@ class AuthService
     /**
      * Obtener clave de caché para intentos fallidos
      *
-     * @param string $email Email del usuario
-     * @param string|null $ipAddress Dirección IP
+     * @param  string  $email  Email del usuario
+     * @param  string|null  $ipAddress  Dirección IP
      * @return string Clave de caché
      */
     protected function getAttemptsKey(string $email, ?string $ipAddress = null): string
     {
         $identifier = $ipAddress ? "{$email}:{$ipAddress}" : $email;
-        return "auth:failed_attempts:" . md5($identifier);
+
+        return 'auth:failed_attempts:'.md5($identifier);
     }
 
     /**
      * Obtener clave de caché para bloqueo
      *
-     * @param string $email Email del usuario
-     * @param string|null $ipAddress Dirección IP
+     * @param  string  $email  Email del usuario
+     * @param  string|null  $ipAddress  Dirección IP
      * @return string Clave de caché
      */
     protected function getLockoutKey(string $email, ?string $ipAddress = null): string
     {
         $identifier = $ipAddress ? "{$email}:{$ipAddress}" : $email;
-        return "auth:lockout:" . md5($identifier);
+
+        return 'auth:lockout:'.md5($identifier);
     }
 
     /**
      * Obtener número de intentos fallidos restantes
      *
-     * @param string $email Email del usuario
-     * @param string|null $ipAddress Dirección IP
+     * @param  string  $email  Email del usuario
+     * @param  string|null  $ipAddress  Dirección IP
      * @return int Número de intentos restantes antes del bloqueo
      */
     public function getRemainingAttempts(string $email, ?string $ipAddress = null): int

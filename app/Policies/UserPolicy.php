@@ -10,16 +10,13 @@ use App\Services\LogService;
  *
  * Policy para autorización de acciones sobre usuarios.
  * Verifica permisos usando el sistema RBAC.
- *
- * @package App\Policies
  */
 class UserPolicy
 {
     /**
      * Determinar si el usuario puede ver cualquier usuario.
      *
-     * @param User $user Usuario autenticado
-     * @return bool
+     * @param  User  $user  Usuario autenticado
      */
     public function viewAny(User $user): bool
     {
@@ -29,9 +26,8 @@ class UserPolicy
     /**
      * Determinar si el usuario puede ver el usuario específico.
      *
-     * @param User $user Usuario autenticado
-     * @param User $model Usuario a verificar
-     * @return bool
+     * @param  User  $user  Usuario autenticado
+     * @param  User  $model  Usuario a verificar
      */
     public function view(User $user, User $model): bool
     {
@@ -42,8 +38,7 @@ class UserPolicy
     /**
      * Determinar si el usuario puede crear usuarios.
      *
-     * @param User $user Usuario autenticado
-     * @return bool
+     * @param  User  $user  Usuario autenticado
      */
     public function create(User $user): bool
     {
@@ -61,9 +56,8 @@ class UserPolicy
     /**
      * Determinar si el usuario puede actualizar el usuario específico.
      *
-     * @param User $user Usuario autenticado
-     * @param User $model Usuario a actualizar
-     * @return bool
+     * @param  User  $user  Usuario autenticado
+     * @param  User  $model  Usuario a actualizar
      */
     public function update(User $user, User $model): bool
     {
@@ -83,9 +77,8 @@ class UserPolicy
     /**
      * Determinar si el usuario puede eliminar el usuario específico.
      *
-     * @param User $user Usuario autenticado
-     * @param User $model Usuario a eliminar
-     * @return bool
+     * @param  User  $user  Usuario autenticado
+     * @param  User  $model  Usuario a eliminar
      */
     public function delete(User $user, User $model): bool
     {
@@ -109,9 +102,8 @@ class UserPolicy
     /**
      * Determinar si el usuario puede restaurar el usuario específico.
      *
-     * @param User $user Usuario autenticado
-     * @param User $model Usuario a restaurar
-     * @return bool
+     * @param  User  $user  Usuario autenticado
+     * @param  User  $model  Usuario a restaurar
      */
     public function restore(User $user, User $model): bool
     {
@@ -130,9 +122,8 @@ class UserPolicy
     /**
      * Determinar si el usuario puede eliminar permanentemente el usuario específico.
      *
-     * @param User $user Usuario autenticado
-     * @param User $model Usuario a eliminar permanentemente
-     * @return bool
+     * @param  User  $user  Usuario autenticado
+     * @param  User  $model  Usuario a eliminar permanentemente
      */
     public function forceDelete(User $user, User $model): bool
     {

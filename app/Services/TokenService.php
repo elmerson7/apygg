@@ -2,14 +2,12 @@
 
 namespace App\Services;
 
-use App\Services\LogService;
 use App\Models\User;
-use Illuminate\Support\Facades\Cache;
-use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenBlacklistedException;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenExpiredException;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenInvalidException;
+use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 /**
  * TokenService
@@ -19,17 +17,16 @@ use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenInvalidException;
  * - Validación de tokens
  * - Revocación de tokens
  * - Renovación con rotación
- *
- * @package App\Services
  */
 class TokenService
 {
     /**
      * Generar access token para un usuario
      *
-     * @param User $user Usuario para el cual generar el token
-     * @param array $customClaims Claims personalizados adicionales
+     * @param  User  $user  Usuario para el cual generar el token
+     * @param  array  $customClaims  Claims personalizados adicionales
      * @return string Token JWT
+     *
      * @throws JWTException
      */
     public function generateAccessToken(User $user, array $customClaims = []): string
@@ -63,8 +60,9 @@ class TokenService
     /**
      * Generar refresh token para un usuario
      *
-     * @param User $user Usuario para el cual generar el token
+     * @param  User  $user  Usuario para el cual generar el token
      * @return string Refresh token JWT
+     *
      * @throws JWTException
      */
     public function generateRefreshToken(User $user): string
@@ -96,9 +94,10 @@ class TokenService
     /**
      * Generar access token y refresh token para un usuario
      *
-     * @param User $user Usuario para el cual generar los tokens
-     * @param array $customClaims Claims personalizados adicionales
+     * @param  User  $user  Usuario para el cual generar los tokens
+     * @param  array  $customClaims  Claims personalizados adicionales
      * @return array ['access_token' => string, 'refresh_token' => string]
+     *
      * @throws JWTException
      */
     public function generateTokens(User $user, array $customClaims = []): array
@@ -112,7 +111,7 @@ class TokenService
     /**
      * Validar token JWT
      *
-     * @param string|null $token Token a validar (null = usar token del request)
+     * @param  string|null  $token  Token a validar (null = usar token del request)
      * @return bool True si el token es válido
      */
     public function validateToken(?string $token = null): bool
@@ -155,7 +154,7 @@ class TokenService
     /**
      * Obtener usuario desde token
      *
-     * @param string|null $token Token a usar (null = usar token del request)
+     * @param  string|null  $token  Token a usar (null = usar token del request)
      * @return User|null Usuario autenticado o null si el token es inválido
      */
     public function getUserFromToken(?string $token = null): ?User
@@ -174,8 +173,9 @@ class TokenService
     /**
      * Obtener claims del token
      *
-     * @param string|null $token Token a usar (null = usar token del request)
+     * @param  string|null  $token  Token a usar (null = usar token del request)
      * @return array Claims del token
+     *
      * @throws JWTException
      */
     public function getTokenClaims(?string $token = null): array
@@ -198,8 +198,9 @@ class TokenService
     /**
      * Revocar token (agregar a blacklist)
      *
-     * @param string|null $token Token a revocar (null = usar token del request)
+     * @param  string|null  $token  Token a revocar (null = usar token del request)
      * @return bool True si se revocó exitosamente
+     *
      * @throws JWTException
      */
     public function revokeToken(?string $token = null): bool
@@ -211,7 +212,7 @@ class TokenService
 
             $token = JWTAuth::getToken();
 
-            if (!$token) {
+            if (! $token) {
                 return false;
             }
 
@@ -240,8 +241,9 @@ class TokenService
     /**
      * Renovar access token usando refresh token (con rotación)
      *
-     * @param string|null $refreshToken Refresh token a usar (null = usar token del request)
+     * @param  string|null  $refreshToken  Refresh token a usar (null = usar token del request)
      * @return array ['access_token' => string, 'refresh_token' => string]
+     *
      * @throws JWTException
      */
     public function refreshToken(?string $refreshToken = null): array
@@ -253,7 +255,7 @@ class TokenService
 
             $token = JWTAuth::getToken();
 
-            if (!$token) {
+            if (! $token) {
                 throw new TokenInvalidException('Token no proporcionado');
             }
 
@@ -266,7 +268,7 @@ class TokenService
             // Obtener usuario del token
             $user = JWTAuth::parseToken()->authenticate();
 
-            if (!$user) {
+            if (! $user) {
                 throw new TokenInvalidException('Usuario no encontrado en el token');
             }
 

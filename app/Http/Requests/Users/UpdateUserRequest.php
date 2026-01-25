@@ -12,8 +12,6 @@ use Illuminate\Validation\Rule;
  * Form Request para validación de actualización de usuarios.
  * Valida email único excepto si es el mismo usuario.
  * Incluye sanitización automática heredada de BaseFormRequest.
- *
- * @package App\Http\Requests\Users
  */
 class UpdateUserRequest extends BaseFormRequest
 {
@@ -23,6 +21,7 @@ class UpdateUserRequest extends BaseFormRequest
     public function authorize(): bool
     {
         $user = \App\Models\User::findOrFail($this->route('id'));
+
         return $this->user()->can('update', $user);
     }
 
@@ -43,7 +42,7 @@ class UpdateUserRequest extends BaseFormRequest
                 'max:255',
                 Rule::unique('users', 'email')->ignore($userId),
             ],
-            'password' => ['sometimes', 'nullable', 'string', 'min:8', new StrongPassword()],
+            'password' => ['sometimes', 'nullable', 'string', 'min:8', new StrongPassword],
         ];
     }
 

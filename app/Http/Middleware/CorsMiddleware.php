@@ -8,7 +8,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Middleware personalizado para manejar CORS
- * 
+ *
  * Controla qué orígenes, métodos y headers están permitidos según el entorno.
  * Usa ALLOWED_ORIGINS en todos los entornos (dev, staging, prod) para garantizar
  * que la configuración funcione correctamente.
@@ -108,7 +108,7 @@ class CorsMiddleware
             $response->headers->set('Access-Control-Allow-Credentials', 'true');
         }
 
-        if (!empty($exposedHeaders)) {
+        if (! empty($exposedHeaders)) {
             $response->headers->set('Access-Control-Expose-Headers', implode(', ', $exposedHeaders));
         }
 
@@ -130,7 +130,7 @@ class CorsMiddleware
         // Verificar si está en la lista de permitidos
         foreach ($allowedOrigins as $allowedOrigin) {
             $allowedOrigin = rtrim($allowedOrigin, '/');
-            
+
             // Comparación exacta
             if ($origin === $allowedOrigin) {
                 return true;

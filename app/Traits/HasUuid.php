@@ -6,10 +6,8 @@ use Illuminate\Support\Str;
 
 /**
  * Trait HasUuid
- * 
+ *
  * Proporciona generación automática de UUID como primary key.
- * 
- * @package App\Traits
  */
 trait HasUuid
 {
@@ -50,7 +48,7 @@ trait HasUuid
     public function hasValidUuid(): bool
     {
         $uuid = $this->getKey();
-        
+
         if (empty($uuid)) {
             return false;
         }

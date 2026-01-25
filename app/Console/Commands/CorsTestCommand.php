@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Config;
 
 /**
  * Comando para probar la configuración de CORS
@@ -49,7 +48,7 @@ class CorsTestCommand extends Command
                 ['Métodos permitidos', implode(', ', $allowedMethods)],
                 ['Headers permitidos', implode(', ', $allowedHeaders)],
                 ['Headers expuestos', implode(', ', $exposedHeaders)],
-                ['Max Age', $maxAge . ' segundos'],
+                ['Max Age', $maxAge.' segundos'],
                 ['Supports Credentials', $supportsCredentials ? '✅ Sí' : '❌ No'],
             ]
         );
@@ -58,6 +57,7 @@ class CorsTestCommand extends Command
         if (empty($allowedOrigins)) {
             $this->warn('⚠️  No hay orígenes permitidos configurados en ALLOWED_ORIGINS');
             $this->info('   Configura ALLOWED_ORIGINS en tu archivo .env');
+
             return self::FAILURE;
         }
 
@@ -66,14 +66,14 @@ class CorsTestCommand extends Command
         if ($testOrigin) {
             $this->newLine();
             $this->info("🧪 Probando origen: {$testOrigin}");
-            
+
             $isAllowed = $this->isOriginAllowed($testOrigin, $allowedOrigins);
-            
+
             if ($isAllowed) {
                 $this->info("✅ El origen '{$testOrigin}' está permitido");
             } else {
                 $this->error("❌ El origen '{$testOrigin}' NO está permitido");
-                $this->info('   Orígenes permitidos: ' . implode(', ', $allowedOrigins));
+                $this->info('   Orígenes permitidos: '.implode(', ', $allowedOrigins));
             }
         } else {
             $this->newLine();
@@ -84,45 +84,45 @@ class CorsTestCommand extends Command
         // Verificaciones de seguridad
         $this->newLine();
         $this->info('🔒 Verificaciones de seguridad:');
-        
+
         $checks = [];
-        
+
         // Verificar si hay wildcard en producción
         $env = config('app.env');
         $hasWildcard = in_array('*', $allowedOrigins);
-        
+
         if ($hasWildcard && $env === 'production') {
             $checks[] = ['❌', 'Wildcard (*) en producción', 'No uses * en producción. Es un riesgo de seguridad.'];
         } elseif ($hasWildcard && $env !== 'production') {
-            $checks[] = ['⚠️', 'Wildcard (*) en ' . $env, 'Considera usar orígenes específicos para mejor seguridad.'];
+            $checks[] = ['⚠️', 'Wildcard (*) en '.$env, 'Considera usar orígenes específicos para mejor seguridad.'];
         } else {
             $checks[] = ['✅', 'Sin wildcard', 'Orígenes específicos configurados.'];
         }
-        
+
         // Verificar credenciales con wildcard
         if ($supportsCredentials && $hasWildcard) {
             $checks[] = ['❌', 'Credenciales con wildcard', 'No se pueden usar credenciales con origen *. Especifica orígenes exactos.'];
-        } elseif ($supportsCredentials && !$hasWildcard) {
+        } elseif ($supportsCredentials && ! $hasWildcard) {
             $checks[] = ['✅', 'Credenciales configuradas', 'Credenciales habilitadas con orígenes específicos.'];
         }
-        
+
         // Verificar HTTPS en producción
         if ($env === 'production') {
             $hasHttp = false;
             foreach ($allowedOrigins as $origin) {
-                if (str_starts_with($origin, 'http://') && !str_contains($origin, 'localhost')) {
+                if (str_starts_with($origin, 'http://') && ! str_contains($origin, 'localhost')) {
                     $hasHttp = true;
                     break;
                 }
             }
-            
+
             if ($hasHttp) {
                 $checks[] = ['⚠️', 'HTTP en producción', 'Considera usar solo HTTPS en producción.'];
             } else {
                 $checks[] = ['✅', 'HTTPS en producción', 'Solo HTTPS configurado.'];
             }
         }
-        
+
         $this->table(['Estado', 'Verificación', 'Nota'], $checks);
 
         return self::SUCCESS;
@@ -134,14 +134,14 @@ class CorsTestCommand extends Command
     private function isOriginAllowed(string $origin, array $allowedOrigins): bool
     {
         $origin = rtrim($origin, '/');
-        
+
         foreach ($allowedOrigins as $allowedOrigin) {
             $allowedOrigin = rtrim($allowedOrigin, '/');
-            
+
             if ($origin === $allowedOrigin) {
                 return true;
             }
-            
+
             if (str_starts_with($allowedOrigin, '*.')) {
                 $domain = substr($allowedOrigin, 2);
                 if (str_ends_with($origin, $domain)) {
@@ -149,7 +149,7 @@ class CorsTestCommand extends Command
                 }
             }
         }
-        
+
         return false;
     }
 }

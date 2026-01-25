@@ -7,7 +7,7 @@ use Illuminate\Contracts\Validation\ValidationRule;
 
 /**
  * Regla de validación para JSON
- * 
+ *
  * Valida que el valor sea un JSON válido y opcionalmente valida su estructura.
  */
 class ValidJson implements ValidationRule
@@ -32,8 +32,9 @@ class ValidJson implements ValidationRule
      */
     public static function withSchema(array $schema): self
     {
-        $rule = new self();
+        $rule = new self;
         $rule->schema = $schema;
+
         return $rule;
     }
 
@@ -42,8 +43,9 @@ class ValidJson implements ValidationRule
      */
     public static function array(): self
     {
-        $rule = new self();
+        $rule = new self;
         $rule->requireArray = true;
+
         return $rule;
     }
 
@@ -52,8 +54,9 @@ class ValidJson implements ValidationRule
      */
     public static function object(): self
     {
-        $rule = new self();
+        $rule = new self;
         $rule->requireObject = true;
+
         return $rule;
     }
 
@@ -65,9 +68,10 @@ class ValidJson implements ValidationRule
         // Si es string, intentar decodificar
         if (is_string($value)) {
             $decoded = json_decode($value, true);
-            
+
             if (json_last_error() !== JSON_ERROR_NONE) {
                 $fail('El campo :attribute debe ser un JSON válido.');
+
                 return;
             }
 
@@ -75,13 +79,15 @@ class ValidJson implements ValidationRule
         }
 
         // Validar tipo requerido
-        if ($this->requireArray && !is_array($value)) {
+        if ($this->requireArray && ! is_array($value)) {
             $fail('El campo :attribute debe ser un array JSON.');
+
             return;
         }
 
-        if ($this->requireObject && !is_object($value) && !is_array($value)) {
+        if ($this->requireObject && ! is_object($value) && ! is_array($value)) {
             $fail('El campo :attribute debe ser un objeto JSON.');
+
             return;
         }
 
@@ -97,8 +103,9 @@ class ValidJson implements ValidationRule
     protected function validateSchema(array $data, array $schema, string $attribute, Closure $fail): void
     {
         foreach ($schema as $key => $expectedType) {
-            if (!isset($data[$key])) {
+            if (! isset($data[$key])) {
                 $fail("El campo :attribute debe contener la clave '{$key}'.");
+
                 return;
             }
 

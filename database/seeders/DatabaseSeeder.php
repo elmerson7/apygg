@@ -13,8 +13,6 @@ use Illuminate\Database\Seeder;
  * 1. RoleSeeder - Crea roles base
  * 2. PermissionSeeder - Crea permisos y los asigna a roles
  * 3. UserSeeder - Crea usuarios de prueba con roles asignados
- *
- * @package Database\Seeders
  */
 class DatabaseSeeder extends Seeder
 {

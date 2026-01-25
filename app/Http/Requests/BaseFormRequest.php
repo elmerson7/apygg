@@ -3,12 +3,11 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 /**
  * Base Form Request
- * 
+ *
  * Clase base para todos los Form Requests de la aplicación.
  * Proporciona validaciones comunes y sanitización automática.
  */
@@ -46,7 +45,7 @@ abstract class BaseFormRequest extends FormRequest
             if (is_string($value)) {
                 // Trim espacios en blanco
                 $input[$key] = trim($value);
-                
+
                 // Convertir strings vacíos a null
                 if ($input[$key] === '') {
                     $input[$key] = null;

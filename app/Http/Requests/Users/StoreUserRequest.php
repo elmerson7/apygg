@@ -4,15 +4,12 @@ namespace App\Http\Requests\Users;
 
 use App\Http\Requests\BaseFormRequest;
 use App\Rules\StrongPassword;
-use Illuminate\Validation\Rule;
 
 /**
  * StoreUserRequest
  *
  * Form Request para validación de creación de usuarios.
  * Incluye sanitización automática heredada de BaseFormRequest.
- *
- * @package App\Http\Requests\Users
  */
 class StoreUserRequest extends BaseFormRequest
 {
@@ -32,7 +29,7 @@ class StoreUserRequest extends BaseFormRequest
         return [
             'name' => ['required', 'string', 'max:255', 'min:2'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8', new StrongPassword()],
+            'password' => ['required', 'string', 'min:8', new StrongPassword],
             'role_ids' => ['sometimes', 'nullable', 'array'],
             'role_ids.*' => ['required', 'string', 'uuid', 'exists:roles,id'],
         ];

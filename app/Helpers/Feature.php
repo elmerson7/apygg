@@ -7,8 +7,6 @@ namespace App\Helpers;
  *
  * Permite verificar si una feature está habilitada o no.
  * Utiliza cache automático para mejorar el rendimiento.
- *
- * @package App\Helpers
  */
 class Feature
 {
@@ -22,7 +20,7 @@ class Feature
     /**
      * Verifica si una feature está habilitada
      *
-     * @param string $feature Nombre de la feature
+     * @param  string  $feature  Nombre de la feature
      * @return bool True si está habilitada, false en caso contrario
      */
     public static function enabled(string $feature): bool
@@ -38,6 +36,7 @@ class Feature
         // Si no existe la configuración, retornar false
         if (empty($config)) {
             static::$cache[$feature] = false;
+
             return false;
         }
 
@@ -53,18 +52,18 @@ class Feature
     /**
      * Verifica si una feature está deshabilitada
      *
-     * @param string $feature Nombre de la feature
+     * @param  string  $feature  Nombre de la feature
      * @return bool True si está deshabilitada, false en caso contrario
      */
     public static function disabled(string $feature): bool
     {
-        return !static::enabled($feature);
+        return ! static::enabled($feature);
     }
 
     /**
      * Obtiene la descripción de una feature
      *
-     * @param string $feature Nombre de la feature
+     * @param  string  $feature  Nombre de la feature
      * @return string|null Descripción de la feature o null si no existe
      */
     public static function description(string $feature): ?string
@@ -94,8 +93,6 @@ class Feature
     /**
      * Limpia el cache de features
      * Útil para testing o cuando se cambian features dinámicamente
-     *
-     * @return void
      */
     public static function clearCache(): void
     {

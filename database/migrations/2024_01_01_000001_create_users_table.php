@@ -26,7 +26,7 @@ return new class extends Migration
         });
 
         // Crear password_reset_tokens solo si no existe (tabla del sistema Laravel)
-        if (!Schema::hasTable('password_reset_tokens')) {
+        if (! Schema::hasTable('password_reset_tokens')) {
             Schema::create('password_reset_tokens', function (Blueprint $table) {
                 $table->string('email')->primary();
                 $table->string('token');
@@ -36,7 +36,7 @@ return new class extends Migration
 
         // Crear sessions solo si no existe (tabla del sistema Laravel)
         // Si ya existe, no la modificamos para evitar conflictos con la estructura original
-        if (!Schema::hasTable('sessions')) {
+        if (! Schema::hasTable('sessions')) {
             Schema::create('sessions', function (Blueprint $table) {
                 $table->string('id')->primary();
                 $table->uuid('user_id')->nullable()->index();
@@ -46,7 +46,7 @@ return new class extends Migration
                 $table->integer('last_activity')->index();
             });
         }
-        // Nota: Si sessions ya existe con user_id como bigInteger, 
+        // Nota: Si sessions ya existe con user_id como bigInteger,
         // se mantiene así para compatibilidad con Laravel estándar
     }
 
@@ -57,7 +57,7 @@ return new class extends Migration
     {
         // Solo eliminar users, las tablas del sistema se mantienen
         Schema::dropIfExists('users');
-        
+
         // No eliminar password_reset_tokens ni sessions (tablas del sistema Laravel)
     }
 };

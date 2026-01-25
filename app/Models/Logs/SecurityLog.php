@@ -10,8 +10,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * Modelo para registrar eventos de seguridad del sistema.
  * Usa ID auto-incrementable como primary key (no UUID) según estrategia del proyecto.
- *
- * @package App\Models\Logs
  */
 class SecurityLog extends Model
 {
@@ -58,18 +56,23 @@ class SecurityLog extends Model
      * Tipos de eventos de seguridad
      */
     public const EVENT_LOGIN_SUCCESS = 'login_success';
+
     public const EVENT_LOGIN_FAILURE = 'login_failure';
+
     public const EVENT_PERMISSION_DENIED = 'permission_denied';
+
     public const EVENT_SUSPICIOUS_ACTIVITY = 'suspicious_activity';
+
     public const EVENT_PASSWORD_CHANGED = 'password_changed';
+
     public const EVENT_TOKEN_REVOKED = 'token_revoked';
+
     public const EVENT_ACCOUNT_LOCKED = 'account_locked';
+
     public const EVENT_ACCOUNT_UNLOCKED = 'account_unlocked';
 
     /**
      * Relación con User (opcional, puede ser null)
-     *
-     * @return BelongsTo
      */
     public function user(): BelongsTo
     {
@@ -78,8 +81,6 @@ class SecurityLog extends Model
 
     /**
      * Relación con ApiLog a través de trace_id
-     *
-     * @return BelongsTo
      */
     public function apiLog(): BelongsTo
     {
@@ -89,8 +90,7 @@ class SecurityLog extends Model
     /**
      * Scope para filtrar por trace_id
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $traceId
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeByTraceId($query, string $traceId)
@@ -101,8 +101,7 @@ class SecurityLog extends Model
     /**
      * Scope para filtrar por usuario
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $userId
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeByUserId($query, string $userId)
@@ -113,8 +112,7 @@ class SecurityLog extends Model
     /**
      * Scope para filtrar por tipo de evento
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $eventType
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeByEventType($query, string $eventType)
@@ -125,7 +123,7 @@ class SecurityLog extends Model
     /**
      * Scope para filtrar intentos de login fallidos
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeLoginFailures($query)
@@ -136,7 +134,7 @@ class SecurityLog extends Model
     /**
      * Scope para filtrar actividades sospechosas
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeSuspiciousActivity($query)
@@ -147,8 +145,7 @@ class SecurityLog extends Model
     /**
      * Scope para filtrar por IP
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $ipAddress
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeByIpAddress($query, string $ipAddress)
@@ -159,9 +156,7 @@ class SecurityLog extends Model
     /**
      * Scope para filtrar por rango de fechas
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string|null $startDate
-     * @param string|null $endDate
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeDateRange($query, ?string $startDate = null, ?string $endDate = null)
@@ -180,7 +175,7 @@ class SecurityLog extends Model
     /**
      * Scope para ordenar por más recientes
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeRecent($query)
@@ -190,8 +185,6 @@ class SecurityLog extends Model
 
     /**
      * Verificar si el evento es crítico
-     *
-     * @return bool
      */
     public function isCritical(): bool
     {

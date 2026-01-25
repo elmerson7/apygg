@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('webhooks')) {
+        if (! Schema::hasTable('webhooks')) {
             Schema::create('webhooks', function (Blueprint $table) {
                 $table->uuid('id')->primary()->default(DB::raw('gen_random_uuid()'));
                 $table->uuid('user_id')->nullable();

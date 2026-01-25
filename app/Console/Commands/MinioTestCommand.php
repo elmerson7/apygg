@@ -39,14 +39,15 @@ class MinioTestCommand extends Command
             // 2. Probar conexión
             $this->info('2️⃣ Probando conexión...');
             $disk = Storage::disk('s3');
-            
+
             // Intentar listar buckets (esto prueba la conexión)
             try {
                 $this->line('   Intentando conectar con MinIO...');
                 // MinIO no tiene un método directo para listar buckets desde Laravel Storage
                 // Pero podemos probar escribiendo un archivo de prueba
             } catch (\Exception $e) {
-                $this->error('   ❌ Error de conexión: ' . $e->getMessage());
+                $this->error('   ❌ Error de conexión: '.$e->getMessage());
+
                 return Command::FAILURE;
             }
             $this->info('   ✅ Conexión exitosa');
@@ -54,14 +55,15 @@ class MinioTestCommand extends Command
 
             // 3. Crear archivo de prueba
             $this->info('3️⃣ Creando archivo de prueba...');
-            $testContent = 'Este es un archivo de prueba creado el ' . now()->toDateTimeString();
-            $testPath = 'test/minio-test-' . Str::random(10) . '.txt';
-            
+            $testContent = 'Este es un archivo de prueba creado el '.now()->toDateTimeString();
+            $testPath = 'test/minio-test-'.Str::random(10).'.txt';
+
             $result = $disk->put($testPath, $testContent);
             if ($result) {
                 $this->info("   ✅ Archivo creado: {$testPath}");
             } else {
                 $this->error('   ❌ No se pudo crear el archivo');
+
                 return Command::FAILURE;
             }
             $this->newLine();
@@ -72,6 +74,7 @@ class MinioTestCommand extends Command
                 $this->info('   ✅ El archivo existe');
             } else {
                 $this->error('   ❌ El archivo no existe');
+
                 return Command::FAILURE;
             }
             $this->newLine();
@@ -118,11 +121,13 @@ class MinioTestCommand extends Command
             $this->newLine();
 
             $this->info('✅ Todas las pruebas completadas exitosamente!');
+
             return Command::SUCCESS;
 
         } catch (\Exception $e) {
-            $this->error('❌ Error durante la prueba: ' . $e->getMessage());
-            $this->error('Stack trace: ' . $e->getTraceAsString());
+            $this->error('❌ Error durante la prueba: '.$e->getMessage());
+            $this->error('Stack trace: '.$e->getTraceAsString());
+
             return Command::FAILURE;
         }
     }
@@ -133,7 +138,7 @@ class MinioTestCommand extends Command
     protected function displayConfig(): void
     {
         $config = config('filesystems.disks.s3');
-        
+
         $this->table(
             ['Configuración', 'Valor'],
             [
@@ -141,7 +146,7 @@ class MinioTestCommand extends Command
                 ['Endpoint', $config['endpoint'] ?? 'N/A'],
                 ['Bucket', $config['bucket'] ?? 'N/A'],
                 ['Region', $config['region'] ?? 'N/A'],
-                ['Key', $config['key'] ? substr($config['key'], 0, 10) . '...' : 'N/A'],
+                ['Key', $config['key'] ? substr($config['key'], 0, 10).'...' : 'N/A'],
                 ['Path Style', $config['use_path_style_endpoint'] ? 'true' : 'false'],
             ]
         );

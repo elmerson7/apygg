@@ -11,16 +11,13 @@ use App\Services\LogService;
  *
  * Policy para autorización de acciones sobre roles.
  * Verifica permisos usando el sistema RBAC.
- *
- * @package App\Policies
  */
 class RolePolicy
 {
     /**
      * Determinar si el usuario puede ver cualquier rol.
      *
-     * @param User $user Usuario autenticado
-     * @return bool
+     * @param  User  $user  Usuario autenticado
      */
     public function viewAny(User $user): bool
     {
@@ -30,9 +27,8 @@ class RolePolicy
     /**
      * Determinar si el usuario puede ver el rol específico.
      *
-     * @param User $user Usuario autenticado
-     * @param Role $role Rol a verificar
-     * @return bool
+     * @param  User  $user  Usuario autenticado
+     * @param  Role  $role  Rol a verificar
      */
     public function view(User $user, Role $role): bool
     {
@@ -42,8 +38,7 @@ class RolePolicy
     /**
      * Determinar si el usuario puede crear roles.
      *
-     * @param User $user Usuario autenticado
-     * @return bool
+     * @param  User  $user  Usuario autenticado
      */
     public function create(User $user): bool
     {
@@ -61,14 +56,13 @@ class RolePolicy
     /**
      * Determinar si el usuario puede actualizar el rol específico.
      *
-     * @param User $user Usuario autenticado
-     * @param Role $role Rol a actualizar
-     * @return bool
+     * @param  User  $user  Usuario autenticado
+     * @param  Role  $role  Rol a actualizar
      */
     public function update(User $user, Role $role): bool
     {
         // No se puede modificar el rol 'admin' a menos que sea admin
-        if ($role->name === 'admin' && !$user->isAdmin()) {
+        if ($role->name === 'admin' && ! $user->isAdmin()) {
             return false;
         }
 
@@ -88,9 +82,8 @@ class RolePolicy
     /**
      * Determinar si el usuario puede eliminar el rol específico.
      *
-     * @param User $user Usuario autenticado
-     * @param Role $role Rol a eliminar
-     * @return bool
+     * @param  User  $user  Usuario autenticado
+     * @param  Role  $role  Rol a eliminar
      */
     public function delete(User $user, Role $role): bool
     {
@@ -115,14 +108,13 @@ class RolePolicy
     /**
      * Determinar si el usuario puede asignar permisos a un rol.
      *
-     * @param User $user Usuario autenticado
-     * @param Role $role Rol al que se asignará el permiso
-     * @return bool
+     * @param  User  $user  Usuario autenticado
+     * @param  Role  $role  Rol al que se asignará el permiso
      */
     public function assignPermission(User $user, Role $role): bool
     {
         // No se puede modificar permisos del rol 'admin' a menos que sea admin
-        if ($role->name === 'admin' && !$user->isAdmin()) {
+        if ($role->name === 'admin' && ! $user->isAdmin()) {
             return false;
         }
 
@@ -142,14 +134,13 @@ class RolePolicy
     /**
      * Determinar si el usuario puede remover permisos de un rol.
      *
-     * @param User $user Usuario autenticado
-     * @param Role $role Rol del que se removerá el permiso
-     * @return bool
+     * @param  User  $user  Usuario autenticado
+     * @param  Role  $role  Rol del que se removerá el permiso
      */
     public function removePermission(User $user, Role $role): bool
     {
         // No se puede modificar permisos del rol 'admin' a menos que sea admin
-        if ($role->name === 'admin' && !$user->isAdmin()) {
+        if ($role->name === 'admin' && ! $user->isAdmin()) {
             return false;
         }
 

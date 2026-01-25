@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Services\LogService;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -16,8 +15,6 @@ use Illuminate\Support\Str;
  * - Validación de tokens
  * - Reset de contraseña
  * - Cambio de contraseña
- *
- * @package App\Services
  */
 class PasswordService
 {
@@ -29,7 +26,7 @@ class PasswordService
     /**
      * Generar token de reset de contraseña
      *
-     * @param User $user Usuario para el cual generar el token
+     * @param  User  $user  Usuario para el cual generar el token
      * @return string Token generado
      */
     public function generateResetToken(User $user): string
@@ -60,8 +57,8 @@ class PasswordService
     /**
      * Validar token de reset de contraseña
      *
-     * @param string $email Email del usuario
-     * @param string $token Token a validar
+     * @param  string  $email  Email del usuario
+     * @param  string  $token  Token a validar
      * @return bool True si el token es válido
      */
     public function validateResetToken(string $email, string $token): bool
@@ -70,7 +67,7 @@ class PasswordService
             ->where('email', $email)
             ->first();
 
-        if (!$record) {
+        if (! $record) {
             return false;
         }
 
@@ -79,6 +76,7 @@ class PasswordService
         if ($createdAt->addMinutes($this->tokenExpirationMinutes)->isPast()) {
             // Token expirado, eliminarlo
             $this->deleteResetToken($email);
+
             return false;
         }
 
@@ -89,13 +87,13 @@ class PasswordService
     /**
      * Obtener usuario desde token de reset
      *
-     * @param string $email Email del usuario
-     * @param string $token Token de reset
+     * @param  string  $email  Email del usuario
+     * @param  string  $token  Token de reset
      * @return User|null Usuario si el token es válido
      */
     public function getUserFromResetToken(string $email, string $token): ?User
     {
-        if (!$this->validateResetToken($email, $token)) {
+        if (! $this->validateResetToken($email, $token)) {
             return null;
         }
 
@@ -105,16 +103,16 @@ class PasswordService
     /**
      * Resetear contraseña usando token
      *
-     * @param string $email Email del usuario
-     * @param string $token Token de reset
-     * @param string $newPassword Nueva contraseña
+     * @param  string  $email  Email del usuario
+     * @param  string  $token  Token de reset
+     * @param  string  $newPassword  Nueva contraseña
      * @return bool True si se reseteó exitosamente
      */
     public function resetPassword(string $email, string $token, string $newPassword): bool
     {
         $user = $this->getUserFromResetToken($email, $token);
 
-        if (!$user) {
+        if (! $user) {
             LogService::warning('Intento de reset de contraseña con token inválido', [
                 'email' => $email,
             ], 'security');
@@ -140,15 +138,15 @@ class PasswordService
     /**
      * Cambiar contraseña de usuario autenticado
      *
-     * @param User $user Usuario autenticado
-     * @param string $currentPassword Contraseña actual
-     * @param string $newPassword Nueva contraseña
+     * @param  User  $user  Usuario autenticado
+     * @param  string  $currentPassword  Contraseña actual
+     * @param  string  $newPassword  Nueva contraseña
      * @return bool True si se cambió exitosamente
      */
     public function changePassword(User $user, string $currentPassword, string $newPassword): bool
     {
         // Verificar contraseña actual
-        if (!Hash::check($currentPassword, $user->password)) {
+        if (! Hash::check($currentPassword, $user->password)) {
             LogService::warning('Intento de cambio de contraseña con contraseña actual incorrecta', [
                 'user_id' => $user->id,
             ], 'security');
@@ -180,8 +178,7 @@ class PasswordService
     /**
      * Eliminar token de reset
      *
-     * @param string $email Email del usuario
-     * @return void
+     * @param  string  $email  Email del usuario
      */
     public function deleteResetToken(string $email): void
     {

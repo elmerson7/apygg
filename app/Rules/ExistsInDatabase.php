@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Regla de validación para verificar existencia en base de datos
- * 
+ *
  * Valida que un valor exista en una tabla específica.
  */
 class ExistsInDatabase implements ValidationRule
@@ -43,6 +43,7 @@ class ExistsInDatabase implements ValidationRule
     public function where(string $column, $value): self
     {
         $this->wheres[] = compact('column', 'value');
+
         return $this;
     }
 
@@ -59,7 +60,7 @@ class ExistsInDatabase implements ValidationRule
             $query->where($where['column'], $where['value']);
         }
 
-        if (!$query->exists()) {
+        if (! $query->exists()) {
             $fail('El valor seleccionado para :attribute no es válido.');
         }
     }

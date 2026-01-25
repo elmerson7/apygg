@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 /**
  * Base Model
- * 
+ *
  * Clase base para todos los modelos de la aplicación.
  * Proporciona UUID como primary key, soft deletes y scopes comunes.
  */

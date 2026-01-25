@@ -11,15 +11,12 @@ use Illuminate\Http\Request;
  * Resource para transformación básica de datos de usuario.
  * Oculta información sensible y permite inclusión condicional de relaciones.
  * Usado para listados y respuestas básicas.
- *
- * @package App\Http\Resources\Users
  */
 class UserResource extends BaseResource
 {
     /**
      * Transform the resource into an array.
      *
-     * @param Request $request
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array

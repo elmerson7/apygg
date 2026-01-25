@@ -11,16 +11,13 @@ use App\Services\LogService;
  *
  * Policy para autorización de acciones sobre permisos.
  * Verifica permisos usando el sistema RBAC.
- *
- * @package App\Policies
  */
 class PermissionPolicy
 {
     /**
      * Determinar si el usuario puede ver cualquier permiso.
      *
-     * @param User $user Usuario autenticado
-     * @return bool
+     * @param  User  $user  Usuario autenticado
      */
     public function viewAny(User $user): bool
     {
@@ -30,9 +27,8 @@ class PermissionPolicy
     /**
      * Determinar si el usuario puede ver el permiso específico.
      *
-     * @param User $user Usuario autenticado
-     * @param Permission $permission Permiso a verificar
-     * @return bool
+     * @param  User  $user  Usuario autenticado
+     * @param  Permission  $permission  Permiso a verificar
      */
     public function view(User $user, Permission $permission): bool
     {
@@ -42,8 +38,7 @@ class PermissionPolicy
     /**
      * Determinar si el usuario puede crear permisos.
      *
-     * @param User $user Usuario autenticado
-     * @return bool
+     * @param  User  $user  Usuario autenticado
      */
     public function create(User $user): bool
     {
@@ -62,9 +57,8 @@ class PermissionPolicy
     /**
      * Determinar si el usuario puede actualizar el permiso específico.
      *
-     * @param User $user Usuario autenticado
-     * @param Permission $permission Permiso a actualizar
-     * @return bool
+     * @param  User  $user  Usuario autenticado
+     * @param  Permission  $permission  Permiso a actualizar
      */
     public function update(User $user, Permission $permission): bool
     {
@@ -85,9 +79,8 @@ class PermissionPolicy
     /**
      * Determinar si el usuario puede eliminar el permiso específico.
      *
-     * @param User $user Usuario autenticado
-     * @param Permission $permission Permiso a eliminar
-     * @return bool
+     * @param  User  $user  Usuario autenticado
+     * @param  Permission  $permission  Permiso a eliminar
      */
     public function delete(User $user, Permission $permission): bool
     {

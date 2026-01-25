@@ -9,8 +9,6 @@ use App\Http\Requests\BaseFormRequest;
  *
  * Form Request para validación de asignación de roles a usuarios.
  * Incluye sanitización automática heredada de BaseFormRequest.
- *
- * @package App\Http\Requests\Users
  */
 class AssignRoleRequest extends BaseFormRequest
 {
@@ -20,6 +18,7 @@ class AssignRoleRequest extends BaseFormRequest
     public function authorize(): bool
     {
         $user = \App\Models\User::findOrFail($this->route('id'));
+
         return $this->user()->can('update', $user);
     }
 

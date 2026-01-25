@@ -15,8 +15,6 @@ use Illuminate\Database\Seeder;
  * - Guest: Usuario invitado con acceso de solo lectura
  * - Moderator: Moderación de contenido
  * - Editor: Edición de contenido
- *
- * @package Database\Seeders
  */
 class RoleSeeder extends Seeder
 {

@@ -7,7 +7,7 @@ use Illuminate\Contracts\Validation\ValidationRule;
 
 /**
  * Regla de validación para imagen en Base64
- * 
+ *
  * Valida que el valor sea una imagen válida codificada en Base64.
  */
 class ValidBase64Image implements ValidationRule
@@ -27,8 +27,9 @@ class ValidBase64Image implements ValidationRule
      */
     public static function mimes(array $mimes): self
     {
-        $rule = new self();
+        $rule = new self;
         $rule->allowedMimes = $mimes;
+
         return $rule;
     }
 
@@ -37,8 +38,9 @@ class ValidBase64Image implements ValidationRule
      */
     public static function maxSize(int $bytes): self
     {
-        $rule = new self();
+        $rule = new self;
         $rule->maxSize = $bytes;
+
         return $rule;
     }
 
@@ -47,23 +49,26 @@ class ValidBase64Image implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (!is_string($value)) {
+        if (! is_string($value)) {
             $fail('El campo :attribute debe ser una imagen codificada en Base64.');
+
             return;
         }
 
         // Verificar formato Base64
-        if (!preg_match('/^data:image\/(jpeg|jpg|png|gif|webp);base64,/', $value)) {
+        if (! preg_match('/^data:image\/(jpeg|jpg|png|gif|webp);base64,/', $value)) {
             $fail('El campo :attribute debe tener el formato: data:image/[tipo];base64,[datos].');
+
             return;
         }
 
         // Extraer datos Base64
         $base64Data = preg_replace('/^data:image\/[^;]+;base64,/', '', $value);
-        
+
         // Validar que sea Base64 válido
-        if (!base64_decode($base64Data, true)) {
+        if (! base64_decode($base64Data, true)) {
             $fail('El campo :attribute contiene datos Base64 inválidos.');
+
             return;
         }
 
@@ -72,6 +77,7 @@ class ValidBase64Image implements ValidationRule
         if ($size > $this->maxSize) {
             $maxSizeMB = round($this->maxSize / 1048576, 2);
             $fail("El campo :attribute no puede ser mayor a {$maxSizeMB}MB.");
+
             return;
         }
 
@@ -81,12 +87,13 @@ class ValidBase64Image implements ValidationRule
 
         if ($imageInfo === false) {
             $fail('El campo :attribute debe ser una imagen válida.');
+
             return;
         }
 
         // Validar tipo MIME
         $mimeType = $imageInfo['mime'];
-        if (!in_array($mimeType, $this->allowedMimes)) {
+        if (! in_array($mimeType, $this->allowedMimes)) {
             $allowedTypes = implode(', ', $this->allowedMimes);
             $fail("El campo :attribute debe ser uno de los siguientes tipos: {$allowedTypes}.");
         }

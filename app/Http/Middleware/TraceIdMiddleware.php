@@ -14,22 +14,16 @@ use Symfony\Component\HttpFoundation\Response;
  *
  * Middleware para generar e inyectar un UUID único (Trace ID) en cada request.
  * Permite rastrear un request completo a través de toda la aplicación.
- *
- * @package App\Http\Middleware
  */
 class TraceIdMiddleware
 {
     /**
      * Handle an incoming request.
-     *
-     * @param Request $request
-     * @param Closure $next
-     * @return Response
      */
     public function handle(Request $request, Closure $next): Response
     {
         // Obtener trace ID del header si existe, o generar uno nuevo
-        $traceId = $request->header('X-Trace-ID') 
+        $traceId = $request->header('X-Trace-ID')
             ?? $request->header('X-Request-ID')
             ?? (string) Str::uuid();
 

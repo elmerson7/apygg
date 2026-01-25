@@ -65,7 +65,7 @@ class SanitizeInput
             } elseif (is_string($value)) {
                 // Sanitizar strings
                 $sanitized = $this->sanitizeString($value);
-                
+
                 // Actualizar el valor sanitizado
                 if ($target instanceof Request) {
                     $requestData = $target->all();
@@ -113,7 +113,7 @@ class SanitizeInput
         $current = &$array;
 
         foreach ($keys as $k) {
-            if (!isset($current[$k]) || !is_array($current[$k])) {
+            if (! isset($current[$k]) || ! is_array($current[$k])) {
                 $current[$k] = [];
             }
             $current = &$current[$k];

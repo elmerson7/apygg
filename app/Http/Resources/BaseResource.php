@@ -6,7 +6,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * Base Resource
- * 
+ *
  * Clase base para todos los Resources de la aplicación.
  * Proporciona formato estándar de respuestas y manejo de relaciones.
  */

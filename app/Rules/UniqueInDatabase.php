@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Regla de validación para verificar unicidad en base de datos
- * 
+ *
  * Valida que un valor sea único en una tabla específica.
  */
 class UniqueInDatabase implements ValidationRule
@@ -54,6 +54,7 @@ class UniqueInDatabase implements ValidationRule
     {
         $this->ignoreId = $id;
         $this->ignoreColumn = $column;
+
         return $this;
     }
 
@@ -63,6 +64,7 @@ class UniqueInDatabase implements ValidationRule
     public function where(string $column, $value): self
     {
         $this->wheres[] = compact('column', 'value');
+
         return $this;
     }
 

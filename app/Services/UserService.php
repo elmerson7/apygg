@@ -2,9 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\User;
 use App\Models\Role;
-use Illuminate\Database\Eloquent\Collection;
+use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Hash;
 
@@ -16,8 +15,6 @@ use Illuminate\Support\Facades\Hash;
  * - Gestión de roles y permisos
  * - Búsqueda con filtros avanzados
  * - Notificaciones de bienvenida
- *
- * @package App\Services
  */
 class UserService
 {
@@ -34,9 +31,9 @@ class UserService
     /**
      * Crear un nuevo usuario
      *
-     * @param array $data Datos del usuario
-     * @param array|null $roleIds IDs de roles a asignar (opcional)
-     * @return User
+     * @param  array  $data  Datos del usuario
+     * @param  array|null  $roleIds  IDs de roles a asignar (opcional)
+     *
      * @throws \InvalidArgumentException Si el email ya existe
      */
     public function create(array $data, ?array $roleIds = null): User
@@ -55,7 +52,7 @@ class UserService
         $user = User::create($data);
 
         // Asignar roles si se proporcionan
-        if ($roleIds && !empty($roleIds)) {
+        if ($roleIds && ! empty($roleIds)) {
             $user->roles()->sync($roleIds);
         } else {
             // Asignar rol 'user' por defecto si no se especifica
@@ -83,9 +80,9 @@ class UserService
     /**
      * Actualizar un usuario existente
      *
-     * @param string $userId ID del usuario
-     * @param array $data Datos a actualizar
-     * @return User
+     * @param  string  $userId  ID del usuario
+     * @param  array  $data  Datos a actualizar
+     *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el usuario no existe
      * @throws \InvalidArgumentException Si el email ya existe
      */
@@ -122,8 +119,8 @@ class UserService
     /**
      * Eliminar un usuario (soft delete)
      *
-     * @param string $userId ID del usuario
-     * @return bool
+     * @param  string  $userId  ID del usuario
+     *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el usuario no existe
      */
     public function delete(string $userId): bool
@@ -146,8 +143,8 @@ class UserService
     /**
      * Restaurar un usuario eliminado
      *
-     * @param string $userId ID del usuario
-     * @return User
+     * @param  string  $userId  ID del usuario
+     *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el usuario no existe
      */
     public function restore(string $userId): User
@@ -170,13 +167,13 @@ class UserService
     /**
      * Buscar un usuario por ID
      *
-     * @param string $userId ID del usuario
-     * @return User
+     * @param  string  $userId  ID del usuario
+     *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el usuario no existe
      */
     public function find(string $userId): User
     {
-        $cacheKey = self::CACHE_PREFIX . $userId;
+        $cacheKey = self::CACHE_PREFIX.$userId;
 
         return CacheService::remember($cacheKey, self::CACHE_TTL, function () use ($userId) {
             return User::with(['roles', 'permissions'])->findOrFail($userId);
@@ -186,8 +183,7 @@ class UserService
     /**
      * Listar usuarios con paginación y filtros
      *
-     * @param array $filters Filtros ['search', 'role', 'email', 'per_page']
-     * @return LengthAwarePaginator
+     * @param  array  $filters  Filtros ['search', 'role', 'email', 'per_page']
      */
     public function list(array $filters = []): LengthAwarePaginator
     {
@@ -222,9 +218,9 @@ class UserService
     /**
      * Asignar roles a un usuario
      *
-     * @param string $userId ID del usuario
-     * @param array $roleIds IDs de roles a asignar
-     * @return User
+     * @param  string  $userId  ID del usuario
+     * @param  array  $roleIds  IDs de roles a asignar
+     *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el usuario no existe
      */
     public function assignRoles(string $userId, array $roleIds): User
@@ -235,8 +231,8 @@ class UserService
         $existingRoles = Role::whereIn('id', $roleIds)->pluck('id')->toArray();
         $invalidRoles = array_diff($roleIds, $existingRoles);
 
-        if (!empty($invalidRoles)) {
-            throw new \InvalidArgumentException("Los siguientes roles no existen: " . implode(', ', $invalidRoles));
+        if (! empty($invalidRoles)) {
+            throw new \InvalidArgumentException('Los siguientes roles no existen: '.implode(', ', $invalidRoles));
         }
 
         // Sincronizar roles (reemplaza todos los roles existentes)
@@ -257,9 +253,9 @@ class UserService
     /**
      * Remover un rol de un usuario
      *
-     * @param string $userId ID del usuario
-     * @param string $roleId ID del rol a remover
-     * @return User
+     * @param  string  $userId  ID del usuario
+     * @param  string  $roleId  ID del rol a remover
+     *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el usuario o rol no existe
      */
     public function removeRole(string $userId, string $roleId): User
@@ -290,9 +286,9 @@ class UserService
     /**
      * Asignar permisos directos a un usuario
      *
-     * @param string $userId ID del usuario
-     * @param array $permissionIds IDs de permisos a asignar
-     * @return User
+     * @param  string  $userId  ID del usuario
+     * @param  array  $permissionIds  IDs de permisos a asignar
+     *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el usuario no existe
      */
     public function assignPermissions(string $userId, array $permissionIds): User
@@ -315,9 +311,9 @@ class UserService
     /**
      * Remover un permiso directo de un usuario
      *
-     * @param string $userId ID del usuario
-     * @param string $permissionId ID del permiso a remover
-     * @return User
+     * @param  string  $userId  ID del usuario
+     * @param  string  $permissionId  ID del permiso a remover
+     *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el usuario no existe
      */
     public function removePermission(string $userId, string $permissionId): User
@@ -340,9 +336,9 @@ class UserService
     /**
      * Obtener historial de actividad de un usuario
      *
-     * @param string $userId ID del usuario
-     * @param int $perPage Número de resultados por página
-     * @return LengthAwarePaginator
+     * @param  string  $userId  ID del usuario
+     * @param  int  $perPage  Número de resultados por página
+     *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el usuario no existe
      */
     public function getActivityLogs(string $userId, int $perPage = 15): LengthAwarePaginator
@@ -357,16 +353,15 @@ class UserService
     /**
      * Limpiar cache de usuarios
      *
-     * @param string|null $userId ID específico del usuario o null para limpiar todo
-     * @return void
+     * @param  string|null  $userId  ID específico del usuario o null para limpiar todo
      */
     protected function clearCache(?string $userId = null): void
     {
         if ($userId) {
-            CacheService::forget(self::CACHE_PREFIX . $userId);
+            CacheService::forget(self::CACHE_PREFIX.$userId);
         }
 
         // Limpiar cache de lista completa
-        CacheService::forget(self::CACHE_PREFIX . 'list');
+        CacheService::forget(self::CACHE_PREFIX.'list');
     }
 }

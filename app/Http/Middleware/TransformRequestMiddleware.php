@@ -78,7 +78,7 @@ class TransformRequestMiddleware
                 $this->transformArray($value, $target);
             } else {
                 $transformed = $this->transformValue($key, $value);
-                
+
                 // Actualizar el valor transformado
                 if ($target instanceof Request) {
                     $requestData = $target->all();
@@ -142,6 +142,7 @@ class TransformRequestMiddleware
         // Verificar por valor (si es "true", "false", "1", "0")
         if (is_string($value)) {
             $lower = strtolower(trim($value));
+
             return in_array($lower, ['true', 'false', '1', '0', 'yes', 'no', 'on', 'off'], true);
         }
 
@@ -163,6 +164,7 @@ class TransformRequestMiddleware
 
         if (is_string($value)) {
             $lower = strtolower(trim($value));
+
             return in_array($lower, ['true', '1', 'yes', 'on'], true);
         }
 
@@ -176,13 +178,13 @@ class TransformRequestMiddleware
     {
         // Verificar por nombre del campo
         foreach ($this->numericFields as $field) {
-            if (str_ends_with($key, '_' . $field) || $key === $field) {
+            if (str_ends_with($key, '_'.$field) || $key === $field) {
                 return true;
             }
         }
 
         // Verificar si el valor es numérico
-        return is_numeric($value) && !is_string($value) || (is_string($value) && is_numeric(trim($value)));
+        return is_numeric($value) && ! is_string($value) || (is_string($value) && is_numeric(trim($value)));
     }
 
     /**
@@ -197,6 +199,7 @@ class TransformRequestMiddleware
 
         if (is_string($value)) {
             $trimmed = trim($value);
+
             return str_contains($trimmed, '.') ? (float) $trimmed : (int) $trimmed;
         }
 
@@ -209,7 +212,7 @@ class TransformRequestMiddleware
     private function isDateField(string $key): bool
     {
         $dateFields = ['date', 'created_at', 'updated_at', 'deleted_at', 'expires_at', 'published_at'];
-        
+
         foreach ($dateFields as $field) {
             if (str_contains($key, $field)) {
                 return true;
@@ -231,6 +234,7 @@ class TransformRequestMiddleware
         try {
             // Intentar parsear la fecha
             $date = Carbon::parse($value);
+
             return $date->toIso8601String();
         } catch (\Exception $e) {
             // Si no se puede parsear, retornar el valor original
@@ -257,7 +261,7 @@ class TransformRequestMiddleware
         $current = &$array;
 
         foreach ($keys as $k) {
-            if (!isset($current[$k]) || !is_array($current[$k])) {
+            if (! isset($current[$k]) || ! is_array($current[$k])) {
                 $current[$k] = [];
             }
             $current = &$current[$k];

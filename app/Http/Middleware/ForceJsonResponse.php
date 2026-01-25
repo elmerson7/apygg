@@ -8,7 +8,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Middleware para forzar respuestas JSON en API
- * 
+ *
  * Asegura que todas las respuestas de la API sean en formato JSON,
  * independientemente del Accept header del cliente.
  */
@@ -27,8 +27,8 @@ class ForceJsonResponse
         $response = $next($request);
 
         // Asegurar que la respuesta sea JSON si no lo es ya
-        if (!$response->headers->has('Content-Type') || 
-            !str_contains($response->headers->get('Content-Type'), 'application/json')) {
+        if (! $response->headers->has('Content-Type') ||
+            ! str_contains($response->headers->get('Content-Type'), 'application/json')) {
             $response->headers->set('Content-Type', 'application/json');
         }
 

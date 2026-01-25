@@ -18,7 +18,7 @@ use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 class User extends Authenticatable implements JWTSubject
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, HasUuids, Notifiable, SoftDeletesWithUser, LogsActivity, HasApiTokens;
+    use HasApiTokens, HasFactory, HasUuids, LogsActivity, Notifiable, SoftDeletesWithUser;
 
     /**
      * Indicates if the IDs are auto-incrementing.
@@ -94,8 +94,6 @@ class User extends Authenticatable implements JWTSubject
      * Relación muchos-a-muchos con Role
      *
      * Un usuario puede tener múltiples roles.
-     *
-     * @return BelongsToMany
      */
     public function roles(): BelongsToMany
     {
@@ -112,8 +110,6 @@ class User extends Authenticatable implements JWTSubject
      *
      * Un usuario puede tener permisos asignados directamente.
      * Estos permisos sobrescriben los permisos heredados de roles.
-     *
-     * @return BelongsToMany
      */
     public function permissions(): BelongsToMany
     {
@@ -129,8 +125,7 @@ class User extends Authenticatable implements JWTSubject
      * Verificar si el usuario tiene un permiso específico
      * Verifica primero permisos directos, luego permisos de roles
      *
-     * @param string $permissionName Nombre del permiso a verificar
-     * @return bool
+     * @param  string  $permissionName  Nombre del permiso a verificar
      */
     public function hasPermission(string $permissionName): bool
     {
@@ -148,8 +143,7 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Verificar si el usuario tiene alguno de los permisos especificados
      *
-     * @param array<string> $permissionNames Array de nombres de permisos
-     * @return bool
+     * @param  array<string>  $permissionNames  Array de nombres de permisos
      */
     public function hasAnyPermission(array $permissionNames): bool
     {
@@ -165,13 +159,12 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Verificar si el usuario tiene todos los permisos especificados
      *
-     * @param array<string> $permissionNames Array de nombres de permisos
-     * @return bool
+     * @param  array<string>  $permissionNames  Array de nombres de permisos
      */
     public function hasAllPermissions(array $permissionNames): bool
     {
         foreach ($permissionNames as $permissionName) {
-            if (!$this->hasPermission($permissionName)) {
+            if (! $this->hasPermission($permissionName)) {
                 return false;
             }
         }
@@ -182,8 +175,7 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Verificar si el usuario tiene un rol específico
      *
-     * @param string $roleName Nombre del rol
-     * @return bool
+     * @param  string  $roleName  Nombre del rol
      */
     public function hasRole(string $roleName): bool
     {
@@ -193,8 +185,7 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Verificar si el usuario tiene alguno de los roles especificados
      *
-     * @param array<string> $roleNames Array de nombres de roles
-     * @return bool
+     * @param  array<string>  $roleNames  Array de nombres de roles
      */
     public function hasAnyRole(array $roleNames): bool
     {
@@ -203,8 +194,6 @@ class User extends Authenticatable implements JWTSubject
 
     /**
      * Verificar si el usuario es administrador
-     *
-     * @return bool
      */
     public function isAdmin(): bool
     {
@@ -214,8 +203,6 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Relación con API Keys
      * Alias para apiKeys() del trait HasApiTokens
-     *
-     * @return HasMany
      */
     public function apiTokens(): HasMany
     {
@@ -225,8 +212,6 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Relación con ActivityLogs
      * Obtiene todos los logs de actividad relacionados con este usuario
-     *
-     * @return HasMany
      */
     public function activityLogs(): HasMany
     {
@@ -236,7 +221,7 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Scope para filtrar usuarios activos (no eliminados)
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeActive($query)
@@ -247,7 +232,7 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Scope para filtrar usuarios inactivos (eliminados)
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeInactive($query)
@@ -258,8 +243,7 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Scope para filtrar por email
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $email
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeByEmail($query, string $email)
@@ -270,8 +254,8 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Scope para filtrar usuarios por rol
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string|array $roleName Nombre del rol o array de nombres
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string|array  $roleName  Nombre del rol o array de nombres
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeByRole($query, string|array $roleName)

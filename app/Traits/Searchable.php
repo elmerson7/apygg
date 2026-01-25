@@ -6,11 +6,9 @@ use Laravel\Scout\Searchable as ScoutSearchable;
 
 /**
  * Trait Searchable
- * 
+ *
  * Integración con Meilisearch para búsqueda full-text.
  * Requiere Laravel Scout y Meilisearch configurado.
- * 
- * @package App\Traits
  */
 trait Searchable
 {
@@ -76,7 +74,7 @@ trait Searchable
     {
         // Solo indexar si no está eliminado (soft delete)
         if (method_exists($this, 'trashed')) {
-            return !$this->trashed();
+            return ! $this->trashed();
         }
 
         return true;
@@ -90,7 +88,7 @@ trait Searchable
         $builder = static::search($query);
 
         // Aplicar filtros si Meilisearch los soporta
-        if (!empty($filters)) {
+        if (! empty($filters)) {
             foreach ($filters as $field => $value) {
                 $builder->where($field, $value);
             }

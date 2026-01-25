@@ -24,6 +24,12 @@ if [ ! -d vendor ] || [ ! -f vendor/autoload.php ]; then
     composer install --no-interaction --prefer-dist
 fi
 
+# Ajustar permisos de ejecución para binarios de vendor (pest, pint, phpstan, etc.)
+if [ -d "vendor/bin" ]; then
+    echo "Ajustando permisos de ejecución para binarios de vendor..."
+    chmod +x vendor/bin/* 2>/dev/null || true
+fi
+
 # Ajustar permisos de archivos críticos para que sean editables desde el IDE y el contenedor
 # Esto asegura que storage y bootstrap/cache sean escribibles por el usuario del contenedor
 if [ -d "storage" ] && [ -d "bootstrap/cache" ]; then

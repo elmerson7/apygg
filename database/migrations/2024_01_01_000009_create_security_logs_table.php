@@ -23,7 +23,7 @@ return new class extends Migration
                 'password_changed',
                 'token_revoked',
                 'account_locked',
-                'account_unlocked'
+                'account_unlocked',
             ]);
             $table->string('ip_address', 45)->nullable();
             $table->string('user_agent', 500)->nullable();

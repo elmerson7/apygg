@@ -44,8 +44,6 @@ class Role extends Model
      * Relación muchos-a-muchos con Permission
      *
      * Un rol puede tener múltiples permisos.
-     *
-     * @return BelongsToMany
      */
     public function permissions(): BelongsToMany
     {
@@ -61,8 +59,6 @@ class Role extends Model
      * Relación muchos-a-muchos con User
      *
      * Un rol puede ser asignado a múltiples usuarios.
-     *
-     * @return BelongsToMany
      */
     public function users(): BelongsToMany
     {
@@ -77,8 +73,7 @@ class Role extends Model
     /**
      * Verificar si el rol tiene un permiso específico
      *
-     * @param string $permissionName Nombre del permiso a verificar
-     * @return bool
+     * @param  string  $permissionName  Nombre del permiso a verificar
      */
     public function hasPermission(string $permissionName): bool
     {
@@ -90,8 +85,7 @@ class Role extends Model
     /**
      * Asignar un permiso al rol
      *
-     * @param string|Permission $permission Permiso o nombre del permiso
-     * @return void
+     * @param  string|Permission  $permission  Permiso o nombre del permiso
      */
     public function assignPermission($permission): void
     {
@@ -99,7 +93,7 @@ class Role extends Model
             $permission = Permission::where('name', $permission)->firstOrFail();
         }
 
-        if (!$this->hasPermission($permission->name)) {
+        if (! $this->hasPermission($permission->name)) {
             $this->permissions()->attach($permission->id);
         }
     }
@@ -107,8 +101,7 @@ class Role extends Model
     /**
      * Remover un permiso del rol
      *
-     * @param string|Permission $permission Permiso o nombre del permiso
-     * @return void
+     * @param  string|Permission  $permission  Permiso o nombre del permiso
      */
     public function removePermission($permission): void
     {

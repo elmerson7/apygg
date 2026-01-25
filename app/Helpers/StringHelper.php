@@ -6,20 +6,18 @@ use Illuminate\Support\Str;
 
 /**
  * StringHelper
- * 
+ *
  * Helper estático para operaciones con strings:
  * slugs, truncamiento, conversión de casos, enmascaramiento.
- * 
- * @package App\Helpers
  */
 class StringHelper
 {
     /**
      * Generar slug desde string
      *
-     * @param string $string String a convertir
-     * @param string $separator Separador (default: '-')
-     * @param string|null $language Idioma para transliteración (default: 'es')
+     * @param  string  $string  String a convertir
+     * @param  string  $separator  Separador (default: '-')
+     * @param  string|null  $language  Idioma para transliteración (default: 'es')
      * @return string Slug generado
      */
     public static function slugify(string $string, string $separator = '-', ?string $language = 'es'): string
@@ -30,9 +28,9 @@ class StringHelper
     /**
      * Truncar string a longitud específica
      *
-     * @param string $string String a truncar
-     * @param int $length Longitud máxima
-     * @param string $suffix Sufijo cuando se trunca (default: '...')
+     * @param  string  $string  String a truncar
+     * @param  int  $length  Longitud máxima
+     * @param  string  $suffix  Sufijo cuando se trunca (default: '...')
      * @return string String truncado
      */
     public static function truncate(string $string, int $length, string $suffix = '...'): string
@@ -43,9 +41,9 @@ class StringHelper
     /**
      * Truncar string por palabras
      *
-     * @param string $string String a truncar
-     * @param int $words Número máximo de palabras
-     * @param string $suffix Sufijo cuando se trunca (default: '...')
+     * @param  string  $string  String a truncar
+     * @param  int  $words  Número máximo de palabras
+     * @param  string  $suffix  Sufijo cuando se trunca (default: '...')
      * @return string String truncado por palabras
      */
     public static function truncateWords(string $string, int $words, string $suffix = '...'): string
@@ -56,7 +54,7 @@ class StringHelper
     /**
      * Convertir a camelCase
      *
-     * @param string $string String a convertir
+     * @param  string  $string  String a convertir
      * @return string String en camelCase
      */
     public static function toCamelCase(string $string): string
@@ -67,7 +65,7 @@ class StringHelper
     /**
      * Convertir a snake_case
      *
-     * @param string $string String a convertir
+     * @param  string  $string  String a convertir
      * @return string String en snake_case
      */
     public static function toSnakeCase(string $string): string
@@ -78,7 +76,7 @@ class StringHelper
     /**
      * Convertir a PascalCase
      *
-     * @param string $string String a convertir
+     * @param  string  $string  String a convertir
      * @return string String en PascalCase
      */
     public static function toPascalCase(string $string): string
@@ -89,7 +87,7 @@ class StringHelper
     /**
      * Convertir a kebab-case
      *
-     * @param string $string String a convertir
+     * @param  string  $string  String a convertir
      * @return string String en kebab-case
      */
     public static function toKebabCase(string $string): string
@@ -100,21 +98,21 @@ class StringHelper
     /**
      * Pluralizar palabra
      *
-     * @param string $word Palabra a pluralizar
-     * @param int $count Cantidad (opcional, para decidir si pluralizar)
+     * @param  string  $word  Palabra a pluralizar
+     * @param  int  $count  Cantidad (opcional, para decidir si pluralizar)
      * @return string Palabra pluralizada
      */
     public static function pluralize(string $word, ?int $count = null): string
     {
         $plural = Str::plural($word, $count ?? 2);
-        
+
         return $plural;
     }
 
     /**
      * Singularizar palabra
      *
-     * @param string $word Palabra a singularizar
+     * @param  string  $word  Palabra a singularizar
      * @return string Palabra singularizada
      */
     public static function singularize(string $word): string
@@ -125,10 +123,10 @@ class StringHelper
     /**
      * Enmascarar string para datos sensibles
      *
-     * @param string $string String a enmascarar
-     * @param int $visibleStart Caracteres visibles al inicio (default: 3)
-     * @param int $visibleEnd Caracteres visibles al final (default: 3)
-     * @param string $mask Carácter de enmascaramiento (default: '*')
+     * @param  string  $string  String a enmascarar
+     * @param  int  $visibleStart  Caracteres visibles al inicio (default: 3)
+     * @param  int  $visibleEnd  Caracteres visibles al final (default: 3)
+     * @param  string  $mask  Carácter de enmascaramiento (default: '*')
      * @return string String enmascarado
      */
     public static function mask(
@@ -147,14 +145,14 @@ class StringHelper
         $end = substr($string, -$visibleEnd);
         $middle = str_repeat($mask, $length - $visibleStart - $visibleEnd);
 
-        return $start . $middle . $end;
+        return $start.$middle.$end;
     }
 
     /**
      * Enmascarar completamente un string
      *
-     * @param string $string String a enmascarar
-     * @param string $mask Carácter de enmascaramiento (default: '*')
+     * @param  string  $string  String a enmascarar
+     * @param  string  $mask  Carácter de enmascaramiento (default: '*')
      * @return string String completamente enmascarado
      */
     public static function maskAll(string $string, string $mask = '*'): string
@@ -165,21 +163,21 @@ class StringHelper
     /**
      * Limpiar string de caracteres especiales
      *
-     * @param string $string String a limpiar
-     * @param bool $preserveSpaces Si preservar espacios (default: true)
+     * @param  string  $string  String a limpiar
+     * @param  bool  $preserveSpaces  Si preservar espacios (default: true)
      * @return string String limpio
      */
     public static function clean(string $string, bool $preserveSpaces = true): string
     {
         $pattern = $preserveSpaces ? '/[^a-zA-Z0-9\s]/' : '/[^a-zA-Z0-9]/';
-        
+
         return preg_replace($pattern, '', $string);
     }
 
     /**
      * Remover espacios extra y normalizar
      *
-     * @param string $string String a normalizar
+     * @param  string  $string  String a normalizar
      * @return string String normalizado
      */
     public static function normalizeWhitespace(string $string): string
@@ -190,7 +188,7 @@ class StringHelper
     /**
      * Extraer números de un string
      *
-     * @param string $string String del cual extraer números
+     * @param  string  $string  String del cual extraer números
      * @return string String con solo números
      */
     public static function extractNumbers(string $string): string
@@ -201,7 +199,7 @@ class StringHelper
     /**
      * Extraer letras de un string
      *
-     * @param string $string String del cual extraer letras
+     * @param  string  $string  String del cual extraer letras
      * @return string String con solo letras
      */
     public static function extractLetters(string $string): string
@@ -212,7 +210,7 @@ class StringHelper
     /**
      * Capitalizar primera letra de cada palabra
      *
-     * @param string $string String a capitalizar
+     * @param  string  $string  String a capitalizar
      * @return string String capitalizado
      */
     public static function capitalizeWords(string $string): string
@@ -223,7 +221,7 @@ class StringHelper
     /**
      * Capitalizar solo la primera letra
      *
-     * @param string $string String a capitalizar
+     * @param  string  $string  String a capitalizar
      * @return string String con primera letra mayúscula
      */
     public static function capitalizeFirst(string $string): string
@@ -234,7 +232,7 @@ class StringHelper
     /**
      * Convertir a minúsculas
      *
-     * @param string $string String a convertir
+     * @param  string  $string  String a convertir
      * @return string String en minúsculas
      */
     public static function toLower(string $string): string
@@ -245,7 +243,7 @@ class StringHelper
     /**
      * Convertir a mayúsculas
      *
-     * @param string $string String a convertir
+     * @param  string  $string  String a convertir
      * @return string String en mayúsculas
      */
     public static function toUpper(string $string): string
@@ -256,8 +254,8 @@ class StringHelper
     /**
      * Verificar si string contiene substring (case-insensitive)
      *
-     * @param string $haystack String donde buscar
-     * @param string $needle String a buscar
+     * @param  string  $haystack  String donde buscar
+     * @param  string  $needle  String a buscar
      * @return bool true si contiene el substring
      */
     public static function contains(string $haystack, string $needle): bool
@@ -268,8 +266,8 @@ class StringHelper
     /**
      * Verificar si string comienza con substring
      *
-     * @param string $haystack String donde buscar
-     * @param string $needle String a buscar
+     * @param  string  $haystack  String donde buscar
+     * @param  string  $needle  String a buscar
      * @return bool true si comienza con el substring
      */
     public static function startsWith(string $haystack, string $needle): bool
@@ -280,8 +278,8 @@ class StringHelper
     /**
      * Verificar si string termina con substring
      *
-     * @param string $haystack String donde buscar
-     * @param string $needle String a buscar
+     * @param  string  $haystack  String donde buscar
+     * @param  string  $needle  String a buscar
      * @return bool true si termina con el substring
      */
     public static function endsWith(string $haystack, string $needle): bool
@@ -292,9 +290,9 @@ class StringHelper
     /**
      * Reemplazar primera ocurrencia
      *
-     * @param string $search String a buscar
-     * @param string $replace String de reemplazo
-     * @param string $subject String donde buscar
+     * @param  string  $search  String a buscar
+     * @param  string  $replace  String de reemplazo
+     * @param  string  $subject  String donde buscar
      * @return string String con reemplazo
      */
     public static function replaceFirst(string $search, string $replace, string $subject): string
@@ -305,9 +303,9 @@ class StringHelper
     /**
      * Reemplazar última ocurrencia
      *
-     * @param string $search String a buscar
-     * @param string $replace String de reemplazo
-     * @param string $subject String donde buscar
+     * @param  string  $search  String a buscar
+     * @param  string  $replace  String de reemplazo
+     * @param  string  $subject  String donde buscar
      * @return string String con reemplazo
      */
     public static function replaceLast(string $search, string $replace, string $subject): string
@@ -318,7 +316,7 @@ class StringHelper
     /**
      * Generar string aleatorio
      *
-     * @param int $length Longitud del string
+     * @param  int  $length  Longitud del string
      * @return string String aleatorio
      */
     public static function random(int $length = 16): string
@@ -339,7 +337,7 @@ class StringHelper
     /**
      * Verificar si string es UUID válido
      *
-     * @param string $string String a verificar
+     * @param  string  $string  String a verificar
      * @return bool true si es UUID válido
      */
     public static function isUuid(string $string): bool
@@ -350,15 +348,15 @@ class StringHelper
     /**
      * Obtener substring entre dos strings
      *
-     * @param string $string String completo
-     * @param string $start String inicial
-     * @param string $end String final
+     * @param  string  $string  String completo
+     * @param  string  $start  String inicial
+     * @param  string  $end  String final
      * @return string|null Substring encontrado o null
      */
     public static function between(string $string, string $start, string $end): ?string
     {
         $startPos = strpos($string, $start);
-        
+
         if ($startPos === false) {
             return null;
         }
@@ -376,7 +374,7 @@ class StringHelper
     /**
      * Remover acentos y caracteres especiales
      *
-     * @param string $string String a limpiar
+     * @param  string  $string  String a limpiar
      * @return string String sin acentos
      */
     public static function removeAccents(string $string): string
@@ -387,7 +385,7 @@ class StringHelper
     /**
      * Obtener palabras de un string
      *
-     * @param string $string String del cual extraer palabras
+     * @param  string  $string  String del cual extraer palabras
      * @return array Array de palabras
      */
     public static function words(string $string): array
@@ -398,7 +396,7 @@ class StringHelper
     /**
      * Contar palabras en un string
      *
-     * @param string $string String a contar
+     * @param  string  $string  String a contar
      * @return int Número de palabras
      */
     public static function wordCount(string $string): int

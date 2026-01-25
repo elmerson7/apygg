@@ -12,17 +12,11 @@ use Symfony\Component\HttpFoundation\Response;
  *
  * Middleware para aplicar rate limiting adaptativo según el tipo de endpoint.
  * Detecta automáticamente si es auth, lectura, escritura o admin y aplica el límite correspondiente.
- *
- * @package App\Http\Middleware
  */
 class AdaptiveRateLimitingMiddleware
 {
     /**
      * Handle an incoming request.
-     *
-     * @param Request $request
-     * @param Closure $next
-     * @return Response
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -37,7 +31,7 @@ class AdaptiveRateLimitingMiddleware
         // Obtener configuración del límite
         $limitConfig = config("rate-limiting.limits.{$endpointType}");
 
-        if (!$limitConfig) {
+        if (! $limitConfig) {
             // Si no hay configuración, usar límite por defecto
             $limitConfig = config('rate-limiting.limits.read');
         }
@@ -79,9 +73,6 @@ class AdaptiveRateLimitingMiddleware
 
     /**
      * Determinar tipo de endpoint según la ruta y método HTTP
-     *
-     * @param Request $request
-     * @return string
      */
     protected function getEndpointType(Request $request): string
     {
@@ -102,7 +93,7 @@ class AdaptiveRateLimitingMiddleware
         // Detectar por método HTTP si no hay patrón específico
         if (in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'])) {
             // Endpoints de escritura que no sean auth
-            if (!$this->isAuthEndpoint($path)) {
+            if (! $this->isAuthEndpoint($path)) {
                 return 'write';
             }
         } elseif ($method === 'GET') {
@@ -115,10 +106,6 @@ class AdaptiveRateLimitingMiddleware
 
     /**
      * Verificar si la ruta coincide con un patrón
-     *
-     * @param string $path
-     * @param string $pattern
-     * @return bool
      */
     protected function matchesPattern(string $path, string $pattern): bool
     {
@@ -130,9 +117,6 @@ class AdaptiveRateLimitingMiddleware
 
     /**
      * Verificar si es un endpoint de autenticación
-     *
-     * @param string $path
-     * @return bool
      */
     protected function isAuthEndpoint(string $path): bool
     {
@@ -150,25 +134,19 @@ class AdaptiveRateLimitingMiddleware
     /**
      * Obtener identificador para el rate limiting (IP o usuario)
      *
-     * @param Request $request
-     * @param string $by 'ip' o 'user'
-     * @return string
+     * @param  string  $by  'ip' o 'user'
      */
     protected function getIdentifier(Request $request, string $by): string
     {
         if ($by === 'user' && auth()->check()) {
-            return 'user:' . auth()->id();
+            return 'user:'.auth()->id();
         }
 
-        return 'ip:' . $request->ip();
+        return 'ip:'.$request->ip();
     }
 
     /**
      * Generar key única para el rate limiter
-     *
-     * @param string $endpointType
-     * @param string $identifier
-     * @return string
      */
     protected function generateKey(string $endpointType, string $identifier): string
     {
@@ -177,9 +155,6 @@ class AdaptiveRateLimitingMiddleware
 
     /**
      * Verificar si la ruta está en excepciones
-     *
-     * @param Request $request
-     * @return bool
      */
     protected function isExcepted(Request $request): bool
     {
@@ -196,10 +171,6 @@ class AdaptiveRateLimitingMiddleware
 
     /**
      * Construir respuesta de rate limit excedido
-     *
-     * @param int $maxAttempts
-     * @param int $seconds
-     * @return Response
      */
     protected function buildRateLimitResponse(int $maxAttempts, int $seconds): Response
     {

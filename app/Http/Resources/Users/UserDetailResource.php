@@ -4,7 +4,6 @@ namespace App\Http\Resources\Users;
 
 use App\Http\Resources\BaseResource;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 
 /**
  * UserDetailResource
@@ -13,15 +12,12 @@ use Illuminate\Support\Collection;
  * Incluye permisos efectivos (combinando permisos de roles y permisos directos),
  * tokens API y más información detallada.
  * Usado para vistas detalladas de usuario.
- *
- * @package App\Http\Resources\Users
  */
 class UserDetailResource extends BaseResource
 {
     /**
      * Transform the resource into an array.
      *
-     * @param Request $request
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
@@ -105,8 +101,8 @@ class UserDetailResource extends BaseResource
             }),
 
             // Información adicional solo para el propio usuario o admin
-            'is_admin' => $this->when($canViewDetails, fn() => $user->isAdmin()),
-            'last_login_at' => $this->when($canViewDetails, fn() => $this->formatDate($user->last_login_at ?? null)),
+            'is_admin' => $this->when($canViewDetails, fn () => $user->isAdmin()),
+            'last_login_at' => $this->when($canViewDetails, fn () => $this->formatDate($user->last_login_at ?? null)),
 
             // Timestamps
             'created_at' => $this->formatDate($user->created_at),
@@ -121,8 +117,7 @@ class UserDetailResource extends BaseResource
      * Obtener permisos efectivos del usuario
      * Combina permisos de roles y permisos directos, eliminando duplicados
      *
-     * @param \App\Models\User $user
-     * @return array
+     * @param  \App\Models\User  $user
      */
     protected function getEffectivePermissions($user): array
     {

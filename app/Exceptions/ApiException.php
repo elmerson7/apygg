@@ -3,14 +3,11 @@
 namespace App\Exceptions;
 
 use Exception;
-use Illuminate\Http\JsonResponse;
 
 /**
  * ApiException
- * 
+ *
  * Excepción base para errores de API con código HTTP específico.
- * 
- * @package App\Exceptions
  */
 class ApiException extends Exception
 {
@@ -42,13 +39,13 @@ class ApiException extends Exception
     /**
      * Constructor
      *
-     * @param string $message Mensaje de error
-     * @param int $statusCode Código HTTP (default: 400)
-     * @param array $errors Errores adicionales (opcional)
-     * @param string|null $type Tipo de error (RFC 7807)
-     * @param string|null $instance Instancia específica del error
-     * @param array $extensions Campos adicionales
-     * @param \Throwable|null $previous Excepción anterior
+     * @param  string  $message  Mensaje de error
+     * @param  int  $statusCode  Código HTTP (default: 400)
+     * @param  array  $errors  Errores adicionales (opcional)
+     * @param  string|null  $type  Tipo de error (RFC 7807)
+     * @param  string|null  $instance  Instancia específica del error
+     * @param  array  $extensions  Campos adicionales
+     * @param  \Throwable|null  $previous  Excepción anterior
      */
     public function __construct(
         string $message = 'Error en la API',
@@ -60,7 +57,7 @@ class ApiException extends Exception
         ?\Throwable $previous = null
     ) {
         parent::__construct($message, 0, $previous);
-        
+
         $this->statusCode = $statusCode;
         $this->errors = $errors;
         $this->type = $type;

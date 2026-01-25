@@ -3,8 +3,8 @@
 namespace App\Listeners;
 
 use App\Services\Logging\AuthLogger;
-use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Failed;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\Log;
@@ -13,16 +13,11 @@ use Illuminate\Support\Facades\Log;
  * LogAuthenticationEvents Listener
  *
  * Listener para registrar eventos de autenticación usando AuthLogger.
- *
- * @package App\Listeners
  */
 class LogAuthenticationEvents
 {
     /**
      * Handle login events.
-     *
-     * @param Login $event
-     * @return void
      */
     public function handleLogin(Login $event): void
     {
@@ -37,9 +32,6 @@ class LogAuthenticationEvents
 
     /**
      * Handle failed login events.
-     *
-     * @param Failed $event
-     * @return void
      */
     public function handleFailed(Failed $event): void
     {
@@ -59,9 +51,6 @@ class LogAuthenticationEvents
 
     /**
      * Handle logout events.
-     *
-     * @param Logout $event
-     * @return void
      */
     public function handleLogout(Logout $event): void
     {
@@ -77,9 +66,6 @@ class LogAuthenticationEvents
 
     /**
      * Handle password reset events.
-     *
-     * @param PasswordReset $event
-     * @return void
      */
     public function handlePasswordReset(PasswordReset $event): void
     {
@@ -95,8 +81,7 @@ class LogAuthenticationEvents
     /**
      * Register the listeners for the subscriber.
      *
-     * @param \Illuminate\Events\Dispatcher $events
-     * @return void
+     * @param  \Illuminate\Events\Dispatcher  $events
      */
     public function subscribe($events): void
     {

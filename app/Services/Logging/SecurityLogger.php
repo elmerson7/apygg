@@ -3,8 +3,8 @@
 namespace App\Services\Logging;
 
 use App\Models\Logs\SecurityLog;
-use App\Services\LogService;
 use App\Models\User;
+use App\Services\LogService;
 use Illuminate\Http\Request;
 
 /**
@@ -12,19 +12,16 @@ use Illuminate\Http\Request;
  *
  * Logger especializado para registrar eventos de seguridad.
  * Registra permisos denegados, actividades sospechosas, bloqueos de cuenta, etc.
- *
- * @package App\Services\Logging
  */
 class SecurityLogger
 {
     /**
      * Registrar permiso denegado
      *
-     * @param User|null $user Usuario que intentó acceder
-     * @param string $permission Permiso requerido
-     * @param string|null $resource Recurso al que intentó acceder
-     * @param Request|null $request Request actual
-     * @return SecurityLog|null
+     * @param  User|null  $user  Usuario que intentó acceder
+     * @param  string  $permission  Permiso requerido
+     * @param  string|null  $resource  Recurso al que intentó acceder
+     * @param  Request|null  $request  Request actual
      */
     public static function logPermissionDenied(
         ?User $user,
@@ -63,11 +60,10 @@ class SecurityLogger
     /**
      * Registrar actividad sospechosa
      *
-     * @param string $description Descripción de la actividad sospechosa
-     * @param User|null $user Usuario relacionado
-     * @param array $details Detalles adicionales
-     * @param Request|null $request Request actual
-     * @return SecurityLog|null
+     * @param  string  $description  Descripción de la actividad sospechosa
+     * @param  User|null  $user  Usuario relacionado
+     * @param  array  $details  Detalles adicionales
+     * @param  Request|null  $request  Request actual
      */
     public static function logSuspiciousActivity(
         string $description,
@@ -113,10 +109,9 @@ class SecurityLogger
     /**
      * Registrar bloqueo de cuenta
      *
-     * @param User $user Usuario bloqueado
-     * @param string $reason Razón del bloqueo
-     * @param User|null $blockedBy Usuario que bloqueó (si es admin)
-     * @return SecurityLog|null
+     * @param  User  $user  Usuario bloqueado
+     * @param  string  $reason  Razón del bloqueo
+     * @param  User|null  $blockedBy  Usuario que bloqueó (si es admin)
      */
     public static function logAccountLocked(
         User $user,
@@ -148,9 +143,8 @@ class SecurityLogger
     /**
      * Registrar desbloqueo de cuenta
      *
-     * @param User $user Usuario desbloqueado
-     * @param User|null $unlockedBy Usuario que desbloqueó (si es admin)
-     * @return SecurityLog|null
+     * @param  User  $user  Usuario desbloqueado
+     * @param  User|null  $unlockedBy  Usuario que desbloqueó (si es admin)
      */
     public static function logAccountUnlocked(
         User $user,
@@ -180,11 +174,10 @@ class SecurityLogger
     /**
      * Registrar evento de seguridad personalizado
      *
-     * @param string $eventType Tipo de evento (debe ser uno de los EVENT_*)
-     * @param User|null $user Usuario relacionado
-     * @param array $details Detalles del evento
-     * @param Request|null $request Request actual
-     * @return SecurityLog|null
+     * @param  string  $eventType  Tipo de evento (debe ser uno de los EVENT_*)
+     * @param  User|null  $user  Usuario relacionado
+     * @param  array  $details  Detalles del evento
+     * @param  Request|null  $request  Request actual
      */
     public static function logEvent(
         string $eventType,

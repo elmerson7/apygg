@@ -9,18 +9,16 @@ use Illuminate\Support\Str;
 
 /**
  * SecurityService
- * 
+ *
  * Servicio centralizado para operaciones de seguridad:
  * encriptación, hashing, validación de IPs, detección de comportamiento sospechoso.
- * 
- * @package App\Services
  */
 class SecurityService
 {
     /**
      * Encriptar datos sensibles
      *
-     * @param mixed $value Valor a encriptar
+     * @param  mixed  $value  Valor a encriptar
      * @return string Valor encriptado
      */
     public static function encrypt($value): string
@@ -31,7 +29,7 @@ class SecurityService
     /**
      * Desencriptar datos
      *
-     * @param string $encryptedValue Valor encriptado
+     * @param  string  $encryptedValue  Valor encriptado
      * @return mixed Valor desencriptado
      */
     public static function decrypt(string $encryptedValue)
@@ -42,6 +40,7 @@ class SecurityService
             Log::warning('Failed to decrypt value', [
                 'error' => $e->getMessage(),
             ]);
+
             throw $e;
         }
     }
@@ -49,8 +48,8 @@ class SecurityService
     /**
      * Hash de contraseña usando bcrypt
      *
-     * @param string $password Contraseña en texto plano
-     * @param int $rounds Número de rounds (default: 10)
+     * @param  string  $password  Contraseña en texto plano
+     * @param  int  $rounds  Número de rounds (default: 10)
      * @return string Hash de contraseña
      */
     public static function hashPassword(string $password, int $rounds = 10): string
@@ -61,9 +60,8 @@ class SecurityService
     /**
      * Verificar contraseña
      *
-     * @param string $password Contraseña en texto plano
-     * @param string $hash Hash almacenado
-     * @return bool
+     * @param  string  $password  Contraseña en texto plano
+     * @param  string  $hash  Hash almacenado
      */
     public static function verifyPassword(string $password, string $hash): bool
     {
@@ -73,9 +71,8 @@ class SecurityService
     /**
      * Verificar si IP está en whitelist
      *
-     * @param string $ip IP a verificar
-     * @param array|null $whitelist Lista de IPs permitidas (null = usar config)
-     * @return bool
+     * @param  string  $ip  IP a verificar
+     * @param  array|null  $whitelist  Lista de IPs permitidas (null = usar config)
      */
     public static function isIpWhitelisted(string $ip, ?array $whitelist = null): bool
     {
@@ -102,9 +99,7 @@ class SecurityService
     /**
      * Verificar si IP está en rango CIDR
      *
-     * @param string $ip
-     * @param string $range Rango CIDR (ej: 192.168.1.0/24)
-     * @return bool
+     * @param  string  $range  Rango CIDR (ej: 192.168.1.0/24)
      */
     protected static function ipInRange(string $ip, string $range): bool
     {
@@ -119,9 +114,9 @@ class SecurityService
     /**
      * Detectar comportamiento sospechoso
      *
-     * @param string $ip IP del usuario
-     * @param string $action Acción realizada
-     * @param array $context Contexto adicional
+     * @param  string  $ip  IP del usuario
+     * @param  string  $action  Acción realizada
+     * @param  array  $context  Contexto adicional
      * @return array ['is_suspicious' => bool, 'reasons' => array]
      */
     public static function detectSuspiciousBehavior(string $ip, string $action, array $context = []): array
@@ -157,7 +152,7 @@ class SecurityService
         // Verificar múltiples acciones fallidas
         $failedActionsKey = "security:failed_actions:{$ip}";
         $failedActions = cache()->get($failedActionsKey, []);
-        
+
         if (count($failedActions) >= config('security.max_failed_actions', 5)) {
             $reasons[] = 'Multiple failed actions detected';
             $isSuspicious = true;
@@ -200,6 +195,7 @@ class SecurityService
     protected static function isIpBlacklisted(string $ip): bool
     {
         $blacklist = config('security.ip_blacklist', []);
+
         return in_array($ip, $blacklist);
     }
 
@@ -209,7 +205,7 @@ class SecurityService
     protected static function calculateRiskScore(array $reasons): int
     {
         $score = 0;
-        
+
         foreach ($reasons as $reason) {
             if (str_contains($reason, 'blacklisted')) {
                 $score += 50;
@@ -228,7 +224,7 @@ class SecurityService
     /**
      * Generar token seguro
      *
-     * @param int $length Longitud del token
+     * @param  int  $length  Longitud del token
      * @return string Token generado
      */
     public static function generateSecureToken(int $length = 64): string
@@ -249,9 +245,8 @@ class SecurityService
     /**
      * Validar token de reset de contraseña
      *
-     * @param string $token Token a validar
-     * @param string $storedToken Token almacenado
-     * @return bool
+     * @param  string  $token  Token a validar
+     * @param  string  $storedToken  Token almacenado
      */
     public static function validatePasswordResetToken(string $token, string $storedToken): bool
     {
@@ -261,7 +256,7 @@ class SecurityService
     /**
      * Sanitizar entrada HTML
      *
-     * @param string $input Entrada a sanitizar
+     * @param  string  $input  Entrada a sanitizar
      * @return string Entrada sanitizada
      */
     public static function sanitizeHtml(string $input): string
@@ -269,38 +264,34 @@ class SecurityService
         // Remover tags HTML peligrosos
         $allowedTags = '<p><br><strong><em><u><a><ul><ol><li>';
         $sanitized = strip_tags($input, $allowedTags);
-        
+
         // Escapar atributos peligrosos
         $sanitized = preg_replace('/on\w+\s*=\s*["\'][^"\']*["\']/i', '', $sanitized);
         $sanitized = preg_replace('/javascript:/i', '', $sanitized);
-        
+
         return $sanitized;
     }
 
     /**
      * Validar CSRF token
      *
-     * @param string $token Token a validar
-     * @return bool
+     * @param  string  $token  Token a validar
      */
     public static function validateCsrfToken(string $token): bool
     {
         $sessionToken = session()->token();
+
         return hash_equals($sessionToken, $token);
     }
 
     /**
      * Registrar acción fallida
-     *
-     * @param string $ip
-     * @param string $action
-     * @return void
      */
     public static function recordFailedAction(string $ip, string $action): void
     {
         $key = "security:failed_actions:{$ip}";
         $failedActions = cache()->get($key, []);
-        
+
         $failedActions[] = [
             'action' => $action,
             'timestamp' => now()->toIso8601String(),
@@ -308,7 +299,7 @@ class SecurityService
 
         // Mantener solo las últimas 10 acciones
         $failedActions = array_slice($failedActions, -10);
-        
+
         cache()->put($key, $failedActions, 3600); // 1 hora
     }
 }

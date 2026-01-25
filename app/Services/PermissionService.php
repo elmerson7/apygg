@@ -13,8 +13,6 @@ use Illuminate\Pagination\LengthAwarePaginator;
  * - CRUD completo de permisos
  * - Validaciones
  * - Búsqueda y filtrado
- *
- * @package App\Services
  */
 class PermissionService
 {
@@ -31,8 +29,8 @@ class PermissionService
     /**
      * Crear un nuevo permiso
      *
-     * @param array $data Datos del permiso ['name', 'display_name', 'resource', 'action', 'description']
-     * @return Permission
+     * @param  array  $data  Datos del permiso ['name', 'display_name', 'resource', 'action', 'description']
+     *
      * @throws \InvalidArgumentException Si el nombre ya existe o los datos son inválidos
      */
     public function create(array $data): Permission
@@ -46,7 +44,7 @@ class PermissionService
         }
 
         // Validar formato de nombre (debe ser resource.action)
-        if (!$this->validateNameFormat($data['name'])) {
+        if (! $this->validateNameFormat($data['name'])) {
             throw new \InvalidArgumentException(
                 "El nombre del permiso debe seguir el formato 'recurso.accion' (ej: 'users.create')"
             );
@@ -75,9 +73,9 @@ class PermissionService
     /**
      * Actualizar un permiso existente
      *
-     * @param string $permissionId ID del permiso
-     * @param array $data Datos a actualizar
-     * @return Permission
+     * @param  string  $permissionId  ID del permiso
+     * @param  array  $data  Datos a actualizar
+     *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el permiso no existe
      * @throws \InvalidArgumentException Si los datos son inválidos
      */
@@ -93,7 +91,7 @@ class PermissionService
             }
 
             // Validar formato
-            if (!$this->validateNameFormat($data['name'])) {
+            if (! $this->validateNameFormat($data['name'])) {
                 throw new \InvalidArgumentException(
                     "El nombre del permiso debe seguir el formato 'recurso.accion' (ej: 'users.create')"
                 );
@@ -118,8 +116,8 @@ class PermissionService
     /**
      * Eliminar un permiso
      *
-     * @param string $permissionId ID del permiso
-     * @return bool
+     * @param  string  $permissionId  ID del permiso
+     *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el permiso no existe
      * @throws \Exception Si el permiso está asignado a roles
      */
@@ -152,13 +150,13 @@ class PermissionService
     /**
      * Buscar un permiso por ID
      *
-     * @param string $permissionId ID del permiso
-     * @return Permission
+     * @param  string  $permissionId  ID del permiso
+     *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el permiso no existe
      */
     public function find(string $permissionId): Permission
     {
-        $cacheKey = self::CACHE_PREFIX . $permissionId;
+        $cacheKey = self::CACHE_PREFIX.$permissionId;
 
         return CacheService::remember($cacheKey, self::CACHE_TTL, function () use ($permissionId) {
             return Permission::with('roles')->findOrFail($permissionId);
@@ -168,12 +166,11 @@ class PermissionService
     /**
      * Buscar un permiso por nombre
      *
-     * @param string $name Nombre del permiso
-     * @return Permission|null
+     * @param  string  $name  Nombre del permiso
      */
     public function findByName(string $name): ?Permission
     {
-        $cacheKey = self::CACHE_PREFIX . 'name:' . $name;
+        $cacheKey = self::CACHE_PREFIX.'name:'.$name;
 
         return CacheService::remember($cacheKey, self::CACHE_TTL, function () use ($name) {
             return Permission::where('name', $name)->first();
@@ -183,8 +180,7 @@ class PermissionService
     /**
      * Listar todos los permisos con paginación
      *
-     * @param array $filters Filtros ['search', 'resource', 'action', 'per_page']
-     * @return LengthAwarePaginator
+     * @param  array  $filters  Filtros ['search', 'resource', 'action', 'per_page']
      */
     public function list(array $filters = []): LengthAwarePaginator
     {
@@ -215,12 +211,10 @@ class PermissionService
 
     /**
      * Obtener todos los permisos sin paginación
-     *
-     * @return Collection
      */
     public function all(): Collection
     {
-        $cacheKey = self::CACHE_PREFIX . 'all';
+        $cacheKey = self::CACHE_PREFIX.'all';
 
         return CacheService::remember($cacheKey, self::CACHE_TTL, function () {
             return Permission::with('roles')->orderBy('resource')->orderBy('action')->get();
@@ -230,12 +224,11 @@ class PermissionService
     /**
      * Obtener permisos por recurso
      *
-     * @param string $resource Nombre del recurso
-     * @return Collection
+     * @param  string  $resource  Nombre del recurso
      */
     public function getByResource(string $resource): Collection
     {
-        $cacheKey = self::CACHE_PREFIX . 'resource:' . $resource;
+        $cacheKey = self::CACHE_PREFIX.'resource:'.$resource;
 
         return CacheService::remember($cacheKey, self::CACHE_TTL, function () use ($resource) {
             return Permission::forResource($resource)->orderBy('action')->get();
@@ -245,12 +238,11 @@ class PermissionService
     /**
      * Obtener permisos por acción
      *
-     * @param string $action Nombre de la acción
-     * @return Collection
+     * @param  string  $action  Nombre de la acción
      */
     public function getByAction(string $action): Collection
     {
-        $cacheKey = self::CACHE_PREFIX . 'action:' . $action;
+        $cacheKey = self::CACHE_PREFIX.'action:'.$action;
 
         return CacheService::remember($cacheKey, self::CACHE_TTL, function () use ($action) {
             return Permission::forAction($action)->orderBy('resource')->get();
@@ -260,13 +252,12 @@ class PermissionService
     /**
      * Obtener permisos por recurso y acción
      *
-     * @param string $resource Nombre del recurso
-     * @param string $action Nombre de la acción
-     * @return Collection
+     * @param  string  $resource  Nombre del recurso
+     * @param  string  $action  Nombre de la acción
      */
     public function getByResourceAndAction(string $resource, string $action): Collection
     {
-        $cacheKey = self::CACHE_PREFIX . 'resource:' . $resource . ':action:' . $action;
+        $cacheKey = self::CACHE_PREFIX.'resource:'.$resource.':action:'.$action;
 
         return CacheService::remember($cacheKey, self::CACHE_TTL, function () use ($resource, $action) {
             return Permission::forResourceAndAction($resource, $action)->get();
@@ -276,8 +267,8 @@ class PermissionService
     /**
      * Validar datos del permiso
      *
-     * @param array $data Datos a validar
-     * @return void
+     * @param  array  $data  Datos a validar
+     *
      * @throws \InvalidArgumentException Si los datos son inválidos
      */
     public function validatePermissionData(array $data): void
@@ -290,8 +281,7 @@ class PermissionService
     /**
      * Validar formato del nombre del permiso (debe ser resource.action)
      *
-     * @param string $name Nombre del permiso
-     * @return bool
+     * @param  string  $name  Nombre del permiso
      */
     public function validateNameFormat(string $name): bool
     {
@@ -302,9 +292,8 @@ class PermissionService
     /**
      * Validar que el nombre del permiso sea único
      *
-     * @param string $name Nombre del permiso
-     * @param string|null $excludeId ID a excluir de la validación (para updates)
-     * @return bool
+     * @param  string  $name  Nombre del permiso
+     * @param  string|null  $excludeId  ID a excluir de la validación (para updates)
      */
     public function validateNameUnique(string $name, ?string $excludeId = null): bool
     {
@@ -314,15 +303,14 @@ class PermissionService
             $query->where('id', '!=', $excludeId);
         }
 
-        return !$query->exists();
+        return ! $query->exists();
     }
 
     /**
      * Validar recurso y acción
      *
-     * @param string $resource Nombre del recurso
-     * @param string $action Nombre de la acción
-     * @return bool
+     * @param  string  $resource  Nombre del recurso
+     * @param  string  $action  Nombre de la acción
      */
     public function validateResourceAction(string $resource, string $action): bool
     {
@@ -336,50 +324,49 @@ class PermissionService
     /**
      * Extraer el recurso del nombre del permiso
      *
-     * @param string $name Nombre del permiso (formato: resource.action)
-     * @return string
+     * @param  string  $name  Nombre del permiso (formato: resource.action)
      */
     protected function extractResource(string $name): string
     {
         $parts = explode('.', $name);
+
         return $parts[0] ?? '';
     }
 
     /**
      * Extraer la acción del nombre del permiso
      *
-     * @param string $name Nombre del permiso (formato: resource.action)
-     * @return string
+     * @param  string  $name  Nombre del permiso (formato: resource.action)
      */
     protected function extractAction(string $name): string
     {
         $parts = explode('.', $name);
+
         return $parts[1] ?? '';
     }
 
     /**
      * Limpiar cache de permisos
      *
-     * @param string|null $permissionId ID específico del permiso o null para limpiar todo
-     * @return void
+     * @param  string|null  $permissionId  ID específico del permiso o null para limpiar todo
      */
     protected function clearCache(?string $permissionId = null): void
     {
         if ($permissionId) {
-            CacheService::forget(self::CACHE_PREFIX . $permissionId);
+            CacheService::forget(self::CACHE_PREFIX.$permissionId);
             $permission = Permission::find($permissionId);
             if ($permission) {
-                CacheService::forget(self::CACHE_PREFIX . 'name:' . $permission->name);
+                CacheService::forget(self::CACHE_PREFIX.'name:'.$permission->name);
                 if ($permission->resource) {
-                    CacheService::forget(self::CACHE_PREFIX . 'resource:' . $permission->resource);
+                    CacheService::forget(self::CACHE_PREFIX.'resource:'.$permission->resource);
                 }
                 if ($permission->action) {
-                    CacheService::forget(self::CACHE_PREFIX . 'action:' . $permission->action);
+                    CacheService::forget(self::CACHE_PREFIX.'action:'.$permission->action);
                 }
             }
         }
 
         // Limpiar cache de lista completa
-        CacheService::forget(self::CACHE_PREFIX . 'all');
+        CacheService::forget(self::CACHE_PREFIX.'all');
     }
 }

@@ -10,8 +10,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * Modelo para registrar errores y excepciones del sistema.
  * Usa ID auto-incrementable como primary key (no UUID) según estrategia del proyecto.
- *
- * @package App\Models\Logs
  */
 class ErrorLog extends Model
 {
@@ -64,14 +62,15 @@ class ErrorLog extends Model
      * Niveles de severidad disponibles
      */
     public const SEVERITY_LOW = 'low';
+
     public const SEVERITY_MEDIUM = 'medium';
+
     public const SEVERITY_HIGH = 'high';
+
     public const SEVERITY_CRITICAL = 'critical';
 
     /**
      * Relación con User (opcional, puede ser null)
-     *
-     * @return BelongsTo
      */
     public function user(): BelongsTo
     {
@@ -80,8 +79,6 @@ class ErrorLog extends Model
 
     /**
      * Relación con ApiLog a través de trace_id
-     *
-     * @return BelongsTo
      */
     public function apiLog(): BelongsTo
     {
@@ -91,8 +88,7 @@ class ErrorLog extends Model
     /**
      * Scope para filtrar por trace_id
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $traceId
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeByTraceId($query, string $traceId)
@@ -103,8 +99,7 @@ class ErrorLog extends Model
     /**
      * Scope para filtrar por usuario
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $userId
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeByUserId($query, string $userId)
@@ -115,8 +110,7 @@ class ErrorLog extends Model
     /**
      * Scope para filtrar por severidad
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $severity
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeBySeverity($query, string $severity)
@@ -127,7 +121,7 @@ class ErrorLog extends Model
     /**
      * Scope para filtrar errores no resueltos
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeUnresolved($query)
@@ -138,7 +132,7 @@ class ErrorLog extends Model
     /**
      * Scope para filtrar errores resueltos
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeResolved($query)
@@ -149,7 +143,7 @@ class ErrorLog extends Model
     /**
      * Scope para filtrar errores críticos
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeCritical($query)
@@ -160,9 +154,7 @@ class ErrorLog extends Model
     /**
      * Scope para filtrar por rango de fechas
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string|null $startDate
-     * @param string|null $endDate
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeDateRange($query, ?string $startDate = null, ?string $endDate = null)
@@ -181,7 +173,7 @@ class ErrorLog extends Model
     /**
      * Scope para ordenar por más recientes
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeRecent($query)
@@ -191,8 +183,6 @@ class ErrorLog extends Model
 
     /**
      * Marcar error como resuelto
-     *
-     * @return bool
      */
     public function markAsResolved(): bool
     {
@@ -201,8 +191,6 @@ class ErrorLog extends Model
 
     /**
      * Verificar si el error está resuelto
-     *
-     * @return bool
      */
     public function isResolved(): bool
     {

@@ -10,8 +10,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * Modelo para registrar todos los requests y responses de la API.
  * Usa ID auto-incrementable como primary key (no UUID) según estrategia del proyecto.
- *
- * @package App\Models\Logs
  */
 class ApiLog extends Model
 {
@@ -67,8 +65,6 @@ class ApiLog extends Model
 
     /**
      * Relación con User (opcional, puede ser null)
-     *
-     * @return BelongsTo
      */
     public function user(): BelongsTo
     {
@@ -78,8 +74,7 @@ class ApiLog extends Model
     /**
      * Scope para filtrar por trace_id
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $traceId
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeByTraceId($query, string $traceId)
@@ -90,8 +85,7 @@ class ApiLog extends Model
     /**
      * Scope para filtrar por usuario
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $userId
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeByUserId($query, string $userId)
@@ -102,8 +96,7 @@ class ApiLog extends Model
     /**
      * Scope para filtrar por método HTTP
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $method
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeByMethod($query, string $method)
@@ -114,8 +107,7 @@ class ApiLog extends Model
     /**
      * Scope para filtrar por código de estado
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param int $status
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeByStatus($query, int $status)
@@ -126,9 +118,7 @@ class ApiLog extends Model
     /**
      * Scope para filtrar por rango de fechas
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string|null $startDate
-     * @param string|null $endDate
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeDateRange($query, ?string $startDate = null, ?string $endDate = null)
@@ -147,7 +137,7 @@ class ApiLog extends Model
     /**
      * Scope para ordenar por más recientes
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeRecent($query)
@@ -158,8 +148,8 @@ class ApiLog extends Model
     /**
      * Scope para filtrar requests lentos
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param int $thresholdMs Umbral en milisegundos
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  int  $thresholdMs  Umbral en milisegundos
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeSlowRequests($query, int $thresholdMs = 1000)

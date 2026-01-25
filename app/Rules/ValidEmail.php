@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Validator;
 
 /**
  * Regla de validación para email
- * 
+ *
  * Valida formato de email y opcionalmente verifica dominio válido.
  */
 class ValidEmail implements ValidationRule
@@ -28,8 +28,9 @@ class ValidEmail implements ValidationRule
      */
     public static function withDomainCheck(bool $check = true): self
     {
-        $rule = new self();
+        $rule = new self;
         $rule->checkDomain = $check;
+
         return $rule;
     }
 
@@ -38,9 +39,10 @@ class ValidEmail implements ValidationRule
      */
     public static function allowedDomains(array $domains): self
     {
-        $rule = new self();
+        $rule = new self;
         $rule->allowedDomains = $domains;
         $rule->checkDomain = true;
+
         return $rule;
     }
 
@@ -49,8 +51,9 @@ class ValidEmail implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (!is_string($value)) {
+        if (! is_string($value)) {
             $fail('El campo :attribute debe ser una cadena de texto.');
+
             return;
         }
 
@@ -62,21 +65,23 @@ class ValidEmail implements ValidationRule
 
         if ($validator->fails()) {
             $fail('El campo :attribute debe ser un correo electrónico válido.');
+
             return;
         }
 
         // Verificar dominio si está habilitado
         if ($this->checkDomain) {
             $domain = substr(strrchr($value, '@'), 1);
-            
+
             if ($this->allowedDomains !== null) {
-                if (!in_array(strtolower($domain), array_map('strtolower', $this->allowedDomains))) {
+                if (! in_array(strtolower($domain), array_map('strtolower', $this->allowedDomains))) {
                     $fail('El campo :attribute debe tener un dominio permitido.');
+
                     return;
                 }
             } else {
                 // Verificar que el dominio tenga MX record o A record
-                if (!checkdnsrr($domain, 'MX') && !checkdnsrr($domain, 'A')) {
+                if (! checkdnsrr($domain, 'MX') && ! checkdnsrr($domain, 'A')) {
                     $fail('El campo :attribute debe tener un dominio válido.');
                 }
             }

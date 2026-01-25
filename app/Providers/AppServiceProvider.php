@@ -3,11 +3,10 @@
 namespace App\Providers;
 
 use App\Listeners\LogAuthenticationEvents;
-use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Failed;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\PasswordReset;
-use Illuminate\Foundation\Support\Providers\EventServiceProvider;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 

@@ -4,7 +4,6 @@ namespace App\Http\Middleware;
 
 use App\Services\Logging\SecurityLogger;
 use App\Services\LogService;
-use App\Services\SecurityService;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -15,8 +14,6 @@ use Symfony\Component\HttpFoundation\Response;
  *
  * Middleware para registrar eventos de seguridad y detectar patrones anómalos.
  * Detecta múltiples denegaciones de acceso, fuerza bruta, comportamiento sospechoso, etc.
- *
- * @package App\Http\Middleware
  */
 class SecurityLoggerMiddleware
 {
@@ -24,16 +21,15 @@ class SecurityLoggerMiddleware
      * Límites de detección de patrones anómalos
      */
     private const MAX_DENIED_PER_USER = 5; // Máximo de denegaciones por usuario en ventana de tiempo
+
     private const MAX_DENIED_PER_IP = 10; // Máximo de denegaciones por IP en ventana de tiempo
+
     private const TIME_WINDOW_MINUTES = 5; // Ventana de tiempo en minutos
+
     private const SUSPICIOUS_ACTIVITY_THRESHOLD = 3; // Umbral para marcar como sospechoso
 
     /**
      * Handle an incoming request.
-     *
-     * @param Request $request
-     * @param Closure $next
-     * @return Response
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -65,12 +61,7 @@ class SecurityLoggerMiddleware
     /**
      * Registrar evento de seguridad según código de respuesta
      *
-     * @param Request $request
-     * @param Response $response
-     * @param int $statusCode
-     * @param mixed $user
-     * @param string $ipAddress
-     * @return void
+     * @param  mixed  $user
      */
     protected function logSecurityEvent(
         Request $request,
@@ -117,11 +108,7 @@ class SecurityLoggerMiddleware
     /**
      * Detectar patrones anómalos en el comportamiento
      *
-     * @param Request $request
-     * @param int $statusCode
-     * @param mixed $user
-     * @param string $ipAddress
-     * @return void
+     * @param  mixed  $user
      */
     protected function detectAnomalousPatterns(
         Request $request,
@@ -130,7 +117,7 @@ class SecurityLoggerMiddleware
         string $ipAddress
     ): void {
         // Solo analizar códigos de error relacionados con seguridad
-        if (!in_array($statusCode, [401, 403, 429])) {
+        if (! in_array($statusCode, [401, 403, 429])) {
             return;
         }
 
@@ -161,13 +148,6 @@ class SecurityLoggerMiddleware
 
     /**
      * Detectar múltiples denegaciones por usuario
-     *
-     * @param string $userId
-     * @param string $ipAddress
-     * @param Request $request
-     * @param int $statusCode
-     * @param int $timeWindow
-     * @return void
      */
     protected function detectMultipleDenialsByUser(
         string $userId,
@@ -224,12 +204,6 @@ class SecurityLoggerMiddleware
 
     /**
      * Detectar múltiples denegaciones por IP
-     *
-     * @param string $ipAddress
-     * @param Request $request
-     * @param int $statusCode
-     * @param int $timeWindow
-     * @return void
      */
     protected function detectMultipleDenialsByIp(
         string $ipAddress,
@@ -286,11 +260,7 @@ class SecurityLoggerMiddleware
     /**
      * Detectar comportamiento anormal
      *
-     * @param Request $request
-     * @param mixed $user
-     * @param string $ipAddress
-     * @param int $statusCode
-     * @return void
+     * @param  mixed  $user
      */
     protected function detectAbnormalBehavior(
         Request $request,
@@ -309,10 +279,6 @@ class SecurityLoggerMiddleware
 
     /**
      * Detectar requests muy rápidos (posible bot)
-     *
-     * @param string $ipAddress
-     * @param Request $request
-     * @return void
      */
     protected function detectRapidRequests(string $ipAddress, Request $request): void
     {
@@ -346,18 +312,13 @@ class SecurityLoggerMiddleware
 
     /**
      * Detectar múltiples IPs para el mismo usuario
-     *
-     * @param string $userId
-     * @param string $ipAddress
-     * @param Request $request
-     * @return void
      */
     protected function detectMultipleIpsForUser(string $userId, string $ipAddress, Request $request): void
     {
         $cacheKey = "security:user_ips:{$userId}";
         $ips = Cache::get($cacheKey, []);
 
-        if (!in_array($ipAddress, $ips)) {
+        if (! in_array($ipAddress, $ips)) {
             $ips[] = [
                 'ip' => $ipAddress,
                 'first_seen' => now()->timestamp,
@@ -392,10 +353,7 @@ class SecurityLoggerMiddleware
     /**
      * Detectar intentos de fuerza bruta
      *
-     * @param string $ipAddress
-     * @param mixed $user
-     * @param Request $request
-     * @return void
+     * @param  mixed  $user
      */
     protected function detectBruteForceAttempts(string $ipAddress, $user, Request $request): void
     {
@@ -439,10 +397,7 @@ class SecurityLoggerMiddleware
     /**
      * Detectar escalada de privilegios
      *
-     * @param string $ipAddress
-     * @param mixed $user
-     * @param Request $request
-     * @return void
+     * @param  mixed  $user
      */
     protected function detectPrivilegeEscalation(string $ipAddress, $user, Request $request): void
     {
@@ -486,9 +441,6 @@ class SecurityLoggerMiddleware
 
     /**
      * Verificar si una ruta es de administración
-     *
-     * @param string $path
-     * @return bool
      */
     protected function isAdminRoute(string $path): bool
     {

@@ -18,8 +18,6 @@ use Illuminate\Http\Request;
  *
  * Controlador para gestión de usuarios.
  * Extiende Controller base y usa UserService para lógica de negocio.
- *
- * @package App\Http\Controllers\Users
  */
 class UserController extends Controller
 {
@@ -57,9 +55,6 @@ class UserController extends Controller
 
     /**
      * Display a listing of users.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
@@ -79,10 +74,6 @@ class UserController extends Controller
 
     /**
      * Display the specified user.
-     *
-     * @param Request $request
-     * @param string $id
-     * @return JsonResponse
      */
     public function show(Request $request, string $id): JsonResponse
     {
@@ -95,7 +86,7 @@ class UserController extends Controller
         if ($include) {
             $relations = explode(',', $include);
             $allowedRelations = array_intersect($relations, $this->allowedRelations);
-            if (!empty($allowedRelations)) {
+            if (! empty($allowedRelations)) {
                 $user->load($allowedRelations);
             }
         }
@@ -112,16 +103,13 @@ class UserController extends Controller
 
     /**
      * Store a newly created user.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function store(Request $request): JsonResponse
     {
         $this->authorize('create', User::class);
 
         // Validar usando las reglas de StoreUserRequest
-        $formRequest = new StoreUserRequest();
+        $formRequest = new StoreUserRequest;
         $validated = $request->validate($formRequest->rules(), $formRequest->messages());
 
         $roleIds = $request->input('role_ids', []);
@@ -133,10 +121,6 @@ class UserController extends Controller
 
     /**
      * Update the specified user.
-     *
-     * @param Request $request
-     * @param string $id
-     * @return JsonResponse
      */
     public function update(Request $request, string $id): JsonResponse
     {
@@ -155,7 +139,7 @@ class UserController extends Controller
                 'max:255',
                 \Illuminate\Validation\Rule::unique('users', 'email')->ignore($id),
             ],
-            'password' => ['sometimes', 'string', 'min:8', new \App\Rules\StrongPassword()],
+            'password' => ['sometimes', 'string', 'min:8', new \App\Rules\StrongPassword],
         ];
 
         $messages = [
@@ -174,9 +158,6 @@ class UserController extends Controller
 
     /**
      * Remove the specified user (soft delete).
-     *
-     * @param string $id
-     * @return JsonResponse
      */
     public function destroy(string $id): JsonResponse
     {
@@ -191,9 +172,6 @@ class UserController extends Controller
 
     /**
      * Restore a soft-deleted user.
-     *
-     * @param string $id
-     * @return JsonResponse
      */
     public function restore(string $id): JsonResponse
     {
@@ -208,10 +186,6 @@ class UserController extends Controller
 
     /**
      * Assign roles to a user.
-     *
-     * @param Request $request
-     * @param string $id
-     * @return JsonResponse
      */
     public function assignRoles(Request $request, string $id): JsonResponse
     {
@@ -221,7 +195,7 @@ class UserController extends Controller
         $this->authorize('update', $user);
 
         // Validar usando las reglas de AssignRoleRequest
-        $formRequest = new AssignRoleRequest();
+        $formRequest = new AssignRoleRequest;
         $validated = $request->validate($formRequest->rules(), $formRequest->messages());
 
         $roleIds = $validated['role_ids'];
@@ -232,10 +206,6 @@ class UserController extends Controller
 
     /**
      * Remove a role from a user.
-     *
-     * @param string $id
-     * @param string $roleId
-     * @return JsonResponse
      */
     public function removeRole(string $id, string $roleId): JsonResponse
     {
@@ -251,10 +221,6 @@ class UserController extends Controller
 
     /**
      * Get activity logs for a user.
-     *
-     * @param Request $request
-     * @param string $id
-     * @return JsonResponse
      */
     public function getActivity(Request $request, string $id): JsonResponse
     {

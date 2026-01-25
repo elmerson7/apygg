@@ -12,8 +12,6 @@ use Illuminate\Support\Facades\Hash;
  *
  * Seeder para crear usuarios de prueba con diferentes roles.
  * Password por defecto para todos los usuarios: "password"
- *
- * @package Database\Seeders
  */
 class UserSeeder extends Seeder
 {
@@ -35,8 +33,9 @@ class UserSeeder extends Seeder
         $moderatorRole = Role::where('name', 'moderator')->first();
         $editorRole = Role::where('name', 'editor')->first();
 
-        if (!$adminRole || !$userRole || !$guestRole) {
+        if (! $adminRole || ! $userRole || ! $guestRole) {
             $this->command->warn('Roles no encontrados. Ejecuta RoleSeeder primero.');
+
             return;
         }
 
@@ -131,7 +130,7 @@ class UserSeeder extends Seeder
             );
 
             // Asignar roles
-            if (!empty($roles)) {
+            if (! empty($roles)) {
                 $user->roles()->syncWithoutDetaching(
                     collect($roles)->pluck('id')->toArray()
                 );
@@ -152,6 +151,6 @@ class UserSeeder extends Seeder
             }
         }
 
-        $this->command->info('Usuarios de prueba creados: ' . count($users) . ' usuarios');
+        $this->command->info('Usuarios de prueba creados: '.count($users).' usuarios');
     }
 }

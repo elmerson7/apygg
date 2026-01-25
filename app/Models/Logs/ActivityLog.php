@@ -11,8 +11,6 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  *
  * Modelo para registrar cambios en modelos (auditoría).
  * Usa ID auto-incrementable como primary key (no UUID) según estrategia del proyecto.
- *
- * @package App\Models\Logs
  */
 class ActivityLog extends Model
 {
@@ -61,14 +59,15 @@ class ActivityLog extends Model
      * Tipos de acciones disponibles
      */
     public const ACTION_CREATED = 'created';
+
     public const ACTION_UPDATED = 'updated';
+
     public const ACTION_DELETED = 'deleted';
+
     public const ACTION_RESTORED = 'restored';
 
     /**
      * Relación con User (opcional, puede ser null)
-     *
-     * @return BelongsTo
      */
     public function user(): BelongsTo
     {
@@ -77,8 +76,6 @@ class ActivityLog extends Model
 
     /**
      * Relación polimórfica con el modelo auditado
-     *
-     * @return MorphTo
      */
     public function model(): MorphTo
     {
@@ -88,8 +85,7 @@ class ActivityLog extends Model
     /**
      * Scope para filtrar por usuario
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $userId
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeByUserId($query, string $userId)
@@ -100,8 +96,7 @@ class ActivityLog extends Model
     /**
      * Scope para filtrar por tipo de modelo
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $modelType
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeByModelType($query, string $modelType)
@@ -112,9 +107,7 @@ class ActivityLog extends Model
     /**
      * Scope para filtrar por modelo específico
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $modelType
-     * @param string $modelId
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeByModel($query, string $modelType, string $modelId)
@@ -126,8 +119,7 @@ class ActivityLog extends Model
     /**
      * Scope para filtrar por acción
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $action
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeByAction($query, string $action)
@@ -138,7 +130,7 @@ class ActivityLog extends Model
     /**
      * Scope para filtrar creaciones
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeCreated($query)
@@ -149,7 +141,7 @@ class ActivityLog extends Model
     /**
      * Scope para filtrar actualizaciones
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeUpdated($query)
@@ -160,7 +152,7 @@ class ActivityLog extends Model
     /**
      * Scope para filtrar eliminaciones
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeDeleted($query)
@@ -171,7 +163,7 @@ class ActivityLog extends Model
     /**
      * Scope para filtrar restauraciones
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeRestored($query)
@@ -182,9 +174,7 @@ class ActivityLog extends Model
     /**
      * Scope para filtrar por rango de fechas
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string|null $startDate
-     * @param string|null $endDate
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeDateRange($query, ?string $startDate = null, ?string $endDate = null)
@@ -203,7 +193,7 @@ class ActivityLog extends Model
     /**
      * Scope para ordenar por más recientes
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeRecent($query)
@@ -213,12 +203,10 @@ class ActivityLog extends Model
 
     /**
      * Obtener los campos que cambiaron
-     *
-     * @return array
      */
     public function getChangedFields(): array
     {
-        if (!$this->old_values || !$this->new_values) {
+        if (! $this->old_values || ! $this->new_values) {
             return [];
         }
 
@@ -238,11 +226,9 @@ class ActivityLog extends Model
 
     /**
      * Verificar si hubo cambios en los valores auditados
-     *
-     * @return bool
      */
     public function hasFieldChanges(): bool
     {
-        return !empty($this->getChangedFields());
+        return ! empty($this->getChangedFields());
     }
 }

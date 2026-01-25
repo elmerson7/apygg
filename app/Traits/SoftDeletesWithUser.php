@@ -7,10 +7,8 @@ use Illuminate\Support\Facades\Auth;
 
 /**
  * Trait SoftDeletesWithUser
- * 
+ *
  * Extiende SoftDeletes nativo agregando registro del usuario que eliminó el registro.
- * 
- * @package App\Traits
  */
 trait SoftDeletesWithUser
 {
@@ -43,12 +41,12 @@ trait SoftDeletesWithUser
     public function initializeSoftDeletesWithUser(): void
     {
         // Agregar deleted_by a fillable si no está
-        if (!in_array('deleted_by', $this->fillable)) {
+        if (! in_array('deleted_by', $this->fillable)) {
             $this->fillable[] = 'deleted_by';
         }
 
         // Agregar deleted_by a casts si no está
-        if (!isset($this->casts['deleted_by'])) {
+        if (! isset($this->casts['deleted_by'])) {
             $this->casts['deleted_by'] = 'string'; // UUID
         }
     }

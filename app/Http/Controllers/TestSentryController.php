@@ -13,15 +13,12 @@ use Sentry\Severity;
  *
  * Controlador para probar el envío de errores a Sentry.
  * Solo disponible cuando FEATURE_DEBUG_ENDPOINTS está activado.
- *
- * @package App\Http\Controllers
  */
 class TestSentryController extends Controller
 {
     /**
      * Probar envío de diferentes niveles de log a Sentry
      *
-     * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function testLogs(Request $request)
@@ -40,7 +37,7 @@ class TestSentryController extends Controller
             ]);
             $results['log_service'] = 'sent';
         } catch (\Exception $e) {
-            $results['log_service'] = 'error: ' . $e->getMessage();
+            $results['log_service'] = 'error: '.$e->getMessage();
         }
 
         // Probar LogService (que usa captura directa de Sentry)
@@ -52,7 +49,7 @@ class TestSentryController extends Controller
             ]);
             $results['log_service_sentry'] = 'sent';
         } catch (\Exception $e) {
-            $results['log_service_sentry'] = 'error: ' . $e->getMessage();
+            $results['log_service_sentry'] = 'error: '.$e->getMessage();
         }
 
         // Probar captura directa de Sentry
@@ -65,7 +62,7 @@ class TestSentryController extends Controller
                     'error' => Severity::error(),
                     'critical' => Severity::fatal(),
                 ];
-                
+
                 $severity = $severityMap[$level] ?? Severity::error();
                 \Sentry\captureMessage(
                     "Sentry Direct: {$message}",
@@ -73,7 +70,7 @@ class TestSentryController extends Controller
                 );
                 $results['sentry_direct'] = 'sent';
             } catch (\Exception $e) {
-                $results['sentry_direct'] = 'error: ' . $e->getMessage();
+                $results['sentry_direct'] = 'error: '.$e->getMessage();
             }
         } else {
             $results['sentry_direct'] = 'Sentry SDK not available';
@@ -83,7 +80,7 @@ class TestSentryController extends Controller
             'level' => $level,
             'message' => $message,
             'environment' => config('app.env'),
-            'sentry_configured' => !empty(config('sentry.dsn')),
+            'sentry_configured' => ! empty(config('sentry.dsn')),
             'sentry_level' => config('logging.channels.sentry.level'),
             'results' => $results,
             'note' => 'Check Sentry dashboard to verify if the message was received',
@@ -93,7 +90,6 @@ class TestSentryController extends Controller
     /**
      * Probar captura de excepción
      *
-     * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function testException(Request $request)
@@ -127,7 +123,7 @@ class TestSentryController extends Controller
                 'exception_class' => get_class($e),
                 'message' => $e->getMessage(),
                 'environment' => config('app.env'),
-                'sentry_configured' => !empty(config('sentry.dsn')),
+                'sentry_configured' => ! empty(config('sentry.dsn')),
                 'note' => 'Exception was captured and sent to Sentry. Check dashboard.',
             ], 'Test exception sent to Sentry');
         }
@@ -141,7 +137,7 @@ class TestSentryController extends Controller
     public function info()
     {
         return ApiResponse::success([
-            'sentry_configured' => !empty(config('sentry.dsn')),
+            'sentry_configured' => ! empty(config('sentry.dsn')),
             'sentry_dsn' => config('sentry.dsn') ? '***configured***' : null,
             'sentry_environment' => config('sentry.environment') ?? config('app.env'),
             'sentry_release' => config('sentry.release'),

@@ -14,8 +14,6 @@ use Symfony\Component\HttpFoundation\Response;
  *
  * Middleware para registrar intentos bloqueados por rate limiting y detectar patrones de abuso.
  * Detecta múltiples bloqueos, intentos repetidos después del bloqueo, posibles ataques DDoS, etc.
- *
- * @package App\Http\Middleware
  */
 class RateLimitLoggerMiddleware
 {
@@ -23,16 +21,15 @@ class RateLimitLoggerMiddleware
      * Límites de detección de abuso
      */
     private const MAX_BLOCKS_PER_IP = 5; // Máximo de bloqueos por IP antes de alertar
+
     private const MAX_BLOCKS_PER_USER = 3; // Máximo de bloqueos por usuario antes de alertar
+
     private const TIME_WINDOW_MINUTES = 15; // Ventana de tiempo en minutos
+
     private const ABUSE_THRESHOLD = 3; // Umbral para marcar como abuso sistemático
 
     /**
      * Handle an incoming request.
-     *
-     * @param Request $request
-     * @param Closure $next
-     * @return Response
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -59,10 +56,6 @@ class RateLimitLoggerMiddleware
 
     /**
      * Registrar bloqueo por rate limiting
-     *
-     * @param Request $request
-     * @param Response $response
-     * @return void
      */
     protected function logRateLimitBlock(Request $request, Response $response): void
     {
@@ -101,11 +94,6 @@ class RateLimitLoggerMiddleware
 
     /**
      * Incrementar contador de bloqueos
-     *
-     * @param string $ipAddress
-     * @param string|null $userId
-     * @param string $path
-     * @return void
      */
     protected function incrementBlockCounter(string $ipAddress, ?string $userId, string $path): void
     {
@@ -144,10 +132,6 @@ class RateLimitLoggerMiddleware
 
     /**
      * Detectar patrones de abuso
-     *
-     * @param Request $request
-     * @param Response $response
-     * @return void
      */
     protected function detectAbusePatterns(Request $request, Response $response): void
     {
@@ -176,11 +160,6 @@ class RateLimitLoggerMiddleware
 
     /**
      * Detectar múltiples bloqueos por IP
-     *
-     * @param string $ipAddress
-     * @param Request $request
-     * @param int $timeWindow
-     * @return void
      */
     protected function detectMultipleBlocksByIp(string $ipAddress, Request $request, int $timeWindow): void
     {
@@ -216,12 +195,6 @@ class RateLimitLoggerMiddleware
 
     /**
      * Detectar múltiples bloqueos por usuario
-     *
-     * @param string $userId
-     * @param string $ipAddress
-     * @param Request $request
-     * @param int $timeWindow
-     * @return void
      */
     protected function detectMultipleBlocksByUser(
         string $userId,
@@ -262,11 +235,6 @@ class RateLimitLoggerMiddleware
 
     /**
      * Detectar intentos repetidos después del bloqueo
-     *
-     * @param string $ipAddress
-     * @param string|null $userId
-     * @param Request $request
-     * @return void
      */
     protected function detectRepeatedAttemptsAfterBlock(string $ipAddress, ?string $userId, Request $request): void
     {
@@ -304,10 +272,6 @@ class RateLimitLoggerMiddleware
 
     /**
      * Detectar posible patrón DDoS (muchos bloqueos desde diferentes IPs al mismo endpoint)
-     *
-     * @param Request $request
-     * @param int $timeWindow
-     * @return void
      */
     protected function detectDdosPattern(Request $request, int $timeWindow): void
     {
@@ -353,11 +317,6 @@ class RateLimitLoggerMiddleware
 
     /**
      * Detectar patrón de scraping (múltiples endpoints bloqueados desde la misma IP)
-     *
-     * @param string $ipAddress
-     * @param Request $request
-     * @param int $timeWindow
-     * @return void
      */
     protected function detectScrapingPattern(string $ipAddress, Request $request, int $timeWindow): void
     {

@@ -13,17 +13,11 @@ use Symfony\Component\HttpFoundation\Response;
  *
  * Middleware para restringir acceso a endpoints críticos solo desde IPs permitidas.
  * Utiliza SecurityService para verificar IPs y soporta rangos CIDR.
- *
- * @package App\Http\Middleware
  */
 class IpWhitelistMiddleware
 {
     /**
      * Handle an incoming request.
-     *
-     * @param Request $request
-     * @param Closure $next
-     * @return Response
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -33,11 +27,12 @@ class IpWhitelistMiddleware
         // Verificar si la IP está en blacklist global
         if ($this->isIpBlacklisted($ip)) {
             $this->logBlockedAttempt($request, $ip, 'IP está en blacklist global');
+
             return $this->buildBlockedResponse();
         }
 
         // Verificar si la ruta requiere whitelist
-        if (!$this->requiresWhitelist($path)) {
+        if (! $this->requiresWhitelist($path)) {
             return $next($request);
         }
 
@@ -45,8 +40,9 @@ class IpWhitelistMiddleware
         $whitelist = $this->getWhitelistForEndpoint($path);
 
         // Verificar si la IP está permitida
-        if (!SecurityService::isIpWhitelisted($ip, $whitelist)) {
+        if (! SecurityService::isIpWhitelisted($ip, $whitelist)) {
             $this->logBlockedAttempt($request, $ip, 'IP no está en whitelist');
+
             return $this->buildBlockedResponse();
         }
 
@@ -55,9 +51,6 @@ class IpWhitelistMiddleware
 
     /**
      * Verificar si la IP está en blacklist global
-     *
-     * @param string $ip
-     * @return bool
      */
     protected function isIpBlacklisted(string $ip): bool
     {
@@ -84,9 +77,7 @@ class IpWhitelistMiddleware
     /**
      * Verificar si IP está en rango CIDR
      *
-     * @param string $ip
-     * @param string $range Rango CIDR (ej: 192.168.1.0/24)
-     * @return bool
+     * @param  string  $range  Rango CIDR (ej: 192.168.1.0/24)
      */
     protected function ipInRange(string $ip, string $range): bool
     {
@@ -100,9 +91,6 @@ class IpWhitelistMiddleware
 
     /**
      * Verificar si la ruta requiere whitelist
-     *
-     * @param string $path
-     * @return bool
      */
     protected function requiresWhitelist(string $path): bool
     {
@@ -123,9 +111,6 @@ class IpWhitelistMiddleware
 
     /**
      * Obtener whitelist específica para el endpoint o usar la global
-     *
-     * @param string $path
-     * @return array|null
      */
     protected function getWhitelistForEndpoint(string $path): ?array
     {
@@ -139,15 +124,12 @@ class IpWhitelistMiddleware
 
         // Si no hay whitelist específica, usar la global
         $globalWhitelist = config('security.ip_whitelist', []);
-        return !empty($globalWhitelist) ? $globalWhitelist : null;
+
+        return ! empty($globalWhitelist) ? $globalWhitelist : null;
     }
 
     /**
      * Verificar si la ruta coincide con un patrón
-     *
-     * @param string $path
-     * @param string $pattern
-     * @return bool
      */
     protected function matchesPattern(string $path, string $pattern): bool
     {
@@ -159,15 +141,10 @@ class IpWhitelistMiddleware
 
     /**
      * Registrar intento bloqueado
-     *
-     * @param Request $request
-     * @param string $ip
-     * @param string $reason
-     * @return void
      */
     protected function logBlockedAttempt(Request $request, string $ip, string $reason): void
     {
-        if (!config('security.log_blocked_attempts', true)) {
+        if (! config('security.log_blocked_attempts', true)) {
             return;
         }
 
@@ -186,8 +163,6 @@ class IpWhitelistMiddleware
 
     /**
      * Construir respuesta de acceso bloqueado
-     *
-     * @return Response
      */
     protected function buildBlockedResponse(): Response
     {

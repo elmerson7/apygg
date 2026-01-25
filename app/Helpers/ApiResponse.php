@@ -9,11 +9,9 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * ApiResponse
- * 
+ *
  * Helper estático para generar respuestas API estándar con formato consistente.
  * Soporta RFC 7807 para errores y metadatos enriquecidos.
- * 
- * @package App\Helpers
  */
 class ApiResponse
 {
@@ -52,7 +50,7 @@ class ApiResponse
      */
     private static function getTraceId(): ?string
     {
-        return request()->header('X-Trace-ID') 
+        return request()->header('X-Trace-ID')
             ?? request()->header('X-Request-ID')
             ?? null;
     }
@@ -99,11 +97,10 @@ class ApiResponse
     /**
      * Respuesta exitosa estándar
      *
-     * @param mixed $data Datos a retornar
-     * @param string $message Mensaje de éxito
-     * @param int $statusCode Código HTTP (default: 200)
-     * @param array|null $links Links relacionados (HATEOAS)
-     * @return JsonResponse
+     * @param  mixed  $data  Datos a retornar
+     * @param  string  $message  Mensaje de éxito
+     * @param  int  $statusCode  Código HTTP (default: 200)
+     * @param  array|null  $links  Links relacionados (HATEOAS)
      */
     public static function success(
         $data = null,
@@ -131,15 +128,14 @@ class ApiResponse
     /**
      * Respuesta de creación exitosa (201)
      *
-     * @param mixed $data Datos del recurso creado
-     * @param string $message Mensaje de éxito
-     * @param string|null $location URL del recurso creado (para header Location)
-     * @return JsonResponse
+     * @param  mixed  $data  Datos del recurso creado
+     * @param  string  $message  Mensaje de éxito
+     * @param  string|null  $location  URL del recurso creado (para header Location)
      */
     public static function created($data = null, string $message = 'Creado exitosamente', ?string $location = null): JsonResponse
     {
         $headers = self::getHeaders();
-        
+
         if ($location) {
             $headers['Location'] = $location;
         }
@@ -157,9 +153,8 @@ class ApiResponse
     /**
      * Respuesta paginada
      *
-     * @param LengthAwarePaginator $paginator Instancia del paginador
-     * @param string $message Mensaje de éxito
-     * @return JsonResponse
+     * @param  LengthAwarePaginator  $paginator  Instancia del paginador
+     * @param  string  $message  Mensaje de éxito
      */
     public static function paginated(LengthAwarePaginator $paginator, string $message = 'Datos obtenidos exitosamente'): JsonResponse
     {
@@ -190,11 +185,10 @@ class ApiResponse
     /**
      * Respuesta de error estándar
      *
-     * @param string $message Mensaje de error
-     * @param int $statusCode Código HTTP (default: 400)
-     * @param array $errors Errores adicionales (opcional)
-     * @param string|null $type Tipo de error (RFC 7807)
-     * @return JsonResponse
+     * @param  string  $message  Mensaje de error
+     * @param  int  $statusCode  Código HTTP (default: 400)
+     * @param  array  $errors  Errores adicionales (opcional)
+     * @param  string|null  $type  Tipo de error (RFC 7807)
      */
     public static function error(
         string $message = 'Error en la operación',
@@ -213,7 +207,7 @@ class ApiResponse
             $response['type'] = $type;
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             $response['errors'] = $errors;
         }
 
@@ -223,9 +217,8 @@ class ApiResponse
     /**
      * Respuesta de error de validación (422)
      *
-     * @param array $errors Errores de validación
-     * @param string $message Mensaje de error
-     * @return JsonResponse
+     * @param  array  $errors  Errores de validación
+     * @param  string  $message  Mensaje de error
      */
     public static function validation(array $errors, string $message = 'Error de validación'): JsonResponse
     {
@@ -235,8 +228,7 @@ class ApiResponse
     /**
      * Respuesta 404 - Recurso no encontrado
      *
-     * @param string $message Mensaje de error
-     * @return JsonResponse
+     * @param  string  $message  Mensaje de error
      */
     public static function notFound(string $message = 'Recurso no encontrado'): JsonResponse
     {
@@ -246,8 +238,7 @@ class ApiResponse
     /**
      * Respuesta 401 - No autenticado
      *
-     * @param string $message Mensaje de error
-     * @return JsonResponse
+     * @param  string  $message  Mensaje de error
      */
     public static function unauthorized(string $message = 'No autenticado'): JsonResponse
     {
@@ -257,8 +248,7 @@ class ApiResponse
     /**
      * Respuesta 403 - No autorizado
      *
-     * @param string $message Mensaje de error
-     * @return JsonResponse
+     * @param  string  $message  Mensaje de error
      */
     public static function forbidden(string $message = 'No autorizado'): JsonResponse
     {
@@ -268,14 +258,13 @@ class ApiResponse
     /**
      * Respuesta 429 - Rate limit excedido
      *
-     * @param string $message Mensaje de error
-     * @param int|null $retryAfter Segundos hasta el próximo intento
-     * @return JsonResponse
+     * @param  string  $message  Mensaje de error
+     * @param  int|null  $retryAfter  Segundos hasta el próximo intento
      */
     public static function rateLimited(string $message = 'Límite de requests excedido', ?int $retryAfter = null): JsonResponse
     {
         $headers = self::getHeaders();
-        
+
         if ($retryAfter !== null) {
             $headers['Retry-After'] = (string) $retryAfter;
         }
@@ -293,9 +282,8 @@ class ApiResponse
     /**
      * Respuesta 500 - Error interno del servidor
      *
-     * @param string $message Mensaje de error
-     * @param bool $logError Si debe loguear el error
-     * @return JsonResponse
+     * @param  string  $message  Mensaje de error
+     * @param  bool  $logError  Si debe loguear el error
      */
     public static function serverError(string $message = 'Error interno del servidor', bool $logError = true): JsonResponse
     {
@@ -312,13 +300,12 @@ class ApiResponse
     /**
      * Respuesta RFC 7807 completa para errores
      *
-     * @param string $title Título del error
-     * @param int $status Código HTTP
-     * @param string|null $detail Detalle del error
-     * @param string|null $type Tipo de error (URI)
-     * @param string|null $instance Instancia específica del error
-     * @param array $extensions Campos adicionales
-     * @return JsonResponse
+     * @param  string  $title  Título del error
+     * @param  int  $status  Código HTTP
+     * @param  string|null  $detail  Detalle del error
+     * @param  string|null  $type  Tipo de error (URI)
+     * @param  string|null  $instance  Instancia específica del error
+     * @param  array  $extensions  Campos adicionales
      */
     public static function rfc7807(
         string $title,
@@ -342,7 +329,7 @@ class ApiResponse
             $response['instance'] = $instance;
         }
 
-        if (!empty($extensions)) {
+        if (! empty($extensions)) {
             $response = array_merge($response, $extensions);
         }
 

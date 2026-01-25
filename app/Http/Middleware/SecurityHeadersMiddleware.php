@@ -11,17 +11,11 @@ use Symfony\Component\HttpFoundation\Response;
  *
  * Middleware para agregar headers de seguridad HTTP a todas las respuestas.
  * Protege contra clickjacking, MIME sniffing, XSS y otros ataques comunes.
- *
- * @package App\Http\Middleware
  */
 class SecurityHeadersMiddleware
 {
     /**
      * Handle an incoming request.
-     *
-     * @param Request $request
-     * @param Closure $next
-     * @return Response
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -35,10 +29,6 @@ class SecurityHeadersMiddleware
 
     /**
      * Agregar headers de seguridad a la respuesta
-     *
-     * @param Response $response
-     * @param Request $request
-     * @return void
      */
     protected function addSecurityHeaders(Response $response, Request $request): void
     {
@@ -85,8 +75,6 @@ class SecurityHeadersMiddleware
 
     /**
      * Construir Content-Security-Policy
-     *
-     * @return string|null
      */
     protected function buildContentSecurityPolicy(): ?string
     {

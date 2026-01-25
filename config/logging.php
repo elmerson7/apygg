@@ -133,14 +133,13 @@ return [
             // - dev: solo critical (evitar ruido en desarrollo)
             // - staging: error y superior
             // - prod: error y superior
-            'level' => env('SENTRY_LOG_LEVEL', match(env('APP_ENV', 'dev')) {
+            'level' => env('SENTRY_LOG_LEVEL', match (env('APP_ENV', 'dev')) {
                 'dev' => 'critical',
                 'staging', 'prod' => 'error',
                 default => 'error',
             }),
             'replace_placeholders' => true,
         ],
-
 
     ],
 

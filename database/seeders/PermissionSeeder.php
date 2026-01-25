@@ -5,15 +5,12 @@ namespace Database\Seeders;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 /**
  * PermissionSeeder
  *
  * Seeder para crear permisos base del sistema RBAC.
  * Estructura de permisos: recurso.accion (ej: users.create, users.read, etc.)
- *
- * @package Database\Seeders
  */
 class PermissionSeeder extends Seeder
 {
@@ -78,7 +75,7 @@ class PermissionSeeder extends Seeder
             );
         }
 
-        $this->command->info('Permisos base creados: ' . count($permissions) . ' permisos');
+        $this->command->info('Permisos base creados: '.count($permissions).' permisos');
 
         // Asignar permisos a roles según jerarquía
         $this->assignPermissionsToRoles();
@@ -88,8 +85,6 @@ class PermissionSeeder extends Seeder
 
     /**
      * Asignar permisos a roles según jerarquía
-     *
-     * @return void
      */
     protected function assignPermissionsToRoles(): void
     {
@@ -100,15 +95,16 @@ class PermissionSeeder extends Seeder
         $moderatorRole = Role::where('name', 'moderator')->first();
         $editorRole = Role::where('name', 'editor')->first();
 
-        if (!$adminRole || !$userRole || !$guestRole) {
+        if (! $adminRole || ! $userRole || ! $guestRole) {
             $this->command->warn('Roles no encontrados. Ejecuta RoleSeeder primero.');
+
             return;
         }
 
         // Admin: Todos los permisos
         $allPermissions = Permission::all();
         $adminRole->permissions()->sync($allPermissions->pluck('id')->toArray());
-        $this->command->info('Permisos asignados a Admin: ' . $allPermissions->count());
+        $this->command->info('Permisos asignados a Admin: '.$allPermissions->count());
 
         // Manager: Permisos de gestión (sin sistema)
         if ($managerRole) {
@@ -119,7 +115,7 @@ class PermissionSeeder extends Seeder
                 'comments.create', 'comments.read', 'comments.moderate',
             ])->get();
             $managerRole->permissions()->sync($managerPermissions->pluck('id')->toArray());
-            $this->command->info('Permisos asignados a Manager: ' . $managerPermissions->count());
+            $this->command->info('Permisos asignados a Manager: '.$managerPermissions->count());
         }
 
         // User: Permisos básicos
@@ -129,12 +125,12 @@ class PermissionSeeder extends Seeder
             'comments.create', 'comments.read', 'comments.update', 'comments.delete',
         ])->get();
         $userRole->permissions()->sync($userPermissions->pluck('id')->toArray());
-        $this->command->info('Permisos asignados a User: ' . $userPermissions->count());
+        $this->command->info('Permisos asignados a User: '.$userPermissions->count());
 
         // Guest: Solo lectura
         $guestPermissions = Permission::where('action', 'read')->get();
         $guestRole->permissions()->sync($guestPermissions->pluck('id')->toArray());
-        $this->command->info('Permisos asignados a Guest: ' . $guestPermissions->count());
+        $this->command->info('Permisos asignados a Guest: '.$guestPermissions->count());
 
         // Moderator: Permisos de moderación
         if ($moderatorRole) {
@@ -144,7 +140,7 @@ class PermissionSeeder extends Seeder
                 'comments.create', 'comments.read', 'comments.delete', 'comments.moderate',
             ])->get();
             $moderatorRole->permissions()->sync($moderatorPermissions->pluck('id')->toArray());
-            $this->command->info('Permisos asignados a Moderator: ' . $moderatorPermissions->count());
+            $this->command->info('Permisos asignados a Moderator: '.$moderatorPermissions->count());
         }
 
         // Editor: Permisos de edición
@@ -155,8 +151,7 @@ class PermissionSeeder extends Seeder
                 'comments.create', 'comments.read', 'comments.update', 'comments.delete',
             ])->get();
             $editorRole->permissions()->sync($editorPermissions->pluck('id')->toArray());
-            $this->command->info('Permisos asignados a Editor: ' . $editorPermissions->count());
+            $this->command->info('Permisos asignados a Editor: '.$editorPermissions->count());
         }
     }
-
 }

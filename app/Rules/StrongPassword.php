@@ -7,7 +7,7 @@ use Illuminate\Contracts\Validation\ValidationRule;
 
 /**
  * Regla de validación para contraseña fuerte
- * 
+ *
  * Valida que la contraseña cumpla con requisitos de seguridad.
  */
 class StrongPassword implements ValidationRule
@@ -47,12 +47,13 @@ class StrongPassword implements ValidationRule
         bool $requireNumbers = true,
         bool $requireSpecial = true
     ): self {
-        $rule = new self();
+        $rule = new self;
         $rule->minLength = $minLength;
         $rule->requireUppercase = $requireUppercase;
         $rule->requireLowercase = $requireLowercase;
         $rule->requireNumbers = $requireNumbers;
         $rule->requireSpecial = $requireSpecial;
+
         return $rule;
     }
 
@@ -61,8 +62,9 @@ class StrongPassword implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (!is_string($value)) {
+        if (! is_string($value)) {
             $fail('El campo :attribute debe ser una cadena de texto.');
+
             return;
         }
 
@@ -74,26 +76,26 @@ class StrongPassword implements ValidationRule
         }
 
         // Validar mayúsculas
-        if ($this->requireUppercase && !preg_match('/[A-Z]/', $value)) {
+        if ($this->requireUppercase && ! preg_match('/[A-Z]/', $value)) {
             $errors[] = 'una letra mayúscula';
         }
 
         // Validar minúsculas
-        if ($this->requireLowercase && !preg_match('/[a-z]/', $value)) {
+        if ($this->requireLowercase && ! preg_match('/[a-z]/', $value)) {
             $errors[] = 'una letra minúscula';
         }
 
         // Validar números
-        if ($this->requireNumbers && !preg_match('/[0-9]/', $value)) {
+        if ($this->requireNumbers && ! preg_match('/[0-9]/', $value)) {
             $errors[] = 'un número';
         }
 
         // Validar caracteres especiales
-        if ($this->requireSpecial && !preg_match('/[^A-Za-z0-9]/', $value)) {
+        if ($this->requireSpecial && ! preg_match('/[^A-Za-z0-9]/', $value)) {
             $errors[] = 'un carácter especial';
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             $requirements = implode(', ', $errors);
             $fail("El campo :attribute debe contener {$requirements}.");
         }

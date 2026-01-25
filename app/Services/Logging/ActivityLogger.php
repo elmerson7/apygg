@@ -12,8 +12,6 @@ use Illuminate\Support\Facades\Auth;
  *
  * Logger especializado para registrar cambios en modelos (auditoría).
  * Se puede usar directamente o mediante Observers para captura automática.
- *
- * @package App\Services\Logging
  */
 class ActivityLogger
 {
@@ -35,11 +33,10 @@ class ActivityLogger
     /**
      * Registrar una acción en un modelo
      *
-     * @param Model $model Modelo afectado
-     * @param string $action Acción realizada (created, updated, deleted, restored)
-     * @param array|null $oldValues Valores anteriores (solo para updated)
-     * @param string|null $userId ID del usuario que realizó la acción (null = usuario autenticado)
-     * @return ActivityLog|null
+     * @param  Model  $model  Modelo afectado
+     * @param  string  $action  Acción realizada (created, updated, deleted, restored)
+     * @param  array|null  $oldValues  Valores anteriores (solo para updated)
+     * @param  string|null  $userId  ID del usuario que realizó la acción (null = usuario autenticado)
      */
     public static function log(
         Model $model,
@@ -81,10 +78,6 @@ class ActivityLogger
 
     /**
      * Registrar creación de modelo
-     *
-     * @param Model $model
-     * @param string|null $userId
-     * @return ActivityLog|null
      */
     public static function logCreated(Model $model, ?string $userId = null): ?ActivityLog
     {
@@ -94,10 +87,7 @@ class ActivityLogger
     /**
      * Registrar actualización de modelo
      *
-     * @param Model $model
-     * @param array|null $oldValues Valores anteriores
-     * @param string|null $userId
-     * @return ActivityLog|null
+     * @param  array|null  $oldValues  Valores anteriores
      */
     public static function logUpdated(Model $model, ?array $oldValues = null, ?string $userId = null): ?ActivityLog
     {
@@ -106,10 +96,6 @@ class ActivityLogger
 
     /**
      * Registrar eliminación de modelo
-     *
-     * @param Model $model
-     * @param string|null $userId
-     * @return ActivityLog|null
      */
     public static function logDeleted(Model $model, ?string $userId = null): ?ActivityLog
     {
@@ -118,10 +104,6 @@ class ActivityLogger
 
     /**
      * Registrar restauración de modelo
-     *
-     * @param Model $model
-     * @param string|null $userId
-     * @return ActivityLog|null
      */
     public static function logRestored(Model $model, ?string $userId = null): ?ActivityLog
     {
@@ -130,22 +112,18 @@ class ActivityLogger
 
     /**
      * Filtrar campos sensibles de los valores
-     *
-     * @param array $values
-     * @return array
      */
     protected static function filterSensitiveFields(array $values): array
     {
         return array_filter($values, function ($key) {
-            return !in_array(strtolower($key), self::$excludedFields);
+            return ! in_array(strtolower($key), self::$excludedFields);
         }, ARRAY_FILTER_USE_KEY);
     }
 
     /**
      * Agregar campos a la lista de excluidos
      *
-     * @param array<string> $fields
-     * @return void
+     * @param  array<string>  $fields
      */
     public static function excludeFields(array $fields): void
     {

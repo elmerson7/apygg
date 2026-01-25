@@ -46,8 +46,6 @@ class Permission extends Model
      * Relación muchos-a-muchos con Role
      *
      * Un permiso puede pertenecer a múltiples roles.
-     *
-     * @return BelongsToMany
      */
     public function roles(): BelongsToMany
     {
@@ -64,8 +62,6 @@ class Permission extends Model
      *
      * Un permiso puede ser asignado directamente a múltiples usuarios.
      * Estos permisos sobrescriben los permisos heredados de roles.
-     *
-     * @return BelongsToMany
      */
     public function users(): BelongsToMany
     {
@@ -80,8 +76,8 @@ class Permission extends Model
     /**
      * Scope para filtrar permisos por recurso
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $resource Nombre del recurso
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $resource  Nombre del recurso
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeForResource($query, string $resource)
@@ -92,8 +88,8 @@ class Permission extends Model
     /**
      * Scope para filtrar permisos por acción
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $action Nombre de la acción
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $action  Nombre de la acción
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeForAction($query, string $action)
@@ -104,9 +100,9 @@ class Permission extends Model
     /**
      * Scope para filtrar permisos por recurso y acción
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $resource Nombre del recurso
-     * @param string $action Nombre de la acción
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $resource  Nombre del recurso
+     * @param  string  $action  Nombre de la acción
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeForResourceAndAction($query, string $resource, string $action)

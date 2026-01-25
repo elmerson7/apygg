@@ -14,8 +14,6 @@ use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
  *
  * Logger especializado para registrar todos los requests y responses de la API.
  * Se usa típicamente en un middleware para captura automática.
- *
- * @package App\Services\Logging
  */
 class ApiLogger
 {
@@ -46,11 +44,8 @@ class ApiLogger
     /**
      * Registrar un request y response de la API
      *
-     * @param Request $request
-     * @param Response|SymfonyResponse $response
-     * @param float|null $responseTime Tiempo de respuesta en milisegundos
-     * @param string|null $traceId Trace ID del request (si no se proporciona, se genera uno)
-     * @return ApiLog|null
+     * @param  float|null  $responseTime  Tiempo de respuesta en milisegundos
+     * @param  string|null  $traceId  Trace ID del request (si no se proporciona, se genera uno)
      */
     public static function logRequest(
         Request $request,
@@ -68,9 +63,9 @@ class ApiLogger
             // IMPORTANTE: Cada request debe tener su propio trace_id único
             // Si viene del header, usarlo; si no, generar uno único para este log
             $traceId = $traceId ?? $request->header('X-Trace-ID');
-            
+
             // Si no hay trace_id, generar uno nuevo (único por request)
-            if (!$traceId) {
+            if (! $traceId) {
                 $traceId = (string) Str::uuid();
             }
 
@@ -136,20 +131,17 @@ class ApiLogger
 
     /**
      * Verificar si una ruta debe ser excluida del logging
-     *
-     * @param string $path
-     * @return bool
      */
     protected static function shouldExcludePath(string $path): bool
     {
         // Normalizar path (remover slash inicial si existe)
         $normalizedPath = ltrim($path, '/');
-        
+
         // Excluir ruta raíz explícitamente
         if ($path === '/' || $normalizedPath === '') {
             return true;
         }
-        
+
         // Verificar si el path contiene alguno de los paths excluidos
         foreach (self::$excludedPaths as $excludedPath) {
             if (Str::contains($normalizedPath, $excludedPath)) {
@@ -162,9 +154,6 @@ class ApiLogger
 
     /**
      * Sanitizar query parameters (eliminar sensibles)
-     *
-     * @param array $query
-     * @return array
      */
     protected static function sanitizeQuery(array $query): array
     {
@@ -174,15 +163,13 @@ class ApiLogger
             if (in_array(strtolower($key), $sensitiveKeys)) {
                 return '[REDACTED]';
             }
+
             return $value;
         }, $query, array_keys($query));
     }
 
     /**
      * Sanitizar body (eliminar campos sensibles)
-     *
-     * @param array|null $body
-     * @return array|null
      */
     protected static function sanitizeBody(?array $body): ?array
     {
@@ -199,15 +186,13 @@ class ApiLogger
             if (is_array($value)) {
                 return self::sanitizeBody($value);
             }
+
             return $value;
         }, $body, array_keys($body));
     }
 
     /**
      * Sanitizar headers (eliminar sensibles)
-     *
-     * @param array $headers
-     * @return array
      */
     protected static function sanitizeHeaders(array $headers): array
     {
@@ -228,7 +213,6 @@ class ApiLogger
     /**
      * Calcular tiempo de respuesta desde el inicio del request
      *
-     * @param Request $request
      * @return float Tiempo en milisegundos
      */
     protected static function calculateResponseTime(Request $request): float
@@ -245,8 +229,7 @@ class ApiLogger
     /**
      * Agregar rutas a la lista de excluidas
      *
-     * @param array<string> $paths
-     * @return void
+     * @param  array<string>  $paths
      */
     public static function excludePaths(array $paths): void
     {
@@ -256,8 +239,7 @@ class ApiLogger
     /**
      * Agregar headers a la lista de excluidos
      *
-     * @param array<string> $headers
-     * @return void
+     * @param  array<string>  $headers
      */
     public static function excludeHeaders(array $headers): void
     {

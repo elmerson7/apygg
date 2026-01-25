@@ -2,17 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
 
 /**
  * Base Controller
- * 
+ *
  * Clase base para todos los controladores de la aplicación.
  * Proporciona métodos CRUD comunes y respuestas estándar.
  */
@@ -132,7 +130,7 @@ abstract class Controller
         $requestedRelations = explode(',', $relations);
         $allowedRelations = array_intersect($requestedRelations, $this->allowedRelations);
 
-        if (!empty($allowedRelations)) {
+        if (! empty($allowedRelations)) {
             $query->with($allowedRelations);
         }
 
@@ -201,7 +199,7 @@ abstract class Controller
             'message' => $message,
         ];
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             $response['errors'] = $errors;
         }
 
@@ -257,6 +255,7 @@ abstract class Controller
     protected function getModelQuery()
     {
         $model = $this->getModel();
+
         return $model::query();
     }
 }

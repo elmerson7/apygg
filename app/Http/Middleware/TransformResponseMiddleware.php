@@ -5,7 +5,6 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -64,13 +63,13 @@ class TransformResponseMiddleware
         return false;
     }
 
-
     /**
      * Verificar si la respuesta es JSON
      */
     private function isJsonResponse(Response $response): bool
     {
         $contentType = $response->headers->get('Content-Type', '');
+
         return str_contains($contentType, 'application/json');
     }
 
@@ -80,7 +79,7 @@ class TransformResponseMiddleware
     private function transformJsonResponse(Response $response, Request $request): Response
     {
         $content = $response->getContent();
-        
+
         if (empty($content)) {
             return $response;
         }
@@ -91,7 +90,6 @@ class TransformResponseMiddleware
         if (json_last_error() !== JSON_ERROR_NONE) {
             return $response;
         }
-
 
         // Si la respuesta ya tiene el formato estándar (success, data, meta), no transformar
         if (isset($data['success']) || isset($data['type'])) {
@@ -139,7 +137,7 @@ class TransformResponseMiddleware
         }
 
         // Agregar datos
-        if (!empty($data)) {
+        if (! empty($data)) {
             // Si los datos ya tienen estructura de paginación, mantenerla
             if (isset($data['data']) && isset($data['pagination'])) {
                 $response = array_merge($response, $data);

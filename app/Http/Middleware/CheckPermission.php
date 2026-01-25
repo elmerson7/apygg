@@ -2,7 +2,6 @@
 
 namespace App\Http\Middleware;
 
-use App\Services\LogService;
 use App\Services\Logging\SecurityLogger;
 use Closure;
 use Illuminate\Http\Request;
@@ -17,23 +16,18 @@ use Symfony\Component\HttpFoundation\Response;
  * Uso en rutas:
  * Route::get('/users', [UserController::class, 'index'])->middleware('permission:users.read');
  * Route::post('/users', [UserController::class, 'store'])->middleware('permission:users.create');
- *
- * @package App\Http\Middleware
  */
 class CheckPermission
 {
     /**
      * Handle an incoming request.
      *
-     * @param Request $request
-     * @param Closure $next
-     * @param string ...$permissions Permisos requeridos (puede ser múltiples)
-     * @return Response
+     * @param  string  ...$permissions  Permisos requeridos (puede ser múltiples)
      */
     public function handle(Request $request, Closure $next, string ...$permissions): Response
     {
         // Verificar que el usuario esté autenticado
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return response()->json([
                 'success' => false,
                 'message' => 'No autenticado',
@@ -64,7 +58,7 @@ class CheckPermission
             }
         }
 
-        if (!$hasPermission) {
+        if (! $hasPermission) {
             // Registrar intento de acceso denegado
             SecurityLogger::logPermissionDenied(
                 $user,

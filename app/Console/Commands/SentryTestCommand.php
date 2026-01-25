@@ -10,6 +10,7 @@ use Sentry\Severity;
 class SentryTestCommand extends Command
 {
     protected $signature = 'sentry:test';
+
     protected $description = 'Test Sentry configuration by sending a test event';
 
     public function handle(): int
@@ -22,16 +23,18 @@ class SentryTestCommand extends Command
 
         if (empty($dsn)) {
             $this->error('Sentry DSN is not configured. Please set SENTRY_LARAVEL_DSN in your .env file.');
+
             return Command::FAILURE;
         }
 
-        $this->info('DSN: ' . substr($dsn, 0, 30) . '...');
+        $this->info('DSN: '.substr($dsn, 0, 30).'...');
         $this->info("Environment: {$environment}");
         $this->newLine();
 
         // En dev, solo se envían eventos critical o superior
         // Para testing, enviaremos con severity fatal (critical) para asegurar que se reciba
         $this->info('Sending test message to Sentry (fatal/critical level)...');
+
         try {
             if (class_exists(SentrySdk::class)) {
                 $eventId = SentrySdk::getCurrentHub()->captureMessage(
@@ -46,10 +49,12 @@ class SentryTestCommand extends Command
                 }
             } else {
                 $this->error('Sentry SDK is not available');
+
                 return Command::FAILURE;
             }
         } catch (\Exception $e) {
             $this->error("✗ Failed to send test message: {$e->getMessage()}");
+
             return Command::FAILURE;
         }
 
@@ -57,6 +62,7 @@ class SentryTestCommand extends Command
 
         // Las excepciones siempre se capturan, pero en dev pueden estar filtradas
         $this->info('Sending test exception to Sentry...');
+
         try {
             $testException = new \Exception('Test exception from Laravel Artisan command (sentry:test)');
             $eventId = SentrySdk::getCurrentHub()->captureException($testException);
@@ -68,12 +74,14 @@ class SentryTestCommand extends Command
             }
         } catch (\Exception $e) {
             $this->error("✗ Failed to send test exception: {$e->getMessage()}");
+
             return Command::FAILURE;
         }
 
         $this->newLine();
 
         $this->info('Testing LogService integration...');
+
         try {
             LogService::log('info', 'Test log from SentryTestCommand', [
                 'source' => 'artisan_command',

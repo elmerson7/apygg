@@ -2,8 +2,8 @@
 
 namespace App\Http\Middleware;
 
-use App\Services\LogService;
 use App\Services\Logging\SecurityLogger;
+use App\Services\LogService;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,23 +17,18 @@ use Symfony\Component\HttpFoundation\Response;
  * Uso en rutas:
  * Route::get('/admin/users', [AdminController::class, 'index'])->middleware('role:admin');
  * Route::get('/moderator/posts', [ModeratorController::class, 'index'])->middleware('role:admin|moderator');
- *
- * @package App\Http\Middleware
  */
 class CheckRole
 {
     /**
      * Handle an incoming request.
      *
-     * @param Request $request
-     * @param Closure $next
-     * @param string ...$roles Roles requeridos (puede ser múltiples)
-     * @return Response
+     * @param  string  ...$roles  Roles requeridos (puede ser múltiples)
      */
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         // Verificar que el usuario esté autenticado
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return response()->json([
                 'success' => false,
                 'message' => 'No autenticado',
@@ -64,7 +59,7 @@ class CheckRole
             }
         }
 
-        if (!$hasRole) {
+        if (! $hasRole) {
             // Registrar intento de acceso denegado
             SecurityLogger::logPermissionDenied(
                 $user,

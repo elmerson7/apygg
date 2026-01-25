@@ -2,19 +2,13 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Queue;
-use Illuminate\Support\Facades\Notification;
-use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Messages\DatabaseMessage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 /**
  * NotificationService
- * 
+ *
  * Servicio centralizado para notificaciones multi-canal (email, SMS, push, database).
- * 
- * @package App\Services
  */
 class NotificationService
 {
@@ -31,12 +25,11 @@ class NotificationService
     /**
      * Enviar notificación por email
      *
-     * @param string|array $to Email(s) destinatario(s)
-     * @param string $subject Asunto
-     * @param string $view Vista del email
-     * @param array $data Datos para la vista
-     * @param bool $queue Si debe enviarse en cola
-     * @return bool
+     * @param  string|array  $to  Email(s) destinatario(s)
+     * @param  string  $subject  Asunto
+     * @param  string  $view  Vista del email
+     * @param  array  $data  Datos para la vista
+     * @param  bool  $queue  Si debe enviarse en cola
      */
     public static function sendEmail(
         string|array $to,
@@ -59,6 +52,7 @@ class NotificationService
             }
 
             self::logNotification('mail', $to, $subject);
+
             return true;
         } catch (\Exception $e) {
             Log::error('Failed to send email notification', [
@@ -66,6 +60,7 @@ class NotificationService
                 'subject' => $subject,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -73,12 +68,11 @@ class NotificationService
     /**
      * Enviar notificación a base de datos
      *
-     * @param \Illuminate\Notifications\Notifiable $notifiable
-     * @param string $title Título
-     * @param string $message Mensaje
-     * @param array $data Datos adicionales
-     * @param string|null $type Tipo de notificación
-     * @return bool
+     * @param  \Illuminate\Notifications\Notifiable  $notifiable
+     * @param  string  $title  Título
+     * @param  string  $message  Mensaje
+     * @param  array  $data  Datos adicionales
+     * @param  string|null  $type  Tipo de notificación
      */
     public static function sendDatabase(
         $notifiable,
@@ -88,7 +82,8 @@ class NotificationService
         ?string $type = null
     ): bool {
         try {
-            $notifiable->notify(new class($title, $message, $data, $type) extends \Illuminate\Notifications\Notification {
+            $notifiable->notify(new class($title, $message, $data, $type) extends \Illuminate\Notifications\Notification
+            {
                 public function __construct(
                     public string $title,
                     public string $message,
@@ -113,11 +108,13 @@ class NotificationService
             });
 
             self::logNotification('database', $notifiable->id ?? 'unknown', $title);
+
             return true;
         } catch (\Exception $e) {
             Log::error('Failed to send database notification', [
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -125,10 +122,9 @@ class NotificationService
     /**
      * Enviar notificación SMS (requiere servicio externo)
      *
-     * @param string $phone Número de teléfono
-     * @param string $message Mensaje
-     * @param bool $queue Si debe enviarse en cola
-     * @return bool
+     * @param  string  $phone  Número de teléfono
+     * @param  string  $message  Mensaje
+     * @param  bool  $queue  Si debe enviarse en cola
      */
     public static function sendSms(string $phone, string $message, bool $queue = true): bool
     {
@@ -137,7 +133,7 @@ class NotificationService
             // Por ahora solo loguear
             Log::info('SMS notification queued', [
                 'phone' => $phone,
-                'message' => substr($message, 0, 50) . '...',
+                'message' => substr($message, 0, 50).'...',
             ]);
 
             if ($queue) {
@@ -149,12 +145,14 @@ class NotificationService
             }
 
             self::logNotification('sms', $phone, 'SMS');
+
             return true;
         } catch (\Exception $e) {
             Log::error('Failed to send SMS notification', [
                 'phone' => $phone,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -162,12 +160,11 @@ class NotificationService
     /**
      * Enviar notificación push (requiere servicio externo)
      *
-     * @param string|array $tokens Token(s) del dispositivo
-     * @param string $title Título
-     * @param string $message Mensaje
-     * @param array $data Datos adicionales
-     * @param bool $queue Si debe enviarse en cola
-     * @return bool
+     * @param  string|array  $tokens  Token(s) del dispositivo
+     * @param  string  $title  Título
+     * @param  string  $message  Mensaje
+     * @param  array  $data  Datos adicionales
+     * @param  bool  $queue  Si debe enviarse en cola
      */
     public static function sendPush(
         string|array $tokens,
@@ -190,12 +187,14 @@ class NotificationService
                 // self::sendPushImmediate($tokens, $title, $message, $data);
             }
 
-            self::logNotification('push', is_array($tokens) ? count($tokens) . ' tokens' : $tokens, $title);
+            self::logNotification('push', is_array($tokens) ? count($tokens).' tokens' : $tokens, $title);
+
             return true;
         } catch (\Exception $e) {
             Log::error('Failed to send push notification', [
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -203,12 +202,12 @@ class NotificationService
     /**
      * Enviar notificación multi-canal
      *
-     * @param array $channels Canales a usar ['mail', 'database', 'sms', 'push']
-     * @param mixed $notifiable Usuario o email/phone
-     * @param string $title Título
-     * @param string $message Mensaje
-     * @param array $data Datos adicionales
-     * @param bool $queue Si debe enviarse en cola
+     * @param  array  $channels  Canales a usar ['mail', 'database', 'sms', 'push']
+     * @param  mixed  $notifiable  Usuario o email/phone
+     * @param  string  $title  Título
+     * @param  string  $message  Mensaje
+     * @param  array  $data  Datos adicionales
+     * @param  bool  $queue  Si debe enviarse en cola
      * @return array Resultados por canal
      */
     public static function sendMultiChannel(
@@ -222,7 +221,7 @@ class NotificationService
         $results = [];
 
         foreach ($channels as $channel) {
-            $results[$channel] = match($channel) {
+            $results[$channel] = match ($channel) {
                 'mail' => self::sendEmail(
                     is_object($notifiable) ? $notifiable->email : $notifiable,
                     $title,
@@ -273,13 +272,13 @@ class NotificationService
     /**
      * Obtener historial de notificaciones
      *
-     * @param string|null $channel Filtrar por canal
-     * @param int $limit Límite de resultados
+     * @param  string|null  $channel  Filtrar por canal
+     * @param  int  $limit  Límite de resultados
      * @return \Illuminate\Database\Eloquent\Collection
      */
     public static function getHistory(?string $channel = null, int $limit = 50)
     {
-        if (!class_exists(\App\Models\NotificationHistory::class)) {
+        if (! class_exists(\App\Models\NotificationHistory::class)) {
             return collect([]);
         }
 

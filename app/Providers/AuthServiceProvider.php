@@ -14,8 +14,6 @@ use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvid
  * AuthServiceProvider
  *
  * Service provider para registrar policies y configuración de autorización.
- *
- * @package App\Providers
  */
 class AuthServiceProvider extends ServiceProvider
 {

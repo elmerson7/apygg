@@ -7,7 +7,7 @@ use Illuminate\Contracts\Validation\ValidationRule;
 
 /**
  * Regla de validación para teléfono
- * 
+ *
  * Valida formato de número telefónico (internacional o nacional).
  */
 class ValidPhone implements ValidationRule
@@ -27,9 +27,10 @@ class ValidPhone implements ValidationRule
      */
     public static function format(string $format, ?string $countryCode = null): self
     {
-        $rule = new self();
+        $rule = new self;
         $rule->format = $format;
         $rule->countryCode = $countryCode;
+
         return $rule;
     }
 
@@ -38,13 +39,14 @@ class ValidPhone implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (!is_string($value) && !is_numeric($value)) {
+        if (! is_string($value) && ! is_numeric($value)) {
             $fail('El campo :attribute debe ser un número telefónico válido.');
+
             return;
         }
 
         $phone = (string) $value;
-        
+
         // Remover espacios, guiones, paréntesis
         $phone = preg_replace('/[\s\-\(\)]/', '', $phone);
 
@@ -71,7 +73,7 @@ class ValidPhone implements ValidationRule
      */
     public function message(): string
     {
-        $formatText = match($this->format) {
+        $formatText = match ($this->format) {
             'international' => 'internacional',
             'national' => 'nacional',
             default => 'válido',

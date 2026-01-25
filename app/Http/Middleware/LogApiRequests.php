@@ -11,17 +11,11 @@ use Symfony\Component\HttpFoundation\Response;
  * LogApiRequests Middleware
  *
  * Middleware para registrar automáticamente todos los requests y responses de la API.
- *
- * @package App\Http\Middleware
  */
 class LogApiRequests
 {
     /**
      * Handle an incoming request.
-     *
-     * @param Request $request
-     * @param Closure $next
-     * @return Response
      */
     public function handle(Request $request, Closure $next): Response
     {

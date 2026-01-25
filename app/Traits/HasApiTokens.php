@@ -11,11 +11,9 @@ use Illuminate\Support\Str;
 
 /**
  * Trait HasApiTokens
- * 
+ *
  * Proporciona métodos para crear, revocar y listar tokens API.
  * Requiere tabla api_keys con estructura estándar.
- * 
- * @package App\Traits
  */
 trait HasApiTokens
 {
@@ -26,7 +24,7 @@ trait HasApiTokens
     {
         // Intentar encontrar la clase ApiKey
         $apiKeyClass = $this->getApiKeyClass();
-            
+
         return $this->hasMany($apiKeyClass, 'user_id');
     }
 
@@ -66,9 +64,9 @@ trait HasApiTokens
     /**
      * Crear un nuevo API Key.
      *
-     * @param string $name Nombre descriptivo del token
-     * @param array $scopes Scopes/permissions del token
-     * @param \DateTimeInterface|null $expiresAt Fecha de expiración (null = sin expiración)
+     * @param  string  $name  Nombre descriptivo del token
+     * @param  array  $scopes  Scopes/permissions del token
+     * @param  \DateTimeInterface|null  $expiresAt  Fecha de expiración (null = sin expiración)
      * @return ApiKey
      */
     public function createApiKey(string $name, array $scopes = [], ?\DateTimeInterface $expiresAt = null)
@@ -88,14 +86,13 @@ trait HasApiTokens
     /**
      * Revocar un API Key específico.
      *
-     * @param string $keyId ID del API Key a revocar
-     * @return bool
+     * @param  string  $keyId  ID del API Key a revocar
      */
     public function revokeApiKey(string $keyId): bool
     {
         $apiKey = $this->apiKeys()->find($keyId);
 
-        if (!$apiKey) {
+        if (! $apiKey) {
             return false;
         }
 
@@ -115,7 +112,7 @@ trait HasApiTokens
     /**
      * Verificar si un token es válido.
      *
-     * @param string $token Token a verificar
+     * @param  string  $token  Token a verificar
      * @return ApiKey|null
      */
     public function findApiKeyByToken(string $token)
@@ -130,15 +127,14 @@ trait HasApiTokens
     /**
      * Verificar si el usuario tiene un token con un scope específico.
      *
-     * @param string $token Token a verificar
-     * @param string $scope Scope requerido
-     * @return bool
+     * @param  string  $token  Token a verificar
+     * @param  string  $scope  Scope requerido
      */
     public function hasApiKeyWithScope(string $token, string $scope): bool
     {
         $apiKey = $this->findApiKeyByToken($token);
 
-        if (!$apiKey) {
+        if (! $apiKey) {
             return false;
         }
 
@@ -155,14 +151,13 @@ trait HasApiTokens
     /**
      * Actualizar último uso de un token.
      *
-     * @param string $token Token usado
-     * @return bool
+     * @param  string  $token  Token usado
      */
     public function updateApiKeyLastUsed(string $token): bool
     {
         $apiKey = $this->findApiKeyByToken($token);
 
-        if (!$apiKey) {
+        if (! $apiKey) {
             return false;
         }
 
@@ -173,8 +168,6 @@ trait HasApiTokens
 
     /**
      * Obtener estadísticas de API Keys.
-     *
-     * @return array
      */
     public function getApiKeyStats(): array
     {

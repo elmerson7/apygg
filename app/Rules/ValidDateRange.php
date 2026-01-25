@@ -2,13 +2,13 @@
 
 namespace App\Rules;
 
+use Carbon\Carbon;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Carbon\Carbon;
 
 /**
  * Regla de validación para rango de fechas
- * 
+ *
  * Valida que una fecha esté dentro de un rango permitido.
  */
 class ValidDateRange implements ValidationRule
@@ -33,10 +33,11 @@ class ValidDateRange implements ValidationRule
      */
     public static function between(?Carbon $minDate = null, ?Carbon $maxDate = null, string $format = 'Y-m-d'): self
     {
-        $rule = new self();
+        $rule = new self;
         $rule->minDate = $minDate;
         $rule->maxDate = $maxDate;
         $rule->format = $format;
+
         return $rule;
     }
 
@@ -61,8 +62,9 @@ class ValidDateRange implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (!is_string($value)) {
+        if (! is_string($value)) {
             $fail('El campo :attribute debe ser una fecha válida.');
+
             return;
         }
 
@@ -70,6 +72,7 @@ class ValidDateRange implements ValidationRule
             $date = Carbon::createFromFormat($this->format, $value);
         } catch (\Exception $e) {
             $fail("El campo :attribute debe tener el formato {$this->format}.");
+
             return;
         }
 
@@ -77,6 +80,7 @@ class ValidDateRange implements ValidationRule
         if ($this->minDate !== null && $date->lt($this->minDate)) {
             $minDateFormatted = $this->minDate->format($this->format);
             $fail("El campo :attribute debe ser posterior o igual a {$minDateFormatted}.");
+
             return;
         }
 

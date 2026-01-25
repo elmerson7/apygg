@@ -2,15 +2,11 @@
 
 namespace App\Exceptions;
 
-use Exception;
-
 /**
  * ExternalServiceException
- * 
+ *
  * Excepción para errores de servicios externos (APIs, webhooks, etc.).
  * Generalmente retorna código HTTP 502 (Bad Gateway) o 503 (Service Unavailable).
- * 
- * @package App\Exceptions
  */
 class ExternalServiceException extends ApiException
 {
@@ -32,13 +28,13 @@ class ExternalServiceException extends ApiException
     /**
      * Constructor
      *
-     * @param string $message Mensaje de error
-     * @param string|null $serviceName Nombre del servicio externo
-     * @param int $statusCode Código HTTP (default: 502)
-     * @param string|null $serviceErrorCode Código de error del servicio
-     * @param string|null $serviceUrl URL del servicio
-     * @param array $extensions Campos adicionales
-     * @param \Throwable|null $previous Excepción anterior
+     * @param  string  $message  Mensaje de error
+     * @param  string|null  $serviceName  Nombre del servicio externo
+     * @param  int  $statusCode  Código HTTP (default: 502)
+     * @param  string|null  $serviceErrorCode  Código de error del servicio
+     * @param  string|null  $serviceUrl  URL del servicio
+     * @param  array  $extensions  Campos adicionales
+     * @param  \Throwable|null  $previous  Excepción anterior
      */
     public function __construct(
         string $message = 'Error en servicio externo',

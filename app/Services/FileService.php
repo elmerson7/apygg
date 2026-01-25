@@ -3,16 +3,14 @@
 namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
  * FileService
- * 
+ *
  * Servicio centralizado para manejo de archivos: upload, delete, getUrl, exists.
- * 
- * @package App\Services
  */
 class FileService
 {
@@ -24,10 +22,10 @@ class FileService
     /**
      * Subir archivo
      *
-     * @param UploadedFile $file Archivo a subir
-     * @param string $path Ruta donde guardar (ej: 'avatars', 'documents')
-     * @param string|null $filename Nombre personalizado (null = generar automático)
-     * @param string|null $disk Disco de almacenamiento (null = usar default)
+     * @param  UploadedFile  $file  Archivo a subir
+     * @param  string  $path  Ruta donde guardar (ej: 'avatars', 'documents')
+     * @param  string|null  $filename  Nombre personalizado (null = generar automático)
+     * @param  string|null  $disk  Disco de almacenamiento (null = usar default)
      * @return array ['path' => string, 'url' => string, 'size' => int]
      */
     public static function upload(
@@ -37,7 +35,7 @@ class FileService
         ?string $disk = null
     ): array {
         $disk = $disk ?? self::$defaultDisk;
-        
+
         // Validar archivo
         self::validateFile($file);
 
@@ -45,7 +43,7 @@ class FileService
         $filename = $filename ?? self::generateFilename($file);
 
         // Construir ruta completa
-        $fullPath = rtrim($path, '/') . '/' . $filename;
+        $fullPath = rtrim($path, '/').'/'.$filename;
 
         // Guardar archivo
         $storedPath = Storage::disk($disk)->putFileAs($path, $file, $filename);
@@ -66,10 +64,9 @@ class FileService
     /**
      * Subir imagen con procesamiento
      *
-     * @param UploadedFile $file Imagen a subir
-     * @param string $path Ruta donde guardar
-     * @param array $options Opciones: width, height, quality, format
-     * @return array
+     * @param  UploadedFile  $file  Imagen a subir
+     * @param  string  $path  Ruta donde guardar
+     * @param  array  $options  Opciones: width, height, quality, format
      */
     public static function uploadImage(
         UploadedFile $file,
@@ -77,7 +74,7 @@ class FileService
         array $options = []
     ): array {
         // Validar que sea imagen
-        if (!str_starts_with($file->getMimeType(), 'image/')) {
+        if (! str_starts_with($file->getMimeType(), 'image/')) {
             throw new \InvalidArgumentException('El archivo debe ser una imagen.');
         }
 
@@ -89,12 +86,12 @@ class FileService
         // Procesar imagen si se especifican dimensiones
         if ($width || $height) {
             // Verificar si Intervention Image está disponible
-            if (!class_exists(\Intervention\Image\Facades\Image::class)) {
+            if (! class_exists(\Intervention\Image\Facades\Image::class)) {
                 throw new \RuntimeException('Intervention Image package is required for image processing.');
             }
-            
+
             $image = \Intervention\Image\Facades\Image::make($file);
-            
+
             if ($width && $height) {
                 $image->fit($width, $height);
             } elseif ($width) {
@@ -117,11 +114,11 @@ class FileService
             $filename = self::generateFilename($file, $extension);
 
             // Guardar imagen procesada
-            $fullPath = rtrim($path, '/') . '/' . $filename;
+            $fullPath = rtrim($path, '/').'/'.$filename;
             $disk = self::$defaultDisk;
-            
+
             Storage::disk($disk)->put($fullPath, $image->stream());
-            
+
             $url = Storage::disk($disk)->url($fullPath);
 
             return [
@@ -143,9 +140,8 @@ class FileService
     /**
      * Eliminar archivo
      *
-     * @param string $path Ruta del archivo
-     * @param string|null $disk Disco de almacenamiento
-     * @return bool
+     * @param  string  $path  Ruta del archivo
+     * @param  string|null  $disk  Disco de almacenamiento
      */
     public static function delete(string $path, ?string $disk = null): bool
     {
@@ -155,6 +151,7 @@ class FileService
             if (Storage::disk($disk)->exists($path)) {
                 return Storage::disk($disk)->delete($path);
             }
+
             return false;
         } catch (\Exception $e) {
             Log::error('Failed to delete file', [
@@ -162,6 +159,7 @@ class FileService
                 'disk' => $disk,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -169,9 +167,8 @@ class FileService
     /**
      * Obtener URL pública del archivo
      *
-     * @param string $path Ruta del archivo
-     * @param string|null $disk Disco de almacenamiento
-     * @return string|null
+     * @param  string  $path  Ruta del archivo
+     * @param  string|null  $disk  Disco de almacenamiento
      */
     public static function getUrl(string $path, ?string $disk = null): ?string
     {
@@ -181,6 +178,7 @@ class FileService
             if (Storage::disk($disk)->exists($path)) {
                 return Storage::disk($disk)->url($path);
             }
+
             return null;
         } catch (\Exception $e) {
             Log::error('Failed to get file URL', [
@@ -188,6 +186,7 @@ class FileService
                 'disk' => $disk,
                 'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -195,21 +194,21 @@ class FileService
     /**
      * Verificar si archivo existe
      *
-     * @param string $path Ruta del archivo
-     * @param string|null $disk Disco de almacenamiento
-     * @return bool
+     * @param  string  $path  Ruta del archivo
+     * @param  string|null  $disk  Disco de almacenamiento
      */
     public static function exists(string $path, ?string $disk = null): bool
     {
         $disk = $disk ?? self::$defaultDisk;
+
         return Storage::disk($disk)->exists($path);
     }
 
     /**
      * Obtener tamaño del archivo
      *
-     * @param string $path Ruta del archivo
-     * @param string|null $disk Disco de almacenamiento
+     * @param  string  $path  Ruta del archivo
+     * @param  string|null  $disk  Disco de almacenamiento
      * @return int|null Tamaño en bytes
      */
     public static function getSize(string $path, ?string $disk = null): ?int
@@ -220,6 +219,7 @@ class FileService
             if (Storage::disk($disk)->exists($path)) {
                 return Storage::disk($disk)->size($path);
             }
+
             return null;
         } catch (\Exception $e) {
             return null;
@@ -229,8 +229,6 @@ class FileService
     /**
      * Validar archivo antes de subir
      *
-     * @param UploadedFile $file
-     * @return void
      * @throws \InvalidArgumentException
      */
     protected static function validateFile(UploadedFile $file): void
@@ -248,7 +246,7 @@ class FileService
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         ]);
 
-        if (!in_array($file->getMimeType(), $allowedMimes)) {
+        if (! in_array($file->getMimeType(), $allowedMimes)) {
             throw new \InvalidArgumentException('Tipo de archivo no permitido.');
         }
 
@@ -258,7 +256,7 @@ class FileService
         ]);
 
         $extension = strtolower($file->getClientOriginalExtension());
-        if (!in_array($extension, $allowedExtensions)) {
+        if (! in_array($extension, $allowedExtensions)) {
             throw new \InvalidArgumentException('Extensión de archivo no permitida.');
         }
     }
@@ -266,9 +264,7 @@ class FileService
     /**
      * Generar nombre único para archivo
      *
-     * @param UploadedFile $file
-     * @param string|null $extension Extensión personalizada
-     * @return string
+     * @param  string|null  $extension  Extensión personalizada
      */
     protected static function generateFilename(UploadedFile $file, ?string $extension = null): string
     {
@@ -282,16 +278,12 @@ class FileService
 
     /**
      * Obtener información del archivo
-     *
-     * @param string $path
-     * @param string|null $disk
-     * @return array|null
      */
     public static function getInfo(string $path, ?string $disk = null): ?array
     {
         $disk = $disk ?? self::$defaultDisk;
 
-        if (!self::exists($path, $disk)) {
+        if (! self::exists($path, $disk)) {
             return null;
         }
 
@@ -307,10 +299,9 @@ class FileService
     /**
      * Copiar archivo
      *
-     * @param string $fromPath Ruta origen
-     * @param string $toPath Ruta destino
-     * @param string|null $disk Disco de almacenamiento
-     * @return bool
+     * @param  string  $fromPath  Ruta origen
+     * @param  string  $toPath  Ruta destino
+     * @param  string|null  $disk  Disco de almacenamiento
      */
     public static function copy(string $fromPath, string $toPath, ?string $disk = null): bool
     {
@@ -324,6 +315,7 @@ class FileService
                 'to' => $toPath,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -331,10 +323,9 @@ class FileService
     /**
      * Mover archivo
      *
-     * @param string $fromPath Ruta origen
-     * @param string $toPath Ruta destino
-     * @param string|null $disk Disco de almacenamiento
-     * @return bool
+     * @param  string  $fromPath  Ruta origen
+     * @param  string  $toPath  Ruta destino
+     * @param  string|null  $disk  Disco de almacenamiento
      */
     public static function move(string $fromPath, string $toPath, ?string $disk = null): bool
     {
@@ -348,6 +339,7 @@ class FileService
                 'to' => $toPath,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
