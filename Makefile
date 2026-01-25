@@ -8,7 +8,7 @@ GROUP_ID ?= $(shell id -g)
 export USER_ID
 export GROUP_ID
 
-.PHONY: build up down restart logs ps sh composer art key migrate seed jwt meilisearch-key scout horizon reverb tinker fix-permissions ensure-env
+.PHONY: build up down restart logs ps sh composer art key migrate seed jwt meilisearch-key scout horizon reverb tinker fix-permissions ensure-env clear
 
 # Asegurar que env/${ENV}.env existe antes de build/up
 ensure-env:
@@ -112,6 +112,9 @@ horizon:
 
 reverb:
 	$(DC) exec reverb php artisan reverb:restart || true
+
+clear:
+	$(DC) exec app php artisan optimize:clear
 
 # Corregir permisos de archivos creados por Docker
 fix-permissions:

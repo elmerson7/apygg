@@ -23,6 +23,7 @@ class TransformResponseMiddleware
         '/up', // Health check
         '/telescope',
         '/horizon',
+        '/', // Endpoint principal de la API (no transformar)
     ];
 
     /**
@@ -41,7 +42,7 @@ class TransformResponseMiddleware
 
         // Solo transformar respuestas JSON
         if ($response instanceof JsonResponse || $this->isJsonResponse($response)) {
-            return $this->transformJsonResponse($response);
+            return $this->transformJsonResponse($response, $request);
         }
 
         return $response;
@@ -63,6 +64,7 @@ class TransformResponseMiddleware
         return false;
     }
 
+
     /**
      * Verificar si la respuesta es JSON
      */
@@ -75,7 +77,7 @@ class TransformResponseMiddleware
     /**
      * Transformar respuesta JSON
      */
-    private function transformJsonResponse(Response $response): Response
+    private function transformJsonResponse(Response $response, Request $request): Response
     {
         $content = $response->getContent();
         
@@ -89,6 +91,7 @@ class TransformResponseMiddleware
         if (json_last_error() !== JSON_ERROR_NONE) {
             return $response;
         }
+
 
         // Si la respuesta ya tiene el formato estándar (success, data, meta), no transformar
         if (isset($data['success']) || isset($data['type'])) {
