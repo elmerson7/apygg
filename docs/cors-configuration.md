@@ -22,23 +22,28 @@ CORS_SUPPORTS_CREDENTIALS=true
 
 **Nota**: La variable `ALLOWED_ORIGINS` se usa para ambos propósitos:
 - ✅ Validación de `reset_url` en recuperación de contraseña (Fase 5.4 - Implementado)
-- ⏳ Configuración de CORS (Fase 10 - Pendiente de implementar)
+- ✅ Configuración de CORS (Fase 10 - Implementado)
 
 **Variable única**: Solo se usa `ALLOWED_ORIGINS` para ambos casos. No se usa `CORS_ALLOWED_ORIGINS`.
 
 ### Configuración por Entorno
 
 #### Desarrollo (local, dev, testing)
-- **Orígenes**: `*` (todos permitidos) o lista específica en `ALLOWED_ORIGINS`
+- **Orígenes**: Lista específica en `ALLOWED_ORIGINS` (ej: `http://localhost:5173,http://localhost:3000`)
 - **Credenciales**: `true`
 - **Max Age**: 3600 segundos
 
-#### Producción
-- **Orígenes**: Debe configurarse explícitamente en `ALLOWED_ORIGINS`
+#### Staging
+- **Orígenes**: Lista específica en `ALLOWED_ORIGINS` (ej: `https://staging.example.com`)
 - **Credenciales**: `true` (configurable)
 - **Max Age**: 3600 segundos (configurable)
 
-⚠️ **IMPORTANTE**: En producción, nunca uses `*` como origen. Siempre especifica dominios exactos en `ALLOWED_ORIGINS`.
+#### Producción
+- **Orígenes**: Lista específica en `ALLOWED_ORIGINS` (ej: `https://example.com,https://www.example.com`)
+- **Credenciales**: `true` (configurable)
+- **Max Age**: 3600 segundos (configurable)
+
+⚠️ **IMPORTANTE**: En todos los entornos (dev, staging, prod) se debe usar `ALLOWED_ORIGINS` con dominios específicos. NO usar `*` para garantizar que la configuración funcione correctamente.
 
 ## Configuración Detallada
 
@@ -69,7 +74,7 @@ ALLOWED_ORIGINS="https://example.com,https://www.example.com,localhost:8080,pane
 
 **Variable única**: Solo se usa `ALLOWED_ORIGINS` para CORS y reset password.
 
-**Nota**: La configuración completa de CORS usando `ALLOWED_ORIGINS` se implementará en la Fase 10. Actualmente solo se usa para validar `reset_url` en recuperación de contraseña.
+**Nota**: ✅ La configuración completa de CORS usando `ALLOWED_ORIGINS` está implementada. Se usa `ALLOWED_ORIGINS` en todos los entornos (dev, staging, prod) para garantizar que funcione correctamente.
 
 ### Métodos HTTP Permitidos
 
@@ -108,12 +113,19 @@ Headers que el cliente puede leer en la respuesta:
 ### Verificar Configuración
 
 ```bash
-php artisan cors:check
+php artisan cors:test
 ```
 
-Con sugerencias de corrección:
+Para probar un origen específico:
 ```bash
-php artisan cors:check --fix
+php artisan cors:test http://localhost:5173
+```
+
+También puedes usar el script de prueba manual:
+```bash
+./tests/cors-test.sh [URL_API] [ORIGIN]
+# Ejemplo:
+./tests/cors-test.sh http://localhost:8010 http://localhost:5173
 ```
 
 ### Ejemplo de Request desde JavaScript
@@ -187,12 +199,12 @@ fetch('https://api.example.com/api/users/1', {
 
 ### Validaciones Automáticas
 
-El comando `cors:check` verifica:
+El comando `cors:test` verifica:
+- ✅ Orígenes permitidos configurados
 - ✅ No usar `*` en producción
 - ✅ No usar wildcards con credenciales
 - ✅ Formato correcto de URLs
-- ✅ No usar HTTP en producción
-- ✅ No incluir localhost en producción
+- ✅ No usar HTTP en producción (solo para desarrollo)
 
 ## Troubleshooting
 
@@ -203,7 +215,7 @@ El comando `cors:check` verifica:
 **Solución**:
 1. Verificar `ALLOWED_ORIGINS` en `.env`
 2. Ejecutar `php artisan config:clear`
-3. Verificar con `php artisan cors:check` (cuando esté implementado en Fase 10)
+3. Verificar con `php artisan cors:test`
 
 ### Error: "Credentials flag is true, but Access-Control-Allow-Origin is *"
 
@@ -218,8 +230,8 @@ El comando `cors:check` verifica:
 **Causa**: El middleware no está registrado correctamente.
 
 **Solución**:
-1. Verificar que `HandleCors` esté en `bootstrap/app.php`
-2. Verificar que esté antes de otros middleware
+1. Verificar que `CorsMiddleware` esté en `bootstrap/app.php`
+2. Verificar que esté antes de otros middleware (debe ser el primero)
 3. Ejecutar `php artisan config:clear`
 
 ### Headers personalizados no funcionan

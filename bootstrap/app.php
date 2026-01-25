@@ -27,7 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Middleware para API: todas las respuestas en JSON
         $middleware->api(prepend: [
-            \Illuminate\Http\Middleware\HandleCors::class,
+            \App\Http\Middleware\CorsMiddleware::class, // CORS personalizado con ALLOWED_ORIGINS
             \App\Http\Middleware\TraceIdMiddleware::class, // Generar e inyectar Trace ID
             \App\Http\Middleware\ForceJsonResponse::class,
             \App\Http\Middleware\LogApiRequests::class, // Registrar requests/responses

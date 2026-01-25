@@ -498,10 +498,10 @@
 - [x] Crear `RateLimitLoggerMiddleware`
   - [x] Registro de intentos bloqueados
   - [x] Alertas de abuso
-- [ ] Crear `CorsMiddleware`
-  - [ ] Configuración por entorno
-  - [ ] Whitelist de dominios
-  - [ ] Headers permitidos
+- [x] Crear `CorsMiddleware`
+  - [x] Configuración por entorno
+  - [x] Whitelist de dominios
+  - [x] Headers permitidos
 - [ ] Crear `ApiVersionMiddleware`
   - [ ] Headers de versión
   - [ ] Routing condicional
@@ -513,13 +513,13 @@
   - [ ] Limpieza de inputs
 
 ### 10.2 Configuración de CORS
-- [ ] Crear `config/cors.php`
-  - [ ] `allowed_origins` por entorno (desarrollo: *, producción: desde env)
-  - [ ] `allowed_methods`, `allowed_headers` (GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD)
-  - [ ] `exposed_headers`, `max_age` (3600 segundos por defecto)
-  - [ ] `supports_credentials` (true por defecto)
-- [ ] Crear middleware `HandleCors` en `app/Http/Middleware/`
-- [ ] Registrar middleware en `bootstrap/app.php`
+- [x] Crear `config/cors.php`
+  - [x] `allowed_origins` por entorno (dev, staging, prod: todos usan ALLOWED_ORIGINS desde env)
+  - [x] `allowed_methods`, `allowed_headers` (GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD)
+  - [x] `exposed_headers`, `max_age` (3600 segundos por defecto)
+  - [x] `supports_credentials` (true por defecto)
+- [x] Crear middleware `CorsMiddleware` en `app/Http/Middleware/`
+- [x] Registrar middleware en `bootstrap/app.php`
 
 ### 10.3 Rate Limiting Adaptativo
 - [ ] Crear `config/rate-limiting.php`
