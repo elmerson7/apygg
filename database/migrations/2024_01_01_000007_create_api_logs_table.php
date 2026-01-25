@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('api_logs', function (Blueprint $table) {
             $table->id();
-            $table->uuid('trace_id')->unique();
+            $table->uuid('trace_id');
             $table->uuid('user_id')->nullable();
             $table->string('request_method', 10);
             $table->string('request_path', 500);
