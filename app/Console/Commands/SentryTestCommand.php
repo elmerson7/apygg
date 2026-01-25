@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Infrastructure\Services\LogService;
+use App\Services\LogService;
 use Illuminate\Console\Command;
 use Sentry\SentrySdk;
 use Sentry\Severity;

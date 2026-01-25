@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Infrastructure\Services\LogService;
+use App\Services\LogService;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;

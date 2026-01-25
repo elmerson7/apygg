@@ -4,7 +4,7 @@ use App\Exceptions\ApiException;
 use App\Exceptions\BusinessLogicException;
 use App\Exceptions\ExternalServiceException;
 use App\Helpers\ApiResponse;
-use App\Infrastructure\Services\LogService;
+use App\Services\LogService;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
