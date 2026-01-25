@@ -19,7 +19,7 @@ x-app-base: &app_base
     - ./:/app
   restart: unless-stopped
   networks:
-    - apygg_network
+    - network
   environment:
     USER_ID: ${USER_ID:-1000}
     GROUP_ID: ${GROUP_ID:-1000}
@@ -48,14 +48,14 @@ x-postgres-base: &postgres_base
   ports:
     - "8011:5432"
   volumes:
-    - apygg_pgdata:/var/lib/postgresql/data
+    - pgdata:/var/lib/postgresql/data
   healthcheck:
     test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB || exit 1"]
     interval: 10s
     timeout: 3s
     retries: 10
   networks:
-    - apygg_network
+    - network
   restart: unless-stopped
 
 x-redis-base: &redis_base
@@ -66,14 +66,14 @@ x-redis-base: &redis_base
   ports:
     - "8014:6379"
   volumes:
-    - apygg_redisdata:/data
+    - redisdata:/data
   healthcheck:
     test: ["CMD", "redis-cli", "ping"]
     interval: 5s
     timeout: 3s
     retries: 20
   networks:
-    - apygg_network
+    - network
   restart: unless-stopped
 
 services:
@@ -209,8 +209,8 @@ services:
       - "8017:6432"
     volumes:
       - ./docker/pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
-      - apygg_pgbouncer_logs:/var/log/pgbouncer
-      - apygg_pgbouncer_run:/var/run/pgbouncer
+      - pgbouncer_logs:/var/log/pgbouncer
+      - pgbouncer_run:/var/run/pgbouncer
     environment:
       PGBOUNCER_DATABASES: "* = host=postgres-prod port=5432 dbname=${DB_DATABASE:-apygg} user=${DB_USERNAME:-apygg} password=${DB_PASSWORD:-secret}"
       PGBOUNCER_POOL_MODE: transaction
@@ -230,7 +230,7 @@ services:
       timeout: 3s
       retries: 10
     networks:
-      - apygg_network
+      - network
     restart: unless-stopped
     depends_on:
       postgres-prod:
@@ -262,18 +262,20 @@ services:
     ports:
       - "8013:7700"
     volumes:
-      - apygg_meilidata:/meili_data
+      - meilidata:/meili_data
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:7700/health || exit 1"]
       interval: 10s
       timeout: 3s
       retries: 10
     networks:
-      - apygg_network
+      - network
     restart: unless-stopped
 
   minio:
-    image: minio/minio:latest
+    build:
+      context: .
+      dockerfile: docker/minio/Dockerfile
     container_name: apygg_minio
     profiles: ["dev", "staging"]
     command: server /data --console-address ":9001"
@@ -281,7 +283,7 @@ services:
       - "8015:9000"  # API S3
       - "8016:9001"  # Consola web
     volumes:
-      - apygg_miniodata:/data
+      - miniodata:/data
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
@@ -291,17 +293,17 @@ services:
       timeout: 3s
       retries: 10
     networks:
-      - apygg_network
+      - network
     restart: unless-stopped
 
 networks:
-  apygg_network:
+  network:
     driver: bridge
 
 volumes:
-  apygg_pgdata:
-  apygg_redisdata:
-  apygg_pgbouncer_logs:
-  apygg_pgbouncer_run:
-  apygg_meilidata:
-  apygg_miniodata:
+  pgdata:
+  redisdata:
+  pgbouncer_logs:
+  pgbouncer_run:
+  meilidata:
+  miniodata:
