@@ -433,16 +433,28 @@
 - [x] **NO aplicar trait HasUuid** (correcto según estrategia: logs usan ID auto-incrementable)
 
 ### 9.3 Loggers Especializados
-- [ ] Crear `ActivityLogger` en `app/Infrastructure/Logging/Loggers/`
-  - [ ] Implementar Observer para modelos auditables
-  - [ ] Captura de cambios antes/después
-- [ ] Crear `AuthLogger` en `app/Infrastructure/Logging/Loggers/`
-  - [ ] Registro de intentos de login
-  - [ ] Detección de patrones sospechosos
-- [ ] Crear `SecurityLogger` en `app/Infrastructure/Logging/Loggers/`
-  - [ ] Middleware para eventos de seguridad
-- [ ] Crear `ApiLogger` en `app/Infrastructure/Logging/Loggers/`
-  - [ ] Middleware para todos los requests
+- [x] Crear `ActivityLogger` en `app/Infrastructure/Logging/Loggers/`
+  - [x] ✅ Logger creado con métodos: log(), logCreated(), logUpdated(), logDeleted(), logRestored()
+  - [x] ✅ Filtrado automático de campos sensibles (password, token, etc.)
+  - [x] ✅ Captura de cambios antes/después (old_values, new_values)
+  - [x] ✅ Listo para usar con Observers (ver Fase 9.4 para implementación de Observers)
+- [x] Crear `AuthLogger` en `app/Infrastructure/Logging/Loggers/`
+  - [x] ✅ Métodos: logLoginSuccess(), logLoginFailure(), logPasswordChanged(), logTokenRevoked()
+  - [x] ✅ Registro de intentos de login con IP y user agent
+  - [x] ✅ Detección automática de patrones sospechosos (múltiples fallos)
+  - [x] ✅ Cache de intentos fallidos con TTL configurable
+  - [x] ✅ Métodos helper: hasSuspiciousActivity(), getFailedAttempts(), clearFailedAttempts()
+- [x] Crear `SecurityLogger` en `app/Infrastructure/Logging/Loggers/`
+  - [x] ✅ Métodos: logPermissionDenied(), logSuspiciousActivity(), logAccountLocked(), logAccountUnlocked()
+  - [x] ✅ Registro de eventos de seguridad con contexto completo
+  - [x] ✅ Método genérico logEvent() para eventos personalizados
+  - [x] ✅ Listo para usar en middleware (ver Fase 10 para implementación de middleware)
+- [x] Crear `ApiLogger` en `app/Infrastructure/Logging/Loggers/`
+  - [x] ✅ Método logRequest() para registrar requests/responses completos
+  - [x] ✅ Sanitización automática de datos sensibles (headers, body, query)
+  - [x] ✅ Cálculo automático de tiempo de respuesta
+  - [x] ✅ Exclusión configurable de rutas (health, ping, telescope, etc.)
+  - [x] ✅ Listo para usar en middleware (ver Fase 10 para implementación de middleware)
 
 ### 9.4 Configuración de Canales
 - [ ] Crear canal `database_logs` en `config/logging.php`
