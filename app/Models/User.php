@@ -3,10 +3,14 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Logs\ActivityLog;
+use App\Traits\HasApiTokens;
+use App\Traits\LogsActivity;
+use App\Traits\SoftDeletesWithUser;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
@@ -14,7 +18,7 @@ use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 class User extends Authenticatable implements JWTSubject
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, HasUuids, Notifiable, SoftDeletes;
+    use HasFactory, HasUuids, Notifiable, SoftDeletesWithUser, LogsActivity, HasApiTokens;
 
     /**
      * Indicates if the IDs are auto-incrementing.
@@ -39,6 +43,7 @@ class User extends Authenticatable implements JWTSubject
         'name',
         'email',
         'password',
+        'deleted_by', // Para SoftDeletesWithUser trait
     ];
 
     /**
@@ -62,6 +67,7 @@ class User extends Authenticatable implements JWTSubject
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
+        'deleted_by' => 'string', // UUID del usuario que eliminó (para SoftDeletesWithUser)
     ];
 
     /**
@@ -203,5 +209,81 @@ class User extends Authenticatable implements JWTSubject
     public function isAdmin(): bool
     {
         return $this->hasRole('admin');
+    }
+
+    /**
+     * Relación con API Keys
+     * Alias para apiKeys() del trait HasApiTokens
+     *
+     * @return HasMany
+     */
+    public function apiTokens(): HasMany
+    {
+        return $this->apiKeys();
+    }
+
+    /**
+     * Relación con ActivityLogs
+     * Obtiene todos los logs de actividad relacionados con este usuario
+     *
+     * @return HasMany
+     */
+    public function activityLogs(): HasMany
+    {
+        return $this->hasMany(ActivityLog::class, 'user_id');
+    }
+
+    /**
+     * Scope para filtrar usuarios activos (no eliminados)
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeActive($query)
+    {
+        return $query->whereNull('deleted_at');
+    }
+
+    /**
+     * Scope para filtrar usuarios inactivos (eliminados)
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeInactive($query)
+    {
+        return $query->onlyTrashed();
+    }
+
+    /**
+     * Scope para filtrar por email
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string $email
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByEmail($query, string $email)
+    {
+        return $query->where('email', $email);
+    }
+
+    /**
+     * Scope para filtrar usuarios por rol
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string|array $roleName Nombre del rol o array de nombres
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByRole($query, string|array $roleName)
+    {
+        if (is_array($roleName)) {
+            return $query->whereHas('roles', function ($q) use ($roleName) {
+                $q->whereIn('name', $roleName);
+            });
+        }
+
+        return $query->whereHas('roles', function ($q) use ($roleName) {
+            $q->where('name', $roleName);
+        });
     }
 }

@@ -373,35 +373,60 @@
 ## Fase 7: Módulo de Usuarios (Semana 7)
 
 ### 7.1 Modelo User y Relaciones
-- [ ] Crear/Extender `User` en `app/Modules/Users/Models/`
-  - [ ] Aplicar traits: HasUuid, LogsActivity, SoftDeletesWithUser, HasApiTokens
-  - [ ] Relaciones: roles(), permissions(), apiTokens(), activityLogs()
-  - [ ] Scopes: active(), inactive(), byEmail(), byRole()
-  - [ ] Métodos helper: isAdmin(), hasPermission(), hasAnyPermission()
+- [x] Crear/Extender `User` en `app/Models/` (no se usa carpeta modules)
+  - [x] Aplicar traits: HasUuids (nativo), LogsActivity, SoftDeletesWithUser, HasApiTokens
+  - [x] Relaciones: roles(), permissions(), apiTokens(), activityLogs()
+  - [x] Scopes: active(), inactive(), byEmail(), byRole()
+  - [x] Métodos helper: isAdmin(), hasPermission(), hasAnyPermission(), hasAllPermissions(), hasRole(), hasAnyRole()
 
 ### 7.2 UserController y Endpoints
-- [ ] Crear `UserController` en `app/Modules/Users/Controllers/`
-  - [ ] `GET /api/v1/users` - Listar con paginación, filtrado, ordenamiento
-  - [ ] `GET /api/v1/users/{id}` - Obtener usuario específico
-  - [ ] `POST /api/v1/users` - Crear usuario (solo admin)
-  - [ ] `PUT /api/v1/users/{id}` - Actualizar usuario
-  - [ ] `DELETE /api/v1/users/{id}` - Eliminar usuario (soft delete)
-  - [ ] `POST /api/v1/users/{id}/restore` - Restaurar usuario
-  - [ ] `POST /api/v1/users/{id}/roles` - Asignar roles
-  - [ ] `DELETE /api/v1/users/{id}/roles/{roleId}` - Remover rol
-  - [ ] `GET /api/v1/users/{id}/activity` - Historial de actividad
+- [x] Crear `UserController` en `app/Http/Controllers/Users/`
+  - [x] `GET /users` - Listar con paginación, filtrado, ordenamiento
+  - [x] `GET /users/{id}` - Obtener usuario específico (con UserDetailResource)
+  - [x] `POST /users` - Crear usuario (solo con permiso users.create)
+  - [x] `PUT /users/{id}` - Actualizar usuario (con autorización por policy)
+  - [x] `DELETE /users/{id}` - Eliminar usuario (soft delete, solo con permiso users.delete)
+  - [x] `POST /users/{id}/restore` - Restaurar usuario (con permiso users.restore)
+  - [x] `POST /users/{id}/roles` - Asignar roles (con permiso users.update)
+  - [x] `DELETE /users/{id}/roles/{roleId}` - Remover rol (con permiso users.update)
+  - [x] `GET /users/{id}/activity` - Historial de actividad
+  - [x] Usa UserService para lógica de negocio
+  - [x] Autorización con Policies
+  - [x] Rutas configuradas en `routes/api/users.php`
 
 ### 7.3 Form Requests de Usuario
-- [ ] Crear `StoreUserRequest`
-  - [ ] Validación: email único, password fuerte, nombre requerido
-  - [ ] Sanitización automática
-- [ ] Crear `UpdateUserRequest`
-  - [ ] Validación: email único (excepto si es el mismo usuario)
-- [ ] Crear `AssignRoleRequest`
+- [x] Crear `StoreUserRequest`
+  - [x] Validación: email único, password fuerte, nombre requerido
+  - [x] Validación de UUIDs para roles
+  - [x] Sanitización automática (heredada de BaseFormRequest)
+  - [x] Mensajes personalizados en español
+- [x] Crear `UpdateUserRequest`
+  - [x] Validación: email único (excepto si es el mismo usuario)
+  - [x] Campos opcionales con `sometimes` y `nullable`
+  - [x] Sanitización automática (heredada de BaseFormRequest)
+  - [x] Mensajes personalizados en español
+- [x] Crear `AssignRoleRequest`
+  - [x] Validación de array de roles (mínimo 1, máximo 10)
+  - [x] Validación de UUIDs y existencia de roles
+  - [x] Validación de roles duplicados (`distinct`)
+  - [x] Sanitización automática (heredada de BaseFormRequest)
+  - [x] Mensajes personalizados en español
 
 ### 7.4 Resources de Usuario
-- [ ] Crear `UserResource` - Transformación básica
-- [ ] Crear `UserDetailResource` - Con permisos y tokens
+- [x] Crear `UserResource` - Transformación básica
+  - [x] Campos básicos: id, name, email, email_verified_at
+  - [x] Relaciones opcionales: roles, permissions (solo si se cargan)
+  - [x] Timestamps formateados en ISO 8601
+  - [x] Oculta información sensible
+- [x] Crear `UserDetailResource` - Con permisos y tokens
+  - [x] Información completa del usuario
+  - [x] Roles con descripción
+  - [x] Permisos directos asignados
+  - [x] Permisos efectivos (combinando roles + directos, sin duplicados)
+  - [x] API Tokens (solo para propio usuario o admin)
+  - [x] Historial de actividad (opcional con eager loading)
+  - [x] Control de visibilidad según permisos
+  - [x] Información adicional: is_admin, last_login_at
 
 ### 7.5 UserService y Lógica
 - [ ] Crear `UserService` en `app/Modules/Users/Services/`
