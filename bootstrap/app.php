@@ -29,6 +29,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(prepend: [
             \Illuminate\Http\Middleware\HandleCors::class,
             \App\Http\Middleware\ForceJsonResponse::class,
+            \App\Http\Middleware\LogApiRequests::class, // Registrar requests/responses
+            \App\Http\Middleware\LogSecurityEvents::class, // Registrar eventos de seguridad
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -73,7 +75,7 @@ return Application::configure(basePath: dirname(__DIR__))
                     if ($isCritical) {
                         LogService::logError($exception, $context);
                     } else {
-                        LogService::warning("Exception: {$exception->getMessage()}", $context, 'error');
+                        LogService::warning("Exception: {$exception->getMessage()}", $context);
                     }
                 } catch (\Exception $logError) {
                     // Silenciar errores de logging para no interrumpir el flujo principal

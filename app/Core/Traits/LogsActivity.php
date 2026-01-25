@@ -2,14 +2,15 @@
 
 namespace App\Core\Traits;
 
+use App\Infrastructure\Logging\Loggers\ActivityLogger;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 /**
  * Trait LogsActivity
  * 
  * Registra automáticamente las actividades (crear, actualizar, eliminar) de un modelo.
+ * Usa ActivityLogger para guardar en la base de datos.
  * 
  * @package App\Core\Traits
  */
@@ -21,65 +22,37 @@ trait LogsActivity
     public static function bootLogsActivity(): void
     {
         static::created(function ($model) {
-            $model->logActivity('created', $model->getAttributes());
+            $model->logActivity('created');
         });
 
         static::updated(function ($model) {
-            $model->logActivity('updated', $model->getChanges(), $model->getOriginal());
+            $model->logActivity('updated', $model->getOriginal());
         });
 
         static::deleted(function ($model) {
-            $model->logActivity('deleted', $model->getAttributes());
+            $model->logActivity('deleted');
+        });
+
+        static::restored(function ($model) {
+            $model->logActivity('restored');
         });
     }
 
     /**
-     * Registrar actividad en el log.
+     * Registrar actividad en el log usando ActivityLogger.
      */
-    protected function logActivity(string $action, array $after = [], array $before = []): void
+    protected function logActivity(string $action, ?array $oldValues = null): void
     {
-        // Filtrar campos sensibles
-        $after = $this->filterSensitiveFields($after);
-        $before = $this->filterSensitiveFields($before);
-
-        $logData = [
-            'model' => get_class($this),
-            'model_id' => $this->getKey(),
-            'action' => $action,
-            'user_id' => Auth::id(),
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->userAgent(),
-            'before' => $before,
-            'after' => $after,
-            'timestamp' => now()->toIso8601String(),
-        ];
-
-        // Log en canal de actividad si existe, sino en default
-        if (config('logging.channels.activity')) {
-            Log::channel('activity')->info("Activity: {$action}", $logData);
-        } else {
-            Log::info("Activity: {$action}", $logData);
-        }
-
-        // También guardar en base de datos si el modelo ActivityLog existe
-        if (class_exists(\App\Models\Logs\ActivityLog::class)) {
-            try {
-                \App\Models\Logs\ActivityLog::create([
-                    'user_id' => Auth::id(),
-                    'model_type' => get_class($this),
-                    'model_id' => $this->getKey(),
-                    'action' => $action,
-                    'before' => $before,
-                    'after' => $after,
-                    'ip_address' => request()->ip(),
-                    'user_agent' => request()->userAgent(),
-                ]);
-            } catch (\Exception $e) {
-                // Silenciar errores de base de datos para no interrumpir el flujo principal
-                Log::warning('Failed to save activity log to database', [
-                    'error' => $e->getMessage(),
-                ]);
-            }
+        try {
+            // Usar ActivityLogger para guardar en base de datos
+            ActivityLogger::log($this, $action, $oldValues);
+        } catch (\Exception $e) {
+            // Silenciar errores de logging para no interrumpir el flujo principal
+            Log::warning('Failed to log activity', [
+                'model' => get_class($this),
+                'action' => $action,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 
