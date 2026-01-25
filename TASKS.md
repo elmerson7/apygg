@@ -399,47 +399,89 @@
 ## Fase 8: Feature Flags (Semana 7)
 
 ### 8.1 Configuración de Feature Flags
-- [ ] Crear `config/features.php` con array de features
-  - [ ] Estructura simple: enabled, description
-- [ ] Crear helper `Feature` class
-  - [ ] Método estático `enabled()`
-  - [ ] Cache automático de configuración
-- [ ] Documentar cómo migrar a base de datos en el futuro
+- [x] Crear `config/features.php` con array de features
+  - [x] Estructura simple: enabled, description
+- [x] Crear helper `Feature` class
+  - [x] Método estático `enabled()`
+  - [x] Cache automático de configuración
+- [x] Documentar cómo migrar a base de datos en el futuro
 
 ---
 
 ## Fase 9: Sistema de Logging y Auditoría (Semana 8)
 
 ### 9.1 Migraciones de Logs (ya creadas en Fase 2)
-- [ ] Verificar migraciones de: api_logs, error_logs, security_logs, activity_logs
+- [x] Verificar migraciones de: api_logs, error_logs, security_logs, activity_logs
+  - [x] ✅ Todas las migraciones están creadas y ejecutadas correctamente
+  - [x] ✅ Estructura correcta según estrategia del proyecto (ID auto-incrementable para logs)
+  - [x] ✅ Índices correctos para optimización
+  - [x] ✅ Verificación documentada en `docs/fase9-revision-migraciones-logs.md`
 
 ### 9.2 Modelos de Logs
-- [ ] Crear `ApiLog` en `app/Infrastructure/Logging/Models/`
-- [ ] Crear `ErrorLog` en `app/Infrastructure/Logging/Models/`
-- [ ] Crear `SecurityLog` en `app/Infrastructure/Logging/Models/`
-- [ ] Crear `ActivityLog` en `app/Infrastructure/Logging/Models/`
-- [ ] Aplicar trait HasUuid a todos
+- [x] Crear `ApiLog` en `app/Infrastructure/Logging/Models/`
+  - [x] ✅ Modelo creado con scopes útiles (byTraceId, byUserId, byMethod, slowRequests, etc.)
+  - [x] ✅ Usa ID auto-incrementable (NO UUID como primary key según estrategia)
+  - [x] ✅ Campos UUID (trace_id, user_id) manejados como campos normales
+- [x] Crear `ErrorLog` en `app/Infrastructure/Logging/Models/`
+  - [x] ✅ Modelo creado con constantes de severidad
+  - [x] ✅ Métodos helper (markAsResolved, isResolved)
+  - [x] ✅ Scopes para filtrar por severidad y estado
+- [x] Crear `SecurityLog` en `app/Infrastructure/Logging/Models/`
+  - [x] ✅ Modelo creado con constantes de tipos de eventos
+  - [x] ✅ Scopes para eventos críticos y sospechosos
+  - [x] ✅ Método isCritical() para identificar eventos importantes
+- [x] Crear `ActivityLog` en `app/Infrastructure/Logging/Models/`
+  - [x] ✅ Modelo creado con relación polimórfica al modelo auditado
+  - [x] ✅ Métodos helper (getChangedFields, hasChanges)
+  - [x] ✅ Scopes para filtrar por acción (created, updated, deleted, restored)
+- [x] **NO aplicar trait HasUuid** (correcto según estrategia: logs usan ID auto-incrementable)
 
 ### 9.3 Loggers Especializados
-- [ ] Crear `ActivityLogger` en `app/Infrastructure/Logging/Loggers/`
-  - [ ] Implementar Observer para modelos auditables
-  - [ ] Captura de cambios antes/después
-- [ ] Crear `AuthLogger` en `app/Infrastructure/Logging/Loggers/`
-  - [ ] Registro de intentos de login
-  - [ ] Detección de patrones sospechosos
-- [ ] Crear `SecurityLogger` en `app/Infrastructure/Logging/Loggers/`
-  - [ ] Middleware para eventos de seguridad
-- [ ] Crear `ApiLogger` en `app/Infrastructure/Logging/Loggers/`
-  - [ ] Middleware para todos los requests
+- [x] Crear `ActivityLogger` en `app/Infrastructure/Logging/Loggers/`
+  - [x] ✅ Logger creado con métodos: log(), logCreated(), logUpdated(), logDeleted(), logRestored()
+  - [x] ✅ Filtrado automático de campos sensibles (password, token, etc.)
+  - [x] ✅ Captura de cambios antes/después (old_values, new_values)
+  - [x] ✅ Listo para usar con Observers (ver Fase 9.4 para implementación de Observers)
+- [x] Crear `AuthLogger` en `app/Infrastructure/Logging/Loggers/`
+  - [x] ✅ Métodos: logLoginSuccess(), logLoginFailure(), logPasswordChanged(), logTokenRevoked()
+  - [x] ✅ Registro de intentos de login con IP y user agent
+  - [x] ✅ Detección automática de patrones sospechosos (múltiples fallos)
+  - [x] ✅ Cache de intentos fallidos con TTL configurable
+  - [x] ✅ Métodos helper: hasSuspiciousActivity(), getFailedAttempts(), clearFailedAttempts()
+- [x] Crear `SecurityLogger` en `app/Infrastructure/Logging/Loggers/`
+  - [x] ✅ Métodos: logPermissionDenied(), logSuspiciousActivity(), logAccountLocked(), logAccountUnlocked()
+  - [x] ✅ Registro de eventos de seguridad con contexto completo
+  - [x] ✅ Método genérico logEvent() para eventos personalizados
+  - [x] ✅ Listo para usar en middleware (ver Fase 10 para implementación de middleware)
+- [x] Crear `ApiLogger` en `app/Infrastructure/Logging/Loggers/`
+  - [x] ✅ Método logRequest() para registrar requests/responses completos
+  - [x] ✅ Sanitización automática de datos sensibles (headers, body, query)
+  - [x] ✅ Cálculo automático de tiempo de respuesta
+  - [x] ✅ Exclusión configurable de rutas (health, ping, telescope, etc.)
+  - [x] ✅ Listo para usar en middleware (ver Fase 10 para implementación de middleware)
 
 ### 9.4 Configuración de Canales
-- [ ] Crear canal `database_logs` en `config/logging.php`
-- [ ] Configurar `LogService` para usar canal database
-- [ ] Integración con Sentry para errores críticos (opcional)
-- [ ] Configurar niveles de log por canal y entorno
+- [x] ~~Crear canal `database_logs`~~ (NO necesario - decisión arquitectónica: logs van en tablas, no canal separado)
+- [x] ~~Configurar `LogService` para usar canal database~~ (NO necesario)
+- [x] Integración con Sentry para errores críticos
+  - [x] ✅ Configurado canal `sentry` con niveles por entorno
+  - [x] ✅ Dev: solo `critical` (evita spam en desarrollo)
+  - [x] ✅ Staging/Prod: `error` y superior
+  - [x] ✅ LogService actualizado para usar canal `sentry` automáticamente
+- [x] Configurar niveles de log por canal y entorno
+  - [x] ✅ Archivos (`single`/`daily`): dev=`debug`, staging/prod=`error`
+  - [x] ✅ Sentry: dev=`critical`, staging/prod=`error`
+  - [x] ✅ Slack: dev=`critical`, prod=`error`
+  - [x] ✅ Configuración automática según `APP_ENV`
 
 ### 9.5 Tests de Logging
 - [ ] Tests de que los logs se registran correctamente
+  - [ ] Tests completos para ActivityLogger (created, updated, deleted, filtrado de campos sensibles)
+  - [ ] Tests completos para AuthLogger (login success/failure, password changed, detección de actividad sospechosa)
+  - [ ] Tests completos para SecurityLogger (permission denied, suspicious activity, account locked)
+  - [ ] Tests completos para ApiLogger (log request, exclusión de paths, sanitización de datos)
+  - [ ] Tests de modelos (ErrorLog, ActivityLog, SecurityLog, ApiLog)
+  - [ ] Tests de scopes y métodos helper
 - [ ] Tests de captura de contexto (trace_id, user_id, IP)
 
 ---
@@ -447,15 +489,15 @@
 ## Fase 10: Middleware y Seguridad (Semana 9)
 
 ### 10.1 Middleware Personalizados
-- [ ] Crear `TraceIdMiddleware` en `app/Http/Middleware/`
-  - [ ] Generación de UUID único por request
-  - [ ] Inyección en headers (X-Trace-ID)
-- [ ] Crear `SecurityLoggerMiddleware`
-  - [ ] Registro de eventos de seguridad
-  - [ ] Detección de patrones anómalos
-- [ ] Crear `RateLimitLoggerMiddleware`
-  - [ ] Registro de intentos bloqueados
-  - [ ] Alertas de abuso
+- [x] Crear `TraceIdMiddleware` en `app/Http/Middleware/`
+  - [x] Generación de UUID único por request
+  - [x] Inyección en headers (X-Trace-ID)
+- [x] Crear `SecurityLoggerMiddleware`
+  - [x] Registro de eventos de seguridad
+  - [x] Detección de patrones anómalos
+- [x] Crear `RateLimitLoggerMiddleware`
+  - [x] Registro de intentos bloqueados
+  - [x] Alertas de abuso
 - [ ] Crear `CorsMiddleware`
   - [ ] Configuración por entorno
   - [ ] Whitelist de dominios

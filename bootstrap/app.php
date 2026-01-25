@@ -28,7 +28,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // Middleware para API: todas las respuestas en JSON
         $middleware->api(prepend: [
             \Illuminate\Http\Middleware\HandleCors::class,
+            \App\Http\Middleware\TraceIdMiddleware::class, // Generar e inyectar Trace ID
             \App\Http\Middleware\ForceJsonResponse::class,
+            \App\Http\Middleware\LogApiRequests::class, // Registrar requests/responses
+            \App\Http\Middleware\SecurityLoggerMiddleware::class, // Registrar eventos de seguridad y detectar patrones anómalos
+            \App\Http\Middleware\RateLimitLoggerMiddleware::class, // Registrar bloqueos por rate limiting y detectar abuso
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -73,7 +77,7 @@ return Application::configure(basePath: dirname(__DIR__))
                     if ($isCritical) {
                         LogService::logError($exception, $context);
                     } else {
-                        LogService::warning("Exception: {$exception->getMessage()}", $context, 'error');
+                        LogService::warning("Exception: {$exception->getMessage()}", $context);
                     }
                 } catch (\Exception $logError) {
                     // Silenciar errores de logging para no interrumpir el flujo principal

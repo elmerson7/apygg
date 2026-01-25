@@ -61,14 +61,14 @@ return [
         'single' => [
             'driver' => 'single',
             'path' => storage_path('logs/laravel.log'),
-            'level' => env('LOG_LEVEL', 'debug'),
+            'level' => env('LOG_LEVEL', env('APP_ENV') === 'prod' ? 'error' : 'debug'),
             'replace_placeholders' => true,
         ],
 
         'daily' => [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),
-            'level' => env('LOG_LEVEL', 'debug'),
+            'level' => env('LOG_LEVEL', env('APP_ENV') === 'prod' ? 'error' : 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
         ],
@@ -78,7 +78,7 @@ return [
             'url' => env('LOG_SLACK_WEBHOOK_URL'),
             'username' => env('LOG_SLACK_USERNAME', 'Laravel Log'),
             'emoji' => env('LOG_SLACK_EMOJI', ':boom:'),
-            'level' => env('LOG_LEVEL', 'critical'),
+            'level' => env('LOG_SLACK_LEVEL', env('APP_ENV') === 'prod' ? 'error' : 'critical'),
             'replace_placeholders' => true,
         ],
 
@@ -129,17 +129,18 @@ return [
 
         'sentry' => [
             'driver' => 'sentry',
-            'level' => env('LOG_LEVEL', 'error'), // Solo error y superior por defecto
+            // Niveles por entorno:
+            // - dev: solo critical (evitar ruido en desarrollo)
+            // - staging: error y superior
+            // - prod: error y superior
+            'level' => env('SENTRY_LOG_LEVEL', match(env('APP_ENV', 'dev')) {
+                'dev' => 'critical',
+                'staging', 'prod' => 'error',
+                default => 'error',
+            }),
             'replace_placeholders' => true,
         ],
 
-        'sentry_logs' => [
-            'driver' => 'sentry',
-            // The minimum logging level at which this handler will be triggered
-            // Available levels: debug, info, notice, warning, error, critical, alert, emergency
-            'level' => env('SENTRY_LOG_LEVEL', env('LOG_LEVEL', 'error')), // defaults to `error` if not set
-            'replace_placeholders' => true,
-        ],
 
     ],
 
