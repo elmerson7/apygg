@@ -94,7 +94,6 @@ Headers que el cliente puede enviar:
 - `Authorization`
 - `X-Requested-With`
 - `X-Trace-ID`
-- `X-API-Version`
 - `Accept`
 - `Origin`
 - `X-CSRF-TOKEN`
@@ -106,7 +105,6 @@ Headers que el cliente puede leer en la respuesta:
 - `X-RateLimit-Limit`
 - `X-RateLimit-Remaining`
 - `X-RateLimit-Reset`
-- `X-API-Version`
 
 ## Uso
 

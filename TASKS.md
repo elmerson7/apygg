@@ -502,15 +502,15 @@
   - [x] Configuración por entorno
   - [x] Whitelist de dominios
   - [x] Headers permitidos
-- [ ] Crear `ApiVersionMiddleware`
-  - [ ] Headers de versión
-  - [ ] Routing condicional
-- [ ] Crear `TransformRequestMiddleware`
-  - [ ] Normalización de requests
-- [ ] Crear `TransformResponseMiddleware`
-  - [ ] Transformación de respuestas
-- [ ] Crear `SanitizeInput` middleware
-  - [ ] Limpieza de inputs
+- [x] ~~Crear `ApiVersionMiddleware`~~ (Cancelado: No se versionará la API)
+  - [x] ~~Headers de versión~~ (Cancelado)
+  - [x] ~~Routing condicional~~ (Cancelado)
+- [x] Crear `TransformRequestMiddleware`
+  - [x] Normalización de requests
+- [x] Crear `TransformResponseMiddleware`
+  - [x] Transformación de respuestas
+- [x] Crear `SanitizeInput` middleware
+  - [x] Limpieza de inputs
 
 ### 10.2 Configuración de CORS
 - [x] Crear `config/cors.php`

@@ -29,7 +29,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(prepend: [
             \App\Http\Middleware\CorsMiddleware::class, // CORS personalizado con ALLOWED_ORIGINS
             \App\Http\Middleware\TraceIdMiddleware::class, // Generar e inyectar Trace ID
+            \App\Http\Middleware\SanitizeInput::class, // Limpieza de inputs (XSS, HTML, etc.)
+            \App\Http\Middleware\TransformRequestMiddleware::class, // Normalización de requests
             \App\Http\Middleware\ForceJsonResponse::class,
+            \App\Http\Middleware\TransformResponseMiddleware::class, // Transformación de respuestas
             \App\Http\Middleware\LogApiRequests::class, // Registrar requests/responses
             \App\Http\Middleware\SecurityLoggerMiddleware::class, // Registrar eventos de seguridad y detectar patrones anómalos
             \App\Http\Middleware\RateLimitLoggerMiddleware::class, // Registrar bloqueos por rate limiting y detectar abuso

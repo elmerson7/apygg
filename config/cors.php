@@ -65,7 +65,6 @@ return [
         'Authorization',
         'X-Requested-With',
         'X-Trace-ID',
-        'X-API-Version',
         'Accept',
         'Origin',
         'X-CSRF-TOKEN',
@@ -85,7 +84,6 @@ return [
         'X-RateLimit-Limit',
         'X-RateLimit-Remaining',
         'X-RateLimit-Reset',
-        'X-API-Version',
     ],
 
     /*

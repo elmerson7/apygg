@@ -50,8 +50,8 @@ Es la tabla que Laravel usa para:
 **¿Se usa en API-only?**
 
 ✅ **SÍ**, si implementas:
-- Endpoint `POST /api/v1/auth/forgot-password` (envía email con token)
-- Endpoint `POST /api/v1/auth/reset-password` (valida token y cambia contraseña)
+- Endpoint `POST /api/auth/forgot-password` (envía email con token)
+- Endpoint `POST /api/auth/reset-password` (valida token y cambia contraseña)
 
 **Flujo típico**:
 1. Usuario solicita reset → se crea registro en `password_reset_tokens`
@@ -128,7 +128,7 @@ El servidor guarda estado (la sesión) y lo busca en cada request.
 
 ### Rutas
 
-✅ **`routes/api.php`**: Creado con prefijo `/api/v1`
+✅ **`routes/api.php`**: Creado con prefijo `/api` (sin versionado)
 ✅ **`routes/web.php`**: Comentado (no se carga)
 ✅ **`bootstrap/app.php`**: Configurado solo para API
 

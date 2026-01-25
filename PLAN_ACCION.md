@@ -413,11 +413,11 @@ Cliente → FrankenPHP (Octane) / Laravel App
 ### 3.0 Versionado de API
 
 **Configuración de Rutas:**
-- Todas las rutas API bajo prefijo `/api/v1/`
-- Estructura preparada para versionado futuro (v2, v3, etc.)
-- Middleware `ApiVersionMiddleware` para manejo de versiones
-- Headers de versión en request/response (`X-API-Version`)
-- Documentación de estrategia de versionado y compatibilidad hacia atrás
+- Todas las rutas API bajo prefijo `/api/` (sin versionado)
+- ~~Estructura preparada para versionado futuro (v2, v3, etc.)~~ (Cancelado: No se versionará la API)
+- ~~Middleware `ApiVersionMiddleware` para manejo de versiones~~ (Cancelado)
+- ~~Headers de versión en request/response (`X-API-Version`)~~ (Cancelado)
+- ~~Documentación de estrategia de versionado y compatibilidad hacia atrás~~ (Cancelado)
 
 ### 3.1 Autenticación JWT
 
@@ -726,11 +726,11 @@ if (Feature::enabled('experimental-feature', false)) {
 - Métodos HTTP permitidos: GET, POST, PUT, DELETE, PATCH, OPTIONS
 - Credenciales habilitadas para cookies y autenticación
 
-**ApiVersionMiddleware (`App\Http\Middleware\ApiVersionMiddleware`):**
-- Preparado para futuro versionado de API
-- Headers de versión en request/response
-- Routing condicional por versión (v1, v2, etc.)
-- Compatibilidad hacia atrás configurable
+~~**ApiVersionMiddleware (`App\Http\Middleware\ApiVersionMiddleware`):**~~ (Cancelado: No se versionará la API)
+- ~~Preparado para futuro versionado de API~~ (Cancelado)
+- ~~Headers de versión en request/response~~ (Cancelado)
+- ~~Routing condicional por versión (v1, v2, etc.)~~ (Cancelado)
+- ~~Compatibilidad hacia atrás configurable~~ (Cancelado)
 
 ### 6.2 Rate Limiting Adaptativo
 
