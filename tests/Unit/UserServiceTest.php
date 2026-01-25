@@ -146,12 +146,12 @@ test('puede remover un rol de un usuario', function () {
 });
 
 test('puede buscar usuarios con filtros', function () {
-    User::factory()->create(['name' => 'John Doe', 'email' => 'john@example.com']);
-    User::factory()->create(['name' => 'Jane Smith', 'email' => 'jane@example.com']);
-    User::factory()->create(['name' => 'Bob Johnson', 'email' => 'bob@example.com']);
+    User::factory()->create(['name' => 'John Doe', 'email' => 'john.doe@example.com']);
+    User::factory()->create(['name' => 'Jane Smith', 'email' => 'jane.smith@example.com']);
+    User::factory()->create(['name' => 'Bob Johnson', 'email' => 'bob.johnson@example.com']);
 
     $result = $this->userService->list([
-        'search' => 'John',
+        'search' => 'John Doe',
     ]);
 
     expect($result->items())->toHaveCount(1)
@@ -183,6 +183,9 @@ test('puede obtener un usuario por ID', function () {
 });
 
 test('lanza excepción si el usuario no existe al buscar', function () {
-    expect(fn () => $this->userService->find('non-existent-id'))
+    // Usar un UUID válido que no existe en la BD
+    $nonExistentUuid = \Illuminate\Support\Str::uuid()->toString();
+    
+    expect(fn () => $this->userService->find($nonExistentUuid))
         ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
 });

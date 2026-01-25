@@ -101,7 +101,7 @@ test('endpoint requiere permiso users.read para listar usuarios', function () {
     $token = JWTAuth::fromUser($user);
 
     $response = $this->withHeader('Authorization', "Bearer {$token}")
-        ->getJson('/api/users');
+        ->getJson('/users');
 
     // Usuario sin permiso users.read no puede listar
     $response->assertStatus(403);
@@ -114,12 +114,11 @@ test('endpoint requiere permiso users.create para crear usuarios', function () {
     $userData = [
         'name' => 'New User',
         'email' => 'newuser@example.com',
-        'password' => 'password123',
-        'password_confirmation' => 'password123',
+        'password' => 'Password123!',
     ];
 
     $response = $this->withHeader('Authorization', "Bearer {$token}")
-        ->postJson('/api/users', $userData);
+        ->postJson('/users', $userData);
 
     // Usuario sin permiso users.create no puede crear
     $response->assertStatus(403);
@@ -131,7 +130,7 @@ test('endpoint requiere permiso users.delete para eliminar usuarios', function (
     $token = JWTAuth::fromUser($user);
 
     $response = $this->withHeader('Authorization', "Bearer {$token}")
-        ->deleteJson("/api/users/{$targetUser->id}");
+        ->deleteJson("/users/{$targetUser->id}");
 
     // Usuario sin permiso users.delete no puede eliminar
     $response->assertStatus(403);
@@ -146,7 +145,7 @@ test('usuario puede actualizar su propio perfil sin permiso users.update', funct
     ];
 
     $response = $this->withHeader('Authorization', "Bearer {$token}")
-        ->putJson("/api/users/{$user->id}", $updateData);
+        ->putJson("/users/{$user->id}", $updateData);
 
     // Usuario puede actualizar su propio perfil
     $response->assertStatus(200);
@@ -162,7 +161,7 @@ test('usuario no puede actualizar otro usuario sin permiso users.update', functi
     ];
 
     $response = $this->withHeader('Authorization', "Bearer {$token}")
-        ->putJson("/api/users/{$user2->id}", $updateData);
+        ->putJson("/users/{$user2->id}", $updateData);
 
     // Usuario sin permiso users.update no puede actualizar otros usuarios
     $response->assertStatus(403);
@@ -181,7 +180,7 @@ test('usuario con permiso users.update puede actualizar otros usuarios', functio
     ];
 
     $response = $this->withHeader('Authorization', "Bearer {$token}")
-        ->putJson("/api/users/{$targetUser->id}", $updateData);
+        ->putJson("/users/{$targetUser->id}", $updateData);
 
     // Usuario con permiso users.update puede actualizar otros usuarios
     $response->assertStatus(200);

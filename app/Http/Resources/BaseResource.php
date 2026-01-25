@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
@@ -14,10 +15,15 @@ abstract class BaseResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
+     * Las clases hijas deben implementar este método.
      *
      * @return array<string, mixed>
      */
-    abstract public function toArray($request): array;
+    public function toArray(Request $request): array
+    {
+        // Las clases hijas deben sobrescribir este método
+        return [];
+    }
 
     /**
      * Campos que siempre se incluyen
@@ -32,9 +38,10 @@ abstract class BaseResource extends JsonResource
     }
 
     /**
-     * Incluir campo solo si la relación está cargada
+     * Helper para incluir campo solo si la relación está cargada
+     * Usa el método whenLoaded() del padre de JsonResource
      */
-    protected function whenLoaded(string $relation, $value = null)
+    protected function includeWhenLoaded(string $relation, $value = null)
     {
         if ($value === null) {
             $value = $this->whenLoaded($relation);

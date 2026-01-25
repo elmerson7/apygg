@@ -22,15 +22,15 @@ test('puede listar usuarios con autenticación y permiso', function () {
     User::factory()->count(3)->create();
 
     $response = $this->withHeader('Authorization', "Bearer {$token}")
-        ->getJson('/api/users');
+        ->getJson('/users');
 
     $response->assertStatus(200)
         ->assertJsonStructure([
             'success',
             'data' => [
-                'data' => [
-                    '*' => ['id', 'name', 'email'],
-                ],
+                '*' => ['id', 'name', 'email'],
+            ],
+            'meta' => [
                 'current_page',
                 'per_page',
                 'total',
@@ -39,7 +39,7 @@ test('puede listar usuarios con autenticación y permiso', function () {
 });
 
 test('no puede listar usuarios sin autenticación', function () {
-    $response = $this->getJson('/api/users');
+    $response = $this->getJson('/users');
 
     $response->assertStatus(401);
 });
@@ -49,7 +49,7 @@ test('no puede listar usuarios sin permiso users.read', function () {
     $token = JWTAuth::fromUser($user);
 
     $response = $this->withHeader('Authorization', "Bearer {$token}")
-        ->getJson('/api/users');
+        ->getJson('/users');
 
     $response->assertStatus(403);
 });
@@ -61,12 +61,11 @@ test('puede crear un usuario con permiso users.create', function () {
     $userData = [
         'name' => 'New User',
         'email' => 'newuser@example.com',
-        'password' => 'password123',
-        'password_confirmation' => 'password123',
+        'password' => 'Password123!',
     ];
 
     $response = $this->withHeader('Authorization', "Bearer {$token}")
-        ->postJson('/api/users', $userData);
+        ->postJson('/users', $userData);
 
     $response->assertStatus(201)
         ->assertJsonStructure([
@@ -87,12 +86,11 @@ test('no puede crear usuario sin permiso users.create', function () {
     $userData = [
         'name' => 'New User',
         'email' => 'newuser@example.com',
-        'password' => 'password123',
-        'password_confirmation' => 'password123',
+        'password' => 'Password123!',
     ];
 
     $response = $this->withHeader('Authorization', "Bearer {$token}")
-        ->postJson('/api/users', $userData);
+        ->postJson('/users', $userData);
 
     $response->assertStatus(403);
 });
@@ -102,7 +100,7 @@ test('valida datos requeridos al crear usuario', function () {
     $token = JWTAuth::fromUser($admin);
 
     $response = $this->withHeader('Authorization', "Bearer {$token}")
-        ->postJson('/api/users', []);
+        ->postJson('/users', []);
 
     $response->assertStatus(422)
         ->assertJsonValidationErrors(['name', 'email', 'password']);
@@ -112,10 +110,9 @@ test('puede ver detalles de un usuario', function () {
     $user = User::factory()->create();
     $token = JWTAuth::fromUser($user);
 
-    $targetUser = User::factory()->create();
-
+    // Usuario puede ver su propio perfil sin permiso users.read
     $response = $this->withHeader('Authorization', "Bearer {$token}")
-        ->getJson("/api/users/{$targetUser->id}");
+        ->getJson("/users/{$user->id}");
 
     $response->assertStatus(200)
         ->assertJsonStructure([
@@ -124,8 +121,8 @@ test('puede ver detalles de un usuario', function () {
         ])
         ->assertJson([
             'data' => [
-                'id' => $targetUser->id,
-                'email' => $targetUser->email,
+                'id' => $user->id,
+                'email' => $user->email,
             ],
         ]);
 });
@@ -139,7 +136,7 @@ test('puede actualizar su propio usuario', function () {
     ];
 
     $response = $this->withHeader('Authorization', "Bearer {$token}")
-        ->putJson("/api/users/{$user->id}", $updateData);
+        ->putJson("/users/{$user->id}", $updateData);
 
     $response->assertStatus(200)
         ->assertJson([
@@ -165,7 +162,7 @@ test('puede actualizar otro usuario con permiso users.update', function () {
     ];
 
     $response = $this->withHeader('Authorization', "Bearer {$token}")
-        ->putJson("/api/users/{$targetUser->id}", $updateData);
+        ->putJson("/users/{$targetUser->id}", $updateData);
 
     $response->assertStatus(200);
 
@@ -186,7 +183,7 @@ test('no puede actualizar otro usuario sin permiso', function () {
     ];
 
     $response = $this->withHeader('Authorization', "Bearer {$token}")
-        ->putJson("/api/users/{$user2->id}", $updateData);
+        ->putJson("/users/{$user2->id}", $updateData);
 
     $response->assertStatus(403);
 });
@@ -198,7 +195,7 @@ test('puede eliminar un usuario con permiso users.delete', function () {
     $targetUser = User::factory()->create();
 
     $response = $this->withHeader('Authorization', "Bearer {$token}")
-        ->deleteJson("/api/users/{$targetUser->id}");
+        ->deleteJson("/users/{$targetUser->id}");
 
     $response->assertStatus(200);
 
@@ -214,7 +211,7 @@ test('no puede eliminar usuario sin permiso users.delete', function () {
     $targetUser = User::factory()->create();
 
     $response = $this->withHeader('Authorization', "Bearer {$token}")
-        ->deleteJson("/api/users/{$targetUser->id}");
+        ->deleteJson("/users/{$targetUser->id}");
 
     $response->assertStatus(403);
 });
@@ -227,7 +224,7 @@ test('puede restaurar un usuario eliminado con permiso users.restore', function 
     $targetUser->delete();
 
     $response = $this->withHeader('Authorization', "Bearer {$token}")
-        ->postJson("/api/users/{$targetUser->id}/restore");
+        ->postJson("/users/{$targetUser->id}/restore");
 
     $response->assertStatus(200);
 
@@ -246,8 +243,8 @@ test('puede asignar roles a un usuario con permiso users.update', function () {
     $editorRole = Role::where('name', 'editor')->first();
 
     $response = $this->withHeader('Authorization', "Bearer {$token}")
-        ->postJson("/api/users/{$targetUser->id}/roles", [
-            'roles' => [$managerRole->id, $editorRole->id],
+        ->postJson("/users/{$targetUser->id}/roles", [
+            'role_ids' => [$managerRole->id, $editorRole->id],
         ]);
 
     $response->assertStatus(200);
@@ -269,7 +266,7 @@ test('puede remover un rol de un usuario con permiso users.update', function () 
     $targetUser->roles()->attach([$managerRole->id, $editorRole->id]);
 
     $response = $this->withHeader('Authorization', "Bearer {$token}")
-        ->deleteJson("/api/users/{$targetUser->id}/roles/{$managerRole->id}");
+        ->deleteJson("/users/{$targetUser->id}/roles/{$managerRole->id}");
 
     $response->assertStatus(200);
 
@@ -284,7 +281,7 @@ test('puede obtener actividad de un usuario', function () {
     $token = JWTAuth::fromUser($user);
 
     $response = $this->withHeader('Authorization', "Bearer {$token}")
-        ->getJson("/api/users/{$user->id}/activity");
+        ->getJson("/users/{$user->id}/activity");
 
     $response->assertStatus(200)
         ->assertJsonStructure([

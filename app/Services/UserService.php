@@ -194,11 +194,11 @@ class UserService
 
         $query = User::with(['roles', 'permissions']);
 
-        // Aplicar búsqueda si existe
+        // Aplicar búsqueda si existe (usar ILIKE para PostgreSQL case-insensitive)
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
+                $q->where('name', 'ILIKE', "%{$search}%")
+                    ->orWhere('email', 'ILIKE', "%{$search}%");
             });
         }
 

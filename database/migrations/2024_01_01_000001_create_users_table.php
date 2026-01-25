@@ -20,9 +20,11 @@ return new class extends Migration
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();
+            $table->uuid('deleted_by')->nullable();
 
             $table->index('email');
             $table->index('created_at');
+            $table->index('deleted_by');
         });
 
         // Crear password_reset_tokens solo si no existe (tabla del sistema Laravel)

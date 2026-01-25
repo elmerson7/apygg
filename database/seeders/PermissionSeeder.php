@@ -26,6 +26,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'users.read', 'resource' => 'users', 'action' => 'read', 'display_name' => 'Ver Usuarios', 'description' => 'Permite ver listado y detalles de usuarios'],
             ['name' => 'users.update', 'resource' => 'users', 'action' => 'update', 'display_name' => 'Actualizar Usuarios', 'description' => 'Permite actualizar información de usuarios'],
             ['name' => 'users.delete', 'resource' => 'users', 'action' => 'delete', 'display_name' => 'Eliminar Usuarios', 'description' => 'Permite eliminar usuarios'],
+            ['name' => 'users.restore', 'resource' => 'users', 'action' => 'restore', 'display_name' => 'Restaurar Usuarios', 'description' => 'Permite restaurar usuarios eliminados'],
             ['name' => 'users.manage-roles', 'resource' => 'users', 'action' => 'manage-roles', 'display_name' => 'Gestionar Roles de Usuarios', 'description' => 'Permite asignar y quitar roles a usuarios'],
 
             // Permisos de Roles
