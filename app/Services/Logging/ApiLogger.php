@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Infrastructure\Logging\Loggers;
+namespace App\Services\Logging;
 
-use App\Infrastructure\Logging\Models\ApiLog;
-use App\Infrastructure\Services\LogService;
+use App\Models\Logs\ApiLog;
+use App\Services\LogService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
  * Logger especializado para registrar todos los requests y responses de la API.
  * Se usa típicamente en un middleware para captura automática.
  *
- * @package App\Infrastructure\Logging\Loggers
+ * @package App\Services\Logging
  */
 class ApiLogger
 {
@@ -71,7 +71,7 @@ class ApiLogger
             
             // Si no hay trace_id, generar uno nuevo (único por request)
             if (!$traceId) {
-                $traceId = (string) \Illuminate\Support\Str::uuid();
+                $traceId = (string) Str::uuid();
             }
 
             // Obtener usuario autenticado

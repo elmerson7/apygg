@@ -2,7 +2,7 @@
 
 namespace App\Listeners;
 
-use App\Infrastructure\Logging\Loggers\AuthLogger;
+use App\Services\Logging\AuthLogger;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Logout;
@@ -45,8 +45,9 @@ class LogAuthenticationEvents
     {
         try {
             AuthLogger::logLoginFailure(
-                $event->credentials['email'] ?? null,
-                $event->user,
+                $event->credentials['email'] ?? 'unknown',
+                null,
+                null,
                 'Invalid credentials'
             );
         } catch (\Exception $e) {

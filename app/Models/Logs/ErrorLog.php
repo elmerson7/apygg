@@ -1,26 +1,26 @@
 <?php
 
-namespace App\Infrastructure\Logging\Models;
+namespace App\Models\Logs;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * ApiLog Model
+ * ErrorLog Model
  *
- * Modelo para registrar todos los requests y responses de la API.
+ * Modelo para registrar errores y excepciones del sistema.
  * Usa ID auto-incrementable como primary key (no UUID) según estrategia del proyecto.
  *
- * @package App\Infrastructure\Logging\Models
+ * @package App\Models\Logs
  */
-class ApiLog extends Model
+class ErrorLog extends Model
 {
     /**
      * The table associated with the model.
      *
      * @var string
      */
-    protected $table = 'api_logs';
+    protected $table = 'error_logs';
 
     /**
      * Indicates if the model should be timestamped.
@@ -37,16 +37,14 @@ class ApiLog extends Model
     protected $fillable = [
         'trace_id',
         'user_id',
-        'request_method',
-        'request_path',
-        'request_query',
-        'request_body',
-        'request_headers',
-        'response_status',
-        'response_body',
-        'response_time_ms',
-        'user_agent',
-        'ip_address',
+        'exception_class',
+        'message',
+        'file',
+        'line',
+        'stack_trace',
+        'context',
+        'severity',
+        'resolved_at',
     ];
 
     /**
@@ -55,15 +53,20 @@ class ApiLog extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'request_query' => 'array',
-        'request_body' => 'array',
-        'request_headers' => 'array',
-        'response_body' => 'array',
-        'response_time_ms' => 'integer',
-        'response_status' => 'integer',
+        'context' => 'array',
+        'line' => 'integer',
+        'resolved_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    /**
+     * Niveles de severidad disponibles
+     */
+    public const SEVERITY_LOW = 'low';
+    public const SEVERITY_MEDIUM = 'medium';
+    public const SEVERITY_HIGH = 'high';
+    public const SEVERITY_CRITICAL = 'critical';
 
     /**
      * Relación con User (opcional, puede ser null)
@@ -73,6 +76,16 @@ class ApiLog extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(\App\Models\User::class, 'user_id');
+    }
+
+    /**
+     * Relación con ApiLog a través de trace_id
+     *
+     * @return BelongsTo
+     */
+    public function apiLog(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Logs\ApiLog::class, 'trace_id', 'trace_id');
     }
 
     /**
@@ -100,27 +113,48 @@ class ApiLog extends Model
     }
 
     /**
-     * Scope para filtrar por método HTTP
+     * Scope para filtrar por severidad
      *
      * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $method
+     * @param string $severity
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeByMethod($query, string $method)
+    public function scopeBySeverity($query, string $severity)
     {
-        return $query->where('request_method', strtoupper($method));
+        return $query->where('severity', $severity);
     }
 
     /**
-     * Scope para filtrar por código de estado
+     * Scope para filtrar errores no resueltos
      *
      * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param int $status
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeByStatus($query, int $status)
+    public function scopeUnresolved($query)
     {
-        return $query->where('response_status', $status);
+        return $query->whereNull('resolved_at');
+    }
+
+    /**
+     * Scope para filtrar errores resueltos
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeResolved($query)
+    {
+        return $query->whereNotNull('resolved_at');
+    }
+
+    /**
+     * Scope para filtrar errores críticos
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeCritical($query)
+    {
+        return $query->where('severity', self::SEVERITY_CRITICAL);
     }
 
     /**
@@ -156,14 +190,22 @@ class ApiLog extends Model
     }
 
     /**
-     * Scope para filtrar requests lentos
+     * Marcar error como resuelto
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param int $thresholdMs Umbral en milisegundos
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return bool
      */
-    public function scopeSlowRequests($query, int $thresholdMs = 1000)
+    public function markAsResolved(): bool
     {
-        return $query->where('response_time_ms', '>', $thresholdMs);
+        return $this->update(['resolved_at' => now()]);
+    }
+
+    /**
+     * Verificar si el error está resuelto
+     *
+     * @return bool
+     */
+    public function isResolved(): bool
+    {
+        return $this->resolved_at !== null;
     }
 }

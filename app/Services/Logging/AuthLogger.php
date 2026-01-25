@@ -1,12 +1,11 @@
 <?php
 
-namespace App\Infrastructure\Logging\Loggers;
+namespace App\Services\Logging;
 
-use App\Infrastructure\Logging\Models\SecurityLog;
-use App\Infrastructure\Services\LogService;
+use App\Models\Logs\SecurityLog;
+use App\Services\LogService;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
 
 /**
  * AuthLogger
@@ -14,7 +13,7 @@ use Illuminate\Support\Str;
  * Logger especializado para registrar eventos de autenticación.
  * Registra intentos de login, fallos, cambios de contraseña, etc.
  *
- * @package App\Infrastructure\Logging\Loggers
+ * @package App\Services\Logging
  */
 class AuthLogger
 {

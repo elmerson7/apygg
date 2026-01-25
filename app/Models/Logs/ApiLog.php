@@ -1,26 +1,26 @@
 <?php
 
-namespace App\Infrastructure\Logging\Models;
+namespace App\Models\Logs;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * SecurityLog Model
+ * ApiLog Model
  *
- * Modelo para registrar eventos de seguridad del sistema.
+ * Modelo para registrar todos los requests y responses de la API.
  * Usa ID auto-incrementable como primary key (no UUID) según estrategia del proyecto.
  *
- * @package App\Infrastructure\Logging\Models
+ * @package App\Models\Logs
  */
-class SecurityLog extends Model
+class ApiLog extends Model
 {
     /**
      * The table associated with the model.
      *
      * @var string
      */
-    protected $table = 'security_logs';
+    protected $table = 'api_logs';
 
     /**
      * Indicates if the model should be timestamped.
@@ -37,10 +37,16 @@ class SecurityLog extends Model
     protected $fillable = [
         'trace_id',
         'user_id',
-        'event_type',
-        'ip_address',
+        'request_method',
+        'request_path',
+        'request_query',
+        'request_body',
+        'request_headers',
+        'response_status',
+        'response_body',
+        'response_time_ms',
         'user_agent',
-        'details',
+        'ip_address',
     ];
 
     /**
@@ -49,22 +55,15 @@ class SecurityLog extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'details' => 'array',
+        'request_query' => 'array',
+        'request_body' => 'array',
+        'request_headers' => 'array',
+        'response_body' => 'array',
+        'response_time_ms' => 'integer',
+        'response_status' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
-
-    /**
-     * Tipos de eventos de seguridad
-     */
-    public const EVENT_LOGIN_SUCCESS = 'login_success';
-    public const EVENT_LOGIN_FAILURE = 'login_failure';
-    public const EVENT_PERMISSION_DENIED = 'permission_denied';
-    public const EVENT_SUSPICIOUS_ACTIVITY = 'suspicious_activity';
-    public const EVENT_PASSWORD_CHANGED = 'password_changed';
-    public const EVENT_TOKEN_REVOKED = 'token_revoked';
-    public const EVENT_ACCOUNT_LOCKED = 'account_locked';
-    public const EVENT_ACCOUNT_UNLOCKED = 'account_unlocked';
 
     /**
      * Relación con User (opcional, puede ser null)
@@ -74,16 +73,6 @@ class SecurityLog extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(\App\Models\User::class, 'user_id');
-    }
-
-    /**
-     * Relación con ApiLog a través de trace_id
-     *
-     * @return BelongsTo
-     */
-    public function apiLog(): BelongsTo
-    {
-        return $this->belongsTo(ApiLog::class, 'trace_id', 'trace_id');
     }
 
     /**
@@ -111,49 +100,27 @@ class SecurityLog extends Model
     }
 
     /**
-     * Scope para filtrar por tipo de evento
+     * Scope para filtrar por método HTTP
      *
      * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $eventType
+     * @param string $method
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeByEventType($query, string $eventType)
+    public function scopeByMethod($query, string $method)
     {
-        return $query->where('event_type', $eventType);
+        return $query->where('request_method', strtoupper($method));
     }
 
     /**
-     * Scope para filtrar intentos de login fallidos
+     * Scope para filtrar por código de estado
      *
      * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param int $status
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeLoginFailures($query)
+    public function scopeByStatus($query, int $status)
     {
-        return $query->where('event_type', self::EVENT_LOGIN_FAILURE);
-    }
-
-    /**
-     * Scope para filtrar actividades sospechosas
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    public function scopeSuspiciousActivity($query)
-    {
-        return $query->where('event_type', self::EVENT_SUSPICIOUS_ACTIVITY);
-    }
-
-    /**
-     * Scope para filtrar por IP
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $ipAddress
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    public function scopeByIpAddress($query, string $ipAddress)
-    {
-        return $query->where('ip_address', $ipAddress);
+        return $query->where('response_status', $status);
     }
 
     /**
@@ -189,16 +156,14 @@ class SecurityLog extends Model
     }
 
     /**
-     * Verificar si el evento es crítico
+     * Scope para filtrar requests lentos
      *
-     * @return bool
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param int $thresholdMs Umbral en milisegundos
+     * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function isCritical(): bool
+    public function scopeSlowRequests($query, int $thresholdMs = 1000)
     {
-        return in_array($this->event_type, [
-            self::EVENT_LOGIN_FAILURE,
-            self::EVENT_SUSPICIOUS_ACTIVITY,
-            self::EVENT_ACCOUNT_LOCKED,
-        ]);
+        return $query->where('response_time_ms', '>', $thresholdMs);
     }
 }

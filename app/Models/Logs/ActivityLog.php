@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Infrastructure\Logging\Models;
+namespace App\Models\Logs;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * Modelo para registrar cambios en modelos (auditoría).
  * Usa ID auto-incrementable como primary key (no UUID) según estrategia del proyecto.
  *
- * @package App\Infrastructure\Logging\Models
+ * @package App\Models\Logs
  */
 class ActivityLog extends Model
 {

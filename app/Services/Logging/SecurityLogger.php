@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Infrastructure\Logging\Loggers;
+namespace App\Services\Logging;
 
-use App\Infrastructure\Logging\Models\SecurityLog;
-use App\Infrastructure\Services\LogService;
+use App\Models\Logs\SecurityLog;
+use App\Services\LogService;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
  * Logger especializado para registrar eventos de seguridad.
  * Registra permisos denegados, actividades sospechosas, bloqueos de cuenta, etc.
  *
- * @package App\Infrastructure\Logging\Loggers
+ * @package App\Services\Logging
  */
 class SecurityLogger
 {

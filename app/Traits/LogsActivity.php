@@ -2,7 +2,7 @@
 
 namespace App\Traits;
 
-use App\Infrastructure\Logging\Loggers\ActivityLogger;
+use App\Services\Logging\ActivityLogger;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 

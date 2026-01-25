@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Infrastructure\Logging\Loggers;
+namespace App\Services\Logging;
 
-use App\Infrastructure\Logging\Models\ActivityLog;
-use App\Infrastructure\Services\LogService;
+use App\Models\Logs\ActivityLog;
+use App\Services\LogService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 
@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Auth;
  * Logger especializado para registrar cambios en modelos (auditoría).
  * Se puede usar directamente o mediante Observers para captura automática.
  *
- * @package App\Infrastructure\Logging\Loggers
+ * @package App\Services\Logging
  */
 class ActivityLogger
 {

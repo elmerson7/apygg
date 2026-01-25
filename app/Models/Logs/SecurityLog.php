@@ -1,26 +1,26 @@
 <?php
 
-namespace App\Infrastructure\Logging\Models;
+namespace App\Models\Logs;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * ErrorLog Model
+ * SecurityLog Model
  *
- * Modelo para registrar errores y excepciones del sistema.
+ * Modelo para registrar eventos de seguridad del sistema.
  * Usa ID auto-incrementable como primary key (no UUID) según estrategia del proyecto.
  *
- * @package App\Infrastructure\Logging\Models
+ * @package App\Models\Logs
  */
-class ErrorLog extends Model
+class SecurityLog extends Model
 {
     /**
      * The table associated with the model.
      *
      * @var string
      */
-    protected $table = 'error_logs';
+    protected $table = 'security_logs';
 
     /**
      * Indicates if the model should be timestamped.
@@ -37,14 +37,10 @@ class ErrorLog extends Model
     protected $fillable = [
         'trace_id',
         'user_id',
-        'exception_class',
-        'message',
-        'file',
-        'line',
-        'stack_trace',
-        'context',
-        'severity',
-        'resolved_at',
+        'event_type',
+        'ip_address',
+        'user_agent',
+        'details',
     ];
 
     /**
@@ -53,20 +49,22 @@ class ErrorLog extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'context' => 'array',
-        'line' => 'integer',
-        'resolved_at' => 'datetime',
+        'details' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
 
     /**
-     * Niveles de severidad disponibles
+     * Tipos de eventos de seguridad
      */
-    public const SEVERITY_LOW = 'low';
-    public const SEVERITY_MEDIUM = 'medium';
-    public const SEVERITY_HIGH = 'high';
-    public const SEVERITY_CRITICAL = 'critical';
+    public const EVENT_LOGIN_SUCCESS = 'login_success';
+    public const EVENT_LOGIN_FAILURE = 'login_failure';
+    public const EVENT_PERMISSION_DENIED = 'permission_denied';
+    public const EVENT_SUSPICIOUS_ACTIVITY = 'suspicious_activity';
+    public const EVENT_PASSWORD_CHANGED = 'password_changed';
+    public const EVENT_TOKEN_REVOKED = 'token_revoked';
+    public const EVENT_ACCOUNT_LOCKED = 'account_locked';
+    public const EVENT_ACCOUNT_UNLOCKED = 'account_unlocked';
 
     /**
      * Relación con User (opcional, puede ser null)
@@ -85,7 +83,7 @@ class ErrorLog extends Model
      */
     public function apiLog(): BelongsTo
     {
-        return $this->belongsTo(ApiLog::class, 'trace_id', 'trace_id');
+        return $this->belongsTo(\App\Models\Logs\ApiLog::class, 'trace_id', 'trace_id');
     }
 
     /**
@@ -113,48 +111,49 @@ class ErrorLog extends Model
     }
 
     /**
-     * Scope para filtrar por severidad
+     * Scope para filtrar por tipo de evento
      *
      * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $severity
+     * @param string $eventType
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeBySeverity($query, string $severity)
+    public function scopeByEventType($query, string $eventType)
     {
-        return $query->where('severity', $severity);
+        return $query->where('event_type', $eventType);
     }
 
     /**
-     * Scope para filtrar errores no resueltos
+     * Scope para filtrar intentos de login fallidos
      *
      * @param \Illuminate\Database\Eloquent\Builder $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeUnresolved($query)
+    public function scopeLoginFailures($query)
     {
-        return $query->whereNull('resolved_at');
+        return $query->where('event_type', self::EVENT_LOGIN_FAILURE);
     }
 
     /**
-     * Scope para filtrar errores resueltos
+     * Scope para filtrar actividades sospechosas
      *
      * @param \Illuminate\Database\Eloquent\Builder $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeResolved($query)
+    public function scopeSuspiciousActivity($query)
     {
-        return $query->whereNotNull('resolved_at');
+        return $query->where('event_type', self::EVENT_SUSPICIOUS_ACTIVITY);
     }
 
     /**
-     * Scope para filtrar errores críticos
+     * Scope para filtrar por IP
      *
      * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string $ipAddress
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeCritical($query)
+    public function scopeByIpAddress($query, string $ipAddress)
     {
-        return $query->where('severity', self::SEVERITY_CRITICAL);
+        return $query->where('ip_address', $ipAddress);
     }
 
     /**
@@ -190,22 +189,16 @@ class ErrorLog extends Model
     }
 
     /**
-     * Marcar error como resuelto
+     * Verificar si el evento es crítico
      *
      * @return bool
      */
-    public function markAsResolved(): bool
+    public function isCritical(): bool
     {
-        return $this->update(['resolved_at' => now()]);
-    }
-
-    /**
-     * Verificar si el error está resuelto
-     *
-     * @return bool
-     */
-    public function isResolved(): bool
-    {
-        return $this->resolved_at !== null;
+        return in_array($this->event_type, [
+            self::EVENT_LOGIN_FAILURE,
+            self::EVENT_SUSPICIOUS_ACTIVITY,
+            self::EVENT_ACCOUNT_LOCKED,
+        ]);
     }
 }

@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Infrastructure\Logging\Loggers\SecurityLogger;
+use App\Services\Logging\SecurityLogger;
 use App\Services\LogService;
 use Closure;
 use Illuminate\Http\Request;
