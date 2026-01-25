@@ -532,14 +532,14 @@
 - [x] Implementar en middleware
 
 ### 10.4 Headers de Seguridad
-- [ ] Crear `SecurityHeadersMiddleware`
-  - [ ] X-Frame-Options, X-Content-Type-Options
-  - [ ] X-XSS-Protection, Strict-Transport-Security
-  - [ ] Content-Security-Policy, Referrer-Policy
+- [x] Crear `SecurityHeadersMiddleware`
+  - [x] X-Frame-Options, X-Content-Type-Options
+  - [x] X-XSS-Protection, Strict-Transport-Security
+  - [x] Content-Security-Policy, Referrer-Policy
 
 ### 10.5 Otros Middleware
-- [ ] Crear `IpWhitelist` middleware para endpoints críticos
-- [ ] Registrar todos los middleware en `app/Http/Kernel.php`
+- [x] Crear `IpWhitelist` middleware para endpoints críticos
+- [x] Registrar todos los middleware en `bootstrap/app.php` (Laravel 12 usa bootstrap/app.php en lugar de Kernel.php)
 
 ---
 
