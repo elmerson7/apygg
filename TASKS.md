@@ -485,12 +485,12 @@
 ## Fase 10: Middleware y Seguridad (Semana 9)
 
 ### 10.1 Middleware Personalizados
-- [ ] Crear `TraceIdMiddleware` en `app/Http/Middleware/`
-  - [ ] Generación de UUID único por request
-  - [ ] Inyección en headers (X-Trace-ID)
-- [ ] Crear `SecurityLoggerMiddleware`
-  - [ ] Registro de eventos de seguridad
-  - [ ] Detección de patrones anómalos
+- [x] Crear `TraceIdMiddleware` en `app/Http/Middleware/`
+  - [x] Generación de UUID único por request
+  - [x] Inyección en headers (X-Trace-ID)
+- [x] Crear `SecurityLoggerMiddleware`
+  - [x] Registro de eventos de seguridad
+  - [x] Detección de patrones anómalos
 - [ ] Crear `RateLimitLoggerMiddleware`
   - [ ] Registro de intentos bloqueados
   - [ ] Alertas de abuso

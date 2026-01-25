@@ -3,7 +3,6 @@
 namespace App\Http\Middleware;
 
 use App\Infrastructure\Logging\Loggers\ApiLogger;
-use App\Infrastructure\Services\LogService;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -26,11 +25,8 @@ class LogApiRequests
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Establecer trace ID si no existe
-        if (!$request->header('X-Trace-ID')) {
-            $traceId = LogService::getTraceId();
-            $request->headers->set('X-Trace-ID', $traceId);
-        }
+        // El trace ID ya está establecido por TraceIdMiddleware
+        // Solo necesitamos medir el tiempo de ejecución
 
         // Medir tiempo de ejecución
         $startTime = microtime(true);

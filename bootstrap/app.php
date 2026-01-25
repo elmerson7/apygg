@@ -28,9 +28,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // Middleware para API: todas las respuestas en JSON
         $middleware->api(prepend: [
             \Illuminate\Http\Middleware\HandleCors::class,
+            \App\Http\Middleware\TraceIdMiddleware::class, // Generar e inyectar Trace ID
             \App\Http\Middleware\ForceJsonResponse::class,
             \App\Http\Middleware\LogApiRequests::class, // Registrar requests/responses
-            \App\Http\Middleware\LogSecurityEvents::class, // Registrar eventos de seguridad
+            \App\Http\Middleware\SecurityLoggerMiddleware::class, // Registrar eventos de seguridad y detectar patrones anómalos
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
