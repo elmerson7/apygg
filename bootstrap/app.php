@@ -42,6 +42,12 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\SecurityLoggerMiddleware::class, // Registrar eventos de seguridad y detectar patrones anómalos
             \App\Http\Middleware\RateLimitLoggerMiddleware::class, // Registrar bloqueos por rate limiting y detectar abuso
         ]);
+
+        // Registrar middleware con alias para uso en rutas
+        $middleware->alias([
+            'permission' => \App\Http\Middleware\CheckPermission::class,
+            'role' => \App\Http\Middleware\CheckRole::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Integración automática de Sentry para captura de excepciones

@@ -15,6 +15,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Seeders de RBAC (deben ejecutarse primero)
+        $this->call([
+            RoleSeeder::class,
+            PermissionSeeder::class,
+        ]);
+
         // User::factory(10)->create();
 
         User::factory()->create([

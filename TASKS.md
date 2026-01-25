@@ -344,15 +344,29 @@
 - [x] Agregar métodos helper al modelo User (hasPermission, hasRole, isAdmin)
 
 ### 6.4 Middleware de RBAC
-- [ ] Crear `CheckPermission` middleware
-- [ ] Crear `CheckRole` middleware
-- [ ] Registrar middleware en `app/Http/Kernel.php`
+- [x] Crear `CheckPermission` middleware
+  - [x] Verificación de permisos RBAC
+  - [x] Soporte para múltiples permisos (OR)
+  - [x] Logging de accesos denegados
+- [x] Crear `CheckRole` middleware
+  - [x] Verificación de roles RBAC
+  - [x] Soporte para múltiples roles (OR)
+  - [x] Logging de accesos denegados
+- [x] Registrar middleware en `bootstrap/app.php` (Laravel 12)
+  - [x] Alias 'permission' y 'role' registrados
 
 ### 6.5 Seeders de RBAC
-- [ ] Crear `RoleSeeder` con roles base: Admin, User, Guest
-- [ ] Crear `PermissionSeeder` con permisos base
-- [ ] Asignar permisos iniciales a roles según jerarquía
-- [ ] Registrar en `DatabaseSeeder`
+- [x] Crear `RoleSeeder` con roles base: Admin, User, Guest
+  - [x] Roles con descripciones y display names
+- [x] Crear `PermissionSeeder` con permisos base
+  - [x] Estructura recurso.accion (users.create, roles.read, etc.)
+  - [x] Permisos para: users, roles, permissions, posts, categories, comments
+  - [x] Display names y descripciones automáticas
+- [x] Asignar permisos iniciales a roles según jerarquía
+  - [x] Admin: Todos los permisos
+  - [x] User: Permisos básicos (create, read, update, delete en posts/comments/categories)
+  - [x] Guest: Solo lectura (read en todos los recursos)
+- [x] Registrar en `DatabaseSeeder`
 
 ---
 
