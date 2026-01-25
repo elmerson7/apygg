@@ -141,18 +141,6 @@ return [
             'replace_placeholders' => true,
         ],
 
-        'sentry_logs' => [
-            'driver' => 'sentry',
-            // The minimum logging level at which this handler will be triggered
-            // Available levels: debug, info, notice, warning, error, critical, alert, emergency
-            // Niveles por entorno (mismo que canal 'sentry')
-            'level' => env('SENTRY_LOG_LEVEL', match(env('APP_ENV', 'dev')) {
-                'dev' => 'critical',
-                'staging', 'prod' => 'error',
-                default => 'error',
-            }),
-            'replace_placeholders' => true,
-        ],
 
     ],
 

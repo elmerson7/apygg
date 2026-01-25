@@ -39,6 +39,15 @@ Route::get('/health', function () {
 require __DIR__ . '/api/auth.php';
 require __DIR__ . '/api/users.php';
 
+// Rutas de prueba de Sentry
+use App\Http\Controllers\TestSentryController;
+
+Route::prefix('test/sentry')->group(function () {
+    Route::get('/info', [TestSentryController::class, 'info']);
+    Route::post('/logs', [TestSentryController::class, 'testLogs']);
+    Route::post('/exception', [TestSentryController::class, 'testException']);
+});
+
 // Rutas con API Key (para servicios/integraciones)
 // Route::middleware(['auth:api-key'])->group(function () {
 //     Route::prefix('webhooks')->group(function () {

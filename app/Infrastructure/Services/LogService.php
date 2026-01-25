@@ -73,16 +73,33 @@ class LogService
         
         $logger->{$level}($message, $enrichedContext);
 
-        // Enviar a Sentry usando el canal configurado (con niveles por entorno)
-        // El canal 'sentry' ya tiene configurado:
+        // Enviar a Sentry usando captura directa (más confiable que el canal)
+        // Verificar nivel según entorno:
         // - dev: solo critical
         // - staging/prod: error y superior
-        if (in_array($level, ['error', 'critical']) && class_exists(\Sentry\SentrySdk::class)) {
+        $shouldSendToSentry = false;
+        if (class_exists(\Sentry\SentrySdk::class)) {
+            $env = config('app.env', 'dev');
+            if ($env === 'dev' && $level === 'critical') {
+                $shouldSendToSentry = true;
+            } elseif (in_array($env, ['staging', 'prod']) && in_array($level, ['error', 'critical'])) {
+                $shouldSendToSentry = true;
+            }
+        }
+        
+        if ($shouldSendToSentry) {
             try {
-                Log::channel('sentry')->{$level}($message, $enrichedContext);
-            } catch (\Exception $e) {
-                // Si falla el canal sentry, usar método directo como fallback
+                // Usar captura directa de Sentry (más confiable que el canal)
                 self::logToSentry($level, $message, $enrichedContext);
+            } catch (\Exception $e) {
+                // Silenciar errores de Sentry para no interrumpir el flujo principal
+                // Solo loguear en modo debug
+                if (config('app.debug')) {
+                    \Log::debug('Failed to send to Sentry', [
+                        'error' => $e->getMessage(),
+                        'level' => $level,
+                    ]);
+                }
             }
         }
     }

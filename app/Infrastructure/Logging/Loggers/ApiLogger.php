@@ -64,8 +64,15 @@ class ApiLogger
                 return null;
             }
 
-            // Obtener trace ID
-            $traceId = $traceId ?? LogService::getTraceId();
+            // Obtener trace ID del header o generar uno nuevo
+            // IMPORTANTE: Cada request debe tener su propio trace_id único
+            // Si viene del header, usarlo; si no, generar uno único para este log
+            $traceId = $traceId ?? $request->header('X-Trace-ID');
+            
+            // Si no hay trace_id, generar uno nuevo (único por request)
+            if (!$traceId) {
+                $traceId = (string) \Illuminate\Support\Str::uuid();
+            }
 
             // Obtener usuario autenticado
             $userId = auth()->id();
@@ -135,8 +142,17 @@ class ApiLogger
      */
     protected static function shouldExcludePath(string $path): bool
     {
+        // Normalizar path (remover slash inicial si existe)
+        $normalizedPath = ltrim($path, '/');
+        
+        // Excluir ruta raíz explícitamente
+        if ($path === '/' || $normalizedPath === '') {
+            return true;
+        }
+        
+        // Verificar si el path contiene alguno de los paths excluidos
         foreach (self::$excludedPaths as $excludedPath) {
-            if (Str::contains($path, $excludedPath)) {
+            if (Str::contains($normalizedPath, $excludedPath)) {
                 return true;
             }
         }
