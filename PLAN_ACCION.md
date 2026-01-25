@@ -1290,8 +1290,10 @@ php artisan db:seed --class=TestDataSeeder --only=users,roles
 
 ### 14.1 Configuración de Testing
 
-**PHPUnit:**
-- Configuración de `phpunit.xml` con entorno de testing separado
+**Pest:**
+- Framework de testing moderno construido sobre PHPUnit
+- Configuración en `tests/Pest.php` con helpers y expectativas personalizadas
+- Sintaxis expresiva y legible: `test()`, `expect()`, `uses()`
 - Factories configuradas para todos los modelos principales
 - Cobertura de código configurada con enfoque pragmático:
   - Cobertura mínima 80% en código crítico (auth, usuarios, permisos)
@@ -1304,6 +1306,13 @@ php artisan db:seed --class=TestDataSeeder --only=users,roles
 - Métodos de aserción personalizados: `assertApiSuccess()`, `assertApiError()`, `assertPermissionDenied()`
 - Traits reutilizables para tests comunes
 - Seed automático de roles/permisos base antes de cada test
+
+**Características de Pest:**
+- Testing paralelo: `--parallel`
+- Watch mode: `--watch` para desarrollo ágil
+- Snapshot testing para comparar outputs
+- Architecture testing para validar estructura del código
+- Browser testing con Playwright (opcional)
 
 ### 14.2 Tests Unitarios
 

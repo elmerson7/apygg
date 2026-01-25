@@ -69,11 +69,23 @@
 ## Testing
 
 ### Herramientas de Test
-- **PHPUnit 11.x** - Framework de testing para PHP
-- **Pest** (Alternativa) - Framework de testing moderno
+- **Pest 4.x** - Framework de testing moderno para PHP (construido sobre PHPUnit 12)
+- **pestphp/pest-plugin-laravel** - Plugin de Pest para Laravel 12 con helpers específicos
+
+### Características
+- Sintaxis expresiva y legible (inspirada en Jest/RSpec)
+- API de expectativas fluida (`expect()->toBe()`, `->toBeTrue()`, etc.)
+- Testing paralelo integrado
+- Watch mode para desarrollo (`--watch`)
+- Snapshot testing
+- Browser testing con Playwright (opcional)
+- Architecture testing
+- Compatible con tests de PHPUnit existentes
 
 ### Cobertura de Código
-- **phpunit/phpunit** - Test runner
+- Pest incluye herramientas de cobertura integradas
+- Target: 80% en código crítico (auth, usuarios, permisos)
+- Enfoque pragmático: calidad sobre cantidad
 
 ---
 

@@ -429,17 +429,29 @@
   - [x] Información adicional: is_admin, last_login_at
 
 ### 7.5 UserService y Lógica
-- [ ] Crear `UserService` en `app/Modules/Users/Services/`
-  - [ ] Métodos CRUD: create(), update(), delete(), restore()
-  - [ ] Gestión de roles: assignRole(), removeRole()
-  - [ ] Gestión de permisos: assignPermission(), removePermission()
-  - [ ] Búsqueda con filtros avanzados
-  - [ ] Notificación de bienvenida
+- [x] Crear `UserService` en `app/Services/`
+  - [x] Métodos CRUD: create(), update(), delete(), restore(), find()
+  - [x] Gestión de roles: assignRoles(), removeRole()
+  - [x] Gestión de permisos: assignPermissions(), removePermission()
+  - [x] Búsqueda con filtros avanzados: list() con paginación, búsqueda por texto, filtro por rol/email
+  - [x] Integración con CacheService (TTL 1 hora)
+  - [x] Integración con LogService (auditoría de acciones)
+  - [x] Validación de email único
+  - [x] Hash automático de passwords
+  - [x] Asignación de rol 'user' por defecto
+  - [x] Protección contra remover último rol de admin
+  - [x] Método getActivityLogs() para historial de actividad
+  - [ ] Notificación de bienvenida (comentado, opcional para implementar con colas)
 
 ### 7.6 Rutas de Usuarios
-- [ ] Crear `routes/modules/users.php`
-- [ ] Registrar rutas en `routes/api.php`
-- [ ] Aplicar middleware de autenticación y autorización
+- [x] Crear `routes/api/users.php`
+- [x] Registrar rutas en `routes/api.php` con `require`
+- [x] Aplicar middleware de autenticación (`auth:api`)
+- [x] Aplicar middleware de autorización (`permission:`)
+- [x] Prefijo `users` configurado correctamente
+- [x] Rutas CRUD básicas: GET, POST, PUT, DELETE
+- [x] Rutas adicionales: restore, assignRoles, removeRole, getActivity
+- [x] Nombres de rutas asignados (route names)
 
 ### 7.7 Tests de Usuarios
 - [ ] Tests unitarios de UserService
@@ -815,14 +827,16 @@
 
 ## Fase 18: Testing (Semana 14-15)
 
-### 19.1 Configuración de PHPUnit
-- [ ] Configurar `phpunit.xml`
-  - [ ] Entorno de testing separado
-  - [ ] Conexión al trait RefreshDatabase
-- [ ] Crear `TestCase` base en `tests/TestCase.php`
-  - [ ] Setup y teardown comunes
-  - [ ] Helpers: actingAs(), loginAs(), createUser()
-  - [ ] Métodos de aserción: assertApiSuccess(), assertApiError()
+### 19.1 Configuración de Pest
+- [x] Instalar Pest y pest-plugin-laravel
+- [x] Configurar `tests/Pest.php` con helpers y expectativas
+- [x] Migrar tests existentes de PHPUnit a Pest
+- [x] Eliminar PHPUnit del proyecto
+- [ ] Crear `TestCase` base mejorado en `tests/TestCase.php`
+  - [ ] Setup y teardown comunes con RefreshDatabase trait
+  - [ ] Helpers: actingAs(), loginAs(), createUser(), createAdmin()
+  - [ ] Métodos de aserción personalizados: assertApiSuccess(), assertApiError()
+  - [ ] Seed automático de roles/permisos base
 
 ### 19.2 Tests Unitarios
 - [ ] Tests de BaseController
@@ -846,9 +860,10 @@
 - [ ] Profiling de queries lentas
 
 ### 19.5 Cobertura de Código
-- [ ] Ejecutar tests con cobertura: `phpunit --coverage-html`
+- [ ] Ejecutar tests con cobertura: `pest --coverage`
 - [ ] Target inicial: 80% en código crítico
 - [ ] Aumentar cobertura gradualmente
+- [ ] Usar `--coverage-html` para reporte visual
 
 ---
 
