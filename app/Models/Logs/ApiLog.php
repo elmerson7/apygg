@@ -20,7 +20,7 @@ class ApiLog extends Model
      *
      * @var string
      */
-    protected $table = 'api_logs';
+    protected $table = 'logs_api';
 
     /**
      * Indicates if the model should be timestamped.

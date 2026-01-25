@@ -20,7 +20,7 @@ class ErrorLog extends Model
      *
      * @var string
      */
-    protected $table = 'error_logs';
+    protected $table = 'logs_error';
 
     /**
      * Indicates if the model should be timestamped.

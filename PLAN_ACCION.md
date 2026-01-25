@@ -201,7 +201,7 @@ Cliente → FrankenPHP (Octane) / Laravel App
 - Documentar cuándo usar PgBouncer vs conexión directa
 
 **Particionamiento de Tablas de Logs:**
-- Implementar particionamiento por fecha en tablas de logs (api_logs, error_logs, security_logs, activity_logs)
+- Implementar particionamiento por fecha en tablas de logs (logs_api, logs_error, logs_security, logs_activity)
 - Configurar particiones mensuales para optimizar consultas y limpieza
 - Implementar políticas de retención y TTL por tipo de log
 - Índices optimizados para consultas por fecha y usuario
@@ -285,7 +285,7 @@ Cliente → FrankenPHP (Octane) / Laravel App
 - Registro automático de cambios en modelos mediante Observers
 - Captura de valores antes/después del cambio en JSON
 - Asociación automática con usuario autenticado que realiza el cambio
-- Guardado en base de datos principal (`apygg.activity_logs`) con particionamiento
+- Guardado en base de datos principal (`apygg.logs_activity`) con particionamiento
 - Filtrado de campos sensibles (passwords, tokens) antes de guardar
 - Configuración de modelos a auditar mediante propiedad `$auditable`
 
@@ -1204,10 +1204,10 @@ readinessProbe:
 - `create_notifications_table` - Notificaciones en base de datos con notifiable_type, notifiable_id, data, read_at
 
 **Logging (en misma base de datos con particionamiento):**
-- `create_api_logs_table` - Logs de requests/responses con trace_id, user_id, request_method, request_path, request_query, request_body, request_headers, response_status, response_body, response_time_ms, user_agent, ip_address, created_at
-- `create_error_logs_table` - Logs de errores con trace_id, user_id, exception_class, message, file, line, stack_trace, context, severity, resolved_at, created_at
-- `create_security_logs_table` - Logs de seguridad con trace_id, user_id, event_type, ip_address, user_agent, details, created_at
-- `create_activity_logs_table` - Logs de auditoría con user_id, model_type, model_id, action, old_values, new_values, ip_address, created_at
+- `create_api_logs_table` - Logs de requests/responses (tabla: `logs_api`) con trace_id, user_id, request_method, request_path, request_query, request_body, request_headers, response_status, response_body, response_time_ms, user_agent, ip_address, created_at
+- `create_error_logs_table` - Logs de errores (tabla: `logs_error`) con trace_id, user_id, exception_class, message, file, line, stack_trace, context, severity, resolved_at, created_at
+- `create_security_logs_table` - Logs de seguridad (tabla: `logs_security`) con trace_id, user_id, event_type, ip_address, user_agent, details, created_at
+- `create_activity_logs_table` - Logs de auditoría (tabla: `logs_activity`) con user_id, model_type, model_id, action, old_values, new_values, ip_address, created_at
 - Particionamiento por mes en tablas de logs para optimizar consultas y limpieza
 
 **Índices:**
@@ -1597,7 +1597,7 @@ php artisan db:seed --class=TestDataSeeder --only=users,roles
 
 **Backups Automáticos:**
 - Backup diario de base de datos principal (`apygg`) a las 3 AM
-  - Incluye todas las tablas: usuarios, roles, permisos, y logs (api_logs, error_logs, security_logs, activity_logs)
+  - Incluye todas las tablas: usuarios, roles, permisos, y logs (logs_api, logs_error, logs_security, logs_activity)
   - Las tablas de logs están particionadas, permitiendo backups incrementales eficientes
 - Retención configurable: 7 días (diarios), 30 días (semanales), 90 días (mensuales)
 - Compresión de backups usando gzip

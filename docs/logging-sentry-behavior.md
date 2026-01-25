@@ -34,7 +34,7 @@ Este documento explica cómo funciona Sentry en diferentes entornos, la diferenc
 - **Ubicación**: `app/Infrastructure/Logging/Loggers/`
 - **Ejemplos**: `ActivityLogger`, `AuthLogger`, `SecurityLogger`, `ApiLogger`
 - **Propósito**: Guardar logs estructurados en **tablas de base de datos**
-- **Tablas**: `activity_logs`, `security_logs`, `api_logs`, `error_logs`
+- **Tablas**: `logs_activity`, `logs_security`, `logs_api`, `logs_error`
 - **Uso**: Se llaman directamente o mediante middleware/listeners
 - **Ejemplo**:
 ```php
@@ -108,10 +108,10 @@ LogService::error('Error en procesamiento', ['data' => $data]);
 ┌──────────────────┐              ┌──────────────────┐  ┌──────────┐
 │ Tablas BD        │              │ laravel.log      │  │ Sentry  │
 │                  │              │                  │  │         │
-│ • activity_logs │              │ • Todos los      │  │ • Solo  │
-│ • security_logs │              │   niveles según  │  │   error │
-│ • api_logs      │              │   entorno        │  │   y     │
-│ • error_logs    │              │                  │  │   critical│
+│ • logs_activity │              │ • Todos los      │  │ • Solo  │
+│ • logs_security │              │   niveles según  │  │   error │
+│ • logs_api      │              │   entorno        │  │   y     │
+│ • logs_error    │              │                  │  │   critical│
 └──────────────────┘              └──────────────────┘  └──────────┘
 ```
 

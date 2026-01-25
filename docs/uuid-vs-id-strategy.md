@@ -13,7 +13,7 @@ Esta guía define qué tipo de identificador usar según el tipo de tabla en el 
 | **Entidades públicas (por defecto)** | ❌ No | ✅ Sí | `users`, `roles`, `permissions`, `products`, `orders` |
 | **Entidades con API** | ❌ No | ✅ Sí | `api_keys`, `webhooks`, `notifications`, `tickets` |
 | **Entidades públicas simples** | ❌ No | ✅ Sí | `public_tokens`, `shareable_links`, `public_files` |
-| **Logs y auditoría** | ✅ Sí | ❌ No | `api_logs`, `error_logs`, `security_logs`, `activity_logs` |
+| **Logs y auditoría** | ✅ Sí | ❌ No | `logs_api`, `logs_error`, `logs_security`, `logs_activity` |
 | **Tablas pivot** | ✅ Sí | ❌ No | `role_permission`, `user_role`, `user_permission` |
 | **Tablas sistema Laravel** | ⚠️ No tocar | ⚠️ No tocar | `cache`, `jobs`, `sessions`, `failed_jobs`, `migrations` |
 | **Tablas internas** | ✅ Sí | ❌ No | `system_settings`, `internal_config` |

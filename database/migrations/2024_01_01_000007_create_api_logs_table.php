@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('api_logs', function (Blueprint $table) {
+        Schema::create('logs_api', function (Blueprint $table) {
             $table->id();
             $table->uuid('trace_id');
             $table->uuid('user_id')->nullable();
@@ -40,6 +40,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('api_logs');
+        Schema::dropIfExists('logs_api');
     }
 };

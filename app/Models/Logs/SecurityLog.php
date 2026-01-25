@@ -20,7 +20,7 @@ class SecurityLog extends Model
      *
      * @var string
      */
-    protected $table = 'security_logs';
+    protected $table = 'logs_security';
 
     /**
      * Indicates if the model should be timestamped.

@@ -21,7 +21,7 @@ class ActivityLog extends Model
      *
      * @var string
      */
-    protected $table = 'activity_logs';
+    protected $table = 'logs_activity';
 
     /**
      * Indicates if the model should be timestamped.
