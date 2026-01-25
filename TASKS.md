@@ -522,14 +522,14 @@
 - [x] Registrar middleware en `bootstrap/app.php`
 
 ### 10.3 Rate Limiting Adaptativo
-- [ ] Crear `config/rate-limiting.php`
-- [ ] Configurar límites por endpoint:
-  - [ ] Auth endpoints: 5 por minuto
-  - [ ] Lectura: 60 por minuto
-  - [ ] Escritura: 30 por minuto
-  - [ ] Admin: 10 por minuto
-- [ ] Headers informativos en respuestas
-- [ ] Implementar en middleware
+- [x] Crear `config/rate-limiting.php`
+- [x] Configurar límites por endpoint:
+  - [x] Auth endpoints: 5 por minuto
+  - [x] Lectura: 60 por minuto
+  - [x] Escritura: 30 por minuto
+  - [x] Admin: 10 por minuto
+- [x] Headers informativos en respuestas
+- [x] Implementar en middleware
 
 ### 10.4 Headers de Seguridad
 - [ ] Crear `SecurityHeadersMiddleware`

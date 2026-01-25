@@ -10,13 +10,15 @@ use App\Http\Controllers\Auth\PasswordController;
 |--------------------------------------------------------------------------
 |
 | Rutas relacionadas con autenticación de usuarios.
-| Rate limiting: 5 requests por minuto por IP para endpoints públicos.
+| Rate limiting adaptativo aplicado automáticamente:
+| - Endpoints públicos (login, register, password reset): 5 por minuto por IP
+| - Endpoints protegidos: según tipo (read/write/admin)
 |
 */
 
 // Rutas públicas de autenticación (sin autenticación requerida)
-// Rate limiting: 5 intentos por minuto por IP para prevenir ataques de fuerza bruta
-Route::prefix('auth')->middleware(['throttle:5,1'])->group(function () {
+// Rate limiting adaptativo: 5 intentos por minuto por IP (configurado en AdaptiveRateLimitingMiddleware)
+Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/forgot-password', [PasswordController::class, 'forgotPassword']);
@@ -24,8 +26,8 @@ Route::prefix('auth')->middleware(['throttle:5,1'])->group(function () {
 });
 
 // Rutas protegidas de autenticación (requieren autenticación JWT)
-// Rate limiting: 30 requests por minuto por usuario autenticado
-Route::middleware(['auth:api', 'throttle:30,1'])->prefix('auth')->group(function () {
+// Rate limiting adaptativo aplicado automáticamente según tipo de endpoint
+Route::middleware(['auth:api'])->prefix('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
     Route::get('/me', [AuthController::class, 'me']);
