@@ -4,15 +4,17 @@ namespace Database\Seeders;
 
 use App\Models\Role;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 /**
  * RoleSeeder
  *
  * Seeder para crear roles base del sistema RBAC:
  * - Admin: Acceso total al sistema
+ * - Manager: Gestión y supervisión
  * - User: Usuario estándar con acceso básico
  * - Guest: Usuario invitado con acceso de solo lectura
+ * - Moderator: Moderación de contenido
+ * - Editor: Edición de contenido
  *
  * @package Database\Seeders
  */
@@ -25,28 +27,34 @@ class RoleSeeder extends Seeder
     {
         $roles = [
             [
-                'id' => $this->generateUuid(),
                 'name' => 'admin',
                 'display_name' => 'Administrador',
-                'description' => 'Rol de administrador con acceso total al sistema. Puede gestionar usuarios, roles, permisos y todas las funcionalidades.',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'description' => 'Rol con todos los permisos del sistema',
             ],
             [
-                'id' => $this->generateUuid(),
+                'name' => 'manager',
+                'display_name' => 'Gerente',
+                'description' => 'Rol con permisos de gestión y supervisión',
+            ],
+            [
                 'name' => 'user',
                 'display_name' => 'Usuario',
-                'description' => 'Rol de usuario estándar con acceso básico a las funcionalidades del sistema.',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'description' => 'Rol básico de usuario con permisos limitados',
             ],
             [
-                'id' => $this->generateUuid(),
                 'name' => 'guest',
                 'display_name' => 'Invitado',
-                'description' => 'Rol de invitado con acceso de solo lectura limitado.',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'description' => 'Rol de solo lectura sin permisos de escritura',
+            ],
+            [
+                'name' => 'moderator',
+                'display_name' => 'Moderador',
+                'description' => 'Rol con permisos de moderación de contenido',
+            ],
+            [
+                'name' => 'editor',
+                'display_name' => 'Editor',
+                'description' => 'Rol con permisos de edición de contenido',
             ],
         ];
 
@@ -54,20 +62,13 @@ class RoleSeeder extends Seeder
         foreach ($roles as $role) {
             Role::firstOrCreate(
                 ['name' => $role['name']],
-                $role
+                array_merge($role, [
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ])
             );
         }
 
-        $this->command->info('Roles base creados: Admin, User, Guest');
-    }
-
-    /**
-     * Generar UUID v4
-     *
-     * @return string
-     */
-    protected function generateUuid(): string
-    {
-        return \Illuminate\Support\Str::uuid()->toString();
+        $this->command->info('Roles base creados: Admin, Manager, User, Guest, Moderator, Editor');
     }
 }

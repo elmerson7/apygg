@@ -2,10 +2,20 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
+/**
+ * DatabaseSeeder
+ *
+ * Seeder principal que ejecuta todos los seeders en el orden correcto.
+ * Orden de ejecución:
+ * 1. RoleSeeder - Crea roles base
+ * 2. PermissionSeeder - Crea permisos y los asigna a roles
+ * 3. UserSeeder - Crea usuarios de prueba con roles asignados
+ *
+ * @package Database\Seeders
+ */
 class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
@@ -17,15 +27,12 @@ class DatabaseSeeder extends Seeder
     {
         // Seeders de RBAC (deben ejecutarse primero)
         $this->call([
-            RoleSeeder::class,
-            PermissionSeeder::class,
+            RoleSeeder::class,      // 1. Crear roles
+            PermissionSeeder::class, // 2. Crear permisos y asignarlos a roles
+            UserSeeder::class,       // 3. Crear usuarios de prueba con roles
         ]);
 
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        $this->command->info('✅ Seeders ejecutados correctamente');
+        $this->command->info('📝 Password por defecto para todos los usuarios: "password"');
     }
 }
