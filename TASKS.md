@@ -491,9 +491,9 @@
 - [x] Crear `SecurityLoggerMiddleware`
   - [x] Registro de eventos de seguridad
   - [x] Detección de patrones anómalos
-- [ ] Crear `RateLimitLoggerMiddleware`
-  - [ ] Registro de intentos bloqueados
-  - [ ] Alertas de abuso
+- [x] Crear `RateLimitLoggerMiddleware`
+  - [x] Registro de intentos bloqueados
+  - [x] Alertas de abuso
 - [ ] Crear `CorsMiddleware`
   - [ ] Configuración por entorno
   - [ ] Whitelist de dominios

@@ -32,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\ForceJsonResponse::class,
             \App\Http\Middleware\LogApiRequests::class, // Registrar requests/responses
             \App\Http\Middleware\SecurityLoggerMiddleware::class, // Registrar eventos de seguridad y detectar patrones anómalos
+            \App\Http\Middleware\RateLimitLoggerMiddleware::class, // Registrar bloqueos por rate limiting y detectar abuso
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
