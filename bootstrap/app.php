@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Route;
 use Sentry\Laravel\Integration;
 
 return Application::configure(basePath: dirname(__DIR__))
+    ->withProviders([
+        \App\Providers\AuthServiceProvider::class,
+    ])
     ->withRouting(
         // No cargar rutas web (solo API)
         // web: __DIR__.'/../routes/web.php',

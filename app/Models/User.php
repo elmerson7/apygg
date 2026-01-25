@@ -118,4 +118,90 @@ class User extends Authenticatable implements JWTSubject
             'permission_id'
         )->withTimestamps();
     }
+
+    /**
+     * Verificar si el usuario tiene un permiso específico
+     * Verifica primero permisos directos, luego permisos de roles
+     *
+     * @param string $permissionName Nombre del permiso a verificar
+     * @return bool
+     */
+    public function hasPermission(string $permissionName): bool
+    {
+        // Verificar permisos directos primero
+        if ($this->permissions()->where('name', $permissionName)->exists()) {
+            return true;
+        }
+
+        // Verificar permisos a través de roles
+        return $this->roles()->whereHas('permissions', function ($query) use ($permissionName) {
+            $query->where('name', $permissionName);
+        })->exists();
+    }
+
+    /**
+     * Verificar si el usuario tiene alguno de los permisos especificados
+     *
+     * @param array<string> $permissionNames Array de nombres de permisos
+     * @return bool
+     */
+    public function hasAnyPermission(array $permissionNames): bool
+    {
+        foreach ($permissionNames as $permissionName) {
+            if ($this->hasPermission($permissionName)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Verificar si el usuario tiene todos los permisos especificados
+     *
+     * @param array<string> $permissionNames Array de nombres de permisos
+     * @return bool
+     */
+    public function hasAllPermissions(array $permissionNames): bool
+    {
+        foreach ($permissionNames as $permissionName) {
+            if (!$this->hasPermission($permissionName)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Verificar si el usuario tiene un rol específico
+     *
+     * @param string $roleName Nombre del rol
+     * @return bool
+     */
+    public function hasRole(string $roleName): bool
+    {
+        return $this->roles()->where('name', $roleName)->exists();
+    }
+
+    /**
+     * Verificar si el usuario tiene alguno de los roles especificados
+     *
+     * @param array<string> $roleNames Array de nombres de roles
+     * @return bool
+     */
+    public function hasAnyRole(array $roleNames): bool
+    {
+        return $this->roles()->whereIn('name', $roleNames)->exists();
+    }
+
+    /**
+     * Verificar si el usuario es administrador
+     *
+     * @return bool
+     */
+    public function isAdmin(): bool
+    {
+        return $this->hasRole('admin');
+    }
 }

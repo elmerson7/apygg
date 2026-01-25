@@ -329,10 +329,19 @@
   - [x] Cache y auditoría integrados
 
 ### 6.3 Policies de Laravel
-- [ ] Crear `UserPolicy` en `app/Policies/`
-- [ ] Crear `RolePolicy` en `app/Policies/`
-- [ ] Crear `PermissionPolicy` en `app/Policies/`
-- [ ] Registrar policies en `AuthServiceProvider`
+- [x] Crear `UserPolicy` en `app/Policies/`
+  - [x] Métodos: viewAny, view, create, update, delete, restore, forceDelete
+  - [x] Verificación de permisos con RBAC
+  - [x] Logging de acciones autorizadas
+- [x] Crear `RolePolicy` en `app/Policies/`
+  - [x] Métodos: viewAny, view, create, update, delete
+  - [x] Métodos adicionales: assignPermission, removePermission
+  - [x] Protección especial para rol 'admin'
+- [x] Crear `PermissionPolicy` en `app/Policies/`
+  - [x] Métodos: viewAny, view, create, update, delete
+  - [x] Solo administradores pueden crear/actualizar/eliminar
+- [x] Crear `AuthServiceProvider` y registrar policies
+- [x] Agregar métodos helper al modelo User (hasPermission, hasRole, isAdmin)
 
 ### 6.4 Middleware de RBAC
 - [ ] Crear `CheckPermission` middleware
