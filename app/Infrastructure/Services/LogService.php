@@ -73,9 +73,17 @@ class LogService
         
         $logger->{$level}($message, $enrichedContext);
 
-        // Enviar a Sentry si es error crítico
+        // Enviar a Sentry usando el canal configurado (con niveles por entorno)
+        // El canal 'sentry' ya tiene configurado:
+        // - dev: solo critical
+        // - staging/prod: error y superior
         if (in_array($level, ['error', 'critical']) && class_exists(\Sentry\SentrySdk::class)) {
-            self::logToSentry($level, $message, $enrichedContext);
+            try {
+                Log::channel('sentry')->{$level}($message, $enrichedContext);
+            } catch (\Exception $e) {
+                // Si falla el canal sentry, usar método directo como fallback
+                self::logToSentry($level, $message, $enrichedContext);
+            }
         }
     }
 

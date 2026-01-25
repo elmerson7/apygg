@@ -457,10 +457,19 @@
   - [x] ✅ Listo para usar en middleware (ver Fase 10 para implementación de middleware)
 
 ### 9.4 Configuración de Canales
-- [ ] Crear canal `database_logs` en `config/logging.php`
-- [ ] Configurar `LogService` para usar canal database
-- [ ] Integración con Sentry para errores críticos (opcional)
-- [ ] Configurar niveles de log por canal y entorno
+- [x] ~~Crear canal `database_logs`~~ (NO necesario - decisión arquitectónica: logs van en tablas, no canal separado)
+- [x] ~~Configurar `LogService` para usar canal database~~ (NO necesario)
+- [x] Integración con Sentry para errores críticos
+  - [x] ✅ Configurado canal `sentry` con niveles por entorno
+  - [x] ✅ Dev: solo `critical` (evita spam en desarrollo)
+  - [x] ✅ Staging/Prod: `error` y superior
+  - [x] ✅ LogService actualizado para usar canal `sentry` automáticamente
+- [x] Configurar niveles de log por canal y entorno
+  - [x] ✅ Archivos (`single`/`daily`): dev=`debug`, staging/prod=`error`
+  - [x] ✅ Sentry: dev=`critical`, staging/prod=`error`
+  - [x] ✅ Slack: dev=`critical`, prod=`error`
+  - [x] ✅ Configuración automática según `APP_ENV`
+  - [x] ✅ Documentación creada en `docs/logging-channels-configuration.md`
 
 ### 9.5 Tests de Logging
 - [ ] Tests de que los logs se registran correctamente
