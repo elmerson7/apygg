@@ -407,14 +407,30 @@
 ## Fase 9: Sistema de Logging y Auditoría (Semana 8)
 
 ### 9.1 Migraciones de Logs (ya creadas en Fase 2)
-- [ ] Verificar migraciones de: api_logs, error_logs, security_logs, activity_logs
+- [x] Verificar migraciones de: api_logs, error_logs, security_logs, activity_logs
+  - [x] ✅ Todas las migraciones están creadas y ejecutadas correctamente
+  - [x] ✅ Estructura correcta según estrategia del proyecto (ID auto-incrementable para logs)
+  - [x] ✅ Índices correctos para optimización
+  - [x] ✅ Verificación documentada en `docs/fase9-revision-migraciones-logs.md`
 
 ### 9.2 Modelos de Logs
-- [ ] Crear `ApiLog` en `app/Infrastructure/Logging/Models/`
-- [ ] Crear `ErrorLog` en `app/Infrastructure/Logging/Models/`
-- [ ] Crear `SecurityLog` en `app/Infrastructure/Logging/Models/`
-- [ ] Crear `ActivityLog` en `app/Infrastructure/Logging/Models/`
-- [ ] Aplicar trait HasUuid a todos
+- [x] Crear `ApiLog` en `app/Infrastructure/Logging/Models/`
+  - [x] ✅ Modelo creado con scopes útiles (byTraceId, byUserId, byMethod, slowRequests, etc.)
+  - [x] ✅ Usa ID auto-incrementable (NO UUID como primary key según estrategia)
+  - [x] ✅ Campos UUID (trace_id, user_id) manejados como campos normales
+- [x] Crear `ErrorLog` en `app/Infrastructure/Logging/Models/`
+  - [x] ✅ Modelo creado con constantes de severidad
+  - [x] ✅ Métodos helper (markAsResolved, isResolved)
+  - [x] ✅ Scopes para filtrar por severidad y estado
+- [x] Crear `SecurityLog` en `app/Infrastructure/Logging/Models/`
+  - [x] ✅ Modelo creado con constantes de tipos de eventos
+  - [x] ✅ Scopes para eventos críticos y sospechosos
+  - [x] ✅ Método isCritical() para identificar eventos importantes
+- [x] Crear `ActivityLog` en `app/Infrastructure/Logging/Models/`
+  - [x] ✅ Modelo creado con relación polimórfica al modelo auditado
+  - [x] ✅ Métodos helper (getChangedFields, hasChanges)
+  - [x] ✅ Scopes para filtrar por acción (created, updated, deleted, restored)
+- [x] **NO aplicar trait HasUuid** (correcto según estrategia: logs usan ID auto-incrementable)
 
 ### 9.3 Loggers Especializados
 - [ ] Crear `ActivityLogger` en `app/Infrastructure/Logging/Loggers/`
