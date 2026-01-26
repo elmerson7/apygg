@@ -671,14 +671,14 @@
 - [x] Dashboard accesible en `/horizon`
 
 ### 12.5 Scheduler de Tareas
-- [ ] Configurar en `app/Console/Kernel.php`:
-  - [ ] Limpieza JWT blacklist: cada hora
-  - [ ] Limpieza tokens de reset: cada 24h
-  - [ ] Limpieza de logs antiguos: diariamente
-  - [ ] Generación de reportes: semanalmente
-  - [ ] Backup de base de datos: diariamente
-  - [ ] Sincronización de índices de búsqueda: cada hora
-  - [ ] Verificación de salud: cada 5 minutos
+- [x] Configurar en `routes/console.php` (Laravel 12):
+  - [x] Limpieza JWT blacklist: cada hora (`CleanJwtBlacklistCommand`)
+  - [x] Limpieza tokens de reset: cada 24h (`CleanPasswordResetTokensCommand`)
+  - [x] Limpieza de logs antiguos: diariamente (`CleanOldLogsCommand`)
+  - [x] Generación de reportes: semanalmente (`GenerateReportsCommand`)
+  - [x] Backup de base de datos: diariamente (`BackupDatabaseCommand`)
+  - [x] Sincronización de índices de búsqueda: cada hora (`SyncSearchIndexesCommand`)
+  - [x] Verificación de salud: cada 5 minutos (`HealthCheckCommand`)
 
 ---
 
