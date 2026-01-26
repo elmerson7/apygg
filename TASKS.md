@@ -658,11 +658,11 @@
   - [x] Notificaciones de fallos
 
 ### 12.3 Jobs Específicos
-- [ ] Crear `SendWelcomeEmailJob`
-- [ ] Crear `SendPasswordResetEmailJob`
-- [ ] Crear `SendNotificationJob`
-- [ ] Crear `ProcessApiLogJob`
-- [ ] Crear `ProcessActivityLogJob`
+- [x] Crear `SendWelcomeEmailJob`
+- [x] Crear `SendPasswordResetEmailJob`
+- [x] Crear `SendNotificationJob`
+- [x] Crear `ProcessApiLogJob`
+- [x] Crear `ProcessActivityLogJob`
 
 ### 12.4 Laravel Horizon
 - [ ] Instalar Horizon
