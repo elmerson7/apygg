@@ -47,6 +47,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'permission' => \App\Http\Middleware\CheckPermission::class,
             'role' => \App\Http\Middleware\CheckRole::class,
+            'auth:api-key' => \App\Http\Middleware\AuthenticateApiKey::class,
+            'api-key-scope' => \App\Http\Middleware\CheckApiKeyScope::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -714,26 +714,66 @@
 ## Fase 14: API Keys y Autenticación Avanzada (Semana 11)
 
 ### 14.1 Modelo de API Keys
-- [ ] Crear `ApiKey` en `app/Modules/Users/Models/`
-  - [ ] Campos: name, key (hashed), user_id, scopes, last_used_at, expires_at
-  - [ ] Prefijo identificable: `apygg_live_`, `apygg_test_`
+- [x] Crear `ApiKey` en `app/Models/` (estructura estándar, sin app/Modules)
+  - [x] Campos: name, key (hashed SHA256), user_id, scopes (JSON), last_used_at, expires_at
+  - [x] Prefijo identificable: `apygg_live_`, `apygg_test_` (configurado en config/api-keys.php)
+  - [x] Relación belongsTo con User
+  - [x] Scopes: active(), expired(), byUser()
+  - [x] Métodos: isExpired(), isActive(), hasScope(), hasAnyScope(), hasAllScopes()
+  - [x] Soft deletes habilitado
 
 ### 14.2 Controlador de API Keys
-- [ ] Crear `ApiKeyController`
-  - [ ] `GET /api/v1/api-keys` - Listar keys del usuario
-  - [ ] `POST /api/v1/api-keys` - Crear nueva key
-  - [ ] `DELETE /api/v1/api-keys/{id}` - Revocar key
-  - [ ] `POST /api/v1/api-keys/{id}/rotate` - Rotación de key
+- [x] Crear `ApiKeyController` en `app/Http/Controllers/ApiKeys/`
+  - [x] `GET /api-keys` - Listar keys del usuario autenticado (con paginación)
+  - [x] `POST /api-keys` - Crear nueva key (retorna key completa solo en creación)
+  - [x] `GET /api-keys/{id}` - Ver detalles de key específica
+  - [x] `DELETE /api-keys/{id}` - Revocar key
+  - [x] `POST /api-keys/{id}/rotate` - Rotación de key (generar nueva con período de gracia)
+  - [x] Usa `auth:api` middleware (JWT) para autenticación
+  - [x] Form Requests: StoreApiKeyRequest, RotateApiKeyRequest
+  - [x] Resource: ApiKeyResource (nunca expone hash de key)
 
 ### 14.3 Middleware de API Keys
-- [ ] Crear `AuthenticateApiKey` middleware
-- [ ] Crear `CheckApiKeyScope` middleware
-- [ ] Validación de scopes
+- [x] Crear `AuthenticateApiKey` middleware en `app/Http/Middleware/`
+  - [x] Lee API Key de header `X-API-Key` o `Authorization: Bearer {key}`
+  - [x] Valida key por hash SHA256, verifica expiración y estado activo
+  - [x] Autentica usuario asociado con `auth()->loginUsingId()`
+  - [x] Actualiza `last_used_at` en background
+  - [x] Registra uso en SecurityLog
+  - [x] Registrado como alias `auth:api-key` en bootstrap/app.php
+- [x] Crear `CheckApiKeyScope` middleware en `app/Http/Middleware/`
+  - [x] Verifica que request fue autenticado con API Key (no JWT)
+  - [x] Valida scopes requeridos contra scopes de la key
+  - [x] Soporte para scope wildcard `*` (acceso total)
+  - [x] Registra denegación en SecurityLog
+  - [x] Registrado como alias `api-key-scope` en bootstrap/app.php
 
 ### 14.4 Sistema de Scopes
-- [ ] Definir scopes granulares: `users:read`, `users:write`, etc.
-- [ ] Asignación de múltiples scopes por key
-- [ ] Validación de scopes en endpoints
+- [x] Definir scopes granulares en `config/api-keys.php`: `users.read`, `users.write`, `users.create`, `users.delete`, etc.
+- [x] Formato de scopes: `resource.action` (compatible con permisos RBAC)
+- [x] Asignación de múltiples scopes por key (array JSON)
+- [x] Validación de scopes en Form Requests (regex: `resource.action` o `*`)
+- [x] Validación de scopes disponibles contra lista configurada
+- [x] Scope wildcard `*` para acceso total
+
+### 14.5 Servicios y Configuración
+- [x] Crear `ApiKeyService` en `app/Services/`
+  - [x] Métodos CRUD: create(), update(), delete(), find(), list()
+  - [x] Método rotate() con período de gracia (7 días)
+  - [x] Método validate() con cache (5 min TTL)
+  - [x] Integración con CacheService y LogService
+- [x] Crear `config/api-keys.php` con configuración completa
+  - [x] Prefijos: `apygg_live_`, `apygg_test_`
+  - [x] Longitud de key: 64 caracteres
+  - [x] Lista de scopes disponibles
+  - [x] Período de gracia para rotación: 7 días
+  - [x] TTL de cache: 5 minutos
+
+### 14.6 Factory y Tests
+- [x] Crear `ApiKeyFactory` en `database/factories/`
+  - [x] Genera keys con prefijos correctos (live/test)
+  - [x] Scopes aleatorios de lista válida
+  - [x] Estados: neverExpires(), expired(), withAllScopes(), withoutScopes()
 
 ---
 

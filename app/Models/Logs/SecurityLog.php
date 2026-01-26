@@ -84,6 +84,8 @@ class SecurityLog extends Model
 
     public const EVENT_ACCOUNT_UNLOCKED = 'account_unlocked';
 
+    public const EVENT_API_KEY_USED = 'api_key_used';
+
     /**
      * Relación con User (opcional, puede ser null)
      */

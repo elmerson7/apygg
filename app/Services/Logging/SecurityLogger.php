@@ -179,6 +179,44 @@ class SecurityLogger
     }
 
     /**
+     * Registrar uso de API Key
+     *
+     * @param  \App\Models\ApiKey  $apiKey  API Key utilizada
+     * @param  Request|null  $request  Request actual
+     */
+    public static function logApiKeyUsage(
+        \App\Models\ApiKey $apiKey,
+        ?Request $request = null
+    ): ?SecurityLog {
+        try {
+            $request = $request ?? request();
+
+            return SecurityLog::create([
+                'trace_id' => LogService::getTraceId(),
+                'user_id' => $apiKey->user_id,
+                'event_type' => SecurityLog::EVENT_API_KEY_USED,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'details' => [
+                    'api_key_id' => $apiKey->id,
+                    'api_key_name' => $apiKey->name,
+                    'route' => $request->route()?->getName(),
+                    'url' => $request->fullUrl(),
+                    'method' => $request->method(),
+                    'used_at' => now()->toIso8601String(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            LogService::error('Failed to log API Key usage', [
+                'api_key_id' => $apiKey->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
      * Registrar evento de seguridad personalizado
      *
      * @param  string  $eventType  Tipo de evento (debe ser uno de los EVENT_*)

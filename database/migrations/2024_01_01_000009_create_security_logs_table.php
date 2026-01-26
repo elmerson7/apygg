@@ -24,6 +24,7 @@ return new class extends Migration
                 'token_revoked',
                 'account_locked',
                 'account_unlocked',
+                'api_key_used',
             ]);
             $table->string('ip_address', 45)->nullable();
             $table->string('user_agent', 500)->nullable();
