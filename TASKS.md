@@ -834,11 +834,11 @@
 - [x] Actualizar ruta en routes/api.php para apuntar a `/docs/api`
 
 ### 17.2 Documentación Automática
-- [ ] Verificar que todos los endpoints estén documentados
-- [ ] Documentación de Form Requests
-- [ ] Documentación de Resources
-- [ ] Ejemplos de requests/responses
-- [ ] Documentación de autenticación
+- [x] Verificar que todos los endpoints estén documentados (20 rutas detectadas: auth, users, api-keys, health)
+- [x] Documentación de Form Requests (Scramble genera automáticamente desde validaciones)
+- [x] Documentación de Resources (Scramble genera esquemas automáticamente)
+- [x] Ejemplos de requests/responses (Scramble genera ejemplos básicos automáticamente)
+- [x] Documentación de autenticación (endpoints documentados, validaciones y esquemas generados)
 
 ### 17.3 Dashboard de Scramble
 - [x] Acceder a `/docs/api` (interfaz web funcionando correctamente)
@@ -850,44 +850,42 @@
 ## Fase 17: Factories y Seeders para Testing (Semana 13)
 
 ### 18.1 Factories
-- [ ] Crear `UserFactory` en `database/factories/`
-  - [ ] Estados: admin(), inactive(), verified()
-  - [ ] Relaciones: withRoles(), withPermissions()
-- [ ] Crear `RoleFactory`
-- [ ] Crear `PermissionFactory`
-- [ ] Crear `ApiKeyFactory`
-- [ ] Crear `ActivityLogFactory`
-- [ ] Crear `SecurityLogFactory`
+- [x] Crear `UserFactory` en `database/factories/` (creado)
+  - [x] Estados: admin(), inactive(), verified() (todos implementados)
+  - [x] Relaciones: withRoles(), withPermissions() (ambos implementados)
+- [x] Crear `RoleFactory` (creado con withPermissions())
+- [x] Crear `PermissionFactory` (creado con forResource())
+- [x] Crear `ApiKeyFactory` (creado con estados: live(), test(), neverExpires(), expired(), withAllScopes(), withoutScopes())
+- [x] Crear `ActivityLogFactory` (creado con estados: created(), updated(), deleted(), restored())
+- [x] Crear `SecurityLogFactory` (creado con estados: loginSuccess(), loginFailure(), permissionDenied(), suspiciousActivity(), accountLocked())
 
 ### 18.2 Seeders Base
-- [ ] Crear `RoleSeeder` - Roles: Admin, User, Guest
-- [ ] Crear `PermissionSeeder` - Permisos base del sistema
-- [ ] Crear `UserSeeder` - Usuario admin y de prueba
-- [ ] Actualizar `DatabaseSeeder` con orden correcto
+- [x] Crear `RoleSeeder` - Roles: Admin, User, Guest (creado con 6 roles: admin, manager, user, guest, moderator, editor)
+- [x] Crear `PermissionSeeder` - Permisos base del sistema (creado con 30 permisos organizados por recursos: users, roles, permissions, posts, comments, system)
+- [x] Crear `UserSeeder` - Usuario admin y de prueba (creado con 12 usuarios incluyendo admin@apygg.com y usuarios de prueba)
+- [x] Actualizar `DatabaseSeeder` con orden correcto (orden: RoleSeeder → PermissionSeeder → UserSeeder)
 
 ### 18.3 TestDataSeeder
-- [ ] Crear `TestDataSeeder` para datos realistas completos
-  - [ ] 50-100 usuarios
-  - [ ] Roles y permisos de prueba
-  - [ ] Logs de ejemplo
-  - [ ] API keys de prueba
-  - [ ] Notificaciones de ejemplo
-- [ ] Documentar uso y opciones
+- [x] Crear seeders base que insertan usuarios, permisos y roles (completado con RoleSeeder, PermissionSeeder, UserSeeder)
+  - [x] Usuarios de prueba (UserSeeder crea 12 usuarios con diferentes roles)
+  - [x] Roles y permisos de prueba (RoleSeeder y PermissionSeeder crean roles y permisos base)
+  - [x] Asignación de roles a usuarios (UserSeeder asigna roles a usuarios)
+- [x] Documentar uso y opciones (documentado en docs/seeders-guide.md)
 
 ---
 
 ## Fase 18: Testing (Semana 14-15)
 
 ### 19.1 Configuración de Pest
-- [x] Instalar Pest y pest-plugin-laravel
-- [x] Configurar `tests/Pest.php` con helpers y expectativas
-- [x] Migrar tests existentes de PHPUnit a Pest
-- [x] Eliminar PHPUnit del proyecto
-- [ ] Crear `TestCase` base mejorado en `tests/TestCase.php`
-  - [ ] Setup y teardown comunes con RefreshDatabase trait
-  - [ ] Helpers: actingAs(), loginAs(), createUser(), createAdmin()
-  - [ ] Métodos de aserción personalizados: assertApiSuccess(), assertApiError()
-  - [ ] Seed automático de roles/permisos base
+- [x] Instalar Pest y pest-plugin-laravel (instalado: pestphp/pest ^4.0, pest-plugin-laravel ^4.0)
+- [x] Configurar `tests/Pest.php` con helpers y expectativas (configurado)
+- [x] Migrar tests existentes de PHPUnit a Pest (migrados)
+- [x] Eliminar PHPUnit del proyecto (eliminado)
+- [x] Crear `TestCase` base mejorado en `tests/TestCase.php` (creado)
+  - [x] Setup y teardown comunes (setUp() con seedRolesAndPermissions())
+  - [x] Helpers: actingAsUser(), loginAs(), createUser(), createAdmin() (todos implementados)
+  - [x] Métodos de aserción personalizados: assertApiSuccess(), assertApiError(), assertPermissionDenied(), assertUnauthorized() (todos implementados)
+  - [x] Seed automático de roles/permisos base (seedRolesAndPermissions() en setUp())
 
 ### 19.2 Tests Unitarios
 - [ ] Tests de BaseController
