@@ -47,15 +47,23 @@ if [ -d "storage" ] && [ -d "bootstrap/cache" ]; then
     fi
 fi
 
-# Cache/optimize (seguro aunque falten algunos paquetes aún)
-# Limpia caches en dev para ver cambios al instante
-# TEMPORALMENTE DESHABILITADO para diagnosticar problemas de inicialización
-# if [ "$APP_ENV" = "dev" ]; then
-#     php artisan optimize:clear 2>&1 || echo "Warning: optimize:clear failed, continuing anyway..."
-# else
-#     php artisan optimize 2>&1 || echo "Warning: optimize failed, continuing anyway..."
-# fi
-echo "Skipping cache optimization for now..."
+# Cache/optimize según entorno
+if [ "$APP_ENV" = "dev" ] || [ "$APP_ENV" = "local" ] || [ "$APP_ENV" = "development" ]; then
+    # En desarrollo: limpiar caches para ver cambios al instante
+    echo "Entorno de desarrollo detectado, limpiando caches..."
+    php artisan optimize:clear 2>&1 || echo "Warning: optimize:clear failed, continuing anyway..."
+else
+    # En producción: optimizar autoloader y caches
+    echo "Entorno de producción detectado, optimizando..."
+    
+    # Optimizar autoloader de Composer (mejora rendimiento)
+    echo "Optimizando autoloader de Composer..."
+    composer dump-autoload -o --no-interaction 2>&1 || echo "Warning: composer dump-autoload -o failed, continuing anyway..."
+    
+    # Optimizar Laravel (cache de config, routes, views)
+    echo "Optimizando caches de Laravel..."
+    php artisan optimize 2>&1 || echo "Warning: optimize failed, continuing anyway..."
+fi
 
 # Configuración de puerto (dinámico para PaaS, fijo por defecto)
 PORT=${PORT:-8000}
