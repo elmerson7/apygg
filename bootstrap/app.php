@@ -38,6 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\TransformRequestMiddleware::class, // Normalización de requests
             \App\Http\Middleware\ForceJsonResponse::class,
             \App\Http\Middleware\TransformResponseMiddleware::class, // Transformación de respuestas
+            \App\Http\Middleware\CompressionMiddleware::class, // Compresión HTTP (gzip/zstd) cuando no se usa Caddy
             \App\Http\Middleware\LogApiRequests::class, // Registrar requests/responses
             \App\Http\Middleware\SecurityLoggerMiddleware::class, // Registrar eventos de seguridad y detectar patrones anómalos
             \App\Http\Middleware\RateLimitLoggerMiddleware::class, // Registrar bloqueos por rate limiting y detectar abuso

@@ -57,6 +57,10 @@ fi
 # fi
 echo "Skipping cache optimization for now..."
 
+# Configuración de puerto (dinámico para PaaS, fijo por defecto)
+PORT=${PORT:-8000}
+echo "Using port: $PORT"
+
 # Iniciar servidor
 # Intentar usar Octane con FrankenPHP primero, fallback al servidor PHP integrado
 if [ "$APP_ENV" = "dev" ]; then
@@ -64,21 +68,31 @@ if [ "$APP_ENV" = "dev" ]; then
     php artisan octane:start \
         --server=frankenphp \
         --host=0.0.0.0 \
-        --port=8000 \
+        --port=$PORT \
         --workers=2 \
         --watch || {
         echo "Octane falló, usando servidor PHP integrado..."
-        exec php -S 0.0.0.0:8000 -t public public/index.php
+        exec php -S 0.0.0.0:$PORT -t public public/index.php
     }
 else
-    # En producción, usar Octane con más workers
-    echo "Starting Laravel Octane server (FrankenPHP) in production mode..."
-    exec php artisan octane:start \
-        --server=frankenphp \
-        --host=0.0.0.0 \
-        --port=8000 \
-        --workers=auto || {
-        echo "Octane falló, usando servidor PHP integrado..."
-        exec php -S 0.0.0.0:8000 -t public public/index.php
-    }
+    # En producción, verificar si se debe usar SSL con Caddy
+    if [ "$USE_FRANKENPHP_SSL" = "true" ] && [ -n "$SERVER_NAME" ]; then
+        echo "Starting FrankenPHP with Caddy (SSL enabled) for: $SERVER_NAME"
+        # Caddy manejará SSL automáticamente con Let's Encrypt
+        # FrankenPHP escuchará en el puerto interno
+        export CADDY_SERVER_NAME=$SERVER_NAME
+        export CADDY_INTERNAL_PORT=$PORT
+        exec caddy run --config /app/docker/app/Caddyfile
+    else
+        # En producción sin SSL en FrankenPHP (proxy externo maneja SSL)
+        echo "Starting Laravel Octane server (FrankenPHP) in production mode..."
+        exec php artisan octane:start \
+            --server=frankenphp \
+            --host=0.0.0.0 \
+            --port=$PORT \
+            --workers=auto || {
+            echo "Octane falló, usando servidor PHP integrado..."
+            exec php -S 0.0.0.0:$PORT -t public public/index.php
+        }
+    fi
 fi

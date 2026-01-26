@@ -814,12 +814,13 @@
 - [x] Ejecutar `composer install` (ejecutado correctamente)
 
 ### 2.5.3 Configuración de FrankenPHP
-- [ ] Configurar FrankenPHP para desarrollo y producción
-  - [ ] Puerto configurable (PORT para PaaS como Railway)
-  - [ ] SSL automático en producción (Let's Encrypt)
-  - [ ] Compresión HTTP habilitada
-  - [ ] Rate limiting a nivel de aplicación
-- [ ] Probar FrankenPHP en contenedor
+- [x] Configurar FrankenPHP para desarrollo y producción
+  - [x] Puerto configurable (PORT para PaaS como Railway) (configurado: PORT=${PORT:-8000} en entrypoint.sh)
+  - [x] SSL automático en producción (Let's Encrypt) (configurado: Caddyfile con SSL opcional mediante USE_FRANKENPHP_SSL)
+  - [x] Compresión HTTP habilitada (configurado: encode zstd gzip en Caddyfile)
+  - [x] Rate limiting a nivel de aplicación (ya implementado: AdaptiveRateLimitingMiddleware en Laravel)
+- [x] Probar FrankenPHP en contenedor (funcionando correctamente)
+- [x] Documentación creada en `docs/frankenphp-configuration.md`
 
 ---
 

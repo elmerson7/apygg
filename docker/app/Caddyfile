@@ -1,0 +1,60 @@
+# Configuración de Caddy para FrankenPHP
+# Este archivo se usa cuando USE_FRANKENPHP_SSL=true
+# Caddy maneja automáticamente SSL con Let's Encrypt
+
+{
+    # Configuración global de Caddy
+    auto_https off
+    # Habilitar compresión
+    compression {
+        gzip
+        zstd
+    }
+}
+
+# Configuración del servidor
+{$CADDY_SERVER_NAME:localhost} {
+    # Redirigir HTTP a HTTPS (solo si SERVER_NAME está configurado)
+    @http {
+        protocol http
+    }
+    redir @http https://{$host}{$uri} permanent
+
+    # Configuración HTTPS
+    encode zstd gzip
+
+    # Headers de seguridad
+    header {
+        # Seguridad
+        X-Frame-Options "DENY"
+        X-Content-Type-Options "nosniff"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        
+        # HSTS (solo en HTTPS)
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    }
+
+    # Reverse proxy a FrankenPHP
+    reverse_proxy localhost:{$CADDY_INTERNAL_PORT:8000} {
+        # Headers para el proxy
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+        header_up Host {host}
+        
+        # Health check
+        health_uri /health
+        health_interval 10s
+        health_timeout 5s
+    }
+
+    # Rate limiting básico (opcional, ya existe en Laravel)
+    # rate_limit {
+    #     zone dynamic {
+    #         key {remote_host}
+    #         events 100
+    #         window 1m
+    #     }
+    # }
+}
