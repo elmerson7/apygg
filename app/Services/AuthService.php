@@ -102,6 +102,13 @@ class AuthService
                 'ip' => $ipAddress,
             ], 'security');
 
+            // Disparar evento UserLoggedIn
+            event(new \App\Events\UserLoggedIn(
+                $user,
+                $ipAddress,
+                request()->userAgent()
+            ));
+
             return [
                 'user' => $user,
                 'tokens' => $tokens,
@@ -179,6 +186,12 @@ class AuthService
                 LogService::info('Token revocado exitosamente', [
                     'user_id' => $user->id,
                 ], 'security');
+
+                // Disparar evento UserLoggedOut
+                event(new \App\Events\UserLoggedOut(
+                    $user,
+                    request()->ip()
+                ));
             }
 
             return $result;

@@ -685,30 +685,30 @@
 ## Fase 13: Sistema de Eventos y Listeners (Semana 10-11)
 
 ### 13.1 Estructura de Eventos
-- [ ] Crear directorios: `app/Events/`, `app/Listeners/`
-- [ ] Configurar `EventServiceProvider`
+- [x] Crear directorios: `app/Events/`, `app/Listeners/`
+- [x] Configurar `EventServiceProvider`
 
 ### 13.2 Eventos de Usuario
-- [ ] Crear `UserCreated` event
-- [ ] Crear `UserUpdated` event
-- [ ] Crear `UserDeleted` event
-- [ ] Crear `UserRestored` event
-- [ ] Crear `UserLoggedIn` event
-- [ ] Crear `UserLoggedOut` event
+- [x] Crear `UserCreated` event
+- [x] Crear `UserUpdated` event
+- [x] Crear `UserDeleted` event
+- [x] Crear `UserRestored` event
+- [x] Crear `UserLoggedIn` event
+- [x] Crear `UserLoggedOut` event
 
 ### 13.3 Eventos de Autorización
-- [ ] Crear `RoleAssigned` event
-- [ ] Crear `RoleRemoved` event
-- [ ] Crear `PermissionGranted` event
-- [ ] Crear `PermissionRevoked` event
+- [x] Crear `RoleAssigned` event
+- [x] Crear `RoleRemoved` event
+- [x] Crear `PermissionGranted` event
+- [x] Crear `PermissionRevoked` event
 
 ### 13.4 Listeners
-- [ ] Crear `LogUserActivity` listener
-- [ ] Crear `LogAuthEvents` listener
-- [ ] Crear `SendWelcomeEmail` listener
-- [ ] Crear `InvalidateUserCache` listener
-- [ ] Crear `InvalidatePermissionsCache` listener
-- [ ] Registrar en `EventServiceProvider`
+- [x] Crear `LogUserActivity` listener
+- [x] Crear `LogAuthEvents` listener
+- [x] Crear `SendWelcomeEmail` listener
+- [x] Crear `InvalidateUserCache` listener
+- [x] Crear `InvalidatePermissionsCache` listener
+- [x] Registrar en `EventServiceProvider`
 
 ---
 

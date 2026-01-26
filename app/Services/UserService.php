@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -65,14 +66,8 @@ class UserService
         // Limpiar cache
         $this->clearCache();
 
-        // Log de auditoría
-        LogService::info('Usuario creado', [
-            'user_id' => $user->id,
-            'email' => $user->email,
-        ], 'activity');
-
-        // Enviar notificación de bienvenida (opcional, se puede hacer en cola)
-        // NotificationService::sendWelcomeEmail($user);
+        // Disparar evento UserCreated
+        event(new \App\Events\UserCreated($user));
 
         return $user->fresh(['roles', 'permissions']);
     }
@@ -97,6 +92,9 @@ class UserService
             }
         }
 
+        // Guardar valores anteriores para el evento
+        $oldAttributes = $user->getAttributes();
+
         // Hash de contraseña si se proporciona
         if (isset($data['password'])) {
             $data['password'] = Hash::make($data['password']);
@@ -107,11 +105,8 @@ class UserService
         // Limpiar cache
         $this->clearCache($userId);
 
-        // Log de auditoría
-        LogService::info('Usuario actualizado', [
-            'user_id' => $userId,
-            'changes' => array_keys($data),
-        ], 'activity');
+        // Disparar evento UserUpdated
+        event(new \App\Events\UserUpdated($user, $oldAttributes));
 
         return $user->fresh(['roles', 'permissions']);
     }
@@ -131,11 +126,8 @@ class UserService
         // Limpiar cache
         $this->clearCache($userId);
 
-        // Log de auditoría
-        LogService::info('Usuario eliminado', [
-            'user_id' => $userId,
-            'email' => $user->email,
-        ], 'activity');
+        // Disparar evento UserDeleted
+        event(new \App\Events\UserDeleted($user));
 
         return $deleted;
     }
@@ -155,11 +147,8 @@ class UserService
         // Limpiar cache
         $this->clearCache($userId);
 
-        // Log de auditoría
-        LogService::info('Usuario restaurado', [
-            'user_id' => $userId,
-            'email' => $user->email,
-        ], 'activity');
+        // Disparar evento UserRestored
+        event(new \App\Events\UserRestored($user));
 
         return $user->fresh(['roles', 'permissions']);
     }
@@ -235,17 +224,32 @@ class UserService
             throw new \InvalidArgumentException('Los siguientes roles no existen: '.implode(', ', $invalidRoles));
         }
 
+        // Obtener roles anteriores para comparar
+        $previousRoleIds = $user->roles()->pluck('id')->toArray();
+
         // Sincronizar roles (reemplaza todos los roles existentes)
         $user->roles()->sync($roleIds);
 
         // Limpiar cache
         $this->clearCache($userId);
 
-        // Log de auditoría
-        LogService::info('Roles asignados a usuario', [
-            'user_id' => $userId,
-            'role_ids' => $roleIds,
-        ], 'activity');
+        // Disparar eventos para roles nuevos y removidos
+        $newRoleIds = array_diff($roleIds, $previousRoleIds);
+        $removedRoleIds = array_diff($previousRoleIds, $roleIds);
+
+        foreach ($newRoleIds as $roleId) {
+            $role = Role::find($roleId);
+            if ($role) {
+                event(new \App\Events\RoleAssigned($user, $role));
+            }
+        }
+
+        foreach ($removedRoleIds as $roleId) {
+            $role = Role::find($roleId);
+            if ($role) {
+                event(new \App\Events\RoleRemoved($user, $role));
+            }
+        }
 
         return $user->fresh(['roles', 'permissions']);
     }
@@ -273,12 +277,8 @@ class UserService
         // Limpiar cache
         $this->clearCache($userId);
 
-        // Log de auditoría
-        LogService::info('Rol removido de usuario', [
-            'user_id' => $userId,
-            'role_id' => $roleId,
-            'role_name' => $role->name,
-        ], 'activity');
+        // Disparar evento RoleRemoved
+        event(new \App\Events\RoleRemoved($user, $role));
 
         return $user->fresh(['roles', 'permissions']);
     }
@@ -294,16 +294,32 @@ class UserService
     public function assignPermissions(string $userId, array $permissionIds): User
     {
         $user = $this->find($userId);
+
+        // Obtener permisos anteriores para comparar
+        $previousPermissionIds = $user->permissions()->pluck('id')->toArray();
+
         $user->permissions()->sync($permissionIds);
 
         // Limpiar cache
         $this->clearCache($userId);
 
-        // Log de auditoría
-        LogService::info('Permisos asignados a usuario', [
-            'user_id' => $userId,
-            'permission_ids' => $permissionIds,
-        ], 'activity');
+        // Disparar eventos para permisos nuevos y removidos
+        $newPermissionIds = array_diff($permissionIds, $previousPermissionIds);
+        $removedPermissionIds = array_diff($previousPermissionIds, $permissionIds);
+
+        foreach ($newPermissionIds as $permissionId) {
+            $permission = Permission::find($permissionId);
+            if ($permission) {
+                event(new \App\Events\PermissionGranted($user, $permission));
+            }
+        }
+
+        foreach ($removedPermissionIds as $permissionId) {
+            $permission = Permission::find($permissionId);
+            if ($permission) {
+                event(new \App\Events\PermissionRevoked($user, $permission));
+            }
+        }
 
         return $user->fresh(['roles', 'permissions']);
     }
@@ -319,10 +335,15 @@ class UserService
     public function removePermission(string $userId, string $permissionId): User
     {
         $user = $this->find($userId);
+        $permission = Permission::findOrFail($permissionId);
+
         $user->permissions()->detach($permissionId);
 
         // Limpiar cache
         $this->clearCache($userId);
+
+        // Disparar evento PermissionRevoked
+        event(new \App\Events\PermissionRevoked($user, $permission));
 
         // Log de auditoría
         LogService::info('Permiso removido de usuario', [
