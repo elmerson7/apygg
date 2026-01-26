@@ -96,7 +96,6 @@ class ExternalServiceException extends ApiException
      * @param  string  $serviceName  Nombre del servicio
      * @param  string|null  $serviceUrl  URL del servicio
      * @param  string|null  $serviceErrorCode  Código de error del servicio
-     * @return self
      */
     public static function externalServiceUnavailable(
         string $serviceName,
@@ -117,7 +116,6 @@ class ExternalServiceException extends ApiException
      *
      * @param  string  $message  Mensaje de error
      * @param  int|null  $retryAfter  Segundos hasta reintentar
-     * @return self
      */
     public static function serviceUnavailable(string $message = 'Servicio no disponible', ?int $retryAfter = null): self
     {

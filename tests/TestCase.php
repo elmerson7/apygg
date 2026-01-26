@@ -11,7 +11,6 @@ use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 abstract class TestCase extends BaseTestCase
 {
-
     /**
      * Creates the application.
      *

@@ -185,7 +185,7 @@ test('puede obtener un usuario por ID', function () {
 test('lanza excepción si el usuario no existe al buscar', function () {
     // Usar un UUID válido que no existe en la BD
     $nonExistentUuid = \Illuminate\Support\Str::uuid()->toString();
-    
+
     expect(fn () => $this->userService->find($nonExistentUuid))
         ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
 });

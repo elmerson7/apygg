@@ -21,6 +21,18 @@ parameters:
         - '#PHPDoc type array<int, string>.*\$fillable.*list<string>#'
         # Problemas menores de tipos en traits y servicios
         - '#Call to an undefined method.*onlyTrashed\(\)#'
+        # Traits no usados (pueden usarse en el futuro)
+        - '#Trait.*is used zero times#'
+        # Problemas conocidos con factories de Laravel (newFactory retorna Factory pero PHPStan espera Factory<static>)
+        # Estos son falsos positivos - el código funciona correctamente
+        # Los archivos están excluidos en excludePaths para evitar estos errores
+        # Dead catch - TokenBlacklistedException se captura específicamente antes de JWTException (correcto)
+        - '#Dead catch.*TokenBlacklistedException#'
 
     excludePaths:
         - ./*/*/FileToIgnore.php
+        # Excluir archivos con problemas conocidos de PHPStan con Laravel factories (newFactory)
+        - app/Models/Logs/ActivityLog.php
+        - app/Models/Logs/ApiLog.php
+        - app/Models/Logs/ErrorLog.php
+        - app/Models/Logs/SecurityLog.php

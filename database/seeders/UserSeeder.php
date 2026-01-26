@@ -117,7 +117,7 @@ class UserSeeder extends Seeder
 
         // Crear usuarios
         foreach ($users as $userData) {
-            $roles = $userData['roles'] ?? [];
+            $roles = $userData['roles'];
             unset($userData['roles']);
 
             $user = User::firstOrCreate(

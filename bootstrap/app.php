@@ -63,6 +63,27 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (\Throwable $e, $request) {
             ApiResponse::setRequestStartTime();
 
+            // Helper para registrar request/response en logs_api (incluso para excepciones)
+            $logApiRequest = function (\Throwable $exception, $req) {
+                try {
+                    // Solo registrar si es una excepción HTTP (404, 403, etc.)
+                    if ($exception instanceof \Symfony\Component\HttpKernel\Exception\HttpException) {
+                        $statusCode = $exception->getStatusCode();
+                        
+                        // Crear respuesta simulada para el logger
+                        $response = new \Illuminate\Http\Response(
+                            ['error' => $exception->getMessage()],
+                            $statusCode
+                        );
+
+                        // Registrar en logs_api
+                        \App\Services\Logging\ApiLogger::logRequest($req, $response);
+                    }
+                } catch (\Exception $logError) {
+                    // Silenciar errores de logging para no interrumpir el flujo principal
+                }
+            };
+
             // Helper para logging de excepciones
             $logException = function (\Throwable $exception, $req, bool $isCritical = false): void {
                 try {
@@ -175,6 +196,9 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($e instanceof \Symfony\Component\HttpKernel\Exception\NotFoundHttpException) {
                 $logException($e, $request, false);
                 
+                // Registrar en logs_api antes de devolver respuesta
+                $logApiRequest($e, $request);
+                
                 return ApiResponse::rfc7807(
                     'Endpoint not found.',
                     404,
@@ -197,6 +221,9 @@ return Application::configure(basePath: dirname(__DIR__))
                 $statusCode = $e->getStatusCode();
                 $isCritical = $statusCode >= 500;
                 $logException($e, $request, $isCritical);
+                
+                // Registrar en logs_api antes de devolver respuesta
+                $logApiRequest($e, $request);
                 
                 return ApiResponse::rfc7807(
                     $e->getMessage() ?: 'An error occurred',

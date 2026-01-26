@@ -69,14 +69,13 @@ class NotificationService
     /**
      * Enviar notificación a base de datos
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable&\Illuminate\Notifications\Notifiable  $notifiable
      * @param  string  $title  Título
      * @param  string  $message  Mensaje
      * @param  array  $data  Datos adicionales
      * @param  string|null  $type  Tipo de notificación
      */
     public static function sendDatabase(
-        $notifiable,
+        \Illuminate\Contracts\Auth\Authenticatable $notifiable,
         string $title,
         string $message,
         array $data = [],
@@ -275,12 +274,12 @@ class NotificationService
      *
      * @param  string|null  $channel  Filtrar por canal
      * @param  int  $limit  Límite de resultados
-     * @return \Illuminate\Database\Eloquent\Collection
      */
     public static function getHistory(?string $channel = null, int $limit = 50): \Illuminate\Database\Eloquent\Collection
     {
         if (! class_exists(\App\Models\NotificationHistory::class)) {
-            return \App\Models\NotificationHistory::query()->whereRaw('1 = 0')->get();
+            // Retornar colección vacía si la clase no existe
+            return new \Illuminate\Database\Eloquent\Collection([]);
         }
 
         $query = \App\Models\NotificationHistory::query()

@@ -74,7 +74,7 @@ class TokenService
             // Configurar TTL antes de generar el token
             $originalTtl = config('jwt.ttl');
             config(['jwt.ttl' => $refreshTtl]);
-            
+
             try {
                 $token = JWTAuth::customClaims([
                     'type' => 'refresh',
@@ -174,7 +174,7 @@ class TokenService
             }
 
             $user = JWTAuth::parseToken()->authenticate();
-            
+
             return $user instanceof User ? $user : null;
         } catch (JWTException $e) {
             return null;
@@ -290,7 +290,7 @@ class TokenService
             $newTokens = $this->generateTokens($authenticatedUser);
 
             LogService::info('Token renovado con rotación', [
-                'user_id' => $user->id,
+                'user_id' => $authenticatedUser->id,
             ], 'auth');
 
             return $newTokens;

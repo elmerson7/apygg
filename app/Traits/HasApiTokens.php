@@ -67,9 +67,8 @@ trait HasApiTokens
      * @param  string  $name  Nombre descriptivo del token
      * @param  array  $scopes  Scopes/permissions del token
      * @param  \DateTimeInterface|null  $expiresAt  Fecha de expiración (null = sin expiración)
-     * @return \App\Models\ApiKey|\Illuminate\Database\Eloquent\Model
      */
-    public function createApiKey(string $name, array $scopes = [], ?\DateTimeInterface $expiresAt = null)
+    public function createApiKey(string $name, array $scopes = [], ?\DateTimeInterface $expiresAt = null): \Illuminate\Database\Eloquent\Model
     {
         /** @var class-string<\Illuminate\Database\Eloquent\Model> $apiKeyClass */
         $apiKeyClass = $this->getApiKeyClass();
@@ -114,9 +113,8 @@ trait HasApiTokens
      * Verificar si un token es válido.
      *
      * @param  string  $token  Token a verificar
-     * @return ApiKey|null
      */
-    public function findApiKeyByToken(string $token)
+    public function findApiKeyByToken(string $token): ?\Illuminate\Database\Eloquent\Model
     {
         $hashedToken = hash('sha256', $token);
 

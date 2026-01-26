@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Logs\ActivityLog;
 use App\Models\Logs\ApiLog;
 use App\Models\Logs\ErrorLog;
 use App\Models\Logs\SecurityLog;

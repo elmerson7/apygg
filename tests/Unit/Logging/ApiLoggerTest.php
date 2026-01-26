@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Logs\ApiLog;
 use App\Models\User;
 use App\Services\Logging\ApiLogger;
 use Illuminate\Foundation\Testing\DatabaseTransactions;

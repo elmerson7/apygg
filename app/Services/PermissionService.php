@@ -330,7 +330,7 @@ class PermissionService
     {
         $parts = explode('.', $name);
 
-        return $parts[0] ?? null;
+        return $parts[0];
     }
 
     /**
