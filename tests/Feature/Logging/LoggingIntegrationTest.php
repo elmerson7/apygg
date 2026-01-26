@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Logs\ApiLog;
-use App\Models\Logs\ErrorLog;
 use App\Models\Logs\SecurityLog;
 use App\Models\User;
 use App\Services\Logging\ActivityLogger;
@@ -117,24 +116,6 @@ test('SecurityLogger guarda contexto completo (user_id, IP, user_agent, trace_id
     ]);
 });
 
-test('ErrorLog puede relacionarse con ApiLog mediante trace_id', function () {
-    // Crear ApiLog con trace_id
-    $apiLog = ApiLog::factory()->withTraceId($this->traceId)->forUser($this->user->id)->create();
-
-    // Crear ErrorLog con el mismo trace_id
-    $errorLog = ErrorLog::factory()
-        ->withTraceId($this->traceId)
-        ->forUser($this->user->id)
-        ->critical()
-        ->create();
-
-    // Verificar relación
-    expect($errorLog->apiLog)->not->toBeNull()
-        ->and($errorLog->apiLog->id)->toBe($apiLog->id)
-        ->and($errorLog->trace_id)->toBe($this->traceId)
-        ->and($apiLog->trace_id)->toBe($this->traceId);
-});
-
 test('SecurityLog puede relacionarse con ApiLog mediante trace_id', function () {
     // Crear ApiLog con trace_id
     $apiLog = ApiLog::factory()->withTraceId($this->traceId)->forUser($this->user->id)->create();
@@ -161,10 +142,6 @@ test('todos los logs pueden tener user_id null para acciones no autenticadas', f
     // SecurityLog sin usuario (login failure)
     $securityLog = SecurityLog::factory()->loginFailure()->create();
     expect($securityLog->user_id)->toBeNull();
-
-    // ErrorLog sin usuario
-    $errorLog = ErrorLog::factory()->create(['user_id' => null]);
-    expect($errorLog->user_id)->toBeNull();
 });
 
 test('los logs preservan información de contexto en detalles JSON', function () {
@@ -189,18 +166,14 @@ test('los logs preservan información de contexto en detalles JSON', function ()
 test('los logs se pueden consultar por trace_id para rastrear request completo', function () {
     // Crear logs relacionados con el mismo trace_id
     $apiLog = ApiLog::factory()->withTraceId($this->traceId)->forUser($this->user->id)->create();
-    $errorLog = ErrorLog::factory()->withTraceId($this->traceId)->forUser($this->user->id)->create();
     $securityLog = SecurityLog::factory()->withTraceId($this->traceId)->forUser($this->user->id)->create();
 
     // Consultar todos los logs por trace_id
     $apiLogs = ApiLog::byTraceId($this->traceId)->get();
-    $errorLogs = ErrorLog::byTraceId($this->traceId)->get();
     $securityLogs = SecurityLog::byTraceId($this->traceId)->get();
 
     expect($apiLogs)->toHaveCount(1)
-        ->and($errorLogs)->toHaveCount(1)
         ->and($securityLogs)->toHaveCount(1)
         ->and($apiLogs->first()->trace_id)->toBe($this->traceId)
-        ->and($errorLogs->first()->trace_id)->toBe($this->traceId)
         ->and($securityLogs->first()->trace_id)->toBe($this->traceId);
 });

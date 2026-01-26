@@ -201,7 +201,7 @@ Cliente → FrankenPHP (Octane) / Laravel App
 - Documentar cuándo usar PgBouncer vs conexión directa
 
 **Particionamiento de Tablas de Logs:**
-- Implementar particionamiento por fecha en tablas de logs (logs_api, logs_error, logs_security, logs_activity)
+- Implementar particionamiento por fecha en tablas de logs (logs_api, logs_security, logs_activity)
 - Configurar particiones mensuales para optimizar consultas y limpieza
 - Implementar políticas de retención y TTL por tipo de log
 - Índices optimizados para consultas por fecha y usuario
@@ -632,14 +632,6 @@ if (Feature::enabled('experimental-feature', false)) {
 - Índices: trace_id, user_id, created_at (para purgas eficientes)
 - Particionamiento por mes para optimizar consultas y limpieza
 
-**ErrorLog (`App\Infrastructure\Logging\Models\ErrorLog`):**
-- Campos: id, trace_id, user_id, exception_class, message, file, line, stack_trace (text), context (JSON), severity (enum: low, medium, high, critical), resolved_at, created_at
-- Captura todas las excepciones no manejadas
-- TTL: 180 días
-- Índices: trace_id, user_id, severity, created_at
-- Particionamiento por mes
-- Integración con Sentry para errores críticos
-
 **SecurityLog (`App\Infrastructure\Logging\Models\SecurityLog`):**
 - Campos: id, trace_id, user_id, event_type (enum: login_success, login_failure, permission_denied, suspicious_activity, password_changed), ip_address, user_agent, details (JSON), created_at
 - Eventos de seguridad: intentos fallidos, cambios de permisos, accesos denegados
@@ -918,7 +910,7 @@ readinessProbe:
 
 **Jobs Base:**
 - Clase base `App\Jobs\Job` con logging integrado
-- Manejo de excepciones estándar con registro en ErrorLog
+- Manejo de excepciones estándar con registro en Sentry (a través de LogService)
 - Retry automático configurado con backoff exponencial
 - Notificaciones de fallos mediante `NotificationService`
 - Métodos helper: `log()`, `handleException()`
@@ -1205,7 +1197,6 @@ readinessProbe:
 
 **Logging (en misma base de datos con particionamiento):**
 - `create_api_logs_table` - Logs de requests/responses (tabla: `logs_api`) con trace_id, user_id, request_method, request_path, request_query, request_body, request_headers, response_status, response_body, response_time_ms, user_agent, ip_address, created_at
-- `create_error_logs_table` - Logs de errores (tabla: `logs_error`) con trace_id, user_id, exception_class, message, file, line, stack_trace, context, severity, resolved_at, created_at
 - `create_security_logs_table` - Logs de seguridad (tabla: `logs_security`) con trace_id, user_id, event_type, ip_address, user_agent, details, created_at
 - `create_activity_logs_table` - Logs de auditoría (tabla: `logs_activity`) con user_id, model_type, model_id, action, old_values, new_values, ip_address, created_at
 - Particionamiento por mes en tablas de logs para optimizar consultas y limpieza
@@ -1256,7 +1247,6 @@ readinessProbe:
 - **Asignaciones:** Usuarios asignados a diferentes roles para pruebas de permisos
 - **Logs de Ejemplo:** 
   - 20-30 registros de `api_logs` con diferentes métodos HTTP y códigos de respuesta
-  - 10-15 registros de `error_logs` con diferentes niveles de severidad
   - 15-20 registros de `security_logs` con diferentes tipos de eventos
   - 30-40 registros de `activity_logs` simulando cambios en modelos
 - **API Keys:** 5-10 API keys de prueba para diferentes usuarios
@@ -1597,7 +1587,7 @@ php artisan db:seed --class=TestDataSeeder --only=users,roles
 
 **Backups Automáticos:**
 - Backup diario de base de datos principal (`apygg`) a las 3 AM
-  - Incluye todas las tablas: usuarios, roles, permisos, y logs (logs_api, logs_error, logs_security, logs_activity)
+  - Incluye todas las tablas: usuarios, roles, permisos, y logs (logs_api, logs_security, logs_activity)
   - Las tablas de logs están particionadas, permitiendo backups incrementales eficientes
 - Retención configurable: 7 días (diarios), 30 días (semanales), 90 días (mensuales)
 - Compresión de backups usando gzip

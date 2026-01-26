@@ -114,7 +114,7 @@ abstract class Job implements ShouldQueue
         // Log del error
         $this->log('error', "Error en job: {$jobName} - {$exception->getMessage()}", $context);
 
-        // Registrar en ErrorLog usando LogService
+        // Registrar error usando LogService (envía a Sentry)
         try {
             LogService::logError($exception, array_merge($context, [
                 'job_name' => $jobName,
@@ -123,7 +123,7 @@ abstract class Job implements ShouldQueue
             ]));
         } catch (Throwable $e) {
             // Si falla el logging, al menos loguear en canal estándar
-            Log::error('Failed to log job error to ErrorLog', [
+            Log::error('Failed to log job error', [
                 'original_error' => $exception->getMessage(),
                 'logging_error' => $e->getMessage(),
             ]);
@@ -212,7 +212,7 @@ abstract class Job implements ShouldQueue
             'line' => $exception->getLine(),
         ]);
 
-        // Registrar en ErrorLog con severidad crítica
+        // Registrar error permanente usando LogService (envía a Sentry)
         try {
             LogService::logError($exception, [
                 'job_name' => static::class,

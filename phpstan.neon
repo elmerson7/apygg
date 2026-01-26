@@ -34,5 +34,4 @@ parameters:
         # Excluir archivos con problemas conocidos de PHPStan con Laravel factories (newFactory)
         - app/Models/Logs/ActivityLog.php
         - app/Models/Logs/ApiLog.php
-        - app/Models/Logs/ErrorLog.php
         - app/Models/Logs/SecurityLog.php

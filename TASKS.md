@@ -121,12 +121,11 @@
 
 ### 2.5 Migraciones de Logs Básicas (Versión Simplificada)
 - [x] Crear migración para tabla `logs_api` (sin particionamiento por ahora) (creada: 2024_01_01_000007_create_api_logs_table.php, ID como PK, trace_id UUID, user_id UUID, índices en trace_id, user_id, created_at)
-- [x] Crear migración para tabla `logs_error` (sin particionamiento por ahora) (creada: 2024_01_01_000008_create_error_logs_table.php, ID como PK, trace_id UUID, user_id UUID, severity enum, índices en trace_id, user_id, severity, created_at)
 - [x] Crear migración para tabla `logs_security` (sin particionamiento por ahora) (creada: 2024_01_01_000009_create_security_logs_table.php, ID como PK, trace_id UUID, user_id UUID, event_type enum, índices en trace_id, user_id, event_type, created_at)
 - [x] Crear migración para tabla `logs_activity` (sin particionamiento por ahora) (creada: 2024_01_01_000010_create_activity_logs_table.php, ID como PK, user_id UUID, model_type/model_id, action enum, índices en user_id, model_type/model_id, action, created_at)
 - [x] Crear índices básicos por created_at (índices creados en todas las tablas de logs: created_at, user_id, trace_id, y otros campos relevantes según tipo de log)
 - [x] NOTA: Particionamiento avanzado se implementará en Fase 9
-- [x] Ejecutar migraciones (todas las migraciones ejecutadas correctamente, batch [3], tablas creadas: logs_api, logs_error, logs_security, logs_activity)
+- [x] Ejecutar migraciones (todas las migraciones ejecutadas correctamente, batch [3], tablas creadas: logs_api, logs_security, logs_activity)
 
 ### 2.6 Migraciones de Autenticación Básica
 - [x] Crear migración para tabla `password_reset_tokens` (creada en 2024_01_01_000001_create_users_table.php, tabla del sistema Laravel)
@@ -239,7 +238,7 @@
   - [x] Método render() personalizado (en bootstrap/app.php)
   - [x] Transformación automática a RFC 7807
   - [x] Manejo específico de excepciones comunes (404, 422, 500, etc.)
-  - [x] Logging automático en ErrorLog
+  - [x] Logging automático de errores (ahora solo en Sentry)
   - [x] Integración con Sentry para errores críticos
 - [x] Crear excepciones personalizadas en `app/Exceptions/`
   - [x] `ApiException`
@@ -441,7 +440,7 @@
   - [x] Asignación de rol 'user' por defecto
   - [x] Protección contra remover último rol de admin
   - [x] Método getActivityLogs() para historial de actividad
-  - [ ] Notificación de bienvenida (comentado, opcional para implementar con colas)
+  - [x] Notificación de bienvenida (implementado con WelcomeNotification usando MailMessage, sin Blade)
 
 ### 7.6 Rutas de Usuarios
 - [x] Crear `routes/api/users.php`
@@ -475,7 +474,7 @@
 ## Fase 9: Sistema de Logging y Auditoría (Semana 8)
 
 ### 9.1 Migraciones de Logs (ya creadas en Fase 2)
-- [x] Verificar migraciones de: logs_api, logs_error, logs_security, logs_activity
+- [x] Verificar migraciones de: logs_api, logs_security, logs_activity
   - [x] ✅ Todas las migraciones están creadas y ejecutadas correctamente
   - [x] ✅ Estructura correcta según estrategia del proyecto (ID auto-incrementable para logs)
   - [x] ✅ Índices correctos para optimización
@@ -486,7 +485,7 @@
   - [x] ✅ Modelo creado con scopes útiles (byTraceId, byUserId, byMethod, slowRequests, etc.)
   - [x] ✅ Usa ID auto-incrementable (NO UUID como primary key según estrategia)
   - [x] ✅ Campos UUID (trace_id, user_id) manejados como campos normales
-- [x] Crear `ErrorLog` en `app/Infrastructure/Logging/Models/`
+- [x] ~~Crear `ErrorLog` en `app/Infrastructure/Logging/Models/`~~ (Eliminado - ahora se usa solo Sentry)
   - [x] ✅ Modelo creado con constantes de severidad
   - [x] ✅ Métodos helper (markAsResolved, isResolved)
   - [x] ✅ Scopes para filtrar por severidad y estado
@@ -544,7 +543,7 @@
   - [x] Tests completos para AuthLogger (login success/failure, password changed, detección de actividad sospechosa)
   - [x] Tests completos para SecurityLogger (permission denied, suspicious activity, account locked)
   - [x] Tests completos para ApiLogger (log request, exclusión de paths, sanitización de datos)
-  - [x] Tests de modelos (ErrorLog, ActivityLog, SecurityLog, ApiLog)
+  - [x] Tests de modelos (ActivityLog, SecurityLog, ApiLog)
   - [x] Tests de scopes y métodos helper
 - [x] Tests de captura de contexto (trace_id, user_id, IP)
 

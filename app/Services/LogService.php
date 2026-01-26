@@ -229,16 +229,6 @@ class LogService
 
         self::error("Exception: {$exception->getMessage()}", $context, 'error');
 
-        // Guardar en base de datos
-        self::saveToDatabase('error', [
-            'severity' => 'error',
-            'exception' => get_class($exception),
-            'message' => $exception->getMessage(),
-            'file' => $exception->getFile(),
-            'line' => $exception->getLine(),
-            'trace' => $exception->getTraceAsString(),
-        ]);
-
         // Enviar a Sentry
         self::logToSentry('error', $exception->getMessage(), $context, $exception);
     }
@@ -255,7 +245,6 @@ class LogService
                 'api' => self::saveApiLog($data, $context),
                 'activity' => self::saveActivityLog($data, $context),
                 'security' => self::saveSecurityLog($data, $context),
-                'error' => self::saveErrorLog($data, $context),
                 default => null,
             };
         } catch (\Exception $e) {
@@ -325,29 +314,6 @@ class LogService
             'event_type' => $data['event_type'],
             'message' => $data['message'],
             'details' => $data['details'],
-            'ip_address' => $context['ip_address'],
-            'user_agent' => $context['user_agent'],
-        ]);
-    }
-
-    /**
-     * Guardar Error log en base de datos
-     */
-    protected static function saveErrorLog(array $data, array $context): void
-    {
-        if (! class_exists(\App\Models\Logs\ErrorLog::class)) {
-            return;
-        }
-
-        \App\Models\Logs\ErrorLog::create([
-            'trace_id' => $context['trace_id'],
-            'user_id' => $context['user_id'],
-            'severity' => $data['severity'],
-            'exception' => $data['exception'],
-            'message' => $data['message'],
-            'file' => $data['file'],
-            'line' => $data['line'],
-            'trace' => $data['trace'],
             'ip_address' => $context['ip_address'],
             'user_agent' => $context['user_agent'],
         ]);

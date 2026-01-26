@@ -107,13 +107,11 @@ php artisan logs:clean --days=30
 
 **TTL por Tipo de Log:**
 - **API Logs**: 90 días (por defecto)
-- **Error Logs**: 180 días (mínimo)
 - **Security Logs**: 365 días (mínimo)
 - **Activity Logs**: 730 días (mínimo)
 
 **Qué hace:**
 - Elimina logs de API anteriores a la fecha de corte
-- Elimina logs de errores anteriores a 180 días (o el parámetro si es mayor)
 - Elimina logs de seguridad anteriores a 365 días (o el parámetro si es mayor)
 - Elimina logs de actividad anteriores a 730 días (o el parámetro si es mayor)
 - Muestra estadísticas de eliminación por tipo
@@ -136,7 +134,6 @@ php artisan reports:generate
 **Qué incluye el reporte:**
 - **Usuarios**: Total, nuevos, activos
 - **API Logs**: Total, errores (status >= 400)
-- **Error Logs**: Total, críticos
 - **Security Logs**: Total, actividad sospechosa
 - **Activity Logs**: Total
 

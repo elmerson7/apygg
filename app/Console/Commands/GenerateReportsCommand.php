@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Models\Logs\ActivityLog;
 use App\Models\Logs\ApiLog;
-use App\Models\Logs\ErrorLog;
 use App\Models\Logs\SecurityLog;
 use App\Models\User;
 use Illuminate\Console\Command;
@@ -40,12 +39,6 @@ class GenerateReportsCommand extends Command
                     'total' => ApiLog::whereBetween('created_at', [$startDate, $endDate])->count(),
                     'errors' => ApiLog::whereBetween('created_at', [$startDate, $endDate])
                         ->where('response_status', '>=', 400)
-                        ->count(),
-                ],
-                'error_logs' => [
-                    'total' => ErrorLog::whereBetween('created_at', [$startDate, $endDate])->count(),
-                    'critical' => ErrorLog::whereBetween('created_at', [$startDate, $endDate])
-                        ->where('severity', 'critical')
                         ->count(),
                 ],
                 'security_logs' => [
