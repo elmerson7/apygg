@@ -3,10 +3,10 @@
 use App\Models\Logs\SecurityLog;
 use App\Models\User;
 use App\Services\Logging\AuthLogger;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Cache;
 
-uses(RefreshDatabase::class);
+uses(DatabaseTransactions::class);
 
 beforeEach(function () {
     Cache::flush();

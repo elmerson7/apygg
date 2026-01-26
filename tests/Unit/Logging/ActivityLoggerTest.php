@@ -3,10 +3,10 @@
 use App\Models\Logs\ActivityLog;
 use App\Models\User;
 use App\Services\Logging\ActivityLogger;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Auth;
 
-uses(RefreshDatabase::class);
+uses(DatabaseTransactions::class);
 
 beforeEach(function () {
     $this->user = User::factory()->create();
@@ -129,7 +129,7 @@ test('puede agregar campos a la lista de excluidos', function () {
 
     $user = User::factory()->create([
         'name' => 'Test',
-        'email' => 'test@example.com',
+        'email' => fake()->unique()->safeEmail(),
     ]);
 
     $log = ActivityLogger::logCreated($user);

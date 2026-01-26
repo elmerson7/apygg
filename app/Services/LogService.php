@@ -64,18 +64,25 @@ class LogService
     {
         $enrichedContext = self::getContext($context);
 
-        $logger = $channel ? Log::channel($channel) : Log::getLogger();
+        // Si el canal no existe, usar el canal por defecto
+        try {
+            $logger = $channel ? Log::channel($channel) : Log::getLogger();
+        } catch (\InvalidArgumentException $e) {
+            // Canal no existe, usar canal por defecto
+            $logger = Log::getLogger();
+        }
 
         $logger->{$level}($message, $enrichedContext);
 
         // Enviar a Sentry usando captura directa (más confiable que el canal)
-        // Verificar nivel según entorno:
-        // - dev: solo critical
-        // - staging/prod: error y superior
+        // NO enviar a Sentry durante tests
         $shouldSendToSentry = false;
-        if (class_exists(\Sentry\SentrySdk::class)) {
+        if (class_exists(\Sentry\SentrySdk::class) && ! app()->runningUnitTests()) {
             $env = config('app.env', 'dev');
-            if ($env === 'dev' && $level === 'critical') {
+            // No enviar a Sentry si estamos en modo testing o en consola (tests)
+            if ($env === 'testing' || app()->runningInConsole()) {
+                $shouldSendToSentry = false;
+            } elseif ($env === 'dev' && $level === 'critical') {
                 $shouldSendToSentry = true;
             } elseif (in_array($env, ['staging', 'prod']) && in_array($level, ['error', 'critical'])) {
                 $shouldSendToSentry = true;

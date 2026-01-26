@@ -2,10 +2,10 @@
 
 use App\Models\Logs\ApiLog;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Str;
 
-uses(RefreshDatabase::class);
+uses(DatabaseTransactions::class);
 
 test('puede filtrar por trace_id', function () {
     $traceId = (string) Str::uuid();

@@ -3,10 +3,10 @@
 use App\Models\Logs\SecurityLog;
 use App\Models\User;
 use App\Services\Logging\SecurityLogger;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\Request;
 
-uses(RefreshDatabase::class);
+uses(DatabaseTransactions::class);
 
 test('puede registrar permiso denegado', function () {
     $user = User::factory()->create();

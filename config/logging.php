@@ -141,6 +141,20 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'activity' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/activity.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'replace_placeholders' => true,
+        ],
+
+        'security' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/security.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'replace_placeholders' => true,
+        ],
+
     ],
 
 ];

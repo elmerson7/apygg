@@ -6,13 +6,11 @@ use App\Models\Permission;
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 abstract class TestCase extends BaseTestCase
 {
-    use RefreshDatabase;
 
     /**
      * Creates the application.
@@ -25,6 +23,9 @@ abstract class TestCase extends BaseTestCase
 
         // Asegurar que la aplicación está completamente inicializada
         $app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+
+        // Forzar entorno de testing para evitar envío a Sentry
+        $app['config']->set('app.env', 'testing');
 
         return $app;
     }

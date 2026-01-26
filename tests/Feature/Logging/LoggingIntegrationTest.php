@@ -9,13 +9,13 @@ use App\Services\Logging\ActivityLogger;
 use App\Services\Logging\ApiLogger;
 use App\Services\Logging\AuthLogger;
 use App\Services\Logging\SecurityLogger;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
-uses(RefreshDatabase::class);
+uses(DatabaseTransactions::class);
 
 beforeEach(function () {
     $this->user = User::factory()->create();

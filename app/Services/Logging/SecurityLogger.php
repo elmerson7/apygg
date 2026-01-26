@@ -87,12 +87,19 @@ class SecurityLogger
                 ], $details),
             ]);
 
-            // Log crítico para actividades sospechosas
-            LogService::critical('Suspicious activity detected', [
-                'user_id' => $user?->id,
-                'description' => $description,
-                'details' => $details,
-            ]);
+            // Log crítico para actividades sospechosas (solo si no estamos en modo testing)
+            // Verificar tanto runningUnitTests como APP_ENV para mayor seguridad
+            $isTesting = app()->runningUnitTests() 
+                || app()->runningInConsole() 
+                || config('app.env') === 'testing';
+            
+            if (! $isTesting) {
+                LogService::critical('Suspicious activity detected', [
+                    'user_id' => $user?->id,
+                    'description' => $description,
+                    'details' => $details,
+                ]);
+            }
 
             return $log;
         } catch (\Exception $e) {

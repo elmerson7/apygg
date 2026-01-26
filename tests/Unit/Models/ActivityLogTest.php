@@ -2,9 +2,9 @@
 
 use App\Models\Logs\ActivityLog;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 
-uses(RefreshDatabase::class);
+uses(DatabaseTransactions::class);
 
 test('puede filtrar por usuario', function () {
     $user1 = User::factory()->create();
