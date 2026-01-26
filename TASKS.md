@@ -1002,8 +1002,8 @@
 - [x] Compresión con gzip (implementado: compresión automática con gzip, configurable con BACKUP_COMPRESSION_ENABLED, soporta descompresión automática en restore, formato configurable gzip/bzip2)
 
 ### 23.2 Verificación de Backups
-- [ ] Test de restauración en entorno de staging
-- [ ] Documentación de procedimientos
+- [x] Test de restauración en entorno de staging (verificado: comando `backup:restore` probado exitosamente con backups comprimidos en formato custom, detección automática de formato custom vs SQL plano, restauración con `pg_restore` para formato custom y `psql` para SQL plano, manejo correcto de archivos temporales y limpieza automática)
+- [x] Documentación de procedimientos (implementado: documentación completa en `docs/backups-system.md` con comandos disponibles, configuración, políticas de retención, uso de S3/MinIO, troubleshooting detallado incluyendo `php artisan test:s3` para diagnóstico de conexión S3, ejemplos de uso y procedimientos de restauración)
 
 ---
 
@@ -1017,11 +1017,11 @@
 - [ ] Etapa Build: Docker image build
 
 ### 24.2 Pre-commit Hooks
-- [ ] Validación de sintaxis PHP
-- [ ] PHP CS Fixer automático
-- [ ] Validación de mensajes (Conventional Commits)
-- [ ] Prevención de console.log, dd()
-- [ ] Tests locales deben pasar
+- [x] Validación de sintaxis PHP (implementado: pre-commit hook valida sintaxis con `php -l` en archivos staged, ejecuta dentro de contenedor Docker, falla commit si hay errores) - **NOTA: Hooks desinstalados por preferencia del usuario, scripts disponibles en `scripts/git-hooks/` para instalación opcional**
+- [x] PHP CS Fixer automático (implementado: Pint se ejecuta automáticamente en archivos staged, formatea código según PSR-12, agrega archivos modificados al staging automáticamente) - **NOTA: Hooks desinstalados por preferencia del usuario**
+- [x] Validación de mensajes (Conventional Commits) (implementado: commit-msg hook valida formato `tipo(scope): descripción`, soporta tipos feat/fix/docs/style/refactor/test/chore/perf/ci/build/revert, valida longitud mínima de descripción, permite excepciones para merge/revert) - **NOTA: Hooks desinstalados por preferencia del usuario**
+- [x] Prevención de console.log, dd() (implementado: pre-commit hook detecta dd(), dump(), var_dump(), console.log() en archivos staged, falla commit si encuentra código de debug, permite saltar con --no-verify) - **NOTA: Hooks desinstalados por preferencia del usuario**
+- [x] Tests locales deben pasar (implementado: pre-commit hook ejecuta tests opcionales, puede saltarse con SKIP_TESTS=true, hooks detectan automáticamente si Docker está corriendo y se saltan si no está disponible, instalación con `make install-hooks` o `./scripts/install-git-hooks.sh`, documentación completa en `docs/git-hooks.md`) - **NOTA: Hooks desinstalados por preferencia del usuario, scripts disponibles para instalación opcional cuando se desee**
 
 ### 24.3 Despliegue Automático
 - [ ] Blue-Green deployment

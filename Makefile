@@ -160,3 +160,17 @@ fix-permissions:
 	find . -name "*.sh" -exec chmod +x {} + 2>/dev/null || true
 	chmod +x artisan 2>/dev/null || true
 	@echo "Permisos corregidos correctamente"
+
+# Instalar Git Hooks (pre-commit, commit-msg)
+install-hooks:
+	@chmod +x scripts/install-git-hooks.sh
+	@./scripts/install-git-hooks.sh
+
+# Helper para hacer commit con formato Conventional Commits
+commit:
+	@if [ -z "$(msg)" ]; then \
+		echo "Uso: make commit msg=\"mensaje de commit\""; \
+		echo "Ejemplo: make commit msg=\"Add git hooks\""; \
+		exit 1; \
+	fi
+	@./scripts/commit-with-suggestion.sh "$(msg)"

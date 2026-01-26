@@ -1,0 +1,160 @@
+#!/bin/bash
+#
+# Commit-msg Hook
+# Valida que los mensajes de commit sigan el formato Conventional Commits
+#
+# Formato esperado:
+#   tipo(scope): descripción
+#
+# Tipos válidos:
+#   - feat: Nueva funcionalidad
+#   - fix: Corrección de bug
+#   - docs: Cambios en documentación
+#   - style: Cambios de formato (espacios, comas, etc.)
+#   - refactor: Refactorización de código
+#   - test: Agregar o modificar tests
+#   - chore: Tareas de mantenimiento
+#   - perf: Mejoras de rendimiento
+#   - ci: Cambios en CI/CD
+#   - build: Cambios en sistema de build
+#   - revert: Revertir un commit anterior
+
+set -e
+
+# Colores para output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Obtener el mensaje de commit
+COMMIT_MSG_FILE=$1
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+# Limpiar mensaje: remover tags XML/HTML y tomar solo la primera línea
+# Cursor/VS Code a veces genera mensajes con <message> tags
+COMMIT_MSG=$(echo "$COMMIT_MSG" | sed 's/<message>//g' | sed 's/<\/message>//g' | head -1 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+
+# Patrón para Conventional Commits
+# Formato: tipo(scope): descripción
+# Ejemplos válidos:
+#   feat: agregar autenticación
+#   feat(auth): agregar login
+#   fix(api): corregir error 500
+#   docs: actualizar README
+CONVENTIONAL_COMMIT_PATTERN='^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?: .{1,}'
+
+# Tipos válidos
+VALID_TYPES=("feat" "fix" "docs" "style" "refactor" "test" "chore" "perf" "ci" "build" "revert")
+
+# Permitir commits de merge y revert automáticos
+if echo "$COMMIT_MSG" | grep -qE '^(Merge|Revert|fixup!|squash!)'; then
+    exit 0
+fi
+
+# Permitir commits que empiezan con # (comentarios en algunos workflows)
+if echo "$COMMIT_MSG" | grep -qE '^#'; then
+    exit 0
+fi
+
+# Verificar si la validación está deshabilitada
+# Opción 1: Variable de entorno
+if [ "$SKIP_COMMIT_MSG_VALIDATION" = "true" ]; then
+    exit 0
+fi
+
+# Opción 2: Configuración de Git
+SKIP_VALIDATION=$(git config --get hooks.skip-commit-msg-validation 2>/dev/null || echo "false")
+if [ "$SKIP_VALIDATION" = "true" ]; then
+    exit 0
+fi
+
+# Validar formato
+if ! echo "$COMMIT_MSG" | grep -qE "$CONVENTIONAL_COMMIT_PATTERN"; then
+    echo -e "${RED}❌ Formato de commit inválido${NC}"
+    echo ""
+    echo -e "${YELLOW}El mensaje de commit debe seguir el formato Conventional Commits:${NC}"
+    echo -e "${GREEN}  tipo(scope): descripción${NC}"
+    echo ""
+    echo -e "${YELLOW}Tipos válidos:${NC}"
+    for TYPE in "${VALID_TYPES[@]}"; do
+        echo -e "  - ${GREEN}$TYPE${NC}"
+    done
+    echo ""
+    echo -e "${YELLOW}Ejemplos válidos:${NC}"
+    echo -e "  ${GREEN}feat: agregar autenticación JWT${NC}"
+    echo -e "  ${GREEN}feat(auth): agregar login con Google${NC}"
+    echo -e "  ${GREEN}fix(api): corregir error 500 en usuarios${NC}"
+    echo -e "  ${GREEN}docs: actualizar README${NC}"
+    echo -e "  ${GREEN}refactor: mejorar estructura de servicios${NC}"
+    echo ""
+    echo -e "${YELLOW}Mensaje actual:${NC}"
+    echo -e "  ${RED}$COMMIT_MSG${NC}"
+    echo ""
+    # Intentar sugerir corrección automática para mensajes comunes
+    FIRST_WORD=$(echo "$COMMIT_MSG" | awk '{print $1}')
+    SUGGESTED_TYPE=""
+    case "$FIRST_WORD" in
+        "Add"|"Adds"|"Added"|"Implement"|"Implements"|"Implemented"|"Create"|"Creates"|"Created")
+            SUGGESTED_TYPE="feat"
+            ;;
+        "Fix"|"Fixes"|"Fixed"|"Correct"|"Corrects"|"Corrected"|"Repair"|"Repairs"|"Repaired")
+            SUGGESTED_TYPE="fix"
+            ;;
+        "Update"|"Updates"|"Updated"|"Improve"|"Improves"|"Improved"|"Refactor"|"Refactors"|"Refactored")
+            SUGGESTED_TYPE="refactor"
+            ;;
+        "Document"|"Documents"|"Documented"|"Docs")
+            SUGGESTED_TYPE="docs"
+            ;;
+        "Test"|"Tests"|"Testing")
+            SUGGESTED_TYPE="test"
+            ;;
+        "Configure"|"Configures"|"Configured"|"Setup"|"Setups"|"Set")
+            SUGGESTED_TYPE="chore"
+            ;;
+    esac
+    
+    if [ -n "$SUGGESTED_TYPE" ]; then
+        # Generar sugerencia basada en el mensaje original
+        # Remover la primera palabra y convertir el resto a minúsculas
+        REST_OF_MSG=$(echo "$COMMIT_MSG" | sed -E "s/^[^[:space:]]+[[:space:]]+//" | tr '[:upper:]' '[:lower:]')
+        # Si el mensaje original empieza con "Add", mantener "add" en la sugerencia
+        if echo "$FIRST_WORD" | grep -qiE "^(Add|Adds|Added)$"; then
+            REST_OF_MSG="add ${REST_OF_MSG}"
+        fi
+        SUGGESTED_MSG="${SUGGESTED_TYPE}: ${REST_OF_MSG}"
+        echo -e "${GREEN}💡 Sugerencia de mensaje corregido:${NC}"
+        echo -e "  ${GREEN}${SUGGESTED_MSG}${NC}"
+        echo ""
+        echo -e "${YELLOW}Para usar esta sugerencia, edita el mensaje en Cursor y usa:${NC}"
+        echo -e "  ${GREEN}${SUGGESTED_MSG}${NC}"
+        echo ""
+    fi
+    
+    echo -e "${YELLOW}Para saltar esta validación (no recomendado):${NC}"
+    echo -e "  ${GREEN}git commit --no-verify${NC}"
+    exit 1
+fi
+
+# Validar longitud de descripción (mínimo 10 caracteres después de ":")
+DESCRIPTION=$(echo "$COMMIT_MSG" | sed -E 's/^[^:]+: //')
+if [ ${#DESCRIPTION} -lt 10 ]; then
+    echo -e "${RED}❌ La descripción del commit es muy corta (mínimo 10 caracteres)${NC}"
+    echo ""
+    echo -e "${YELLOW}Mensaje actual:${NC}"
+    echo -e "  ${RED}$COMMIT_MSG${NC}"
+    echo ""
+    echo -e "${YELLOW}Proporciona una descripción más detallada.${NC}"
+    exit 1
+fi
+
+# Validar que la descripción no termine con punto (opcional, pero buena práctica)
+if echo "$DESCRIPTION" | grep -qE '\.$'; then
+    echo -e "${YELLOW}⚠️  La descripción termina con punto. Considera eliminarlo.${NC}"
+    echo -e "${YELLOW}   Mensaje: $COMMIT_MSG${NC}"
+    # No fallar, solo advertir
+fi
+
+echo -e "${GREEN}✓ Formato de commit válido${NC}"
+exit 0
