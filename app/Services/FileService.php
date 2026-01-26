@@ -233,30 +233,46 @@ class FileService
      */
     protected static function validateFile(UploadedFile $file): void
     {
-        // Validar tamaño máximo (10MB por defecto)
-        $maxSize = config('filesystems.max_file_size', 10485760); // 10MB
+        // Validar tamaño máximo usando nueva configuración de files.php
+        $maxSize = config('files.max_sizes.default', 10 * 1024 * 1024); // 10MB por defecto
         if ($file->getSize() > $maxSize) {
             throw new \InvalidArgumentException('El archivo excede el tamaño máximo permitido.');
         }
 
-        // Validar tipo MIME permitido
-        $allowedMimes = config('filesystems.allowed_mimes', [
-            'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-            'application/pdf', 'application/msword',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        ]);
+        // Validar tipo MIME permitido usando nueva configuración
+        $allAllowedMimes = [];
+        foreach (config('files.allowed_mimes', []) as $categoryMimes) {
+            $allAllowedMimes = array_merge($allAllowedMimes, $categoryMimes);
+        }
+        $allAllowedMimes = array_unique($allAllowedMimes);
 
-        if (! in_array($file->getMimeType(), $allowedMimes)) {
+        if (empty($allAllowedMimes)) {
+            // Fallback a valores por defecto si no hay configuración
+            $allAllowedMimes = [
+                'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+                'application/pdf', 'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            ];
+        }
+
+        if (! in_array($file->getMimeType(), $allAllowedMimes)) {
             throw new \InvalidArgumentException('Tipo de archivo no permitido.');
         }
 
-        // Validar extensión
-        $allowedExtensions = config('filesystems.allowed_extensions', [
-            'jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx',
-        ]);
+        // Validar extensión usando nueva configuración
+        $allAllowedExtensions = [];
+        foreach (config('files.allowed_extensions', []) as $categoryExtensions) {
+            $allAllowedExtensions = array_merge($allAllowedExtensions, $categoryExtensions);
+        }
+        $allAllowedExtensions = array_unique($allAllowedExtensions);
+
+        if (empty($allAllowedExtensions)) {
+            // Fallback a valores por defecto
+            $allAllowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx'];
+        }
 
         $extension = strtolower($file->getClientOriginalExtension());
-        if (! in_array($extension, $allowedExtensions)) {
+        if (! in_array($extension, $allAllowedExtensions)) {
             throw new \InvalidArgumentException('Extensión de archivo no permitida.');
         }
     }

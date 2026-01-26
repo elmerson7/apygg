@@ -44,6 +44,7 @@ Route::middleware(['auth:api'])->get('/health/detailed', [HealthController::clas
 require __DIR__.'/api/auth.php';
 require __DIR__.'/api/users.php';
 require __DIR__.'/api/api-keys.php';
+require __DIR__.'/api/files.php';
 
 Route::prefix('test/sentry')->group(function () {
     Route::get('/info', [TestSentryController::class, 'info']);

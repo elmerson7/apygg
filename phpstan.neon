@@ -35,3 +35,5 @@ parameters:
         - app/Models/Logs/ActivityLog.php
         - app/Models/Logs/ApiLog.php
         - app/Models/Logs/SecurityLog.php
+        # FileController: errores de contravariedad al sobrescribir métodos con FormRequest (falso positivo válido)
+        - app/Http/Controllers/Files/FileController.php

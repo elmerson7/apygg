@@ -925,18 +925,19 @@
 - [x] Cache warming automático (comando `cache:warm` creado, scheduler configurado para ejecución diaria a las 01:00)
 
 ### 20.2 Configuración de Sesiones
-- [ ] Configurar Redis para sesiones
-- [ ] Configurar lifetime (120 minutos)
-- [ ] Seguridad de cookies: httpOnly, secure, sameSite
+- [x] Configurar Redis para sesiones (configurado: SESSION_DRIVER=redis en .env.example, config/session.php con driver redis)
+- [x] Configurar lifetime (120 minutos) (configurado: SESSION_LIFETIME=120 en config/session.php)
+- [x] Seguridad de cookies: httpOnly, secure, sameSite (configurado: http_only=true, secure configurable via SESSION_SECURE_COOKIE, same_site='lax' en config/session.php)
+- ⚠️ **Nota**: Las sesiones NO se usan en API REST stateless (este proyecto usa JWT y API Keys). La configuración está lista por si se implementan WebSockets (Laravel Reverb) en el futuro.
 
 ### 20.3 Configuración de Archivos
-- [ ] Crear `config/files.php`
-  - [ ] Límites de tamaño por tipo
-  - [ ] Tipos MIME permitidos
-  - [ ] Políticas de retención
-- [ ] Crear `FileService` (ya creado en Fase 3)
-- [ ] Crear `FileController` endpoints
-- [ ] Crear modelo `File` y migraciones
+- [x] Crear `config/files.php` (creado con límites de tamaño por tipo, tipos MIME permitidos, políticas de retención, rutas de almacenamiento, configuración de procesamiento de imágenes)
+- [x] Crear `FileService` (ya creado en Fase 3, métodos: upload, delete, getUrl, exists, uploadImage, getInfo, copy, move)
+- [x] Crear `FileController` endpoints (creado: index, show, store, update, destroy, download)
+- [x] Crear modelo `File` y migraciones (creado modelo File con UUID, relaciones, scopes, métodos helper; migración con campos completos: user_id, name, filename, path, url, disk, mime_type, extension, size, type, category, description, metadata, is_public, expires_at)
+- [x] Crear Form Requests (StoreFileRequest, UpdateFileRequest)
+- [x] Crear Resources (FileResource)
+- [x] Crear rutas (routes/api/files.php con endpoints CRUD y download)
 
 ### 20.4 Configuración de Mail
 - [ ] Configurar driver SMTP en `config/mail.php`
