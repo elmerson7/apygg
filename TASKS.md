@@ -539,14 +539,14 @@
   - [x] ✅ Configuración automática según `APP_ENV`
 
 ### 9.5 Tests de Logging
-- [ ] Tests de que los logs se registran correctamente
-  - [ ] Tests completos para ActivityLogger (created, updated, deleted, filtrado de campos sensibles)
-  - [ ] Tests completos para AuthLogger (login success/failure, password changed, detección de actividad sospechosa)
-  - [ ] Tests completos para SecurityLogger (permission denied, suspicious activity, account locked)
-  - [ ] Tests completos para ApiLogger (log request, exclusión de paths, sanitización de datos)
-  - [ ] Tests de modelos (ErrorLog, ActivityLog, SecurityLog, ApiLog)
-  - [ ] Tests de scopes y métodos helper
-- [ ] Tests de captura de contexto (trace_id, user_id, IP)
+- [x] Tests de que los logs se registran correctamente
+  - [x] Tests completos para ActivityLogger (created, updated, deleted, filtrado de campos sensibles)
+  - [x] Tests completos para AuthLogger (login success/failure, password changed, detección de actividad sospechosa)
+  - [x] Tests completos para SecurityLogger (permission denied, suspicious activity, account locked)
+  - [x] Tests completos para ApiLogger (log request, exclusión de paths, sanitización de datos)
+  - [x] Tests de modelos (ErrorLog, ActivityLog, SecurityLog, ApiLog)
+  - [x] Tests de scopes y métodos helper
+- [x] Tests de captura de contexto (trace_id, user_id, IP)
 
 ---
 

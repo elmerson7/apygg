@@ -158,14 +158,17 @@ class ApiLogger
     protected static function sanitizeQuery(array $query): array
     {
         $sensitiveKeys = ['password', 'token', 'key', 'secret', 'api_key'];
+        $sanitized = [];
 
-        return array_map(function ($value, $key) use ($sensitiveKeys) {
+        foreach ($query as $key => $value) {
             if (in_array(strtolower($key), $sensitiveKeys)) {
-                return '[REDACTED]';
+                $sanitized[$key] = '[REDACTED]';
+            } else {
+                $sanitized[$key] = $value;
             }
+        }
 
-            return $value;
-        }, $query, array_keys($query));
+        return $sanitized;
     }
 
     /**
@@ -178,17 +181,19 @@ class ApiLogger
         }
 
         $sensitiveKeys = ['password', 'password_confirmation', 'token', 'api_token', 'secret', 'key'];
+        $sanitized = [];
 
-        return array_map(function ($value, $key) use ($sensitiveKeys) {
+        foreach ($body as $key => $value) {
             if (in_array(strtolower($key), $sensitiveKeys)) {
-                return '[REDACTED]';
+                $sanitized[$key] = '[REDACTED]';
+            } elseif (is_array($value)) {
+                $sanitized[$key] = self::sanitizeBody($value);
+            } else {
+                $sanitized[$key] = $value;
             }
-            if (is_array($value)) {
-                return self::sanitizeBody($value);
-            }
+        }
 
-            return $value;
-        }, $body, array_keys($body));
+        return $sanitized;
     }
 
     /**

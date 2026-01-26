@@ -2,6 +2,7 @@
 
 namespace App\Models\Logs;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -14,12 +15,24 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  */
 class ActivityLog extends Model
 {
+    use HasFactory;
+
     /**
      * The table associated with the model.
      *
      * @var string
      */
     protected $table = 'logs_activity';
+
+    /**
+     * Create a new factory instance for the model.
+     *
+     * @return \Illuminate\Database\Eloquent\Factories\Factory<static>
+     */
+    protected static function newFactory()
+    {
+        return \Database\Factories\ActivityLogFactory::new();
+    }
 
     /**
      * Indicates if the model should be timestamped.
