@@ -801,17 +801,17 @@
 ## Fase 2.5: Instalación de Dependencias Adicionales (Semana 2)
 
 ### 2.5.1 Dependencias de Observabilidad y Desarrollo
-- [ ] Instalar `laravel/telescope` para observabilidad en desarrollo
-- [ ] Instalar `spatie/laravel-query-builder` para filtros estandarizados
-- [ ] Instalar `dedoc/scramble` para documentación automática de API
-- [ ] Ejecutar `composer install`
+- [x] Instalar `laravel/telescope` para observabilidad en desarrollo (instalado: ^5.16.1 en require-dev)
+- [x] Instalar `spatie/laravel-query-builder` para filtros estandarizados (instalado: ^6.4.0)
+- [x] Instalar `dedoc/scramble` para documentación automática de API (instalado: ^0.13.10)
+- [x] Ejecutar `composer install` (ejecutado correctamente)
 
 ### 2.5.2 Dependencias de Funcionalidades Avanzadas (Opcionales)
-- [ ] Instalar `laravel/reverb` para WebSockets nativo (si se necesita)
-- [ ] Instalar `laravel/scout` para búsqueda full-text (si se necesita)
-- [ ] Instalar `laravel/horizon` para gestión de colas avanzada (si se necesita)
-- [ ] Instalar `sentry/sentry-laravel` para logging de errores (opcional) (ya instalado: ^4.15, configurado en config/sentry.php)
-- [ ] Ejecutar `composer install`
+- [x] Instalar `laravel/reverb` para WebSockets nativo (instalado: ^1.5)
+- [x] Instalar `laravel/scout` para búsqueda full-text (instalado: ^10.17)
+- [x] Instalar `laravel/horizon` para gestión de colas avanzada (instalado: ^5.43)
+- [x] Instalar `sentry/sentry-laravel` para logging de errores (instalado: ^4.15, configurado en config/sentry.php)
+- [x] Ejecutar `composer install` (ejecutado correctamente)
 
 ### 2.5.3 Configuración de FrankenPHP
 - [ ] Configurar FrankenPHP para desarrollo y producción
