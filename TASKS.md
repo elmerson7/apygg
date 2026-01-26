@@ -993,13 +993,13 @@
 ## Fase 22: Backups y Recuperación (Semana 17)
 
 ### 23.1 Sistema de Backups
-- [ ] Crear comando artisan `backup:create`
-- [ ] Comando `backup:restore`
-- [ ] Comando `backup:list`
-- [ ] Retención configurada: 7 días (diarios), 30 (semanales), 90 (mensuales)
-- [ ] Scheduler para backups automáticos a las 3 AM
-- [ ] Almacenamiento seguro (S3 o servidor remoto)
-- [ ] Compresión con gzip
+- [x] Crear comando artisan `backup:create` (implementado: BackupCreateCommand con opciones --database, --files, --no-compress, --no-upload, crea backups de BD con compresión y subida a remoto opcional, BackupService centraliza lógica de creación)
+- [x] Comando `backup:restore` (implementado: BackupRestoreCommand con confirmación de seguridad, busca backups en local y remoto, soporta backups comprimidos, restaura con pg_restore, incluye verificación de integridad)
+- [x] Comando `backup:list` (implementado: BackupListCommand lista backups locales y remotos, filtros por tipo, formato table/json, muestra tamaño, fecha, ubicación, compresión, estadísticas de retención)
+- [x] Retención configurada: 7 días (diarios), 30 (semanales), 90 (mensuales) (implementado: BackupCleanCommand limpia backups antiguos, política configurable en config/backups.php, mantiene diarios últimos 7 días, semanales últimos 30 días, mensuales últimos 90 días, programado diariamente a las 4 AM)
+- [x] Scheduler para backups automáticos a las 3 AM (implementado: backup:create --database programado diariamente a las 3 AM, backup:clean programado a las 4 AM, sin overlapping para evitar conflictos)
+- [x] Almacenamiento seguro (S3 o servidor remoto) (implementado: BackupService::uploadToRemote() sube automáticamente a S3/MinIO, si falla la subida el backup se mantiene en storage local como respaldo, configuración en config/backups.php con BACKUP_REMOTE_ENABLED=true por defecto, BACKUP_REMOTE_DISK, BACKUP_REMOTE_PATH, soporta cualquier disco de Laravel Filesystem, manejo de errores mejorado con mensajes claros si el bucket no existe)
+- [x] Compresión con gzip (implementado: compresión automática con gzip, configurable con BACKUP_COMPRESSION_ENABLED, soporta descompresión automática en restore, formato configurable gzip/bzip2)
 
 ### 23.2 Verificación de Backups
 - [ ] Test de restauración en entorno de staging

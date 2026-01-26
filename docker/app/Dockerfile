@@ -12,6 +12,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libicu-dev \
         libpq-dev \
         libzip-dev \
+        wget \
+        ca-certificates \
+        gnupg \
+    && echo "deb http://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+    && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends postgresql-client-18 \
     && install-php-extensions \
         pcntl \
         intl \
@@ -21,7 +28,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         pdo_pgsql \
         bcmath \
         redis \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* /etc/apt/sources.list.d/pgdg.list
 
 WORKDIR /app
 

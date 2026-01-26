@@ -45,11 +45,19 @@ Schedule::command('reports:generate')
     });
 
 // Backup de base de datos: cada día a las 3 AM
-Schedule::command('db:backup --compress')
+Schedule::command('backup:create --database')
     ->dailyAt('03:00')
     ->withoutOverlapping()
     ->onFailure(function () {
         \Illuminate\Support\Facades\Log::error('Falló el backup de base de datos');
+    });
+
+// Limpieza de backups antiguos: cada día a las 4 AM (después de crear backup)
+Schedule::command('backup:clean')
+    ->dailyAt('04:00')
+    ->withoutOverlapping()
+    ->onFailure(function () {
+        \Illuminate\Support\Facades\Log::error('Falló la limpieza de backups antiguos');
     });
 
 // Sincronización de índices de búsqueda: cada hora
