@@ -29,7 +29,7 @@ test('puede filtrar por usuario', function () {
 });
 
 test('puede filtrar por método HTTP', function () {
-    $uniquePath = '/api/test-'.uniqid();
+    $uniquePath = '/test-'.uniqid();
     ApiLog::factory()->forEndpoint('GET', $uniquePath)->count(3)->create();
     ApiLog::factory()->forEndpoint('POST', $uniquePath)->count(2)->create();
 
@@ -41,7 +41,7 @@ test('puede filtrar por método HTTP', function () {
 });
 
 test('puede filtrar por código de estado', function () {
-    $uniquePath = '/api/test-status-'.uniqid();
+    $uniquePath = '/test-status-'.uniqid();
     ApiLog::factory()->create(['response_status' => 200, 'request_path' => $uniquePath]);
     ApiLog::factory()->create(['response_status' => 201, 'request_path' => $uniquePath]);
     ApiLog::factory()->create(['response_status' => 400, 'request_path' => $uniquePath]);
@@ -55,7 +55,7 @@ test('puede filtrar por código de estado', function () {
 });
 
 test('puede filtrar requests lentos', function () {
-    $uniquePath = '/api/test-slow-'.uniqid();
+    $uniquePath = '/test-slow-'.uniqid();
     ApiLog::factory()->slow(1000)->count(3)->create(['request_path' => $uniquePath]);
     ApiLog::factory()->create(['response_time_ms' => 500, 'request_path' => $uniquePath]);
 

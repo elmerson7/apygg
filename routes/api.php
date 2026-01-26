@@ -21,20 +21,24 @@ Route::get('/', function () {
     return response()->json([
         'name' => 'APYGG API',
         'status' => 'running',
+        'version' => config('app.version', '1.0.0'),
         'endpoints' => [
             'health' => '/health',
+            'health_live' => '/health/live',
+            'health_ready' => '/health/ready',
+            'health_detailed' => '/health/detailed',
             'documentation' => '/documentation', // Cuando implementes Scramble
         ],
     ]);
 });
 
-// Health check (sin autenticación)
-Route::get('/health', function () {
-    return response()->json([
-        'status' => 'ok',
-        'timestamp' => now()->toIso8601String(),
-    ]);
-});
+// Health check endpoints (sin autenticación)
+use App\Http\Controllers\Health\HealthController;
+
+Route::get('/health', [HealthController::class, 'check']);
+Route::get('/health/live', [HealthController::class, 'live']);
+Route::get('/health/ready', [HealthController::class, 'ready']);
+Route::middleware(['auth:api'])->get('/health/detailed', [HealthController::class, 'detailed']);
 
 // Cargar rutas modulares
 require __DIR__.'/api/auth.php';

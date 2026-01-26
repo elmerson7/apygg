@@ -44,7 +44,7 @@ test('ActivityLogger guarda contexto completo (user_id, IP)', function () {
 test('ApiLogger guarda contexto completo (trace_id, user_id, IP, user_agent)', function () {
     \Illuminate\Support\Facades\Auth::login($this->user);
 
-    $request = Request::create('/api/users', 'GET');
+    $request = Request::create('/users', 'GET');
     $request->server->set('REMOTE_ADDR', $this->ipAddress);
     $request->headers->set('User-Agent', $this->userAgent);
     $request->headers->set('X-Trace-ID', $this->traceId);
@@ -58,7 +58,7 @@ test('ApiLogger guarda contexto completo (trace_id, user_id, IP, user_agent)', f
         ->and($log->ip_address)->toBe($this->ipAddress)
         ->and($log->user_agent)->toBe($this->userAgent)
         ->and($log->request_method)->toBe('GET')
-        ->and($log->request_path)->toBe('api/users') // Request::create() remueve el slash inicial
+        ->and($log->request_path)->toBe('users') // Request::create() remueve el slash inicial
         ->and($log->response_status)->toBe(200);
 
     // Verificar en base de datos
@@ -92,7 +92,7 @@ test('AuthLogger guarda contexto completo (user_id, IP, user_agent)', function (
 });
 
 test('SecurityLogger guarda contexto completo (user_id, IP, user_agent, trace_id)', function () {
-    $request = Request::create('/api/users/123', 'DELETE');
+    $request = Request::create('/users/123', 'DELETE');
     $request->server->set('REMOTE_ADDR', $this->ipAddress);
     $request->headers->set('User-Agent', $this->userAgent);
     $request->headers->set('X-Trace-ID', $this->traceId);
@@ -168,7 +168,7 @@ test('todos los logs pueden tener user_id null para acciones no autenticadas', f
 });
 
 test('los logs preservan información de contexto en detalles JSON', function () {
-    $request = Request::create('/api/users', 'POST', ['name' => 'Test']);
+    $request = Request::create('/users', 'POST', ['name' => 'Test']);
     $request->setUserResolver(fn () => $this->user);
     $request->headers->set('X-Trace-ID', $this->traceId);
 

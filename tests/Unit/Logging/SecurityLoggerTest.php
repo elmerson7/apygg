@@ -64,7 +64,7 @@ test('puede registrar actividad sospechosa', function () {
 
 test('puede registrar actividad sospechosa sin usuario', function () {
     $description = 'Suspicious IP activity';
-    $request = Request::create('/api/users', 'GET');
+    $request = Request::create('/users', 'GET');
 
     $log = SecurityLogger::logSuspiciousActivity($description, null, [], $request);
 
@@ -128,7 +128,7 @@ test('puede registrar evento de seguridad personalizado', function () {
 
 test('captura información del request en detalles', function () {
     $user = User::factory()->create();
-    $request = Request::create('/api/users/123', 'PUT', ['name' => 'New Name']);
+    $request = Request::create('/users/123', 'PUT', ['name' => 'New Name']);
 
     $log = SecurityLogger::logPermissionDenied($user, 'users.update', 'users', $request);
 

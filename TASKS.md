@@ -610,16 +610,20 @@
 ## Fase 11: Health Checks y Monitoreo (Semana 9)
 
 ### 11.1 Health Check Endpoints
-- [ ] Crear `HealthController` en `app/Modules/System/Controllers/`
-  - [ ] `GET /api/health` - Health check básico sin autenticación
-  - [ ] `GET /api/health/live` - Liveness probe
-  - [ ] `GET /api/health/ready` - Readiness probe
-  - [ ] `GET /api/health/detailed` - Health check completo (autenticado)
-- [ ] Implementar verificaciones de servicios:
-  - [ ] Database conectividad
-  - [ ] Redis conectividad
-  - [ ] Meilisearch (opcional)
-  - [ ] Horizon (opcional)
+- [x] Crear `HealthController` en `app/Http/Controllers/Health/`
+  - [x] `GET /health` - Health check básico sin autenticación (alias de ready)
+  - [x] `GET /health/live` - Liveness probe (solo verifica que la app responde)
+  - [x] `GET /health/ready` - Readiness probe (verifica servicios críticos: DB, Redis)
+  - [x] `GET /health/detailed` - Health check completo (autenticado, verifica todos los servicios)
+- [x] Implementar verificaciones de servicios:
+  - [x] Database conectividad (con latencia en ms)
+  - [x] Redis conectividad (con latencia en ms y prueba de read/write)
+  - [x] Meilisearch (opcional, solo si está configurado)
+  - [x] Horizon (opcional, solo si está instalado)
+- [x] Respuestas rápidas y ligeras (timeout máximo 2-3 segundos)
+- [x] Formato JSON estándar con status, timestamp y servicios
+- [x] Excluidos de rate limiting y logging excesivo
+- [x] Versión de aplicación en config/app.php
 
 ### 11.2 Configuración para Kubernetes
 - [ ] Documentar probes recomendadas

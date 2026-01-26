@@ -141,4 +141,16 @@ return [
         array_map('trim', explode(',', env('ALLOWED_ORIGINS', '')))
     ),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Application Version
+    |--------------------------------------------------------------------------
+    |
+    | This value is the version of your application. Used in health checks
+    | and API responses.
+    |
+    */
+
+    'version' => env('APP_VERSION', '1.0.0'),
+
 ];

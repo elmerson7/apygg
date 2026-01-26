@@ -11,7 +11,7 @@ beforeEach(function () {
 });
 
 test('puede registrar request y response de API', function () {
-    $request = Request::create('/api/users', 'GET');
+    $request = Request::create('/users', 'GET');
     $response = new Response(['data' => []], 200);
     $traceId = (string) Str::uuid();
 
@@ -20,13 +20,13 @@ test('puede registrar request y response de API', function () {
     expect($log)->not->toBeNull()
         ->and($log->trace_id)->toBe($traceId)
         ->and($log->request_method)->toBe('GET')
-        ->and($log->request_path)->toBe('api/users') // Request::create() remueve el slash inicial
+        ->and($log->request_path)->toBe('users') // Request::create() remueve el slash inicial
         ->and($log->response_status)->toBe(200)
         ->and($log->response_time_ms)->toBe(151); // redondeado
 });
 
 test('genera trace_id si no se proporciona', function () {
-    $request = Request::create('/api/users', 'POST');
+    $request = Request::create('/users', 'POST');
     $response = new Response(['success' => true], 201);
 
     $log = ApiLogger::logRequest($request, $response);
@@ -38,7 +38,7 @@ test('genera trace_id si no se proporciona', function () {
 
 test('usa trace_id del header X-Trace-ID si existe', function () {
     $traceId = (string) Str::uuid();
-    $request = Request::create('/api/users', 'GET');
+    $request = Request::create('/users', 'GET');
     $request->headers->set('X-Trace-ID', $traceId);
     $response = new Response([], 200);
 
@@ -79,7 +79,7 @@ test('excluye rutas que contienen paths excluidos', function () {
 });
 
 test('sanitiza campos sensibles en query parameters', function () {
-    $request = Request::create('/api/users?password=secret&token=abc123&name=test', 'GET');
+    $request = Request::create('/users?password=secret&token=abc123&name=test', 'GET');
     $response = new Response([], 200);
 
     $log = ApiLogger::logRequest($request, $response);
@@ -92,7 +92,7 @@ test('sanitiza campos sensibles en query parameters', function () {
 });
 
 test('sanitiza campos sensibles en request body', function () {
-    $request = Request::create('/api/users', 'POST', [
+    $request = Request::create('/users', 'POST', [
         'name' => 'Test User',
         'email' => 'test@example.com',
         'password' => 'secret123',
@@ -114,7 +114,7 @@ test('sanitiza campos sensibles en request body', function () {
 });
 
 test('sanitiza headers sensibles', function () {
-    $request = Request::create('/api/users', 'GET');
+    $request = Request::create('/users', 'GET');
     $request->headers->set('Authorization', 'Bearer token123');
     $request->headers->set('X-Api-Key', 'key123');
     $request->headers->set('Content-Type', 'application/json');
@@ -130,7 +130,7 @@ test('sanitiza headers sensibles', function () {
 });
 
 test('calcula tiempo de respuesta si no se proporciona', function () {
-    $request = Request::create('/api/users', 'GET');
+    $request = Request::create('/users', 'GET');
     $request->server->set('REQUEST_TIME_FLOAT', microtime(true) - 0.1);
     $response = new Response([], 200);
 
@@ -143,7 +143,7 @@ test('calcula tiempo de respuesta si no se proporciona', function () {
 test('captura usuario autenticado si existe', function () {
     \Illuminate\Support\Facades\Auth::login($this->user);
 
-    $request = Request::create('/api/users', 'GET');
+    $request = Request::create('/users', 'GET');
     $response = new Response([], 200);
 
     $log = ApiLogger::logRequest($request, $response);
@@ -152,7 +152,7 @@ test('captura usuario autenticado si existe', function () {
 });
 
 test('captura IP address y user agent', function () {
-    $request = Request::create('/api/users', 'GET');
+    $request = Request::create('/users', 'GET');
     $request->server->set('REMOTE_ADDR', '192.168.1.1');
     $request->headers->set('User-Agent', 'Test Agent');
     $response = new Response([], 200);
@@ -177,7 +177,7 @@ test('puede agregar rutas a la lista de excluidas', function () {
 test('puede agregar headers a la lista de excluidos', function () {
     ApiLogger::excludeHeaders(['custom-header']);
 
-    $request = Request::create('/api/users', 'GET');
+    $request = Request::create('/users', 'GET');
     $request->headers->set('Custom-Header', 'secret-value');
     $response = new Response([], 200);
 
@@ -188,7 +188,7 @@ test('puede agregar headers a la lista de excluidos', function () {
 });
 
 test('captura response body si es JSON', function () {
-    $request = Request::create('/api/users', 'GET');
+    $request = Request::create('/users', 'GET');
     $responseData = ['success' => true, 'data' => []];
     $response = new Response(json_encode($responseData), 200);
     $response->headers->set('Content-Type', 'application/json');
