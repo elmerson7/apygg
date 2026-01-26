@@ -83,11 +83,18 @@ abstract class Controller
 
     /**
      * Store a newly created resource in storage.
+     *
+     * Nota: Este método debe ser sobrescrito en controladores específicos
+     * con FormRequest para validación adecuada. Los controladores hijos pueden
+     * usar tipos más específicos (FormRequest) sin problemas de compatibilidad.
      */
     public function store(Request $request): JsonResponse
     {
-        // Nota: Este método debe ser sobrescrito en controladores específicos
-        // con FormRequest para validación adecuada
+        // Implementación genérica - debe ser sobrescrita en controladores específicos
+        if ($this->model === null) {
+            throw new \RuntimeException('Método store() debe ser implementado en el controlador hijo');
+        }
+
         $validated = $request->all();
         $item = $this->getModel()::create($validated);
 
@@ -96,11 +103,18 @@ abstract class Controller
 
     /**
      * Update the specified resource in storage.
+     *
+     * Nota: Este método debe ser sobrescrito en controladores específicos
+     * con FormRequest para validación adecuada. Los controladores hijos pueden
+     * usar tipos más específicos (FormRequest) sin problemas de compatibilidad.
      */
     public function update(Request $request, string $id): JsonResponse
     {
-        // Nota: Este método debe ser sobrescrito en controladores específicos
-        // con FormRequest para validación adecuada
+        // Implementación genérica - debe ser sobrescrita en controladores específicos
+        if ($this->model === null) {
+            throw new \RuntimeException('Método update() debe ser implementado en el controlador hijo');
+        }
+
         $item = $this->getModelQuery()->findOrFail($id);
         $validated = $request->all();
 

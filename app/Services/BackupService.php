@@ -370,35 +370,57 @@ class BackupService
         // Descomprimir si es necesario
         $isCompressed = str_ends_with($backupPath, '.gz');
         $finalPath = $backupPath;
+        $tempUncompressedPath = null;
 
         if ($isCompressed) {
-            $uncompressedPath = str_replace('.gz', '', $backupPath);
-            exec("gunzip -c {$backupPath} > {$uncompressedPath}", $output, $returnCode);
+            // Crear ruta temporal para archivo descomprimido
+            $tempUncompressedPath = sys_get_temp_dir().'/'.uniqid('backup_restore_', true).'.sql';
+            exec('gunzip -c '.escapeshellarg($backupPath).' > '.escapeshellarg($tempUncompressedPath).' 2>&1', $output, $returnCode);
 
             if ($returnCode !== 0) {
                 throw new \RuntimeException('Error al descomprimir backup: '.implode("\n", $output));
             }
 
-            $finalPath = $uncompressedPath;
+            $finalPath = $tempUncompressedPath;
         }
 
         try {
             // Determinar si es formato custom (-F c) o SQL plano
-            $isCustomFormat = str_ends_with($finalPath, '.sql') === false ||
-                              (file_exists($finalPath) && ! is_readable($finalPath));
+            // Los backups en formato custom empiezan con "PGDMP" (magic bytes)
+            // Los backups SQL empiezan con texto SQL (--, CREATE, etc.)
+            $isCustomFormat = false;
 
-            // Verificar si el archivo es formato custom (binario) o SQL (texto)
             if (file_exists($finalPath)) {
-                $fileContent = file_get_contents($finalPath, false, null, 0, 4);
-                $isCustomFormat = $fileContent !== false &&
-                                 (strpos($fileContent, 'PGDMP') === 0 ||
-                                  strpos($fileContent, "\x1f\x8b") === 0); // Gzip header
+                // Leer primeros bytes para detectar formato
+                $handle = fopen($finalPath, 'rb');
+                if ($handle) {
+                    $header = fread($handle, 5);
+                    fclose($handle);
+
+                    // Formato custom de PostgreSQL empieza con "PGDMP"
+                    if ($header === 'PGDMP') {
+                        $isCustomFormat = true;
+                    } else {
+                        // Verificar si es texto SQL (empieza con --, CREATE, etc.)
+                        $handle = fopen($finalPath, 'rb');
+                        $firstLine = fgets($handle, 100);
+                        fclose($handle);
+
+                        // Si no empieza con texto SQL común, podría ser custom
+                        $isCustomFormat = ! (
+                            str_starts_with(trim($firstLine), '--') ||
+                            str_starts_with(trim($firstLine), 'CREATE') ||
+                            str_starts_with(trim($firstLine), 'SET') ||
+                            str_starts_with(trim($firstLine), 'BEGIN')
+                        );
+                    }
+                }
             }
 
             if ($isCustomFormat) {
-                // Restaurar backup formato custom
+                // Restaurar backup formato custom usando pg_restore
                 $command = sprintf(
-                    'PGPASSWORD=%s pg_restore -h %s -p %s -U %s -d %s --clean --if-exists %s',
+                    'PGPASSWORD=%s pg_restore -h %s -p %s -U %s -d %s --clean --if-exists --no-owner --no-acl %s 2>&1',
                     escapeshellarg($password),
                     escapeshellarg($host),
                     escapeshellarg($port),
@@ -407,9 +429,9 @@ class BackupService
                     escapeshellarg($finalPath)
                 );
             } else {
-                // Restaurar backup SQL plano
+                // Restaurar backup SQL plano usando psql
                 $command = sprintf(
-                    'PGPASSWORD=%s psql -h %s -p %s -U %s -d %s -f %s',
+                    'PGPASSWORD=%s psql -h %s -p %s -U %s -d %s -f %s 2>&1',
                     escapeshellarg($password),
                     escapeshellarg($host),
                     escapeshellarg($port),
@@ -419,21 +441,24 @@ class BackupService
                 );
             }
 
-            exec($command.' 2>&1', $output, $returnCode);
+            exec($command, $output, $returnCode);
 
             if ($returnCode !== 0) {
-                throw new \RuntimeException('Error al restaurar backup: '.implode("\n", $output));
+                $errorOutput = implode("\n", $output);
+
+                throw new \RuntimeException('Error al restaurar backup: '.$errorOutput);
             }
 
             Log::info('Backup restaurado exitosamente', [
                 'backup' => basename($backupPath),
+                'format' => $isCustomFormat ? 'custom' : 'sql',
             ]);
 
             return true;
         } finally {
             // Limpiar archivos temporales
-            if ($isCompressed && file_exists($finalPath) && $finalPath !== $backupPath) {
-                unlink($finalPath);
+            if ($tempUncompressedPath && file_exists($tempUncompressedPath)) {
+                unlink($tempUncompressedPath);
             }
             if ($tempPath && file_exists($tempPath)) {
                 unlink($tempPath);

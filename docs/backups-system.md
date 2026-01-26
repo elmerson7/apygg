@@ -62,6 +62,47 @@ php artisan backup:clean
 php artisan backup:clean --dry-run
 ```
 
+### 5. Probar Conexión a S3/MinIO
+
+```bash
+# Probar conexión y configuración de S3/MinIO
+php artisan test:s3
+```
+
+Este comando verifica:
+- ✅ Configuración de S3 (bucket, región, endpoint, credenciales)
+- ✅ Acceso al bucket (listar archivos)
+- ✅ Escritura de archivos (subir archivo de prueba)
+- ✅ Lectura de archivos (leer archivo de prueba)
+- ✅ Eliminación de archivos (limpiar archivo de prueba)
+
+**Útil para diagnosticar problemas de conexión antes de crear backups.**
+
+**Ejemplo de salida exitosa:**
+```
+Probando conexión a S3/MinIO...
+Configuración S3:
++-----------+-------------------+
+| Parámetro | Valor             |
++-----------+-------------------+
+| Driver    | s3                |
+| Bucket    | elmerson          |
+| Region    | us-east-1         |
+| Endpoint  | http://minio:9000 |
++-----------+-------------------+
+✓ Acceso al bucket verificado
+✓ Archivo subido exitosamente: backups/test-1234567890.txt
+✓ Archivo leído exitosamente
+✓ Archivo de prueba eliminado
+✓ Conexión a S3/MinIO funcionando correctamente
+```
+
+**Si hay errores, el comando mostrará:**
+- Tipo de error (AWS S3, conexión, etc.)
+- Código de error AWS (si aplica)
+- Mensaje detallado del error
+- Stack trace para debugging
+
 ## Configuración
 
 ### Variables de Entorno
@@ -168,6 +209,12 @@ php artisan backup:restore backup_db_apygg_2026-01-26_03-00-00.sql.gz
 php artisan backup:clean --dry-run
 ```
 
+### Probar conexión a S3/MinIO
+
+```bash
+php artisan test:s3
+```
+
 ## Notas Importantes
 
 1. **Backups locales**: Se guardan en `storage/app/backups/` (siempre se mantiene una copia local)
@@ -224,10 +271,41 @@ docker compose exec minio mc mb local/elmerson
 
 ### Error al subir a S3
 
-Verificar conexión a S3/MinIO:
+**Primer paso: Probar conexión**
 
 ```bash
 php artisan test:s3
 ```
 
-Este comando prueba la conexión y muestra detalles del error si falla.
+Este comando prueba la conexión completa y muestra detalles del error si falla:
+- Verifica configuración de S3 (bucket, región, endpoint, credenciales)
+- Prueba acceso al bucket (listar archivos)
+- Intenta escribir, leer y eliminar un archivo de prueba
+- Muestra mensajes de error detallados si algo falla
+
+**Ejemplo de salida exitosa:**
+```
+Probando conexión a S3/MinIO...
+Configuración S3:
++-----------+-------------------+
+| Parámetro | Valor             |
++-----------+-------------------+
+| Driver    | s3                |
+| Bucket    | elmerson          |
+| Region    | us-east-1         |
+| Endpoint  | http://minio:9000 |
++-----------+-------------------+
+✓ Acceso al bucket verificado
+✓ Archivo subido exitosamente: backups/test-1234567890.txt
+✓ Archivo leído exitosamente
+✓ Archivo de prueba eliminado
+✓ Conexión a S3/MinIO funcionando correctamente
+```
+
+**Si el test falla, verificar:**
+1. Que MinIO esté corriendo: `docker compose ps minio`
+2. Que el bucket exista: `docker compose exec minio mc ls local/`
+3. Que las credenciales sean correctas en `.env`
+4. Que el endpoint sea accesible desde el contenedor app
+
+**Nota:** Si `test:s3` falla, los backups seguirán funcionando pero se guardarán solo en storage local (fallback automático).
