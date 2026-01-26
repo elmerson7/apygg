@@ -67,3 +67,12 @@ Schedule::command('health:check')
     ->onFailure(function () {
         \Illuminate\Support\Facades\Log::error('Health check falló');
     });
+
+// Cache warming automático: después de migraciones y al inicio del día
+// Se ejecuta automáticamente después de deployments mediante hooks
+Schedule::command('cache:warm')
+    ->dailyAt('01:00')
+    ->withoutOverlapping()
+    ->onFailure(function () {
+        \Illuminate\Support\Facades\Log::error('Cache warming falló');
+    });

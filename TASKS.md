@@ -919,10 +919,10 @@
 ## Fase 19: Configuraciones Adicionales (Semana 15)
 
 ### 20.1 Configuración de Cache
-- [ ] Configurar Redis como driver en `config/cache.php`
-- [ ] Configurar TTL por tipo de dato
-- [ ] Configurar tags para invalidación
-- [ ] Cache warming automático
+- [x] Configurar Redis como driver en `config/cache.php` (configurado: default = redis en config/cache.php)
+- [x] Configurar TTL por tipo de dato (configurado en CacheService: user=3600s, entity=7200s, search=1800s, default=3600s)
+- [x] Configurar tags para invalidación (implementado en CacheService con métodos forgetTag/forgetTags)
+- [x] Cache warming automático (comando `cache:warm` creado, scheduler configurado para ejecución diaria a las 01:00)
 
 ### 20.2 Configuración de Sesiones
 - [ ] Configurar Redis para sesiones
