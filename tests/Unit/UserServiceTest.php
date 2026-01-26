@@ -18,16 +18,17 @@ beforeEach(function () {
 });
 
 test('puede crear un usuario', function () {
+    $email = fake()->unique()->safeEmail();
     $userData = [
         'name' => 'Test User',
-        'email' => 'test@example.com',
+        'email' => $email,
         'password' => 'password123',
     ];
 
     $user = $this->userService->create($userData);
 
     expect($user)->toBeInstanceOf(User::class)
-        ->and($user->email)->toBe('test@example.com')
+        ->and($user->email)->toBe($email)
         ->and($user->name)->toBe('Test User')
         ->and($user->hasRole('user'))->toBeTrue();
 });
@@ -35,7 +36,7 @@ test('puede crear un usuario', function () {
 test('asigna rol user por defecto si no se especifica', function () {
     $userData = [
         'name' => 'Test User',
-        'email' => 'test@example.com',
+        'email' => fake()->unique()->safeEmail(),
         'password' => 'password123',
     ];
 
@@ -51,7 +52,7 @@ test('puede crear usuario con roles específicos', function () {
 
     $userData = [
         'name' => 'Test User',
-        'email' => 'test@example.com',
+        'email' => fake()->unique()->safeEmail(),
         'password' => 'password123',
     ];
 
@@ -63,16 +64,17 @@ test('puede crear usuario con roles específicos', function () {
 });
 
 test('lanza excepción si el email ya existe', function () {
-    User::factory()->create(['email' => 'test@example.com']);
+    $email = fake()->unique()->safeEmail();
+    User::factory()->create(['email' => $email]);
 
     $userData = [
         'name' => 'Test User',
-        'email' => 'test@example.com',
+        'email' => $email,
         'password' => 'password123',
     ];
 
     expect(fn () => $this->userService->create($userData))
-        ->toThrow(\InvalidArgumentException::class, "El email 'test@example.com' ya está en uso");
+        ->toThrow(\InvalidArgumentException::class, "El email '{$email}' ya está en uso");
 });
 
 test('puede actualizar un usuario', function () {

@@ -2,10 +2,7 @@
 
 use App\Models\Logs\ErrorLog;
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Str;
-
-uses(DatabaseTransactions::class);
 
 test('puede filtrar por trace_id', function () {
     $traceId = (string) Str::uuid();
@@ -32,42 +29,46 @@ test('puede filtrar por usuario', function () {
 });
 
 test('puede filtrar por severidad', function () {
-    ErrorLog::factory()->low()->count(2)->create();
-    ErrorLog::factory()->medium()->count(3)->create();
-    ErrorLog::factory()->high()->count(1)->create();
-    ErrorLog::factory()->critical()->count(2)->create();
+    $uniqueFile = 'test-'.uniqid().'.php';
+    ErrorLog::factory()->low()->count(2)->create(['file' => $uniqueFile]);
+    ErrorLog::factory()->medium()->count(3)->create(['file' => $uniqueFile]);
+    ErrorLog::factory()->high()->count(1)->create(['file' => $uniqueFile]);
+    ErrorLog::factory()->critical()->count(2)->create(['file' => $uniqueFile]);
 
-    expect(ErrorLog::bySeverity(ErrorLog::SEVERITY_LOW)->count())->toBe(2)
-        ->and(ErrorLog::bySeverity(ErrorLog::SEVERITY_MEDIUM)->count())->toBe(3)
-        ->and(ErrorLog::bySeverity(ErrorLog::SEVERITY_HIGH)->count())->toBe(1)
-        ->and(ErrorLog::bySeverity(ErrorLog::SEVERITY_CRITICAL)->count())->toBe(2);
+    expect(ErrorLog::where('file', $uniqueFile)->bySeverity(ErrorLog::SEVERITY_LOW)->count())->toBe(2)
+        ->and(ErrorLog::where('file', $uniqueFile)->bySeverity(ErrorLog::SEVERITY_MEDIUM)->count())->toBe(3)
+        ->and(ErrorLog::where('file', $uniqueFile)->bySeverity(ErrorLog::SEVERITY_HIGH)->count())->toBe(1)
+        ->and(ErrorLog::where('file', $uniqueFile)->bySeverity(ErrorLog::SEVERITY_CRITICAL)->count())->toBe(2);
 });
 
 test('puede filtrar errores no resueltos', function () {
-    ErrorLog::factory()->unresolved()->count(5)->create();
-    ErrorLog::factory()->resolved()->count(3)->create();
+    $uniqueFile = 'test-unresolved-'.uniqid().'.php';
+    ErrorLog::factory()->unresolved()->count(5)->create(['file' => $uniqueFile]);
+    ErrorLog::factory()->resolved()->count(3)->create(['file' => $uniqueFile]);
 
-    $unresolvedLogs = ErrorLog::unresolved()->get();
+    $unresolvedLogs = ErrorLog::where('file', $uniqueFile)->unresolved()->get();
 
     expect($unresolvedLogs)->toHaveCount(5)
         ->and($unresolvedLogs->every(fn ($log) => $log->resolved_at === null))->toBeTrue();
 });
 
 test('puede filtrar errores resueltos', function () {
-    ErrorLog::factory()->unresolved()->count(5)->create();
-    ErrorLog::factory()->resolved()->count(3)->create();
+    $uniqueFile = 'test-resolved-'.uniqid().'.php';
+    ErrorLog::factory()->unresolved()->count(5)->create(['file' => $uniqueFile]);
+    ErrorLog::factory()->resolved()->count(3)->create(['file' => $uniqueFile]);
 
-    $resolvedLogs = ErrorLog::resolved()->get();
+    $resolvedLogs = ErrorLog::where('file', $uniqueFile)->resolved()->get();
 
     expect($resolvedLogs)->toHaveCount(3)
         ->and($resolvedLogs->every(fn ($log) => $log->resolved_at !== null))->toBeTrue();
 });
 
 test('puede filtrar errores críticos', function () {
-    ErrorLog::factory()->critical()->count(3)->create();
-    ErrorLog::factory()->high()->count(2)->create();
+    $uniqueFile = 'test-critical-'.uniqid().'.php';
+    ErrorLog::factory()->critical()->count(3)->create(['file' => $uniqueFile]);
+    ErrorLog::factory()->high()->count(2)->create(['file' => $uniqueFile]);
 
-    $criticalLogs = ErrorLog::critical()->get();
+    $criticalLogs = ErrorLog::where('file', $uniqueFile)->critical()->get();
 
     expect($criticalLogs)->toHaveCount(3)
         ->and($criticalLogs->every(fn ($log) => $log->severity === ErrorLog::SEVERITY_CRITICAL))->toBeTrue();

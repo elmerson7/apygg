@@ -2,10 +2,7 @@
 
 use App\Models\Logs\SecurityLog;
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Str;
-
-uses(DatabaseTransactions::class);
 
 test('puede filtrar por trace_id', function () {
     $traceId = (string) Str::uuid();
@@ -32,43 +29,48 @@ test('puede filtrar por usuario', function () {
 });
 
 test('puede filtrar por tipo de evento', function () {
-    SecurityLog::factory()->loginSuccess()->count(3)->create();
-    SecurityLog::factory()->loginFailure()->count(2)->create();
-    SecurityLog::factory()->permissionDenied()->count(1)->create();
+    $uniqueIp = '192.168.150.'.rand(1, 255);
+    SecurityLog::factory()->loginSuccess()->count(3)->create(['ip_address' => $uniqueIp]);
+    SecurityLog::factory()->loginFailure()->count(2)->create(['ip_address' => $uniqueIp]);
+    SecurityLog::factory()->permissionDenied()->count(1)->create(['ip_address' => $uniqueIp]);
 
-    $loginSuccessLogs = SecurityLog::byEventType(SecurityLog::EVENT_LOGIN_SUCCESS)->get();
-    $loginFailureLogs = SecurityLog::byEventType(SecurityLog::EVENT_LOGIN_FAILURE)->get();
+    $loginSuccessLogs = SecurityLog::byIpAddress($uniqueIp)->byEventType(SecurityLog::EVENT_LOGIN_SUCCESS)->get();
+    $loginFailureLogs = SecurityLog::byIpAddress($uniqueIp)->byEventType(SecurityLog::EVENT_LOGIN_FAILURE)->get();
 
     expect($loginSuccessLogs)->toHaveCount(3)
         ->and($loginFailureLogs)->toHaveCount(2);
 });
 
 test('puede filtrar intentos de login fallidos', function () {
-    SecurityLog::factory()->loginFailure()->count(5)->create();
+    $uniqueEmail = 'test-'.uniqid().'@example.com';
+    SecurityLog::factory()->loginFailure()->count(5)->create([
+        'details' => ['email' => $uniqueEmail],
+    ]);
     SecurityLog::factory()->loginSuccess()->count(3)->create();
 
-    $failureLogs = SecurityLog::loginFailures()->get();
+    $failureLogs = SecurityLog::whereJsonContains('details->email', $uniqueEmail)->loginFailures()->get();
 
     expect($failureLogs)->toHaveCount(5)
         ->and($failureLogs->every(fn ($log) => $log->event_type === SecurityLog::EVENT_LOGIN_FAILURE))->toBeTrue();
 });
 
 test('puede filtrar actividades sospechosas', function () {
-    SecurityLog::factory()->suspiciousActivity()->count(4)->create();
-    SecurityLog::factory()->loginSuccess()->count(2)->create();
+    $uniqueIp = '192.168.100.'.rand(1, 255);
+    SecurityLog::factory()->suspiciousActivity()->count(4)->create(['ip_address' => $uniqueIp]);
+    SecurityLog::factory()->loginSuccess()->count(2)->create(['ip_address' => $uniqueIp]);
 
-    $suspiciousLogs = SecurityLog::suspiciousActivity()->get();
+    $suspiciousLogs = SecurityLog::byIpAddress($uniqueIp)->suspiciousActivity()->get();
 
     expect($suspiciousLogs)->toHaveCount(4)
         ->and($suspiciousLogs->every(fn ($log) => $log->event_type === SecurityLog::EVENT_SUSPICIOUS_ACTIVITY))->toBeTrue();
 });
 
 test('puede filtrar por IP address', function () {
-    $ipAddress = '192.168.1.1';
+    $ipAddress = '192.168.200.'.rand(1, 255);
 
     SecurityLog::factory()->create(['ip_address' => $ipAddress]);
     SecurityLog::factory()->create(['ip_address' => $ipAddress]);
-    SecurityLog::factory()->create(['ip_address' => '10.0.0.1']);
+    SecurityLog::factory()->create(['ip_address' => '10.0.0.'.rand(1, 255)]);
 
     $logs = SecurityLog::byIpAddress($ipAddress)->get();
 

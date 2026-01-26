@@ -2,12 +2,9 @@
 
 use App\Models\User;
 use App\Services\Logging\ApiLogger;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
-
-uses(DatabaseTransactions::class);
 
 beforeEach(function () {
     $this->user = User::factory()->create();

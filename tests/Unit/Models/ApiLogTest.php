@@ -2,10 +2,7 @@
 
 use App\Models\Logs\ApiLog;
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Str;
-
-uses(DatabaseTransactions::class);
 
 test('puede filtrar por trace_id', function () {
     $traceId = (string) Str::uuid();
@@ -32,34 +29,37 @@ test('puede filtrar por usuario', function () {
 });
 
 test('puede filtrar por método HTTP', function () {
-    ApiLog::factory()->forEndpoint('GET', '/api/users')->count(3)->create();
-    ApiLog::factory()->forEndpoint('POST', '/api/users')->count(2)->create();
+    $uniquePath = '/api/test-'.uniqid();
+    ApiLog::factory()->forEndpoint('GET', $uniquePath)->count(3)->create();
+    ApiLog::factory()->forEndpoint('POST', $uniquePath)->count(2)->create();
 
-    $getLogs = ApiLog::byMethod('GET')->get();
-    $postLogs = ApiLog::byMethod('POST')->get();
+    $getLogs = ApiLog::where('request_path', $uniquePath)->byMethod('GET')->get();
+    $postLogs = ApiLog::where('request_path', $uniquePath)->byMethod('POST')->get();
 
     expect($getLogs)->toHaveCount(3)
         ->and($postLogs)->toHaveCount(2);
 });
 
 test('puede filtrar por código de estado', function () {
-    ApiLog::factory()->create(['response_status' => 200]);
-    ApiLog::factory()->create(['response_status' => 201]);
-    ApiLog::factory()->create(['response_status' => 400]);
-    ApiLog::factory()->create(['response_status' => 404]);
+    $uniquePath = '/api/test-status-'.uniqid();
+    ApiLog::factory()->create(['response_status' => 200, 'request_path' => $uniquePath]);
+    ApiLog::factory()->create(['response_status' => 201, 'request_path' => $uniquePath]);
+    ApiLog::factory()->create(['response_status' => 400, 'request_path' => $uniquePath]);
+    ApiLog::factory()->create(['response_status' => 404, 'request_path' => $uniquePath]);
 
-    $successLogs = ApiLog::byStatus(200)->get();
-    $errorLogs = ApiLog::byStatus(400)->get();
+    $successLogs = ApiLog::where('request_path', $uniquePath)->byStatus(200)->get();
+    $errorLogs = ApiLog::where('request_path', $uniquePath)->byStatus(400)->get();
 
     expect($successLogs->count())->toBe(1)
         ->and($errorLogs->count())->toBe(1);
 });
 
 test('puede filtrar requests lentos', function () {
-    ApiLog::factory()->slow(1000)->count(3)->create();
-    ApiLog::factory()->create(['response_time_ms' => 500]);
+    $uniquePath = '/api/test-slow-'.uniqid();
+    ApiLog::factory()->slow(1000)->count(3)->create(['request_path' => $uniquePath]);
+    ApiLog::factory()->create(['response_time_ms' => 500, 'request_path' => $uniquePath]);
 
-    $slowLogs = ApiLog::slowRequests(1000)->get();
+    $slowLogs = ApiLog::where('request_path', $uniquePath)->slowRequests(1000)->get();
 
     expect($slowLogs)->toHaveCount(3)
         ->and($slowLogs->every(fn ($log) => $log->response_time_ms > 1000))->toBeTrue();
