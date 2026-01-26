@@ -4,11 +4,14 @@ namespace App\Providers;
 
 use App\Listeners\LogAuthenticationEvents;
 use App\Logging\DateOrganizedStreamHandler;
+use Dedoc\Scramble\Scramble;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Telescope\Telescope;
@@ -42,6 +45,59 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(Failed::class, [LogAuthenticationEvents::class, 'handleFailed']);
         Event::listen(Logout::class, [LogAuthenticationEvents::class, 'handleLogout']);
         Event::listen(PasswordReset::class, [LogAuthenticationEvents::class, 'handlePasswordReset']);
+
+        // Configurar Gate para acceso a documentación de Scramble
+        // Permite acceso en entornos de desarrollo (local, dev) sin autenticación
+        // En producción, requiere autenticación y permisos específicos
+        Gate::define('viewApiDocs', function ($user = null) {
+            // En entornos de desarrollo, permitir acceso sin autenticación
+            if (app()->environment(['local', 'dev'])) {
+                return true;
+            }
+
+            // En producción, requerir autenticación y permisos de administrador
+            if ($user && $user->isAdmin()) {
+                return true;
+            }
+
+            return false;
+        });
+
+        // Configurar Scramble para detectar todas las rutas de la API
+        // Las rutas están en la raíz (sin prefijo /api), por lo que necesitamos un resolver personalizado
+        Scramble::afterOpenApiGenerated(function ($openApi) {
+            // Esta función se ejecuta después de generar el OpenAPI
+            // Podemos modificar el documento aquí si es necesario
+        });
+
+        // Configurar resolver de rutas personalizado para Scramble
+        // Incluye todas las rutas de la API excepto las de documentación, health checks básicos y herramientas de desarrollo
+        Scramble::routes(function (Route $route) {
+            $uri = $route->uri();
+
+            // Excluir rutas de documentación de Scramble
+            if (str_starts_with($uri, 'docs')) {
+                return false;
+            }
+
+            // Excluir rutas de herramientas de desarrollo (Telescope, Horizon)
+            if (str_starts_with($uri, 'telescope') || str_starts_with($uri, 'horizon')) {
+                return false;
+            }
+
+            // Excluir health checks básicos (solo incluir /health/detailed si está autenticado)
+            if ($uri === 'health' || $uri === 'health/live' || $uri === 'health/ready') {
+                return false;
+            }
+
+            // Excluir rutas de prueba/test
+            if (str_starts_with($uri, 'test')) {
+                return false;
+            }
+
+            // Incluir todas las demás rutas (auth, users, api-keys, health/detailed, etc.)
+            return true;
+        });
 
         // Configurar canales de logging organizados por fecha
         $this->configureDateOrganizedLogChannels();

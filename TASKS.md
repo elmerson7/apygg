@@ -827,9 +827,11 @@
 ## Fase 16: Documentación de API Interactiva (Semana 13)
 
 ### 17.1 Instalación de Scramble
-- [ ] Instalar `dedoc/scramble`
-- [ ] Publicar configuración
-- [ ] Configurar en `config/api.php`
+- [x] Instalar `dedoc/scramble` (ya estaba instalado en Fase 2.5.1: ^0.13.10)
+- [x] Publicar configuración (publicado: config/scramble.php)
+- [x] Configurar en `config/scramble.php` (configurado: título, descripción, versión, tema)
+- [x] Configurar Gate `viewApiDocs` en AppServiceProvider para acceso en desarrollo
+- [x] Actualizar ruta en routes/api.php para apuntar a `/docs/api`
 
 ### 17.2 Documentación Automática
 - [ ] Verificar que todos los endpoints estén documentados
@@ -839,9 +841,9 @@
 - [ ] Documentación de autenticación
 
 ### 17.3 Dashboard de Scramble
-- [ ] Acceder a `/api/docs`
-- [ ] Verificar que esté generada correctamente
-- [ ] Probar endpoints interactivos
+- [x] Acceder a `/docs/api` (interfaz web funcionando correctamente)
+- [x] Verificar que esté generada correctamente (OpenAPI JSON disponible en `/docs/api.json`)
+- [x] Probar endpoints interactivos (interfaz Stoplight Elements funcionando)
 
 ---
 

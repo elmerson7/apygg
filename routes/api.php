@@ -27,7 +27,7 @@ Route::get('/', function () {
             'health_live' => '/health/live',
             'health_ready' => '/health/ready',
             'health_detailed' => '/health/detailed',
-            'documentation' => '/documentation', // Cuando implementes Scramble
+            'documentation' => '/docs/api', // Scramble API Documentation
         ],
     ]);
 });
