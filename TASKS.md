@@ -940,10 +940,10 @@
 - [x] Crear rutas (routes/api/files.php con endpoints CRUD y download)
 
 ### 20.4 Configuración de Mail
-- [ ] Configurar driver SMTP en `config/mail.php`
-- [ ] Queue para emails asíncrono
-- [ ] Templates base en Markdown
-- [ ] Configuración por entorno
+- [x] Configurar driver SMTP en `config/mail.php` (configurado: SMTP con encryption, timeout, verify_peer; también soporta SES, Postmark, Resend)
+- [x] Queue para emails asíncrono (notificaciones usan ShouldQueue, NotificationService usa Mail::queue(), jobs configurados con Redis)
+- [x] Templates base en Markdown (templates HTML publicados en resources/views/vendor/mail, MailMessage genera HTML automáticamente)
+- [x] Configuración por entorno (default: 'log' en desarrollo, 'smtp' en producción según APP_ENV)
 
 ---
 

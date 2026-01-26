@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Mail\SimpleMail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -46,9 +47,17 @@ class NotificationService
             };
 
             if ($queue) {
-                // Usar Mail::queue con callback (Laravel maneja la cola internamente)
-                Mail::send($view, $data, $callback);
+                // Usar SimpleMail con ShouldQueue para procesamiento asíncrono
+                $mailable = new SimpleMail($view, $data, $subject);
+                $mailer = Mail::to($emails[0]);
+                if (count($emails) > 1) {
+                    foreach (array_slice($emails, 1) as $email) {
+                        $mailer->cc($email);
+                    }
+                }
+                $mailer->send($mailable);
             } else {
+                // Envío síncrono (solo para casos especiales)
                 Mail::send($view, $data, $callback);
             }
 
