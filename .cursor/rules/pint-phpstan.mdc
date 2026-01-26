@@ -1,0 +1,10 @@
+---
+name: pint-phpstan
+description: This is a new rule
+alwaysApply: true
+---
+
+> **Cada vez que Cursor genere o modifique código PHP en este proyecto, debe finalizar ejecutando y validando estos comandos:**
+
+- `make pint`   → para formateo y estilo de código PHP automático siguiendo PSR-12 y convenciones del proyecto.
+- `make phpstan` → para análisis y chequeo estático de código PHP asegurando calidad, tipado y evitar errores comunes.
