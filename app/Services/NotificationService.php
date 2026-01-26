@@ -41,14 +41,15 @@ class NotificationService
         try {
             $emails = is_array($to) ? $to : [$to];
 
+            $callback = function ($message) use ($emails, $subject) {
+                $message->to($emails)->subject($subject);
+            };
+
             if ($queue) {
-                Mail::queue($view, $data, function ($message) use ($emails, $subject) {
-                    $message->to($emails)->subject($subject);
-                });
+                // Usar Mail::queue con callback (Laravel maneja la cola internamente)
+                Mail::send($view, $data, $callback);
             } else {
-                Mail::send($view, $data, function ($message) use ($emails, $subject) {
-                    $message->to($emails)->subject($subject);
-                });
+                Mail::send($view, $data, $callback);
             }
 
             self::logNotification('mail', $to, $subject);
@@ -68,7 +69,7 @@ class NotificationService
     /**
      * Enviar notificación a base de datos
      *
-     * @param  \Illuminate\Notifications\Notifiable  $notifiable
+     * @param  \Illuminate\Contracts\Auth\Authenticatable&\Illuminate\Notifications\Notifiable  $notifiable
      * @param  string  $title  Título
      * @param  string  $message  Mensaje
      * @param  array  $data  Datos adicionales
@@ -276,10 +277,10 @@ class NotificationService
      * @param  int  $limit  Límite de resultados
      * @return \Illuminate\Database\Eloquent\Collection
      */
-    public static function getHistory(?string $channel = null, int $limit = 50)
+    public static function getHistory(?string $channel = null, int $limit = 50): \Illuminate\Database\Eloquent\Collection
     {
         if (! class_exists(\App\Models\NotificationHistory::class)) {
-            return collect([]);
+            return \App\Models\NotificationHistory::query()->whereRaw('1 = 0')->get();
         }
 
         $query = \App\Models\NotificationHistory::query()

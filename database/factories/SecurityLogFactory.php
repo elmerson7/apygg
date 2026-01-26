@@ -15,9 +15,9 @@ class SecurityLogFactory extends Factory
     /**
      * The name of the factory's corresponding model.
      *
-     * @var class-string<\Illuminate\Database\Eloquent\Model>
+     * @var class-string<\App\Models\Logs\SecurityLog>
      */
-    protected $model = \App\Models\Logs\SecurityLog::class;
+    protected $model = SecurityLog::class;
 
     /**
      * Define the model's default state.

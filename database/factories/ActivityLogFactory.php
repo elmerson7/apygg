@@ -14,9 +14,9 @@ class ActivityLogFactory extends Factory
     /**
      * The name of the factory's corresponding model.
      *
-     * @var class-string<\Illuminate\Database\Eloquent\Model>
+     * @var class-string<\App\Models\Logs\ActivityLog>
      */
-    protected $model = \App\Models\Logs\ActivityLog::class;
+    protected $model = ActivityLog::class;
 
     /**
      * Define the model's default state.

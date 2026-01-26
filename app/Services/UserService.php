@@ -52,7 +52,7 @@ class UserService
         $user = User::create($data);
 
         // Asignar roles si se proporcionan
-        if ($roleIds && ! empty($roleIds)) {
+        if (! empty($roleIds)) {
             $user->roles()->sync($roleIds);
         } else {
             // Asignar rol 'user' por defecto si no se especifica

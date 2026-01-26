@@ -11,7 +11,16 @@ parameters:
     level: 5
 
     ignoreErrors:
-        - '#PHPDoc tag @var#'
+        # Propiedades dinámicas de Eloquent (comunes en Laravel)
+        - '#Access to an undefined property.*\$id#'
+        - '#Access to an undefined property.*\$created_at#'
+        - '#Access to an undefined property.*\$updated_at#'
+        - '#Access to an undefined property.*\$deleted_at#'
+        - '#Access to an undefined property.*\$permissions#'
+        # Problemas de PHPDoc con fillable (compatibilidad con Laravel)
+        - '#PHPDoc type array<int, string>.*\$fillable.*list<string>#'
+        # Problemas menores de tipos en traits y servicios
+        - '#Call to an undefined method.*onlyTrashed\(\)#'
 
     excludePaths:
         - ./*/*/FileToIgnore.php

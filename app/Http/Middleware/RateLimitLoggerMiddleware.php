@@ -26,7 +26,7 @@ class RateLimitLoggerMiddleware
 
     private const TIME_WINDOW_MINUTES = 15; // Ventana de tiempo en minutos
 
-    private const ABUSE_THRESHOLD = 3; // Umbral para marcar como abuso sistemático
+    // private const ABUSE_THRESHOLD = 3; // Umbral para marcar como abuso sistemático (no usado actualmente)
 
     /**
      * Handle an incoming request.

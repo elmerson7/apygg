@@ -15,9 +15,9 @@ class ApiLogFactory extends Factory
     /**
      * The name of the factory's corresponding model.
      *
-     * @var class-string<\Illuminate\Database\Eloquent\Model>
+     * @var class-string<\App\Models\Logs\ApiLog>
      */
-    protected $model = \App\Models\Logs\ApiLog::class;
+    protected $model = ApiLog::class;
 
     /**
      * Define the model's default state.

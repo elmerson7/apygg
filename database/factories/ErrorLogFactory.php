@@ -15,9 +15,9 @@ class ErrorLogFactory extends Factory
     /**
      * The name of the factory's corresponding model.
      *
-     * @var class-string<\Illuminate\Database\Eloquent\Model>
+     * @var class-string<\App\Models\Logs\ErrorLog>
      */
-    protected $model = \App\Models\Logs\ErrorLog::class;
+    protected $model = ErrorLog::class;
 
     /**
      * Define the model's default state.

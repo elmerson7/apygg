@@ -67,10 +67,11 @@ trait HasApiTokens
      * @param  string  $name  Nombre descriptivo del token
      * @param  array  $scopes  Scopes/permissions del token
      * @param  \DateTimeInterface|null  $expiresAt  Fecha de expiración (null = sin expiración)
-     * @return ApiKey
+     * @return \App\Models\ApiKey|\Illuminate\Database\Eloquent\Model
      */
     public function createApiKey(string $name, array $scopes = [], ?\DateTimeInterface $expiresAt = null)
     {
+        /** @var class-string<\Illuminate\Database\Eloquent\Model> $apiKeyClass */
         $apiKeyClass = $this->getApiKeyClass();
         $key = Str::random(64); // Generar clave aleatoria de 64 caracteres
 

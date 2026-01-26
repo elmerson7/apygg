@@ -19,7 +19,7 @@ class SentryTestCommand extends Command
         $this->newLine();
 
         $dsn = config('sentry.dsn');
-        $environment = config('sentry.environment', env('APP_ENV', 'local'));
+        $environment = config('sentry.environment', config('app.env', 'local'));
 
         if (empty($dsn)) {
             $this->error('Sentry DSN is not configured. Please set SENTRY_LARAVEL_DSN in your .env file.');

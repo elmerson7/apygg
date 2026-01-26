@@ -26,7 +26,7 @@ class SecurityLoggerMiddleware
 
     private const TIME_WINDOW_MINUTES = 5; // Ventana de tiempo en minutos
 
-    private const SUSPICIOUS_ACTIVITY_THRESHOLD = 3; // Umbral para marcar como sospechoso
+    // private const SUSPICIOUS_ACTIVITY_THRESHOLD = 3; // Umbral para marcar como sospechoso (no usado actualmente)
 
     /**
      * Handle an incoming request.

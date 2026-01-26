@@ -117,7 +117,7 @@ class UserSeeder extends Seeder
 
         // Crear usuarios
         foreach ($users as $userData) {
-            $roles = $userData['roles'];
+            $roles = $userData['roles'] ?? [];
             unset($userData['roles']);
 
             $user = User::firstOrCreate(
@@ -129,12 +129,10 @@ class UserSeeder extends Seeder
                 ])
             );
 
-            // Asignar roles
-            if (! empty($roles)) {
-                $user->roles()->syncWithoutDetaching(
-                    collect($roles)->pluck('id')->toArray()
-                );
-            }
+            // Asignar roles (siempre existen en este contexto)
+            $user->roles()->syncWithoutDetaching(
+                collect($roles)->pluck('id')->toArray()
+            );
         }
 
         // Asignar permisos directos adicionales al Test User

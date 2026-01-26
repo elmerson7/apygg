@@ -90,7 +90,7 @@ class ApiLogger
             // Intentar obtener el body de la respuesta (si es JSON)
             if ($response instanceof Response) {
                 $content = $response->getContent();
-                if ($content && is_string($content)) {
+                if (is_string($content) && $content !== '') {
                     $json = json_decode($content, true);
                     if (json_last_error() === JSON_ERROR_NONE) {
                         $responseData['body'] = self::sanitizeBody($json);

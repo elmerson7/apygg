@@ -47,7 +47,7 @@ abstract class BaseResource extends JsonResource
             $value = $this->whenLoaded($relation);
         }
 
-        return $this->when($this->relationLoaded($relation), $value);
+        return $this->when($this->resource && $this->resource->relationLoaded($relation), $value);
     }
 
     /**

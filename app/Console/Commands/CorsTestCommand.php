@@ -88,12 +88,12 @@ class CorsTestCommand extends Command
         $checks = [];
 
         // Verificar si hay wildcard en producción
-        $env = config('app.env');
+        $env = config('app.env', 'local');
         $hasWildcard = in_array('*', $allowedOrigins);
 
         if ($hasWildcard && $env === 'production') {
             $checks[] = ['❌', 'Wildcard (*) en producción', 'No uses * en producción. Es un riesgo de seguridad.'];
-        } elseif ($hasWildcard && $env !== 'production') {
+        } elseif ($hasWildcard) {
             $checks[] = ['⚠️', 'Wildcard (*) en '.$env, 'Considera usar orígenes específicos para mejor seguridad.'];
         } else {
             $checks[] = ['✅', 'Sin wildcard', 'Orígenes específicos configurados.'];
@@ -102,7 +102,7 @@ class CorsTestCommand extends Command
         // Verificar credenciales con wildcard
         if ($supportsCredentials && $hasWildcard) {
             $checks[] = ['❌', 'Credenciales con wildcard', 'No se pueden usar credenciales con origen *. Especifica orígenes exactos.'];
-        } elseif ($supportsCredentials && ! $hasWildcard) {
+        } elseif ($supportsCredentials) {
             $checks[] = ['✅', 'Credenciales configuradas', 'Credenciales habilitadas con orígenes específicos.'];
         }
 

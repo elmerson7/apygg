@@ -71,9 +71,18 @@ class TokenService
             // Refresh token con expiración más larga
             $refreshTtl = config('jwt.refresh_ttl', 20160); // Por defecto 14 días
 
-            $token = JWTAuth::setTTL($refreshTtl)->customClaims([
-                'type' => 'refresh',
-            ])->fromUser($user);
+            // Configurar TTL antes de generar el token
+            $originalTtl = config('jwt.ttl');
+            config(['jwt.ttl' => $refreshTtl]);
+            
+            try {
+                $token = JWTAuth::customClaims([
+                    'type' => 'refresh',
+                ])->fromUser($user);
+            } finally {
+                // Restaurar TTL original
+                config(['jwt.ttl' => $originalTtl]);
+            }
 
             LogService::debug('Refresh token generado', [
                 'user_id' => $user->id,
@@ -164,7 +173,9 @@ class TokenService
                 JWTAuth::setToken($token);
             }
 
-            return JWTAuth::parseToken()->authenticate();
+            $user = JWTAuth::parseToken()->authenticate();
+            
+            return $user instanceof User ? $user : null;
         } catch (JWTException $e) {
             return null;
         }
@@ -217,7 +228,7 @@ class TokenService
             }
 
             // Invalidar token (agregar a blacklist)
-            JWTAuth::invalidate($token);
+            JWTAuth::invalidate(true);
 
             // Obtener claims para logging
             $claims = JWTAuth::parseToken()->getPayload()->toArray();
@@ -266,17 +277,17 @@ class TokenService
             }
 
             // Obtener usuario del token
-            $user = JWTAuth::parseToken()->authenticate();
+            $authenticatedUser = JWTAuth::parseToken()->authenticate();
 
-            if (! $user) {
+            if (! $authenticatedUser instanceof User) {
                 throw new TokenInvalidException('Usuario no encontrado en el token');
             }
 
             // Revocar el refresh token antiguo (rotación)
-            JWTAuth::invalidate($token);
+            JWTAuth::invalidate(true);
 
             // Generar nuevos tokens
-            $newTokens = $this->generateTokens($user);
+            $newTokens = $this->generateTokens($authenticatedUser);
 
             LogService::info('Token renovado con rotación', [
                 'user_id' => $user->id,
