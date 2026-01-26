@@ -645,10 +645,10 @@
 ## Fase 12: Procesamiento Asíncrono con Colas (Semana 10)
 
 ### 12.1 Configuración de Colas
-- [ ] Configurar Redis como driver en `config/queue.php`
-- [ ] Crear colas con prioridades: high, default, low
-- [ ] Configurar timeout (60 segundos)
-- [ ] Configurar reintentos (3 intentos con backoff exponencial)
+- [x] Configurar Redis como driver en `config/queue.php`
+- [x] Crear colas con prioridades: high, default, low
+- [x] Configurar timeout (60 segundos)
+- [x] Configurar reintentos (3 intentos con backoff exponencial)
 
 ### 12.2 Jobs Base
 - [x] Crear `Job` en `app/Jobs/`
