@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\User;
-use App\Services\NotificationService;
+use App\Notifications\WelcomeNotification;
 
 /**
  * SendWelcomeEmailJob
@@ -41,26 +41,12 @@ class SendWelcomeEmailJob extends Job
             return;
         }
 
-        // Enviar email de bienvenida usando NotificationService
-        $sent = NotificationService::sendEmail(
-            $user->email,
-            'Bienvenido a '.config('app.name'),
-            'emails.welcome',
-            [
-                'user' => $user,
-                'name' => $user->name,
-                'app_name' => config('app.name'),
-            ],
-            false // Ya estamos en cola, no necesitamos otra cola
-        );
+        // Enviar email de bienvenida usando WelcomeNotification
+        $user->notify(new WelcomeNotification);
 
-        if ($sent) {
-            $this->log('info', 'Email de bienvenida enviado exitosamente', [
-                'user_id' => $user->id,
-                'email' => $user->email,
-            ]);
-        } else {
-            throw new \RuntimeException("No se pudo enviar el email de bienvenida al usuario {$user->id}");
-        }
+        $this->log('info', 'Email de bienvenida enviado exitosamente', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+        ]);
     }
 }
