@@ -633,10 +633,12 @@
 - [x] Explicación de Liveness, Readiness y Startup probes
 
 ### 11.3 Laravel Telescope (Desarrollo)
-- [ ] Instalar y publicar Telescope
-- [ ] Configurar dashboard en `/telescope`
-- [ ] Filtros para datos sensibles
-- [ ] Deshabilitar en producción
+- [x] Instalar y publicar Telescope (versión 5.16.1 instalada, migraciones ejecutadas)
+- [x] Configurar dashboard en `/telescope` (path configurado, registrado en bootstrap/providers.php)
+- [x] Filtros para datos sensibles (configurados en CacheWatcher y RequestWatcher: password, token, api_token, secret, key, authorization)
+- [x] Deshabilitar en producción (configurado para habilitarse solo en local/dev, con variable TELESCOPE_ENABLED)
+- [x] Rutas ignoradas: health*, telescope*, horizon* (configurado en ignore_paths)
+- [x] Autorización configurada en AppServiceProvider (solo desarrollo)
 
 ---
 

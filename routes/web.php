@@ -1,7 +1,4 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-
-Route::get('/', function () {
-    return view('welcome');
-});
+// Rutas web solo para Telescope y Horizon
+// La ruta raíz '/' está manejada por routes/api.php para la API

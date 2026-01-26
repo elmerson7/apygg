@@ -9,6 +9,7 @@ use App\Policies\PermissionPolicy;
 use App\Policies\RolePolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * AuthServiceProvider
@@ -34,5 +35,10 @@ class AuthServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerPolicies();
+
+        // Configurar gate para Telescope (solo desarrollo)
+        Gate::define('viewTelescope', function ($user = null) {
+            return app()->environment(['local', 'dev']);
+        });
     }
 }

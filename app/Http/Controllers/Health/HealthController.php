@@ -7,7 +7,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
-use Illuminate\Support\Facades\Log;
 
 class HealthController extends Controller
 {
@@ -15,8 +14,6 @@ class HealthController extends Controller
      * Health check básico - Liveness probe
      * Verifica solo que la aplicación está viva y respondiendo
      * Sin verificación de servicios externos
-     *
-     * @return JsonResponse
      */
     public function live(): JsonResponse
     {
@@ -29,8 +26,6 @@ class HealthController extends Controller
     /**
      * Health check básico - Readiness probe
      * Verifica servicios críticos: Database y Redis
-     *
-     * @return JsonResponse
      */
     public function ready(): JsonResponse
     {
@@ -85,9 +80,6 @@ class HealthController extends Controller
 
     /**
      * Health check básico (alias de ready para compatibilidad)
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return JsonResponse
      */
     public function check(\Illuminate\Http\Request $request): JsonResponse
     {
@@ -97,8 +89,6 @@ class HealthController extends Controller
     /**
      * Health check detallado con autenticación requerida
      * Verifica todos los servicios incluyendo opcionales
-     *
-     * @return JsonResponse
      */
     public function detailed(): JsonResponse
     {
@@ -137,7 +127,7 @@ class HealthController extends Controller
             $latency = round((microtime(true) - $startTime) * 1000, 2);
 
             // Verificar que puede escribir y leer
-            $testKey = 'health_check_' . time();
+            $testKey = 'health_check_'.time();
             Cache::put($testKey, 'test', 1);
             $value = Cache::get($testKey);
             Cache::forget($testKey);

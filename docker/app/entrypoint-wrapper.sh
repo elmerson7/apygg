@@ -14,6 +14,12 @@ if [ -d "storage" ] && [ -d "bootstrap/cache" ]; then
     chown -R appuser:appuser storage bootstrap/cache 2>/dev/null || true
     find storage bootstrap/cache -type d -exec chmod 775 {} + 2>/dev/null || true
     find storage bootstrap/cache -type f -exec chmod 664 {} + 2>/dev/null || true
+    # Asegurar permisos específicos en storage/logs para compatibilidad con WSL
+    if [ -d "storage/logs" ]; then
+        chown -R appuser:appuser storage/logs 2>/dev/null || true
+        find storage/logs -type d -exec chmod 775 {} + 2>/dev/null || true
+        find storage/logs -type f -exec chmod 664 {} + 2>/dev/null || true
+    fi
 fi
 
 # Cambiar al usuario appuser y ejecutar entrypoint

@@ -17,8 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
         \App\Providers\AuthServiceProvider::class,
     ])
     ->withRouting(
-        // No cargar rutas web (solo API)
-        // web: __DIR__.'/../routes/web.php',
+        // Cargar rutas web solo para Telescope y Horizon (necesitan sesiones)
+        web: __DIR__.'/../routes/web.php',
         // Cargar rutas API sin prefijo /api (directo en la raíz)
         using: function () {
             Route::middleware('api')
