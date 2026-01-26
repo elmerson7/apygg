@@ -917,7 +917,7 @@ readinessProbe:
 - Configuración de conexión Redis desde `.env`
 
 **Jobs Base:**
-- Clase base `App\Core\Jobs\BaseJob` con logging integrado
+- Clase base `App\Jobs\Job` con logging integrado
 - Manejo de excepciones estándar con registro en ErrorLog
 - Retry automático configurado con backoff exponencial
 - Notificaciones de fallos mediante `NotificationService`

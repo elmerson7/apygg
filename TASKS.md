@@ -651,11 +651,11 @@
 - [ ] Configurar reintentos (3 intentos con backoff exponencial)
 
 ### 12.2 Jobs Base
-- [ ] Crear `BaseJob` en `app/Core/Jobs/`
-  - [ ] Logging integrado
-  - [ ] Manejo de excepciones
-  - [ ] Retry automático
-  - [ ] Notificaciones de fallos
+- [x] Crear `Job` en `app/Jobs/`
+  - [x] Logging integrado
+  - [x] Manejo de excepciones
+  - [x] Retry automático
+  - [x] Notificaciones de fallos
 
 ### 12.3 Jobs Específicos
 - [ ] Crear `SendWelcomeEmailJob`
