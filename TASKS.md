@@ -665,10 +665,10 @@
 - [x] Crear `ProcessActivityLogJob`
 
 ### 12.4 Laravel Horizon
-- [ ] Instalar Horizon
-- [ ] Configurar workers en `config/horizon.php`
-- [ ] Configuración de colas por prioridad
-- [ ] Dashboard accesible en `/horizon`
+- [x] Instalar Horizon
+- [x] Configurar workers en `config/horizon.php`
+- [x] Configuración de colas por prioridad
+- [x] Dashboard accesible en `/horizon`
 
 ### 12.5 Scheduler de Tareas
 - [ ] Configurar en `app/Console/Kernel.php`:
