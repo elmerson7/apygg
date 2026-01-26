@@ -626,8 +626,11 @@
 - [x] Versión de aplicación en config/app.php
 
 ### 11.2 Configuración para Kubernetes
-- [ ] Documentar probes recomendadas
-- [ ] Documentar timeouts y thresholds
+- [x] Documentar probes recomendadas (documentación completa en `docs/kubernetes-health-checks.md`)
+- [x] Documentar timeouts y thresholds (valores recomendados por escenario: desarrollo, producción, alta carga)
+- [x] Ejemplos de configuración de Deployment completo
+- [x] Troubleshooting común y comandos útiles
+- [x] Explicación de Liveness, Readiness y Startup probes
 
 ### 11.3 Laravel Telescope (Desarrollo)
 - [ ] Instalar y publicar Telescope
