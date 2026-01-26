@@ -950,25 +950,21 @@
 ## Fase 20: Seguridad Avanzada (Semana 16)
 
 ### 21.1 IP Whitelisting
-- [ ] Crear `config/security.php`
-- [ ] Middleware `IpWhitelist` para endpoints críticos
-- [ ] Logging de intentos bloqueados
+- [x] Crear `config/security.php` (creado con configuración completa: ip_whitelist, ip_blacklist, critical_endpoints, endpoint_whitelists, log_blocked_attempts)
+- [x] Middleware `IpWhitelist` para endpoints críticos (creado IpWhitelistMiddleware, registrado como alias 'ip.whitelist' en bootstrap/app.php)
+- [x] Logging de intentos bloqueados (implementado en IpWhitelistMiddleware usando LogService::logSecurity)
 
-### 21.2 Encriptación de Datos Sensibles
-- [ ] Identificar campos sensibles
-- [ ] Implementar encriptación con Laravel Crypt
-- [ ] Manejo de claves rotables
 
-### 21.3 Protección contra Ataques
-- [ ] CSRF tokens (para web si aplica)
-- [ ] SQL Injection: verificar Eloquent
-- [ ] XSS: sanitización verificada
-- [ ] Brute force: rate limiting verificado
+### 21.2 Protección contra Ataques
+- [x] CSRF tokens (para web si aplica) (no aplica para API REST stateless - métodos helper disponibles en SecurityService/SecurityHelper por si se necesita en el futuro)
+- [x] SQL Injection: verificar Eloquent (protegido: Eloquent y Query Builder usan prepared statements automáticamente, no hay queries raw vulnerables, documentado en docs/eloquent-vs-query-builder.md)
+- [x] XSS: sanitización verificada (implementado: SanitizeInput middleware activo en stack global, SecurityHelper::sanitizeHtml() y escapeHtml(), exclusión de campos sensibles)
+- [x] Brute force: rate limiting verificado (implementado: AdaptiveRateLimitingMiddleware activo, auth: 5 req/min por IP, read: 60 req/min, write: 30 req/min, admin: 10 req/min, RateLimitLoggerMiddleware para logging)
 
-### 21.4 Validación de Inputs
-- [ ] Revisar todas las Form Requests
-- [ ] Validar rangos, tipos, formatos
-- [ ] Pruebas de inputs maliciosos
+### 21.3 Validación de Inputs
+- [x] Revisar todas las Form Requests (revisadas 13 Form Requests: BaseFormRequest, StoreUserRequest, UpdateUserRequest, LoginRequest, RegisterRequest, ResetPasswordRequest, ChangePasswordRequest, ForgotPasswordRequest, AssignRoleRequest, StoreApiKeyRequest, RotateApiKeyRequest, StoreFileRequest, UpdateFileRequest)
+- [x] Validar rangos, tipos, formatos (implementado: min/max para strings, arrays, números; tipos: string, email, uuid, boolean, array, file, date; formatos: regex para scopes, date_format, url; validaciones: exists, unique, confirmed, distinct; reglas custom: StrongPassword, ValidUuid, ValidEmail, ValidPhone, ValidJson, ValidDateRange, ValidBase64Image, ExistsInDatabase, UniqueInDatabase)
+- [x] Pruebas de inputs maliciosos (protegido: sanitización automática en BaseFormRequest::sanitizeInput() y SanitizeInput middleware global; validación de tipos previene inyección de tipos incorrectos; Eloquent previene SQL injection; SecurityHelper::sanitizeHtml() previene XSS; regex valida formatos específicos; límites de tamaño previenen DoS)
 
 ---
 

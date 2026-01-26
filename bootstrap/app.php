@@ -50,6 +50,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\CheckRole::class,
             'auth:api-key' => \App\Http\Middleware\AuthenticateApiKey::class,
             'api-key-scope' => \App\Http\Middleware\CheckApiKeyScope::class,
+            'ip.whitelist' => \App\Http\Middleware\IpWhitelistMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
