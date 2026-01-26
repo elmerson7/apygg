@@ -1034,16 +1034,16 @@
 ## Fase 24: Internacionalización (i18n) - Preparado para Expansión (Semana 18)
 
 ### 25.1 Configuración Base
-- [ ] Español (`es`) como idioma por defecto
-- [ ] Archivos de traducción en `resources/lang/es/`
-- [ ] Mensajes de validación en español
-- [ ] Documentación de cómo agregar idiomas
+- [x] Español (`es`) como idioma por defecto (implementado: config/app.php con locale='es' por defecto, APP_LOCALE=es en .env.example, fallback_locale='es', faker_locale='es_ES')
+- [x] Archivos de traducción en `resources/lang/es.json` (implementado: archivo JSON con traducciones de validación, atributos, autenticación y mensajes generales, estructura preparada para expansión)
+- [x] Mensajes de validación en español (implementado: traducciones completas en es.json para todas las reglas de validación comunes, atributos traducidos, mensajes de error y éxito)
+- [x] Documentación de cómo agregar idiomas (implementado: documentación completa en docs/internationalization.md con ejemplos de uso, guía para agregar nuevos idiomas, mejores prácticas, y estructura de traducciones)
 
 ### 25.2 Manejo de Timezones
-- [ ] Timezone por defecto en `config/app.php`
-- [ ] Helper `DateHelper` con métodos de formateo
-- [ ] Estructura preparada para preferencia de timezone por usuario
-- [ ] Documentación de implementación futura
+- [x] Timezone por defecto en `config/app.php` (implementado: timezone configurado como 'UTC' en config/app.php, estándar para almacenamiento de fechas)
+- [x] Helper `DateHelper` con métodos de formateo (implementado: DateHelper completo con métodos format, toSpanish, toIso8601, convertTimezone, diffForHumans, now, today, yesterday, tomorrow, y más métodos de formateo y conversión)
+- [x] Estructura preparada para preferencia de timezone por usuario (implementado: campo timezone agregado a tabla users en migración existente, nullable con default 'UTC', agregado a fillable del modelo User, método getTimezone() en User que retorna timezone del usuario o UTC por defecto)
+- [x] Documentación de implementación futura (implementado: documentación completa en docs/internationalization.md con sección de timezones, ejemplos de uso de DateHelper, guía para preferencia por usuario, ejemplos de middleware para timezone automático, mejores prácticas y referencias)
 
 ---
 

@@ -44,6 +44,7 @@ class User extends Authenticatable implements JWTSubject
         'name',
         'email',
         'password',
+        'timezone', // Preferencia de timezone del usuario
         'deleted_by', // Para SoftDeletesWithUser trait
     ];
 
@@ -171,6 +172,16 @@ class User extends Authenticatable implements JWTSubject
         }
 
         return true;
+    }
+
+    /**
+     * Obtener el timezone del usuario o el timezone por defecto de la aplicación
+     *
+     * @return string Timezone del usuario o timezone por defecto
+     */
+    public function getTimezone(): string
+    {
+        return $this->timezone ?? config('app.timezone', 'UTC');
     }
 
     /**

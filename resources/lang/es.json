@@ -1,0 +1,84 @@
+{
+    "validation": {
+        "required": "El campo :attribute es obligatorio.",
+        "email": "El campo :attribute debe ser un correo electrónico válido.",
+        "unique": "El valor del campo :attribute ya está en uso.",
+        "exists": "El valor seleccionado para :attribute no es válido.",
+        "min": {
+            "string": "El campo :attribute debe tener al menos :min caracteres.",
+            "numeric": "El campo :attribute debe ser al menos :min."
+        },
+        "max": {
+            "string": "El campo :attribute no puede tener más de :max caracteres.",
+            "numeric": "El campo :attribute no puede ser mayor que :max."
+        },
+        "numeric": "El campo :attribute debe ser un número.",
+        "integer": "El campo :attribute debe ser un número entero.",
+        "string": "El campo :attribute debe ser una cadena de texto.",
+        "array": "El campo :attribute debe ser un array.",
+        "date": "El campo :attribute debe ser una fecha válida.",
+        "date_format": "El campo :attribute debe tener el formato :format.",
+        "uuid": "El campo :attribute debe ser un UUID válido.",
+        "confirmed": "La confirmación del campo :attribute no coincide.",
+        "password": "La contraseña es incorrecta.",
+        "file": "El campo :attribute debe ser un archivo válido.",
+        "in": "El campo :attribute seleccionado no es válido.",
+        "after": "El campo :attribute debe ser posterior a :date.",
+        "boolean": "El campo :attribute debe ser verdadero o falso."
+    },
+    "attributes": {
+        "name": "nombre",
+        "email": "correo electrónico",
+        "password": "contraseña",
+        "password_confirmation": "confirmación de contraseña",
+        "file": "archivo",
+        "description": "descripción",
+        "category": "categoría",
+        "is_public": "visibilidad pública",
+        "role_ids": "roles",
+        "scopes": "permisos",
+        "expires_at": "fecha de expiración",
+        "environment": "entorno",
+        "created_at": "fecha de creación",
+        "updated_at": "fecha de actualización"
+    },
+    "auth": {
+        "failed": "Las credenciales proporcionadas no son correctas.",
+        "password": "La contraseña proporcionada es incorrecta.",
+        "throttle": "Demasiados intentos de acceso. Por favor intente nuevamente en :seconds segundos."
+    },
+    "messages": {
+        "success": {
+            "created": "Recurso creado exitosamente.",
+            "updated": "Recurso actualizado exitosamente.",
+            "deleted": "Recurso eliminado exitosamente.",
+            "restored": "Recurso restaurado exitosamente."
+        },
+        "error": {
+            "not_found": "Recurso no encontrado.",
+            "unauthorized": "No autorizado para realizar esta acción.",
+            "forbidden": "No tienes permiso para realizar esta acción.",
+            "validation": "Error de validación.",
+            "server_error": "Error interno del servidor."
+        },
+        "user": {
+            "created": "Usuario creado exitosamente.",
+            "updated": "Usuario actualizado exitosamente.",
+            "deleted": "Usuario eliminado exitosamente.",
+            "roles_assigned": "Roles asignados exitosamente.",
+            "role_removed": "Rol removido exitosamente."
+        },
+        "file": {
+            "uploaded": "Archivo subido exitosamente.",
+            "updated": "Archivo actualizado exitosamente.",
+            "deleted": "Archivo eliminado exitosamente.",
+            "not_found": "El archivo no existe.",
+            "permission_denied": "No tienes permiso para acceder a este archivo."
+        },
+        "api_key": {
+            "created": "API Key creada exitosamente.",
+            "rotated": "API Key rotada exitosamente.",
+            "revoked": "API Key revocada exitosamente."
+        }
+    }
+}
