@@ -143,6 +143,14 @@ pint-test:
 phpstan:
 	$(DC) exec app ./vendor/bin/phpstan analyse
 
+# Ver tamaño de la base de datos (o tabla específica con table=nombre_tabla)
+db-size:
+	@if [ -z "$(table)" ]; then \
+		$(DC) exec app php artisan db:size; \
+	else \
+		$(DC) exec app php artisan db:size --table=$(table); \
+	fi
+
 # Corregir permisos de archivos creados por Docker
 fix-permissions:
 	@echo "Corrigiendo permisos con UID: $(USER_ID), GID: $(GROUP_ID)"
