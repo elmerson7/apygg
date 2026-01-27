@@ -37,8 +37,6 @@ class SyncSearchIndexesCommand extends Command
                 User::chunk(100, function ($users) use (&$synced) {
                     foreach ($users as $user) {
                         // El método searchable() viene del trait Searchable de Laravel Scout
-                        // PHPStan no lo reconoce estáticamente, pero existe en runtime
-                        /** @phpstan-ignore-next-line */
                         $user->searchable();
                         $synced++;
                     }

@@ -6,6 +6,7 @@ namespace App\Models;
 use App\Models\Logs\ActivityLog;
 use App\Traits\HasApiTokens;
 use App\Traits\LogsActivity;
+use App\Traits\Searchable;
 use App\Traits\SoftDeletesWithUser;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -19,7 +20,7 @@ use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 class User extends Authenticatable implements JWTSubject
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasFactory, HasUuids, LogsActivity, Notifiable, SoftDeletes, SoftDeletesWithUser;
+    use HasApiTokens, HasFactory, HasUuids, LogsActivity, Notifiable, Searchable, SoftDeletes, SoftDeletesWithUser;
 
     /**
      * Indicates if the IDs are auto-incrementing.
@@ -281,5 +282,64 @@ class User extends Authenticatable implements JWTSubject
         return $query->whereHas('roles', function ($q) use ($roleName) {
             $q->where('name', $roleName);
         });
+    }
+
+    /**
+     * Get the indexable data array for the model.
+     * Sobrescribe el método del trait Searchable para personalizar los campos indexables.
+     *
+     * @return array<string, mixed>
+     */
+    public function toSearchableArray(): array
+    {
+        $array = [
+            'id' => $this->id,
+            'name' => $this->name,
+            'email' => $this->email,
+            'email_verified_at' => $this->email_verified_at?->timestamp,
+            'timezone' => $this->timezone,
+            'created_at' => $this->created_at->timestamp,
+            'updated_at' => $this->updated_at->timestamp,
+            'is_admin' => $this->isAdmin(),
+            'roles' => $this->roles->pluck('name')->toArray(),
+            'role_ids' => $this->roles->pluck('id')->toArray(),
+        ];
+
+        return $array;
+    }
+
+    /**
+     * Campos que deben ser filtrables en Meilisearch.
+     * Sobrescribe el método del trait Searchable.
+     *
+     * @return array<string>
+     */
+    public function getFilterableAttributes(): array
+    {
+        return [
+            'email_verified_at',
+            'timezone',
+            'is_admin',
+            'roles',
+            'role_ids',
+            'created_at',
+        ];
+    }
+
+    /**
+     * Campos que deben ser ordenables en Meilisearch.
+     * Sobrescribe el método del trait Searchable.
+     *
+     * @return array<string>
+     */
+    public function getSortableAttributes(): array
+    {
+        return [
+            'name',
+            'email',
+            'created_at',
+            'updated_at',
+            'email_verified_at',
+        ];
     }
 }

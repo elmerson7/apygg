@@ -73,11 +73,8 @@ trait Searchable
     public function shouldBeSearchable(): bool
     {
         // Solo indexar si no está eliminado (soft delete)
-        if (method_exists($this, 'trashed')) {
-            return ! $this->trashed();
-        }
-
-        return true;
+        // El modelo User usa SoftDeletes, por lo que siempre tiene el método trashed()
+        return ! $this->trashed();
     }
 
     /**
