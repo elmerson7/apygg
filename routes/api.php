@@ -18,7 +18,9 @@ use Illuminate\Support\Facades\Route;
 
 // Ruta raíz: información de la API
 Route::get('/', function () {
-    return response()->json([
+    $broadcastingEnabled = config('broadcasting.default') !== 'null';
+
+    $response = [
         'name' => 'APYGG API',
         'status' => 'running',
         'version' => config('app.version', '1.0.0'),
@@ -31,7 +33,18 @@ Route::get('/', function () {
             'webhooks' => '/webhooks',
             'documentation' => '/docs/api', // Scramble API Documentation
         ],
-    ]);
+    ];
+
+    // Agregar información de WebSockets si está habilitado
+    if ($broadcastingEnabled) {
+        $response['websockets'] = [
+            'enabled' => true,
+            'auth_endpoint' => '/broadcasting/auth',
+            'documentation' => '/docs/websockets.md',
+        ];
+    }
+
+    return response()->json($response);
 });
 
 // Health check endpoints (sin autenticación)

@@ -25,6 +25,14 @@ Route::prefix('auth')->group(function () {
     Route::post('/reset-password', [PasswordController::class, 'resetPassword']);
 });
 
+// Broadcasting auth (WebSockets - OPCIONAL)
+// Solo funciona si BROADCAST_CONNECTION=reverb está configurado
+// NOTA: Laravel también crea una ruta automática en routes/web.php
+// Esta ruta usa el mismo endpoint pero con autenticación JWT para API
+Route::post('/broadcasting/auth', [\App\Http\Controllers\Auth\BroadcastAuthController::class, 'authenticate'])
+    ->middleware('auth:api')
+    ->name('broadcasting.auth');
+
 // Rutas protegidas de autenticación (requieren autenticación JWT)
 // Rate limiting adaptativo aplicado automáticamente según tipo de endpoint
 Route::middleware(['auth:api'])->prefix('auth')->group(function () {

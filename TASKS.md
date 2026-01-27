@@ -1076,20 +1076,22 @@
 
 ## Fase 26: WebSockets con Reverb (Opcional, Semana 19)
 
+**NOTA**: WebSockets es completamente OPCIONAL. Para habilitarlo, configurar `BROADCAST_CONNECTION=reverb` en `.env`. Si no se configura, la API funciona normalmente con REST.
+
 ### 27.1 Instalación de Reverb
-- [ ] Instalar `laravel/reverb`
-- [ ] Configurar servidor WebSocket
-- [ ] Configuración de broadcasting
+- [x] Instalar `laravel/reverb` v1.7.0
+- [x] Configurar servidor WebSocket (config/reverb.php)
+- [x] Configuración de broadcasting (config/broadcasting.php)
 
 ### 27.2 Eventos y Channels
-- [ ] Definir canales en `routes/channels.php`
-- [ ] Crear eventos de broadcasting
-- [ ] Implementar autorización de canales
+- [x] Definir canales en `routes/channels.php` (públicos, privados, presencia)
+- [x] Crear eventos de broadcasting (UserCreatedBroadcast, NotificationBroadcast)
+- [x] Implementar autorización de canales con JWT (BroadcastAuthController)
 
 ### 27.3 Frontend Integration
-- [ ] Documentación de conexión con Laravel Echo
-- [ ] Ejemplos de listeners
-- [ ] Reconexión automática
+- [x] Documentación consolidada (docs/websockets.md) - Backend y Frontend en un solo archivo breve
+- [x] Ejemplos rápidos para Vue.js, Nuxt y Capacitor
+- [x] Documentar cómo habilitar/deshabilitar WebSockets
 
 ---
 

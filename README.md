@@ -31,7 +31,7 @@ API Boilerplate production-ready construido con Laravel 12, diseñado para aplic
 ### Colas y Procesamiento Asíncrono
 - **Laravel Queue** - Sistema de colas
 - **Laravel Horizon v5.33** - Dashboard para monitoreo de colas
-- **Laravel Reverb v1.5** - WebSockets nativo para tiempo real
+- **Laravel Reverb v1.7.0** - WebSockets nativo para tiempo real (OPCIONAL)
 
 ### Búsqueda y Observabilidad
 - **Meilisearch 1.x** (Opcional) - Motor de búsqueda full-text

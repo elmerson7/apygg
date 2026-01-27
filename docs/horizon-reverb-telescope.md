@@ -132,7 +132,9 @@ php artisan horizon:terminate
 php artisan horizon:clear
 ```
 
-## Reverb
+## Reverb (WebSockets - OPCIONAL)
+
+**⚠️ IMPORTANTE**: Reverb es completamente OPCIONAL. Para habilitarlo, configurar `BROADCAST_CONNECTION=reverb` en `.env`. Si no se configura, la API funciona normalmente con REST.
 
 ### Configuración
 
@@ -141,6 +143,18 @@ Archivo: `config/reverb.php`
 - **Host**: `0.0.0.0` (interno), `localhost` (desarrollo), dominio (producción)
 - **Port**: `8080` (interno), `8012` (host)
 - **Scheme**: `http` (desarrollo), `https` (producción)
+
+### Habilitar/Deshabilitar
+
+**Habilitar**:
+```env
+BROADCAST_CONNECTION=reverb
+```
+
+**Deshabilitar**:
+```env
+BROADCAST_CONNECTION=null
+```
 
 ### Variables Requeridas
 
@@ -182,24 +196,9 @@ Configurar en `config/broadcasting.php`:
 ],
 ```
 
-### Uso desde Frontend
+### Documentación
 
-```javascript
-import Echo from 'laravel-echo';
-import Pusher from 'pusher-js';
-
-window.Pusher = Pusher;
-
-window.Echo = new Echo({
-    broadcaster: 'reverb',
-    key: import.meta.env.VITE_REVERB_APP_KEY,
-    wsHost: import.meta.env.VITE_REVERB_HOST,
-    wsPort: import.meta.env.VITE_REVERB_PORT ?? 80,
-    wssPort: import.meta.env.VITE_REVERB_PORT ?? 443,
-    forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
-    enabledTransports: ['ws', 'wss'],
-});
-```
+Ver guía completa en: [docs/websockets.md](./websockets.md)
 
 ## Telescope
 
