@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat en Tiempo Real - APYGG</title>
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chat-container {
+            width: 90%;
+            max-width: 800px;
+            height: 90vh;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4ade80;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.disconnected {
+            background: #ef4444;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+
+        .message {
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .message-author {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 14px;
+        }
+
+        .message-time {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .message-content {
+            background: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            color: #334155;
+            word-wrap: break-word;
+            max-width: 70%;
+        }
+
+        .message.system .message-content {
+            background: #e0e7ff;
+            color: #4338ca;
+            font-style: italic;
+            max-width: 100%;
+        }
+
+        .message.own .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-left: auto;
+        }
+
+        .message.own .message-header {
+            flex-direction: row-reverse;
+        }
+
+        .input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 12px;
+        }
+
+        .username-input {
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 14px;
+            width: 150px;
+            transition: border-color 0.2s;
+        }
+
+        .username-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 14px;
+            resize: none;
+            transition: border-color 0.2s;
+        }
+
+        .message-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .send-button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .send-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .send-button:active {
+            transform: translateY(0);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #94a3b8;
+            padding: 40px;
+            font-size: 16px;
+        }
+
+        /* Scrollbar personalizado */
+        .messages-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .messages-container::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        .messages-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .messages-container::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>💬 Chat en Tiempo Real</h1>
+            <div class="status">
+                <div class="status-indicator" id="statusIndicator"></div>
+                <span id="statusText">Conectando...</span>
+            </div>
+        </div>
+
+        <div class="messages-container" id="messagesContainer">
+            <div class="empty-state">
+                Esperando mensajes...
+            </div>
+        </div>
+
+        <div class="input-container">
+            <input 
+                type="text" 
+                class="username-input" 
+                id="usernameInput" 
+                placeholder="Tu nombre"
+                maxlength="20"
+            >
+            <textarea 
+                class="message-input" 
+                id="messageInput" 
+                placeholder="Escribe un mensaje..."
+                rows="1"
+            ></textarea>
+            <button class="send-button" id="sendButton" disabled>Enviar</button>
+        </div>
+    </div>
+
+    <script>
+        // Configuración - Ajusta según tu .env
+        const config = {
+            key: 'apygg-key',         // Debe coincidir con REVERB_APP_KEY en .env
+            host: 'localhost',       // REVERB_HOST
+            port: 8012,               // REVERB_PORT
+            scheme: 'http'            // REVERB_SCHEME
+        };
+
+        // Estado
+        let username = '';
+        let pusher = null;
+        let channel = null;
+
+        // Elementos DOM
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+        const messagesContainer = document.getElementById('messagesContainer');
+        const usernameInput = document.getElementById('usernameInput');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+
+        // Inicializar Pusher
+        function initPusher() {
+            pusher = new Pusher(config.key, {
+                wsHost: config.host,
+                wsPort: config.port,
+                wssPort: 443,
+                forceTLS: config.scheme === 'https',
+                enabledTransports: ['ws', 'wss'],
+                cluster: '',
+                disableStats: true,
+            });
+
+            // Escuchar conexión
+            pusher.connection.bind('connected', () => {
+                updateStatus(true);
+                addSystemMessage('Conectado a WebSockets');
+            });
+
+            pusher.connection.bind('disconnected', () => {
+                updateStatus(false);
+                addSystemMessage('Desconectado de WebSockets');
+            });
+
+            pusher.connection.bind('error', (error) => {
+                console.error('Error de conexión:', error);
+                addSystemMessage('Error de conexión', 'error');
+            });
+
+            // Suscribirse al canal
+            channel = pusher.subscribe('test-messages');
+
+            channel.bind('pusher:subscription_succeeded', () => {
+                console.log('✅ Suscrito al canal test-messages');
+                addSystemMessage('Listo para chatear');
+            });
+
+            channel.bind('pusher:subscription_error', (error) => {
+                console.error('❌ Error al suscribirse:', error);
+                addSystemMessage('Error al suscribirse al canal', 'error');
+            });
+
+            // Escuchar mensajes
+            channel.bind('test.message', (data) => {
+                console.log('📨 Mensaje recibido:', data);
+                const messageText = data.message || '';
+                
+                // Parsear username del mensaje (formato: "Usuario: mensaje")
+                let messageAuthor = 'Usuario';
+                let messageContent = messageText;
+                const colonIndex = messageText.indexOf(':');
+                
+                if (colonIndex > 0) {
+                    messageAuthor = messageText.substring(0, colonIndex).trim();
+                    messageContent = messageText.substring(colonIndex + 1).trim();
+                }
+                
+                const isOwn = messageAuthor === username && username !== '';
+                addChatMessage(messageAuthor, messageContent, data.time || new Date().toLocaleTimeString(), isOwn);
+            });
+        }
+
+        // Actualizar estado de conexión
+        function updateStatus(connected) {
+            if (connected) {
+                statusIndicator.classList.remove('disconnected');
+                statusText.textContent = 'Conectado';
+            } else {
+                statusIndicator.classList.add('disconnected');
+                statusText.textContent = 'Desconectado';
+            }
+        }
+
+        // Agregar mensaje del sistema
+        function addSystemMessage(message, type = 'info') {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message system';
+            messageDiv.innerHTML = `
+                <div class="message-content">${message}</div>
+            `;
+            messagesContainer.insertBefore(messageDiv, messagesContainer.firstChild);
+            removeEmptyState();
+        }
+
+        // Agregar mensaje de chat
+        function addChatMessage(author, content, time, isOwn = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isOwn ? 'own' : ''}`;
+            messageDiv.innerHTML = `
+                <div class="message-header">
+                    <span class="message-author">${isOwn ? 'Tú' : escapeHtml(author)}</span>
+                    <span class="message-time">${time}</span>
+                </div>
+                <div class="message-content">${escapeHtml(content)}</div>
+            `;
+            messagesContainer.insertBefore(messageDiv, messagesContainer.firstChild);
+            removeEmptyState();
+            
+            // Auto-scroll al nuevo mensaje
+            messagesContainer.scrollTop = 0;
+        }
+
+        // Remover estado vacío
+        function removeEmptyState() {
+            const emptyState = messagesContainer.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.remove();
+            }
+        }
+
+        // Escapar HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Enviar mensaje
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message || !username.trim()) {
+                return;
+            }
+
+            try {
+                // Enviar al servidor vía API
+                const response = await fetch('/chat/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        username: username,
+                    }),
+                });
+
+                if (response.ok) {
+                    // El mensaje se mostrará cuando llegue por WebSocket
+                    messageInput.value = '';
+                    messageInput.style.height = 'auto';
+                } else {
+                    console.error('Error al enviar mensaje');
+                    addSystemMessage('Error al enviar mensaje', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                addSystemMessage('Error de conexión al enviar mensaje', 'error');
+            }
+        }
+
+        // Event listeners
+        usernameInput.addEventListener('input', (e) => {
+            username = e.target.value.trim();
+            sendButton.disabled = !username || !messageInput.value.trim();
+        });
+
+        messageInput.addEventListener('input', (e) => {
+            e.target.style.height = 'auto';
+            e.target.style.height = e.target.scrollHeight + 'px';
+            sendButton.disabled = !username.trim() || !e.target.value.trim();
+        });
+
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        sendButton.addEventListener('click', sendMessage);
+
+        // Inicializar
+        initPusher();
+    </script>
+</body>
+</html>

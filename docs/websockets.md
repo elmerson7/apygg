@@ -81,6 +81,11 @@ const echo = new Echo({
 
 **Escuchar**:
 ```javascript
+// Canal público de pruebas
+echo.channel('test-messages').listen('.test.message', (e) => {
+    console.log('Mensaje:', e.message, 'Hora:', e.time);
+});
+
 // Público
 echo.channel('notifications').listen('.user.created', (e) => {...});
 
@@ -92,6 +97,11 @@ echo.join('presence-online')
     .here((users) => {...})
     .joining((user) => {...})
     .leaving((user) => {...});
+```
+
+**Prueba rápida desde Tinker**:
+```php
+broadcast(new App\Events\Broadcasting\TestMessageBroadcast('Hola!'));
 ```
 
 **Variables de entorno**:
