@@ -17,6 +17,7 @@ use App\Listeners\InvalidateUserCache;
 use App\Listeners\LogAuthEvents;
 use App\Listeners\LogUserActivity;
 use App\Listeners\SendWelcomeEmail;
+use App\Listeners\WebhookListener;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
@@ -34,38 +35,48 @@ class EventServiceProvider extends ServiceProvider
             [LogUserActivity::class, 'handleUserCreated'],
             SendWelcomeEmail::class,
             InvalidateUserCache::class,
+            WebhookListener::class,
         ],
         UserUpdated::class => [
             [LogUserActivity::class, 'handleUserUpdated'],
             InvalidateUserCache::class,
+            WebhookListener::class,
         ],
         UserDeleted::class => [
             [LogUserActivity::class, 'handleUserDeleted'],
             InvalidateUserCache::class,
+            WebhookListener::class,
         ],
         UserRestored::class => [
             [LogUserActivity::class, 'handleUserRestored'],
             InvalidateUserCache::class,
+            WebhookListener::class,
         ],
         UserLoggedIn::class => [
             [LogAuthEvents::class, 'handleUserLoggedIn'],
+            WebhookListener::class,
         ],
         UserLoggedOut::class => [
             [LogAuthEvents::class, 'handleUserLoggedOut'],
+            WebhookListener::class,
         ],
 
         // Eventos de Autorización
         RoleAssigned::class => [
             InvalidatePermissionsCache::class,
+            WebhookListener::class,
         ],
         RoleRemoved::class => [
             InvalidatePermissionsCache::class,
+            WebhookListener::class,
         ],
         PermissionGranted::class => [
             InvalidatePermissionsCache::class,
+            WebhookListener::class,
         ],
         PermissionRevoked::class => [
             InvalidatePermissionsCache::class,
+            WebhookListener::class,
         ],
     ];
 

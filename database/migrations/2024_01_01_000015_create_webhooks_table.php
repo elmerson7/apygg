@@ -18,6 +18,8 @@ return new class extends Migration
                 $table->string('name');
                 $table->string('url');
                 $table->string('secret')->nullable(); // Secret para firmar payloads
+                $table->string('old_secret')->nullable(); // Secret anterior (para rotación con período de gracia)
+                $table->timestamp('secret_rotated_at')->nullable(); // Fecha de rotación del secret
                 $table->json('events')->nullable(); // Eventos que activan el webhook
                 $table->enum('status', ['active', 'inactive', 'paused'])->default('active');
                 $table->integer('timeout')->default(30); // Timeout en segundos

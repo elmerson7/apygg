@@ -8,7 +8,6 @@ use App\Http\Resources\Search\SearchResource;
 use App\Http\Resources\Users\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Collection;
 
 /**
  * SearchController
@@ -27,9 +26,6 @@ class SearchController extends Controller
 
     /**
      * Realizar búsqueda global en múltiples modelos
-     *
-     * @param  SearchRequest  $request
-     * @return JsonResponse
      */
     public function search(SearchRequest $request): JsonResponse
     {
@@ -65,11 +61,6 @@ class SearchController extends Controller
     /**
      * Buscar en un modelo específico
      *
-     * @param  string  $modelClass
-     * @param  string  $query
-     * @param  array  $filters
-     * @param  int  $perPage
-     * @param  int  $page
      * @return array<string, mixed>
      */
     protected function searchModel(
@@ -122,9 +113,6 @@ class SearchController extends Controller
 
     /**
      * Verificar si un modelo es searchable
-     *
-     * @param  string  $modelClass
-     * @return bool
      */
     protected function isModelSearchable(string $modelClass): bool
     {
@@ -140,9 +128,6 @@ class SearchController extends Controller
 
     /**
      * Obtener la clave del modelo para usar en respuestas
-     *
-     * @param  string  $modelClass
-     * @return string
      */
     protected function getModelKey(string $modelClass): string
     {

@@ -100,6 +100,15 @@ return [
             'after_commit' => false,
         ],
 
+        'redis-webhooks' => [
+            'driver' => 'redis',
+            'connection' => env('REDIS_QUEUE_CONNECTION', 'queue'),
+            'queue' => env('REDIS_QUEUE_WEBHOOKS', 'webhooks'),
+            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 60),
+            'block_for' => null,
+            'after_commit' => false,
+        ],
+
         'deferred' => [
             'driver' => 'deferred',
         ],

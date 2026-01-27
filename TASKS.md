@@ -1050,26 +1050,27 @@
 ## Fase 25: Webhooks (Opcional, Semana 19)
 
 ### 26.1 Configuración de Webhooks
-- [ ] Crear modelo `Webhook`
-- [ ] Crear modelo `WebhookEvent`
-- [ ] Crear modelo `WebhookDelivery`
-- [ ] Eventos suscribibles definidos
+- [x] Crear modelo `Webhook`
+- [x] Crear modelo `WebhookDelivery` (WebhookEvent no es necesario, se usa configuración)
+- [x] Eventos suscribibles definidos en `config/webhooks.php`
 
 ### 26.2 Delivery y Reintentos
-- [ ] Cola dedicada para webhooks
-- [ ] Reintentos exponenciales
-- [ ] Dead letter queue
-- [ ] Tracking de entregas
+- [x] Cola dedicada para webhooks (configurada en config/queue.php: redis-webhooks)
+- [x] Reintentos exponenciales (implementado en SendWebhookJob con backoff configurable)
+- [x] Dead letter queue (usando failed_jobs de Laravel, método failed() en SendWebhookJob)
+- [x] Tracking de entregas (WebhookDelivery model con estados y métodos helper)
 
 ### 26.3 Seguridad
-- [ ] Firma HMAC-SHA256
-- [ ] Validación de timestamp
-- [ ] Rotación de secrets
+- [x] Firma HMAC-SHA256 (implementada en WebhookService::generateSignature y validación en validateSignature)
+- [x] Validación de timestamp (implementada en WebhookService::validateTimestamp para prevenir replay attacks)
+- [x] Rotación de secrets (implementada en Webhook::rotateSecret con período de gracia, comando cleanup)
 
 ### 26.4 Dashboard
-- [ ] Endpoint para ver webhooks configurados
-- [ ] Historial de entregas
-- [ ] Reenvío manual de fallos
+- [x] Endpoint para ver webhooks configurados (GET /webhooks, GET /webhooks/{id})
+- [x] Historial de entregas (GET /webhooks/{id}/deliveries)
+- [x] Reenvío manual de fallos (POST /webhooks/{id}/deliveries/{deliveryId}/retry)
+- [x] CRUD completo de webhooks (POST, PUT, DELETE)
+- [x] Rotación de secrets (POST /webhooks/{id}/rotate-secret)
 
 ---
 
