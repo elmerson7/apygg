@@ -40,6 +40,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Registrar Observers para invalidación automática de cache
+        if (class_exists(\App\Models\ApiKey::class)) {
+            \App\Models\ApiKey::observe(\App\Observers\ApiKeyObserver::class);
+        }
+
+        if (class_exists(\App\Models\Webhook::class)) {
+            \App\Models\Webhook::observe(\App\Observers\WebhookObserver::class);
+        }
         // Registrar listeners para eventos de autenticación
         Event::listen(Login::class, [LogAuthenticationEvents::class, 'handleLogin']);
         Event::listen(Failed::class, [LogAuthenticationEvents::class, 'handleFailed']);

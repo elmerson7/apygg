@@ -12,7 +12,7 @@ use Illuminate\Foundation\Events\Dispatchable;
  *
  * Evento simple para pruebas de WebSockets.
  * Permite enviar mensajes de prueba que se pueden ver en tiempo real.
- * 
+ *
  * Usa ShouldBroadcastNow para ejecución inmediata sin cola.
  * NO usa SerializesModels porque no tiene modelos Eloquent.
  */

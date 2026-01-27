@@ -49,6 +49,14 @@ class WarmCacheCommand extends Command
             $this->info('Pre-cargando datos de usuarios recientes...');
             $warmed += $this->warmActiveUsers();
 
+            // 4. Pre-cargar configuración de webhooks activos
+            $this->info('Pre-cargando configuración de webhooks...');
+            $warmed += $this->warmWebhooks();
+
+            // 5. Pre-cargar índices de búsqueda (Meilisearch)
+            $this->info('Pre-cargando índices de búsqueda...');
+            $warmed += $this->warmSearchIndexes();
+
             $elapsedTime = round((microtime(true) - $startTime) * 1000, 2);
 
             $this->info("✓ Cache warming completado: {$warmed} elementos cacheados en {$elapsedTime}ms");
@@ -189,6 +197,80 @@ class WarmCacheCommand extends Command
             return $count;
         } catch (\Exception $e) {
             $this->warn("  ⚠ Error cacheando usuarios: {$e->getMessage()}");
+
+            return $count;
+        }
+    }
+
+    /**
+     * Pre-cargar configuración de webhooks activos
+     */
+    protected function warmWebhooks(): int
+    {
+        $count = 0;
+
+        try {
+            if (class_exists(\App\Models\Webhook::class)) {
+                $webhooks = \App\Models\Webhook::where('status', 'active')->get();
+
+                foreach ($webhooks as $webhook) {
+                    CacheService::set("webhook:{$webhook->id}", [
+                        'id' => $webhook->id,
+                        'name' => $webhook->name,
+                        'url' => $webhook->url,
+                        'events' => $webhook->events,
+                        'status' => $webhook->status,
+                    ], 3600);
+                    $count++;
+                }
+
+                if ($count >= 1) {
+                    $this->line("  ✓ {$count} webhooks activos cacheados");
+                } else {
+                    $this->line('  ℹ No hay webhooks activos para cachear');
+                }
+            }
+
+            return $count;
+        } catch (\Exception $e) {
+            $this->warn("  ⚠ Error cacheando webhooks: {$e->getMessage()}");
+
+            return $count;
+        }
+    }
+
+    /**
+     * Pre-cargar información de índices de búsqueda
+     */
+    protected function warmSearchIndexes(): int
+    {
+        $count = 0;
+
+        try {
+            // Verificar que Meilisearch esté configurado
+            if (config('scout.driver') !== 'meilisearch') {
+                $this->line('  ℹ Meilisearch no está configurado, saltando índices');
+
+                return $count;
+            }
+
+            // Cachear información de índices disponibles
+            $indexes = ['users']; // Agregar más según modelos searchable
+
+            foreach ($indexes as $index) {
+                CacheService::set("search:index:{$index}:info", [
+                    'name' => $index,
+                    'status' => 'ready',
+                    'last_synced' => now()->toIso8601String(),
+                ], 1800); // 30 minutos
+                $count++;
+            }
+
+            $this->line("  ✓ {$count} índices de búsqueda cacheados");
+
+            return $count;
+        } catch (\Exception $e) {
+            $this->warn("  ⚠ Error cacheando índices de búsqueda: {$e->getMessage()}");
 
             return $count;
         }

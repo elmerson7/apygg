@@ -1098,19 +1098,21 @@
 ## Fase 27: Caché Avanzado (Opcional, Semana 20)
 
 ### 28.1 Cache Warming
-- [ ] Comando artisan `cache:warm`
-- [ ] Cache warming automático post-deployment
-- [ ] Cache de datos frecuentes
+- [x] Comando artisan `cache:warm` (implementado en app/Console/Commands/WarmCacheCommand.php)
+- [x] Cache warming automático post-deployment (script scripts/post-deploy.sh creado, scheduler diario a las 01:00)
+- [x] Cache de datos frecuentes (roles, permisos, configuraciones, usuarios recientes, webhooks, índices de búsqueda)
 
 ### 28.2 CDN Integration
-- [ ] Integración con Cloudflare (opcional)
-- [ ] Cache de assets estáticos
-- [ ] Purge automático de cache
+- [x] ~~Integración con Cloudflare (opcional)~~ **NO APLICA** - API REST pura sin assets estáticos
+- [x] ~~Cache de assets estáticos~~ **NO APLICA** - Frontends externos (Vue.js/Nuxt) se sirven desde sus propios servidores
+- [x] ~~Purge automático de cache~~ **NO APLICA** - Cache se maneja en backend (Redis)
 
 ### 28.3 Cache Invalidation Inteligente
-- [ ] Listeners para invalidación automática
-- [ ] Invalidación por tags
-- [ ] Invalidación masiva por patrón
+- [x] Listeners para invalidación automática (InvalidateUserCache, InvalidatePermissionsCache)
+- [x] Invalidación por tags (CacheService::forgetTag, forgetTags implementados)
+- [x] Invalidación masiva por patrón (CacheService::forgetPattern, forgetPatternScan implementados)
+- [x] Observers automáticos (ApiKeyObserver, WebhookObserver)
+- [x] Comando artisan cache:invalidate para invalidación manual
 
 ### 28.4 Métricas
 - [ ] Monitoreo de hit rate

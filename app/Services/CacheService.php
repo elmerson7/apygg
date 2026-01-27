@@ -314,6 +314,83 @@ class CacheService
     }
 
     /**
+     * Invalidar cache por patrón (invalidación masiva)
+     *
+     * Ejemplos:
+     * - forgetPattern('user:*') - Invalida todo el cache de usuarios
+     * - forgetPattern('*:permissions') - Invalida todo el cache de permisos
+     * - forgetPattern('user:123:*') - Invalida todo el cache del usuario 123
+     *
+     * @param  string  $pattern  Patrón con wildcards (*)
+     */
+    public static function forgetPattern(string $pattern): int
+    {
+        if (config('cache.default') !== 'redis') {
+            return 0;
+        }
+
+        try {
+            $redis = Redis::connection('cache');
+            $fullPattern = self::buildKey($pattern);
+            $keys = $redis->keys($fullPattern);
+
+            if (empty($keys)) {
+                return 0;
+            }
+
+            // Redis KEYS puede ser lento, pero es necesario para patrones
+            // En producción, considerar usar SCAN para mejor performance
+            $deleted = $redis->del($keys);
+
+            return $deleted;
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Invalidar cache por patrón usando SCAN (más eficiente para grandes volúmenes)
+     *
+     * @param  string  $pattern  Patrón con wildcards (*)
+     * @param  int  $count  Número de elementos a escanear por iteración
+     */
+    public static function forgetPatternScan(string $pattern, int $count = 100): int
+    {
+        if (config('cache.default') !== 'redis') {
+            return 0;
+        }
+
+        try {
+            $redis = Redis::connection('cache');
+            $fullPattern = self::buildKey($pattern);
+            $cursor = 0;
+            $totalDeleted = 0;
+
+            do {
+                // Redis SCAN retorna [cursor, keys] donde cursor es int
+                $result = $redis->scan($cursor, $fullPattern, $count);
+
+                if (! is_array($result) || count($result) !== 2) {
+                    break;
+                }
+
+                /** @var int $cursor */
+                /** @var array<string> $keys */
+                [$cursor, $keys] = $result;
+
+                if (! empty($keys)) {
+                    $deleted = $redis->del($keys);
+                    $totalDeleted += $deleted;
+                }
+            } while ($cursor > 0);
+
+            return $totalDeleted;
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    /**
      * Calcular hit rate del caché
      */
     protected static function calculateHitRate(): float

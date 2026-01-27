@@ -77,10 +77,17 @@ Schedule::command('health:check')
     });
 
 // Cache warming automático: después de migraciones y al inicio del día
-// Se ejecuta automáticamente después de deployments mediante hooks
+// También se ejecuta automáticamente después de deployments mediante scripts/post-deploy.sh
 Schedule::command('cache:warm')
     ->dailyAt('01:00')
     ->withoutOverlapping()
     ->onFailure(function () {
         \Illuminate\Support\Facades\Log::error('Cache warming falló');
     });
+
+// Cache warming después de migraciones (si se ejecutan migraciones automáticamente)
+// Nota: Esto se puede activar en producción si las migraciones se ejecutan automáticamente
+// Schedule::command('cache:warm')
+//     ->after(function () {
+//         // Se ejecutaría después de migraciones si se configura así
+//     });
