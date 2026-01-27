@@ -27,6 +27,7 @@ Route::get('/', function () {
             'health_live' => '/health/live',
             'health_ready' => '/health/ready',
             'health_detailed' => '/health/detailed',
+            'search' => '/search',
             'documentation' => '/docs/api', // Scramble API Documentation
         ],
     ]);
@@ -45,6 +46,7 @@ require __DIR__.'/api/auth.php';
 require __DIR__.'/api/users.php';
 require __DIR__.'/api/api-keys.php';
 require __DIR__.'/api/files.php';
+require __DIR__.'/api/search.php';
 
 Route::prefix('test/sentry')->group(function () {
     Route::get('/info', [TestSentryController::class, 'info']);

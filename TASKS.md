@@ -792,9 +792,9 @@
 - [x] Sincronizar índices: `php artisan scout:import`
 
 ### 15.3 SearchController
-- [ ] Crear endpoint `GET /api/v1/search`
-- [ ] Búsqueda global en múltiples modelos
-- [ ] Filtros y facetas
+- [x] Crear endpoint `GET /search` (sin versión según reglas del proyecto)
+- [x] Búsqueda global en múltiples modelos
+- [x] Filtros y facetas
 
 ---
 
