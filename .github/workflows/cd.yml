@@ -141,7 +141,6 @@ jobs:
       needs.determine-deployment.outputs.strategy == 'blue-green'
     environment:
       name: ${{ needs.determine-deployment.outputs.environment }}
-      url: ${{ secrets.DEPLOYMENT_URL }}
 
     steps:
       - name: Checkout code
@@ -217,7 +216,6 @@ jobs:
       needs.determine-deployment.outputs.strategy == 'canary'
     environment:
       name: ${{ needs.determine-deployment.outputs.environment }}
-      url: ${{ secrets.DEPLOYMENT_URL }}
 
     steps:
       - name: Checkout code
@@ -287,7 +285,6 @@ jobs:
       needs.determine-deployment.outputs.strategy == 'rolling'
     environment:
       name: ${{ needs.determine-deployment.outputs.environment }}
-      url: ${{ secrets.DEPLOYMENT_URL }}
 
     steps:
       - name: Checkout code

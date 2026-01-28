@@ -72,7 +72,7 @@ jobs:
           APP_ENV: testing
           APP_KEY: base64:test-key-for-sonarcloud-only
           DB_CONNECTION: sqlite
-          DB_DATABASE: :memory:
+          DB_DATABASE: ":memory:"
         run: |
           ./vendor/bin/pest --coverage --coverage-xml=coverage.xml || true
 
