@@ -53,12 +53,18 @@ class CacheService
     public static function get(string $key, $default = null)
     {
         $fullKey = self::buildKey($key);
+        $value = null;
 
         if (! empty(self::getActiveTags())) {
-            return Cache::tags(self::getActiveTags())->get($fullKey, $default);
+            $value = Cache::tags(self::getActiveTags())->get($fullKey, $default);
+        } else {
+            $value = Cache::get($fullKey, $default);
         }
 
-        return Cache::get($fullKey, $default);
+        // Trackear hit/miss
+        self::trackCacheAccess($value !== $default || Cache::has($fullKey));
+
+        return $value;
     }
 
     /**
@@ -103,11 +109,19 @@ class CacheService
         $fullKey = self::buildKey($key);
         $ttl = $ttl ?? self::$defaultTtls['default'];
 
-        if (! empty(self::getActiveTags())) {
-            return Cache::tags(self::getActiveTags())->remember($fullKey, $ttl, $callback);
-        }
+        // Verificar si existe antes de remember para trackear hit/miss
+        $exists = ! empty(self::getActiveTags())
+            ? Cache::tags(self::getActiveTags())->has($fullKey)
+            : Cache::has($fullKey);
 
-        return Cache::remember($fullKey, $ttl, $callback);
+        $value = ! empty(self::getActiveTags())
+            ? Cache::tags(self::getActiveTags())->remember($fullKey, $ttl, $callback)
+            : Cache::remember($fullKey, $ttl, $callback);
+
+        // Trackear hit si existía, miss si no
+        self::trackCacheAccess($exists);
+
+        return $value;
     }
 
     /**
@@ -149,7 +163,14 @@ class CacheService
         $key = "user:{$userId}";
         $tag = "user:{$userId}";
 
-        return Cache::tags([$tag])->remember($key, $ttl, $callback);
+        // Verificar si existe antes de remember para trackear hit/miss
+        $exists = Cache::tags([$tag])->has($key);
+        $value = Cache::tags([$tag])->remember($key, $ttl, $callback);
+
+        // Trackear hit si existía, miss si no
+        self::trackCacheAccess($exists);
+
+        return $value;
     }
 
     /**
@@ -163,7 +184,14 @@ class CacheService
         $key = "entity:{$entity}";
         $tag = "entity:{$entity}";
 
-        return Cache::tags([$tag])->remember($key, $ttl, $callback);
+        // Verificar si existe antes de remember para trackear hit/miss
+        $exists = Cache::tags([$tag])->has($key);
+        $value = Cache::tags([$tag])->remember($key, $ttl, $callback);
+
+        // Trackear hit si existía, miss si no
+        self::trackCacheAccess($exists);
+
+        return $value;
     }
 
     /**
@@ -179,7 +207,14 @@ class CacheService
         $key = "search:{$hash}";
         $tag = 'searches';
 
-        return Cache::tags([$tag])->remember($key, $ttl, $callback);
+        // Verificar si existe antes de remember para trackear hit/miss
+        $exists = Cache::tags([$tag])->has($key);
+        $value = Cache::tags([$tag])->remember($key, $ttl, $callback);
+
+        // Trackear hit si existía, miss si no
+        self::trackCacheAccess($exists);
+
+        return $value;
     }
 
     /**
@@ -391,18 +426,55 @@ class CacheService
     }
 
     /**
+     * Trackear acceso al caché (hit o miss)
+     *
+     * @param  bool  $isHit  true si fue hit, false si fue miss
+     */
+    protected static function trackCacheAccess(bool $isHit): void
+    {
+        if (config('cache.default') !== 'redis') {
+            return;
+        }
+
+        try {
+            $redis = Redis::connection('cache');
+            $key = $isHit ? 'cache:hits' : 'cache:misses';
+            $redis->incr($key);
+
+            // Expirar contadores después de 24 horas para resetear métricas diarias
+            $redis->expire('cache:hits', 86400);
+            $redis->expire('cache:misses', 86400);
+        } catch (\Exception $e) {
+            // Silenciar errores de tracking para no afectar la funcionalidad principal
+        }
+    }
+
+    /**
+     * Resetear contadores de métricas
+     */
+    public static function resetMetrics(): void
+    {
+        if (config('cache.default') !== 'redis') {
+            return;
+        }
+
+        try {
+            $redis = Redis::connection('cache');
+            $redis->del('cache:hits', 'cache:misses');
+        } catch (\Exception $e) {
+            // Silenciar errores
+        }
+    }
+
+    /**
      * Calcular hit rate del caché
      */
     protected static function calculateHitRate(): float
     {
-        // Esto requiere implementar contadores de hits/misses
-        // Por ahora retornamos un valor por defecto
-        // Se puede implementar con Redis counters o métricas de Laravel
-
         try {
             $redis = Redis::connection('cache');
-            $hits = $redis->get('cache:hits') ?? 0;
-            $misses = $redis->get('cache:misses') ?? 0;
+            $hits = (int) ($redis->get('cache:hits') ?? 0);
+            $misses = (int) ($redis->get('cache:misses') ?? 0);
 
             $total = $hits + $misses;
             if ($total === 0) {

@@ -85,6 +85,14 @@ Schedule::command('cache:warm')
         \Illuminate\Support\Facades\Log::error('Cache warming falló');
     });
 
+// Monitoreo de métricas de caché: cada hora
+Schedule::command('cache:metrics --alert-threshold=70')
+    ->hourly()
+    ->withoutOverlapping()
+    ->onFailure(function () {
+        \Illuminate\Support\Facades\Log::error('Monitoreo de métricas de caché falló');
+    });
+
 // Cache warming después de migraciones (si se ejecutan migraciones automáticamente)
 // Nota: Esto se puede activar en producción si las migraciones se ejecutan automáticamente
 // Schedule::command('cache:warm')

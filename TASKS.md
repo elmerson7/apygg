@@ -1115,9 +1115,9 @@
 - [x] Comando artisan cache:invalidate para invalidación manual
 
 ### 28.4 Métricas
-- [ ] Monitoreo de hit rate
-- [ ] Alertas cuando hit rate baja de 70%
-- [ ] Recomendaciones de optimización
+- [x] Monitoreo de hit rate (implementado: tracking automático de hits/misses en CacheService, método getAllMetrics() con cálculo de hit rate, comando cache:metrics para monitoreo)
+- [x] Alertas cuando hit rate baja de 70% (implementado: comando cache:metrics con umbral configurable, alertas automáticas con logging a LogService y Sentry, scheduler cada hora)
+- [x] Recomendaciones de optimización (implementado: sistema de recomendaciones basado en hit rate, memoria y número de keys, prioridades high/medium/low, acciones sugeridas específicas)
 
 ---
 
