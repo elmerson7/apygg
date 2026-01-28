@@ -10,8 +10,6 @@ on:
 
 env:
   PHP_VERSION: '8.5'
-  POSTGRES_VERSION: '18'
-  REDIS_VERSION: '7'
 
 jobs:
   lint:
@@ -57,7 +55,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:${{ env.POSTGRES_VERSION }}
+        image: postgres:18
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -71,7 +69,7 @@ jobs:
           - 5432:5432
 
       redis:
-        image: redis:${{ env.REDIS_VERSION }}
+        image: redis:7
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
