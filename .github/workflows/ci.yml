@@ -44,7 +44,7 @@ jobs:
         continue-on-error: false
 
       - name: Run PHPStan (Static Analysis)
-        run: ./vendor/bin/phpstan analyse --level=5 --memory-limit=2G
+        run: ./vendor/bin/phpstan analyse --memory-limit=2G
         continue-on-error: false
 
   test:
