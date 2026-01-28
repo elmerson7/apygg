@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f9ca232083a41601d2b171eaf6ac3b75",
+    "content-hash": "4f9927764d194d443bcfbeeefee315c2",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -1731,16 +1731,16 @@
         },
         {
             "name": "laravel/framework",
-            "version": "v12.40.0",
+            "version": "v12.40.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/framework.git",
-                "reference": "3159215d904a2b04c5b903bce0328d54f1688d0f"
+                "reference": "1ccd99220b474500e672b373f32bd709ec38de50"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/framework/zipball/3159215d904a2b04c5b903bce0328d54f1688d0f",
-                "reference": "3159215d904a2b04c5b903bce0328d54f1688d0f",
+                "url": "https://api.github.com/repos/laravel/framework/zipball/1ccd99220b474500e672b373f32bd709ec38de50",
+                "reference": "1ccd99220b474500e672b373f32bd709ec38de50",
                 "shasum": ""
             },
             "require": {
@@ -1946,7 +1946,7 @@
                 "issues": "https://github.com/laravel/framework/issues",
                 "source": "https://github.com/laravel/framework"
             },
-            "time": "2025-11-25T15:07:47+00:00"
+            "time": "2025-11-26T19:24:25+00:00"
         },
         {
             "name": "laravel/horizon",
