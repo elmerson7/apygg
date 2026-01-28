@@ -6443,16 +6443,16 @@
         },
         {
             "name": "spatie/laravel-query-builder",
-            "version": "6.4.0",
+            "version": "6.4.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/spatie/laravel-query-builder.git",
-                "reference": "f73627028538bfa58d5437f79344fa93ae254a36"
+                "reference": "9c7427c0dff87d7232beeecd2d33bf7d21952b43"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/spatie/laravel-query-builder/zipball/f73627028538bfa58d5437f79344fa93ae254a36",
-                "reference": "f73627028538bfa58d5437f79344fa93ae254a36",
+                "url": "https://api.github.com/repos/spatie/laravel-query-builder/zipball/9c7427c0dff87d7232beeecd2d33bf7d21952b43",
+                "reference": "9c7427c0dff87d7232beeecd2d33bf7d21952b43",
                 "shasum": ""
             },
             "require": {
@@ -6513,7 +6513,7 @@
                     "type": "custom"
                 }
             ],
-            "time": "2026-01-09T13:35:54+00:00"
+            "time": "2026-01-27T07:27:24+00:00"
         },
         {
             "name": "symfony/clock",
