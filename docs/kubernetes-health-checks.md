@@ -313,7 +313,7 @@ kubectl logs <pod-name>
 kubectl exec <pod-name> -- curl http://localhost:8000/health/ready
 
 # Ver métricas de probes
-kubectl get --raw "/api/v1/namespaces/default/pods/<pod-name>/proxy/metrics"
+kubectl get --raw "/api/namespaces/default/pods/<pod-name>/proxy/metrics"
 ```
 
 ## Consideraciones Importantes

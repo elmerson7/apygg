@@ -375,7 +375,7 @@ Cliente → FrankenPHP (Octane) / Laravel App
       "execution_time_ms": 45
     },
     "links": {
-      "self": "/api/v1/users/123"
+      "self": "/api/users/123"
     }
   }
   ```
@@ -430,11 +430,11 @@ Cliente → FrankenPHP (Octane) / Laravel App
 - Configurar claims estándar: iss (issuer), aud (audience), exp (expiration), iat (issued at), sub (subject)
 
 **AuthController (`App\Http\Controllers\Auth\AuthController`):**
-- Endpoint `POST /api/v1/auth/login` - Login con email/contraseña, retorna JWT y refresh token
-- Endpoint `POST /api/v1/auth/register` - Registro de nuevos usuarios (si está habilitado)
-- Endpoint `POST /api/v1/auth/logout` - Cerrar sesión y revocar token agregándolo a blacklist
-- Endpoint `POST /api/v1/auth/refresh` - Renovar access token usando refresh token
-- Endpoint `GET /api/v1/auth/me` - Obtener datos del usuario autenticado
+- Endpoint `POST /api/auth/login` - Login con email/contraseña, retorna JWT y refresh token
+- Endpoint `POST /api/auth/register` - Registro de nuevos usuarios (si está habilitado)
+- Endpoint `POST /api/auth/logout` - Cerrar sesión y revocar token agregándolo a blacklist
+- Endpoint `POST /api/auth/refresh` - Renovar access token usando refresh token
+- Endpoint `GET /api/auth/me` - Obtener datos del usuario autenticado
 - Validación de credenciales contra base de datos
 - Rate limiting estricto en endpoints de autenticación (5 intentos por minuto)
 - Registro de intentos de login (exitosos y fallidos) en SecurityLog
@@ -460,9 +460,9 @@ Cliente → FrankenPHP (Octane) / Laravel App
 ### 3.2 Recuperación de Contraseña
 
 **PasswordController (`App\Http\Controllers\Auth\PasswordController`):**
-- Endpoint `POST /api/v1/auth/forgot-password` - Solicitar reset, envía email con token
-- Endpoint `POST /api/v1/auth/reset-password` - Resetear contraseña con token válido
-- Endpoint `POST /api/v1/auth/change-password` - Cambiar contraseña si está autenticado
+- Endpoint `POST /api/auth/forgot-password` - Solicitar reset, envía email con token
+- Endpoint `POST /api/auth/reset-password` - Resetear contraseña con token válido
+- Endpoint `POST /api/auth/change-password` - Cambiar contraseña si está autenticado
 - Validación de tokens de reset (existencia, expiración)
 - Expiración de tokens de reset (1 hora)
 
@@ -570,15 +570,15 @@ if (Feature::enabled('experimental-feature', false)) {
 ### 4.1 Gestión de Usuarios
 
 **UserController (`App\Http\Controllers\Users\UserController`):**
-- `GET /api/v1/users` - Listar usuarios con paginación, filtrado y ordenamiento usando Query Filters
-- `GET /api/v1/users/{id}` - Obtener usuario específico con relaciones opcionales
-- `POST /api/v1/users` - Crear nuevo usuario (solo admin)
-- `PUT /api/v1/users/{id}` - Actualizar usuario (admin o el usuario mismo)
-- `DELETE /api/v1/users/{id}` - Eliminar usuario con soft delete (solo admin)
-- `POST /api/v1/users/{id}/restore` - Restaurar usuario eliminado
-- `POST /api/v1/users/{id}/roles` - Asignar roles a usuario
-- `DELETE /api/v1/users/{id}/roles/{roleId}` - Remover rol de usuario
-- `GET /api/v1/users/{id}/activity` - Historial de actividad del usuario
+- `GET /api/users` - Listar usuarios con paginación, filtrado y ordenamiento usando Query Filters
+- `GET /api/users/{id}` - Obtener usuario específico con relaciones opcionales
+- `POST /api/users` - Crear nuevo usuario (solo admin)
+- `PUT /api/users/{id}` - Actualizar usuario (admin o el usuario mismo)
+- `DELETE /api/users/{id}` - Eliminar usuario con soft delete (solo admin)
+- `POST /api/users/{id}/restore` - Restaurar usuario eliminado
+- `POST /api/users/{id}/roles` - Asignar roles a usuario
+- `DELETE /api/users/{id}/roles/{roleId}` - Remover rol de usuario
+- `GET /api/users/{id}/activity` - Historial de actividad del usuario
 
 **Query Filters Estandarizado:**
 - Uso de `spatie/laravel-query-builder` para filtros consistentes

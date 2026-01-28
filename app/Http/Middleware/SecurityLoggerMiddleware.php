@@ -447,7 +447,6 @@ class SecurityLoggerMiddleware
         $adminPatterns = [
             '/admin',
             '/api/admin',
-            '/api/v1/admin',
             '/users',
             '/roles',
             '/permissions',
