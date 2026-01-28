@@ -22,16 +22,11 @@
 name: SonarCloud Analysis
 
 on:
-  # Ejecutar después de que CI pase exitosamente
+  # Ejecutar después de que CI pase exitosamente (solo en main/develop, no en PRs de Dependabot)
   workflow_run:
     workflows: ["CI Pipeline"]
     types: [completed]
     branches: [main, develop]
-  # También ejecutar en push/PR (opcional)
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
   # Ejecutar manualmente
   workflow_dispatch:
 
@@ -42,7 +37,9 @@ permissions:
 
 jobs:
   Analysis:
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name != 'workflow_run' }}
+    # Solo ejecutar si CI pasó exitosamente (no en PRs de Dependabot)
+    # Los PRs de Dependabot se saltan automáticamente porque workflow_run solo se ejecuta en main/develop
+    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 15
 

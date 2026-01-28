@@ -4,10 +4,10 @@ updates:
   - package-ecosystem: "composer"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"  # Reducido de weekly a monthly
       day: "monday"
       time: "09:00"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5  # Reducido de 10 a 5
     reviewers:
       - "elmerson"
     labels:
@@ -27,6 +27,9 @@ updates:
       # Ignorar actualizaciones mayores de PHP (requieren revisión manual)
       - dependency-name: "php"
         update-types: ["version-update:semver-major"]
+      # Ignorar actualizaciones menores de Laravel Framework (solo parches automáticos)
+      - dependency-name: "laravel/framework"
+        update-types: ["version-update:semver-minor"]  # Ignorar 12.40.0 → 12.49.0
 
   # GitHub Actions
   - package-ecosystem: "github-actions"

@@ -22,8 +22,7 @@ Se ejecuta automáticamente en:
    - Servicios: PostgreSQL 18 y Redis 7
 
 3. **Security Scan**
-   - Snyk (requiere `SNYK_TOKEN` en secrets)
-   - Composer audit (escaneo de vulnerabilidades)
+   - Composer audit (escaneo rápido de vulnerabilidades)
 
 4. **Docker Build**
    - Construcción de imagen Docker
@@ -35,12 +34,9 @@ Se ejecuta automáticamente en:
 
 Configura los siguientes secrets en tu repositorio (Settings → Secrets and variables → Actions):
 
-- `SNYK_TOKEN` (opcional): Token de Snyk para escaneo de seguridad avanzado
-  - Obtener en: https://snyk.io/
-  - Si no se configura, el workflow `snyk-security.yml` se saltará
 - `SONAR_TOKEN` (opcional): Token de SonarCloud para análisis de código
   - Obtener en: https://sonarcloud.io/account/security/
-  - Si no se configura, el workflow `sonarcloud.yml` se saltará
+  - Si no se configura, el workflow `sonarcloud.yml` fallará
 
 ### Variables de Entorno
 
@@ -116,20 +112,6 @@ Puedes ejecutar despliegues manualmente desde la pestaña "Actions":
    - Strategy (blue-green/canary/rolling)
    - Rollback (si quieres hacer rollback)
 
-### `snyk-security.yml` - Snyk Security Scan
-
-Escaneo de seguridad completo con Snyk:
-- **Snyk Code (SAST)**: Análisis de código estático
-- **Snyk Open Source (SCA)**: Análisis de dependencias Composer
-- **Snyk Container**: Análisis de imagen Docker
-- **Snyk IaC**: Análisis de Dockerfiles y docker-compose
-
-Se ejecuta automáticamente después de que CI pasa exitosamente.
-
-**Configuración:**
-1. Obtén tu token en https://snyk.io/
-2. Agrega `SNYK_TOKEN` a GitHub Secrets
-
 ### `sonarcloud.yml` - SonarCloud Analysis
 
 Análisis de calidad de código con SonarCloud:
@@ -138,7 +120,7 @@ Análisis de calidad de código con SonarCloud:
 - Cobertura de código
 - Métricas de complejidad
 
-Se ejecuta automáticamente después de que CI pasa exitosamente.
+**Se ejecuta automáticamente después de que CI pasa exitosamente** (solo en main/develop, no en PRs de Dependabot).
 
 **Configuración:**
 1. Login en https://sonarcloud.io/ con tu cuenta GitHub
@@ -148,10 +130,27 @@ Se ejecuta automáticamente después de que CI pasa exitosamente.
 5. Agrega `SONAR_TOKEN` a GitHub Secrets
 6. Actualiza `YOUR_PROJECT_KEY` y `YOUR_ORGANIZATION_KEY` en el workflow
 
+**Nota:** Si falta el token o las keys, el workflow fallará. Configúralo o desactívalo temporalmente.
+
+## Control de Ejecuciones
+
+### Limitar ejecuciones en PRs de Dependabot
+
+El workflow `sonarcloud.yml` está configurado para **NO ejecutarse** en PRs de Dependabot.
+
+Solo se ejecuta después de que CI pasa exitosamente en ramas `main` o `develop`, evitando ejecuciones innecesarias cuando Dependabot actualiza dependencias.
+
+### Desactivar workflows temporalmente
+
+Si quieres desactivar SonarCloud temporalmente:
+
+1. Ve al archivo `.github/workflows/sonarcloud.yml`
+2. Comenta el trigger `on:` o cambia las ramas
+3. O simplemente no configures el `SONAR_TOKEN` (el workflow fallará pero no bloqueará CI)
+
 ## Próximos Pasos
 
 - [x] Configurar CD Pipeline (Fase 24.3) para despliegue automático ✅
-- [x] Configurar Snyk Security Scan ✅
 - [x] Configurar SonarCloud Analysis ✅
 - [ ] Agregar más tests para aumentar cobertura
 - [ ] Configurar notificaciones (Slack, Discord, Email)

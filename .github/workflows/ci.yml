@@ -5,6 +5,8 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
+    # Evitar ejecutar CI en PRs de Dependabot automáticamente (opcional)
+    # Los PRs de Dependabot seguirán ejecutando CI, pero puedes limitar workflows secundarios
 
 env:
   PHP_VERSION: '8.5'
