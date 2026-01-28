@@ -1,0 +1,100 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+# Snyk Security Scan for APYGG Laravel Project
+# Scans for vulnerabilities in dependencies, code, containers, and IaC
+# Results are uploaded to GitHub Security Code Scanning
+
+name: Snyk Security
+
+on:
+  # Ejecutar después de que CI pase exitosamente
+  workflow_run:
+    workflows: ["CI Pipeline"]
+    types: [completed]
+    branches: [main, develop]
+  # También ejecutar en push/PR (opcional)
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # Ejecutar manualmente
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  snyk:
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name != 'workflow_run' }}
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Snyk CLI
+        uses: snyk/actions/setup@806182742461562b67788a64410098c9d9b96adb
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: pdo_pgsql, redis, gd, intl, zip, opcache
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-dev
+
+      # Snyk Code (SAST) - Análisis de código estático
+      - name: Snyk Code test (SAST)
+        run: snyk code test --sarif > snyk-code.sarif || true
+        continue-on-error: true
+
+      # Snyk Open Source (SCA) - Análisis de dependencias Composer
+      - name: Snyk Open Source monitor (Composer)
+        run: snyk test --file=composer.json --package-manager=composer || true
+        continue-on-error: true
+
+      - name: Snyk Open Source monitor (upload to Snyk)
+        run: snyk monitor --file=composer.json --package-manager=composer || true
+        continue-on-error: true
+
+      # Snyk Infrastructure as Code (IaC) - Análisis de Dockerfiles y docker-compose
+      - name: Snyk IaC test (Dockerfile)
+        run: snyk iac test --file=./docker/app/Dockerfile --report || true
+        continue-on-error: true
+
+      - name: Snyk IaC test (docker-compose.yml)
+        run: snyk iac test --file=./docker-compose.yml --report || true
+        continue-on-error: true
+
+      # Snyk Container - Análisis de imagen Docker
+      - name: Build Docker image for scanning
+        run: docker build -f ./docker/app/Dockerfile -t apygg:scan .
+
+      - name: Snyk Container test
+        run: snyk container test apygg:scan --file=./docker/app/Dockerfile || true
+        continue-on-error: true
+
+      - name: Snyk Container monitor (upload to Snyk)
+        run: snyk container monitor apygg:scan --file=./docker/app/Dockerfile || true
+        continue-on-error: true
+
+      # Subir resultados de Snyk Code a GitHub Code Scanning
+      - name: Upload Snyk Code results to GitHub Code Scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: snyk-code.sarif
+          wait-for-processing: false

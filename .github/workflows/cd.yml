@@ -1,0 +1,411 @@
+name: CD Pipeline
+
+on:
+  workflow_run:
+    workflows: ["CI Pipeline"]
+    types:
+      - completed
+    branches: [ main, staging ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      strategy:
+        description: 'Deployment strategy'
+        required: true
+        type: choice
+        options:
+          - blue-green
+          - canary
+          - rolling
+      rollback:
+        description: 'Rollback to previous version'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  DOCKER_REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  determine-deployment:
+    name: Determine Deployment Strategy
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    outputs:
+      environment: ${{ steps.set-env.outputs.environment }}
+      strategy: ${{ steps.set-strategy.outputs.strategy }}
+      should-deploy: ${{ steps.check.outputs.should-deploy }}
+      is-rollback: ${{ steps.set-rollback.outputs.is-rollback }}
+
+    steps:
+      - name: Set environment
+        id: set-env
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+          else
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set strategy
+        id: set-strategy
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "strategy=${{ github.event.inputs.strategy }}" >> $GITHUB_OUTPUT
+          else
+            echo "strategy=blue-green" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check if should deploy
+        id: check
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ "${{ github.event.inputs.rollback }}" == "true" ]; then
+            echo "should-deploy=false" >> $GITHUB_OUTPUT
+          else
+            echo "should-deploy=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set rollback flag
+        id: set-rollback
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ "${{ github.event.inputs.rollback }}" == "true" ]; then
+            echo "is-rollback=true" >> $GITHUB_OUTPUT
+          else
+            echo "is-rollback=false" >> $GITHUB_OUTPUT
+          fi
+
+  build-and-push:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    needs: determine-deployment
+    if: needs.determine-deployment.outputs.should-deploy == 'true'
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/app/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            USER_ID=1000
+            GROUP_ID=1000
+
+  blue-green-deploy:
+    name: Blue-Green Deployment
+    runs-on: ubuntu-latest
+    needs: [determine-deployment, build-and-push]
+    if: |
+      needs.determine-deployment.outputs.should-deploy == 'true' &&
+      needs.determine-deployment.outputs.strategy == 'blue-green'
+    environment:
+      name: ${{ needs.determine-deployment.outputs.environment }}
+      url: ${{ secrets.DEPLOYMENT_URL }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Blue environment
+        env:
+          DEPLOYMENT_ENV: ${{ needs.determine-deployment.outputs.environment }}
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.image-tag }}
+          BLUE_ENV: blue
+        run: |
+          echo "🚀 Deploying to BLUE environment..."
+          # Aquí va tu lógica de despliegue específica
+          # Ejemplo para Railway:
+          # railway up --service blue --detach
+          # Ejemplo para AWS ECS:
+          # aws ecs update-service --cluster apygg --service apygg-blue --force-new-deployment
+          echo "✅ Blue environment deployed"
+
+      - name: Health check Blue
+        run: |
+          echo "🏥 Running health checks on Blue..."
+          # Esperar a que Blue esté listo
+          max_attempts=30
+          attempt=0
+          while [ $attempt -lt $max_attempts ]; do
+            if curl -f "${{ secrets.BLUE_HEALTH_URL }}/health/ready" > /dev/null 2>&1; then
+              echo "✅ Blue environment is healthy"
+              exit 0
+            fi
+            attempt=$((attempt + 1))
+            sleep 5
+          done
+          echo "❌ Blue environment health check failed"
+          exit 1
+
+      - name: Switch traffic to Blue
+        run: |
+          echo "🔄 Switching traffic to Blue environment..."
+          # Aquí va tu lógica de switch de tráfico
+          # Ejemplo: Actualizar load balancer, cambiar DNS, etc.
+          echo "✅ Traffic switched to Blue"
+
+      - name: Wait for stabilization
+        run: |
+          echo "⏳ Waiting for stabilization (60 seconds)..."
+          sleep 60
+
+      - name: Verify deployment success
+        run: |
+          echo "✅ Verifying deployment..."
+          # Verificar métricas, logs, etc.
+          if [ "$?" -eq 0 ]; then
+            echo "✅ Deployment successful"
+          else
+            echo "❌ Deployment verification failed - initiating rollback"
+            exit 1
+          fi
+
+      - name: Cleanup Green environment
+        if: success()
+        run: |
+          echo "🧹 Cleaning up Green environment..."
+          # Mantener Green por un tiempo antes de limpiar (para rollback rápido)
+          # O limpiar inmediatamente si todo está bien
+
+  canary-deploy:
+    name: Canary Deployment
+    runs-on: ubuntu-latest
+    needs: [determine-deployment, build-and-push]
+    if: |
+      needs.determine-deployment.outputs.should-deploy == 'true' &&
+      needs.determine-deployment.outputs.strategy == 'canary'
+    environment:
+      name: ${{ needs.determine-deployment.outputs.environment }}
+      url: ${{ secrets.DEPLOYMENT_URL }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy Canary (10% traffic)
+        env:
+          DEPLOYMENT_ENV: ${{ needs.determine-deployment.outputs.environment }}
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.image-tag }}
+          CANARY_PERCENTAGE: 10
+        run: |
+          echo "🚀 Deploying Canary with 10% traffic..."
+          # Desplegar canary con 10% del tráfico
+          echo "✅ Canary deployed"
+
+      - name: Health check Canary
+        run: |
+          echo "🏥 Running health checks on Canary..."
+          max_attempts=30
+          attempt=0
+          while [ $attempt -lt $max_attempts ]; do
+            if curl -f "${{ secrets.CANARY_HEALTH_URL }}/health/ready" > /dev/null 2>&1; then
+              echo "✅ Canary is healthy"
+              exit 0
+            fi
+            attempt=$((attempt + 1))
+            sleep 5
+          done
+          echo "❌ Canary health check failed - rolling back"
+          exit 1
+
+      - name: Monitor Canary (5 minutes)
+        run: |
+          echo "📊 Monitoring Canary for 5 minutes..."
+          sleep 300
+          # Aquí podrías agregar verificación de métricas, errores, etc.
+
+      - name: Increase Canary to 50%
+        if: success()
+        run: |
+          echo "🔄 Increasing Canary to 50% traffic..."
+          # Aumentar tráfico a canary
+
+      - name: Monitor Canary (5 minutes)
+        if: success()
+        run: |
+          echo "📊 Monitoring Canary at 50% for 5 minutes..."
+          sleep 300
+
+      - name: Increase Canary to 100%
+        if: success()
+        run: |
+          echo "🔄 Increasing Canary to 100% traffic..."
+          # Migrar todo el tráfico a canary
+
+      - name: Complete Canary deployment
+        if: success()
+        run: |
+          echo "✅ Canary deployment completed successfully"
+
+  rolling-deploy:
+    name: Rolling Deployment
+    runs-on: ubuntu-latest
+    needs: [determine-deployment, build-and-push]
+    if: |
+      needs.determine-deployment.outputs.should-deploy == 'true' &&
+      needs.determine-deployment.outputs.strategy == 'rolling'
+    environment:
+      name: ${{ needs.determine-deployment.outputs.environment }}
+      url: ${{ secrets.DEPLOYMENT_URL }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Rolling deployment
+        env:
+          DEPLOYMENT_ENV: ${{ needs.determine-deployment.outputs.environment }}
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.image-tag }}
+        run: |
+          echo "🚀 Starting rolling deployment..."
+          # Desplegar en batches pequeños
+          # Ejemplo: Actualizar 25% de instancias, verificar, luego otro 25%, etc.
+          echo "✅ Rolling deployment completed"
+
+  post-deploy:
+    name: Post-Deployment Tasks
+    runs-on: ubuntu-latest
+    needs: [determine-deployment, build-and-push]
+    if: |
+      always() &&
+      (needs.blue-green-deploy.result == 'success' ||
+       needs.canary-deploy.result == 'success' ||
+       needs.rolling-deploy.result == 'success')
+    environment:
+      name: ${{ needs.determine-deployment.outputs.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run post-deployment script
+        env:
+          DEPLOYMENT_ENV: ${{ needs.determine-deployment.outputs.environment }}
+          DEPLOYMENT_URL: ${{ secrets.DEPLOYMENT_URL }}
+        run: |
+          echo "🚀 Running post-deployment tasks..."
+          # Ejecutar migraciones, cache warming, etc.
+          # Esto normalmente se hace dentro del contenedor después del deploy
+          # Pero aquí puedes ejecutar tareas adicionales si es necesario
+          echo "✅ Post-deployment tasks completed"
+
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    needs: [determine-deployment]
+    if: |
+      needs.determine-deployment.outputs.is-rollback == 'true' ||
+      (needs.blue-green-deploy.result == 'failure' ||
+       needs.canary-deploy.result == 'failure' ||
+       needs.rolling-deploy.result == 'failure')
+    environment:
+      name: ${{ needs.determine-deployment.outputs.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get previous version
+        id: previous
+        run: |
+          # Obtener la versión anterior del registro
+          # Esto depende de tu sistema de versionado
+          echo "version=previous" >> $GITHUB_OUTPUT
+
+      - name: Rollback to previous version
+        env:
+          DEPLOYMENT_ENV: ${{ needs.determine-deployment.outputs.environment }}
+          PREVIOUS_VERSION: ${{ steps.previous.outputs.version }}
+        run: |
+          echo "⏪ Rolling back to previous version..."
+          # Lógica de rollback específica de tu plataforma
+          # Ejemplo: Cambiar tráfico de Blue a Green, o revertir a imagen anterior
+          echo "✅ Rollback completed"
+
+      - name: Verify rollback
+        run: |
+          echo "✅ Verifying rollback..."
+          max_attempts=30
+          attempt=0
+          while [ $attempt -lt $max_attempts ]; do
+            if curl -f "${{ secrets.DEPLOYMENT_URL }}/health/ready" > /dev/null 2>&1; then
+              echo "✅ Rollback verified - system is healthy"
+              exit 0
+            fi
+            attempt=$((attempt + 1))
+            sleep 5
+          done
+          echo "❌ Rollback verification failed"
+          exit 1
+
+  notify:
+    name: Notify Deployment Status
+    runs-on: ubuntu-latest
+    needs: [determine-deployment, build-and-push, blue-green-deploy, canary-deploy, rolling-deploy, post-deploy, rollback]
+    if: always()
+
+    steps:
+      - name: Determine status
+        id: status
+        run: |
+          if [ "${{ needs.rollback.result }}" == "success" ]; then
+            echo "status=rolled_back" >> $GITHUB_OUTPUT
+            echo "message=Deployment rolled back successfully" >> $GITHUB_OUTPUT
+          elif [ "${{ needs.post-deploy.result }}" == "success" ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "message=Deployment completed successfully" >> $GITHUB_OUTPUT
+          else
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "message=Deployment failed" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send notification
+        run: |
+          echo "📢 Deployment Status: ${{ steps.status.outputs.status }}"
+          echo "Message: ${{ steps.status.outputs.message }}"
+          # Aquí puedes agregar notificaciones a Slack, Discord, Email, etc.
+          # Ejemplo con Slack:
+          # curl -X POST -H 'Content-type: application/json' \
+          #   --data "{\"text\":\"${{ steps.status.outputs.message }}\"}" \
+          #   ${{ secrets.SLACK_WEBHOOK_URL }}

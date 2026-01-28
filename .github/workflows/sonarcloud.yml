@@ -1,0 +1,99 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+# SonarCloud Analysis for APYGG Laravel Project
+# Free for open source projects
+# Results populate GitHub Code Scanning alerts
+
+# Setup Instructions:
+# 1. Login to SonarCloud.io using your GitHub account
+# 2. Import your project on SonarCloud
+#    - Add your GitHub organization first
+#    - Add your repository as a new project
+# 3. Get your Project Key and Organization Key from SonarCloud
+#    - Click on "Information" at the bottom left
+#    - Copy/paste into the args parameter below
+# 4. Generate a token and add it to GitHub Secrets
+#    - SonarCloud > My account > Security
+#    - Add as SONAR_TOKEN secret in GitHub
+
+name: SonarCloud Analysis
+
+on:
+  # Ejecutar después de que CI pase exitosamente
+  workflow_run:
+    workflows: ["CI Pipeline"]
+    types: [completed]
+    branches: [main, develop]
+  # También ejecutar en push/PR (opcional)
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # Ejecutar manualmente
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+  security-events: write
+
+jobs:
+  Analysis:
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name != 'workflow_run' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for better analysis
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: pdo_pgsql, redis, gd, intl, zip, opcache, xdebug
+          coverage: xdebug
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Run tests with coverage
+        env:
+          APP_ENV: testing
+          APP_KEY: base64:test-key-for-sonarcloud-only
+          DB_CONNECTION: sqlite
+          DB_DATABASE: :memory:
+        run: |
+          ./vendor/bin/pest --coverage --coverage-xml=coverage.xml || true
+
+      - name: Analyze with SonarCloud
+        uses: SonarSource/sonarcloud-github-action@4006f663ecaf1f8093e8e4abb9227f6041f52216
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=YOUR_PROJECT_KEY
+            -Dsonar.organization=YOUR_ORGANIZATION_KEY
+            -Dsonar.php.version=8.5
+            -Dsonar.sources=app,config,routes
+            -Dsonar.tests=tests
+            -Dsonar.exclusions=**/vendor/**,**/node_modules/**,**/storage/**,**/bootstrap/cache/**
+            -Dsonar.test.exclusions=tests/**/*
+            -Dsonar.coverage.exclusions=tests/**,**/vendor/**,**/node_modules/**,**/storage/**,**/bootstrap/cache/**
+            -Dsonar.coverageReportPaths=coverage.xml
+            -Dsonar.sourceEncoding=UTF-8
+            -Dsonar.php.tests.reportPath=coverage.xml
+          projectBaseDir: .

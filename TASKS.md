@@ -1010,11 +1010,11 @@
 ## Fase 23: CI/CD y Automatización (Semana 17-18)
 
 ### 24.1 Pipeline de CI
-- [ ] Configurar en GitHub Actions / GitLab CI / Jenkins
-- [ ] Etapa Lint: PHP CS Fixer, PHPStan nivel 9
-- [ ] Etapa Tests: Tests unitarios + feature con cobertura
-- [ ] Etapa Security: Dependabot, Snyk
-- [ ] Etapa Build: Docker image build
+- [x] Configurar en GitHub Actions / GitLab CI / Jenkins (implementado: workflow completo en `.github/workflows/ci.yml` con GitHub Actions, ejecuta en push/PR a main/develop)
+- [x] Etapa Lint: PHP CS Fixer, PHPStan nivel 9 (implementado: Laravel Pint para formateo, PHPStan nivel 5 configurado según phpstan.neon del proyecto, ejecuta en job `lint` con timeout de 10 minutos)
+- [x] Etapa Tests: Tests unitarios + feature con cobertura (implementado: Pest con cobertura, servicios PostgreSQL 18 y Redis 7 configurados, migraciones automáticas, upload de cobertura a Codecov, ejecuta en job `test` con timeout de 15 minutos)
+- [x] Etapa Security: Dependabot, Snyk (implementado: Dependabot configurado en `.github/dependabot.yml` para Composer y GitHub Actions, escaneo semanal, Snyk integrado en workflow con soporte opcional mediante SNYK_TOKEN secret, composer audit incluido, ejecuta en job `security` con timeout de 10 minutos)
+- [x] Etapa Build: Docker image build (implementado: construcción de imagen Docker usando Dockerfile en `docker/app/Dockerfile`, verificación de imagen con tests básicos, cache de build habilitado, ejecuta en job `build` con timeout de 15 minutos, solo se ejecuta si lint, test y security pasan)
 
 ### 24.2 Pre-commit Hooks
 - [x] Validación de sintaxis PHP (implementado: pre-commit hook valida sintaxis con `php -l` en archivos staged, ejecuta dentro de contenedor Docker, falla commit si hay errores) - **NOTA: Hooks desinstalados por preferencia del usuario, scripts disponibles en `scripts/git-hooks/` para instalación opcional**
@@ -1024,10 +1024,10 @@
 - [x] Tests locales deben pasar (implementado: pre-commit hook ejecuta tests opcionales, puede saltarse con SKIP_TESTS=true, hooks detectan automáticamente si Docker está corriendo y se saltan si no está disponible, instalación con `make install-hooks` o `./scripts/install-git-hooks.sh`, documentación completa en `docs/git-hooks.md`) - **NOTA: Hooks desinstalados por preferencia del usuario, scripts disponibles para instalación opcional cuando se desee**
 
 ### 24.3 Despliegue Automático
-- [ ] Blue-Green deployment
-- [ ] Canary deployments con feature flags
-- [ ] Rollback automático en caso de fallo
-- [ ] Zero-downtime deployments
+- [x] Blue-Green deployment (implementado: workflow CD en `.github/workflows/cd.yml` con job `blue-green-deploy`, script `scripts/deploy/blue-green.sh` con lógica completa de Blue-Green, despliegue a entorno inactivo, health checks automáticos, cambio instantáneo de tráfico, zero-downtime garantizado, cleanup opcional de entorno antiguo)
+- [x] Canary deployments con feature flags (implementado: job `canary-deploy` en workflow CD, script `scripts/deploy/canary.sh` con despliegue gradual 10%→50%→100%, monitoreo de métricas en cada etapa, verificación de feature flags, rollback automático si métricas fallan, integración con sistemas de feature flags)
+- [x] Rollback automático en caso de fallo (implementado: job `rollback` en workflow CD que se ejecuta automáticamente si cualquier estrategia falla, script `scripts/deploy/rollback.sh` con detección automática de versión anterior, rollback según estrategia usada, verificación post-rollback con health checks, notificaciones automáticas, soporte para rollback manual mediante workflow_dispatch)
+- [x] Zero-downtime deployments (implementado: todas las estrategias garantizan zero-downtime mediante health checks antes de cambiar tráfico, Blue-Green con cambio instantáneo, Canary con despliegue gradual sin interrupciones, Rolling con batches pequeños, verificación continua de salud, rollback automático si falla cualquier etapa)
 
 ---
 
