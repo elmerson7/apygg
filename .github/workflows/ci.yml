@@ -128,8 +128,11 @@ jobs:
         run: php artisan migrate --force --env=testing
 
       - name: Run Pest tests with coverage
-        run: ./vendor/bin/pest --coverage --min=0
+        run: |
+          ./vendor/bin/pest --coverage --coverage-clover=coverage.xml --min=0
         continue-on-error: false
+        env:
+          XDEBUG_MODE: coverage
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
