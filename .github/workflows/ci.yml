@@ -128,7 +128,7 @@ jobs:
         run: php artisan migrate --force --env=testing
 
       - name: Run Pest tests with coverage
-        run: ./vendor/bin/pest --coverage --coverage-clover coverage.xml --min 0 --do-not-cache-result
+        run: ./vendor/bin/pest --coverage --coverage-clover=coverage.xml --min=0 --do-not-cache-result
         continue-on-error: false
         env:
           XDEBUG_MODE: coverage
