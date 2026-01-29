@@ -32,6 +32,7 @@ class UserDetailResource extends BaseResource
             'name' => $user->name,
             'email' => $user->email,
             'email_verified_at' => $this->formatDate($user->email_verified_at),
+            'identity_document' => $user->identity_document,
 
             // Roles siempre visibles (información básica)
             'roles' => $this->whenLoaded('roles', function () use ($user) {

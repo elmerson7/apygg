@@ -46,6 +46,7 @@ class User extends Authenticatable implements JWTSubject
         'email',
         'password',
         'timezone', // Preferencia de timezone del usuario
+        'identity_document', // Documento de identidad del usuario
         'deleted_by', // Para SoftDeletesWithUser trait
     ];
 

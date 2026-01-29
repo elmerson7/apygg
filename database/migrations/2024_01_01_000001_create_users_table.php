@@ -18,6 +18,7 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('timezone')->nullable()->default('UTC');
+            $table->string('identity_document')->nullable();
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();

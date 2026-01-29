@@ -30,6 +30,7 @@ class StoreUserRequest extends BaseFormRequest
             'name' => ['required', 'string', 'max:255', 'min:2'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8', new StrongPassword],
+            'identity_document' => ['sometimes', 'nullable', 'string', 'max:50'],
             'role_ids' => ['sometimes', 'nullable', 'array'],
             'role_ids.*' => ['required', 'string', 'uuid', 'exists:roles,id'],
         ];
@@ -52,6 +53,8 @@ class StoreUserRequest extends BaseFormRequest
             'password.required' => 'La contraseña es requerida',
             'password.string' => 'La contraseña debe ser texto',
             'password.min' => 'La contraseña debe tener al menos 8 caracteres',
+            'identity_document.string' => 'El documento de identidad debe ser texto',
+            'identity_document.max' => 'El documento de identidad no puede exceder 50 caracteres',
             'role_ids.array' => 'Los roles deben ser un array',
             'role_ids.*.required' => 'Cada rol es requerido',
             'role_ids.*.uuid' => 'Cada rol debe ser un UUID válido',
@@ -68,6 +71,7 @@ class StoreUserRequest extends BaseFormRequest
             'name' => 'nombre',
             'email' => 'correo electrónico',
             'password' => 'contraseña',
+            'identity_document' => 'documento de identidad',
             'role_ids' => 'roles',
             'role_ids.*' => 'rol',
         ];

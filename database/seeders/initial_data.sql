@@ -92,19 +92,19 @@ INSERT INTO permissions (id, name, display_name, resource, action, description, 
 -- ============================================
 -- Password por defecto: "password" (hash: $2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi)
 
-INSERT INTO users (id, name, email, email_verified_at, password, remember_token, created_at, updated_at) VALUES
-('a0000000-0000-0000-0000-000000000001', 'Admin User', 'admin@apygg.com', NOW(), '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NULL, NOW(), NOW()),
-('a0000000-0000-0000-0000-000000000002', 'Manager User', 'manager@apygg.com', NOW(), '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NULL, NOW(), NOW()),
-('a0000000-0000-0000-0000-000000000003', 'John Doe', 'john.doe@example.com', NOW(), '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NULL, NOW(), NOW()),
-('a0000000-0000-0000-0000-000000000004', 'Jane Smith', 'jane.smith@example.com', NOW(), '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NULL, NOW(), NOW()),
-('a0000000-0000-0000-0000-000000000005', 'Bob Johnson', 'bob.johnson@example.com', NOW(), '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NULL, NOW(), NOW()),
-('a0000000-0000-0000-0000-000000000006', 'Alice Williams', 'alice.williams@example.com', NOW(), '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NULL, NOW(), NOW()),
-('a0000000-0000-0000-0000-000000000007', 'Charlie Brown', 'charlie.brown@example.com', NOW(), '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NULL, NOW(), NOW()),
-('a0000000-0000-0000-0000-000000000008', 'Diana Prince', 'diana.prince@example.com', NOW(), '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NULL, NOW(), NOW()),
-('a0000000-0000-0000-0000-000000000009', 'Moderator User', 'moderator@apygg.com', NOW(), '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NULL, NOW(), NOW()),
-('a0000000-0000-0000-0000-000000000010', 'Editor User', 'editor@apygg.com', NOW(), '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NULL, NOW(), NOW()),
-('a0000000-0000-0000-0000-000000000011', 'Guest User', 'guest@apygg.com', NULL, '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NULL, NOW(), NOW()),
-('a0000000-0000-0000-0000-000000000012', 'Test User', 'test@apygg.com', NOW(), '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NULL, NOW(), NOW());
+INSERT INTO users (id, name, email, email_verified_at, password, identity_document, remember_token, created_at, updated_at) VALUES
+('a0000000-0000-0000-0000-000000000001', 'Admin User', 'admin@apygg.com', NOW(), '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '12345678', NULL, NOW(), NOW()),
+('a0000000-0000-0000-0000-000000000002', 'Manager User', 'manager@apygg.com', NOW(), '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '23456789', NULL, NOW(), NOW()),
+('a0000000-0000-0000-0000-000000000003', 'John Doe', 'john.doe@example.com', NOW(), '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '34567890', NULL, NOW(), NOW()),
+('a0000000-0000-0000-0000-000000000004', 'Jane Smith', 'jane.smith@example.com', NOW(), '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '45678901', NULL, NOW(), NOW()),
+('a0000000-0000-0000-0000-000000000005', 'Bob Johnson', 'bob.johnson@example.com', NOW(), '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '56789012', NULL, NOW(), NOW()),
+('a0000000-0000-0000-0000-000000000006', 'Alice Williams', 'alice.williams@example.com', NOW(), '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '67890123', NULL, NOW(), NOW()),
+('a0000000-0000-0000-0000-000000000007', 'Charlie Brown', 'charlie.brown@example.com', NOW(), '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '78901234', NULL, NOW(), NOW()),
+('a0000000-0000-0000-0000-000000000008', 'Diana Prince', 'diana.prince@example.com', NOW(), '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '89012345', NULL, NOW(), NOW()),
+('a0000000-0000-0000-0000-000000000009', 'Moderator User', 'moderator@apygg.com', NOW(), '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '90123456', NULL, NOW(), NOW()),
+('a0000000-0000-0000-0000-000000000010', 'Editor User', 'editor@apygg.com', NOW(), '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '01234567', NULL, NOW(), NOW()),
+('a0000000-0000-0000-0000-000000000011', 'Guest User', 'guest@apygg.com', NULL, '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '11223344', NULL, NOW(), NOW()),
+('a0000000-0000-0000-0000-000000000012', 'Test User', 'test@apygg.com', NOW(), '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '22334455', NULL, NOW(), NOW());
 
 -- ============================================
 -- RELACIONES USUARIO-ROL
