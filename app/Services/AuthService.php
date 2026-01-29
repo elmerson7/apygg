@@ -89,6 +89,18 @@ class AuthService
             return null;
         }
 
+        // Rehash automático si la contraseña usa un algoritmo diferente o necesita actualización
+        // Esto permite migrar de bcrypt a argon2id automáticamente
+        if (Hash::needsRehash($user->password)) {
+            $user->password = Hash::make($password);
+            $user->save();
+
+            LogService::info('Contraseña rehasheada automáticamente durante login', [
+                'user_id' => $user->id,
+                'email' => $email,
+            ], 'security');
+        }
+
         // Limpiar intentos fallidos al autenticar exitosamente
         $this->clearFailedAttempts($email, $ipAddress);
 
