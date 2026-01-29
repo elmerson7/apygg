@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -27,6 +28,11 @@ return new class extends Migration
             $table->index('email');
             $table->index('created_at');
             $table->index('deleted_by');
+        });
+
+        // Agregar índice único a identity_document (permite múltiples NULLs en PostgreSQL)
+        Schema::table('users', function (Blueprint $table) {
+            $table->unique('identity_document');
         });
 
         // Crear password_reset_tokens solo si no existe (tabla del sistema Laravel)
@@ -59,6 +65,14 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Eliminar índice único de identity_document antes de eliminar la tabla
+        // Solo si la tabla existe
+        if (Schema::hasTable('users')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->dropUnique(['identity_document']);
+            });
+        }
+
         // Solo eliminar users, las tablas del sistema se mantienen
         Schema::dropIfExists('users');
 

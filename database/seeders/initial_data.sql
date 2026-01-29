@@ -93,18 +93,18 @@ INSERT INTO permissions (id, name, display_name, resource, action, description, 
 -- Password por defecto: "password" (hash argon2id: $argon2id$v=19$m=65536,t=5,p=3$Ym1WVWgvc2JMbS54VWxMcg$trHOeKRjtuZCBISms5F7qXge/8MfHrwP5w90Pih0ud8)
 
 INSERT INTO users (id, name, email, email_verified_at, password, identity_document, remember_token, created_at, updated_at) VALUES
-('a0000000-0000-0000-0000-000000000001', 'Admin User', 'admin@apygg.com', NOW(), '$argon2id$v=19$m=65536,t=5,p=3$Ym1WVWgvc2JMbS54VWxMcg$trHOeKRjtuZCBISms5F7qXge/8MfHrwP5w90Pih0ud8', '12345678', NULL, NOW(), NOW()),
-('a0000000-0000-0000-0000-000000000002', 'Manager User', 'manager@apygg.com', NOW(), '$argon2id$v=19$m=65536,t=5,p=3$Ym1WVWgvc2JMbS54VWxMcg$trHOeKRjtuZCBISms5F7qXge/8MfHrwP5w90Pih0ud8', '23456789', NULL, NOW(), NOW()),
-('a0000000-0000-0000-0000-000000000003', 'John Doe', 'john.doe@example.com', NOW(), '$argon2id$v=19$m=65536,t=5,p=3$Ym1WVWgvc2JMbS54VWxMcg$trHOeKRjtuZCBISms5F7qXge/8MfHrwP5w90Pih0ud8', '34567890', NULL, NOW(), NOW()),
-('a0000000-0000-0000-0000-000000000004', 'Jane Smith', 'jane.smith@example.com', NOW(), '$argon2id$v=19$m=65536,t=5,p=3$Ym1WVWgvc2JMbS54VWxMcg$trHOeKRjtuZCBISms5F7qXge/8MfHrwP5w90Pih0ud8', '45678901', NULL, NOW(), NOW()),
-('a0000000-0000-0000-0000-000000000005', 'Bob Johnson', 'bob.johnson@example.com', NOW(), '$argon2id$v=19$m=65536,t=5,p=3$Ym1WVWgvc2JMbS54VWxMcg$trHOeKRjtuZCBISms5F7qXge/8MfHrwP5w90Pih0ud8', '56789012', NULL, NOW(), NOW()),
-('a0000000-0000-0000-0000-000000000006', 'Alice Williams', 'alice.williams@example.com', NOW(), '$argon2id$v=19$m=65536,t=5,p=3$Ym1WVWgvc2JMbS54VWxMcg$trHOeKRjtuZCBISms5F7qXge/8MfHrwP5w90Pih0ud8', '67890123', NULL, NOW(), NOW()),
-('a0000000-0000-0000-0000-000000000007', 'Charlie Brown', 'charlie.brown@example.com', NOW(), '$argon2id$v=19$m=65536,t=5,p=3$Ym1WVWgvc2JMbS54VWxMcg$trHOeKRjtuZCBISms5F7qXge/8MfHrwP5w90Pih0ud8', '78901234', NULL, NOW(), NOW()),
-('a0000000-0000-0000-0000-000000000008', 'Diana Prince', 'diana.prince@example.com', NOW(), '$argon2id$v=19$m=65536,t=5,p=3$Ym1WVWgvc2JMbS54VWxMcg$trHOeKRjtuZCBISms5F7qXge/8MfHrwP5w90Pih0ud8', '89012345', NULL, NOW(), NOW()),
-('a0000000-0000-0000-0000-000000000009', 'Moderator User', 'moderator@apygg.com', NOW(), '$argon2id$v=19$m=65536,t=5,p=3$Ym1WVWgvc2JMbS54VWxMcg$trHOeKRjtuZCBISms5F7qXge/8MfHrwP5w90Pih0ud8', '90123456', NULL, NOW(), NOW()),
-('a0000000-0000-0000-0000-000000000010', 'Editor User', 'editor@apygg.com', NOW(), '$argon2id$v=19$m=65536,t=5,p=3$Ym1WVWgvc2JMbS54VWxMcg$trHOeKRjtuZCBISms5F7qXge/8MfHrwP5w90Pih0ud8', '01234567', NULL, NOW(), NOW()),
-('a0000000-0000-0000-0000-000000000011', 'Guest User', 'guest@apygg.com', NULL, '$argon2id$v=19$m=65536,t=5,p=3$Ym1WVWgvc2JMbS54VWxMcg$trHOeKRjtuZCBISms5F7qXge/8MfHrwP5w90Pih0ud8', '11223344', NULL, NOW(), NOW()),
-('a0000000-0000-0000-0000-000000000012', 'Test User', 'test@apygg.com', NOW(), '$argon2id$v=19$m=65536,t=5,p=3$Ym1WVWgvc2JMbS54VWxMcg$trHOeKRjtuZCBISms5F7qXge/8MfHrwP5w90Pih0ud8', '22334455', NULL, NOW(), NOW());
+('a0000000-0000-0000-0000-000000000001', 'Admin User', 'admin@apygg.com', NOW(), '$argon2id$v=19$m=65536,t=5,p=3$Ym1WVWgvc2JMbS54VWxMcg$trHOeKRjtuZCBISms5F7qXge/8MfHrwP5w90Pih0ud8', '123456789', NULL, NOW(), NOW()),
+('a0000000-0000-0000-0000-000000000002', 'Manager User', 'manager@apygg.com', NOW(), '$argon2id$v=19$m=65536,t=5,p=3$Ym1WVWgvc2JMbS54VWxMcg$trHOeKRjtuZCBISms5F7qXge/8MfHrwP5w90Pih0ud8', '234567890', NULL, NOW(), NOW()),
+('a0000000-0000-0000-0000-000000000003', 'John Doe', 'john.doe@example.com', NOW(), '$argon2id$v=19$m=65536,t=5,p=3$Ym1WVWgvc2JMbS54VWxMcg$trHOeKRjtuZCBISms5F7qXge/8MfHrwP5w90Pih0ud8', '345678901', NULL, NOW(), NOW()),
+('a0000000-0000-0000-0000-000000000004', 'Jane Smith', 'jane.smith@example.com', NOW(), '$argon2id$v=19$m=65536,t=5,p=3$Ym1WVWgvc2JMbS54VWxMcg$trHOeKRjtuZCBISms5F7qXge/8MfHrwP5w90Pih0ud8', '456789012', NULL, NOW(), NOW()),
+('a0000000-0000-0000-0000-000000000005', 'Bob Johnson', 'bob.johnson@example.com', NOW(), '$argon2id$v=19$m=65536,t=5,p=3$Ym1WVWgvc2JMbS54VWxMcg$trHOeKRjtuZCBISms5F7qXge/8MfHrwP5w90Pih0ud8', '567890123', NULL, NOW(), NOW()),
+('a0000000-0000-0000-0000-000000000006', 'Alice Williams', 'alice.williams@example.com', NOW(), '$argon2id$v=19$m=65536,t=5,p=3$Ym1WVWgvc2JMbS54VWxMcg$trHOeKRjtuZCBISms5F7qXge/8MfHrwP5w90Pih0ud8', '678901234', NULL, NOW(), NOW()),
+('a0000000-0000-0000-0000-000000000007', 'Charlie Brown', 'charlie.brown@example.com', NOW(), '$argon2id$v=19$m=65536,t=5,p=3$Ym1WVWgvc2JMbS54VWxMcg$trHOeKRjtuZCBISms5F7qXge/8MfHrwP5w90Pih0ud8', '789012345', NULL, NOW(), NOW()),
+('a0000000-0000-0000-0000-000000000008', 'Diana Prince', 'diana.prince@example.com', NOW(), '$argon2id$v=19$m=65536,t=5,p=3$Ym1WVWgvc2JMbS54VWxMcg$trHOeKRjtuZCBISms5F7qXge/8MfHrwP5w90Pih0ud8', '890123456', NULL, NOW(), NOW()),
+('a0000000-0000-0000-0000-000000000009', 'Moderator User', 'moderator@apygg.com', NOW(), '$argon2id$v=19$m=65536,t=5,p=3$Ym1WVWgvc2JMbS54VWxMcg$trHOeKRjtuZCBISms5F7qXge/8MfHrwP5w90Pih0ud8', '901234567', NULL, NOW(), NOW()),
+('a0000000-0000-0000-0000-000000000010', 'Editor User', 'editor@apygg.com', NOW(), '$argon2id$v=19$m=65536,t=5,p=3$Ym1WVWgvc2JMbS54VWxMcg$trHOeKRjtuZCBISms5F7qXge/8MfHrwP5w90Pih0ud8', '012345678', NULL, NOW(), NOW()),
+('a0000000-0000-0000-0000-000000000011', 'Guest User', 'guest@apygg.com', NULL, '$argon2id$v=19$m=65536,t=5,p=3$Ym1WVWgvc2JMbS54VWxMcg$trHOeKRjtuZCBISms5F7qXge/8MfHrwP5w90Pih0ud8', '112233445', NULL, NOW(), NOW()),
+('a0000000-0000-0000-0000-000000000012', 'Test User', 'test@apygg.com', NOW(), '$argon2id$v=19$m=65536,t=5,p=3$Ym1WVWgvc2JMbS54VWxMcg$trHOeKRjtuZCBISms5F7qXge/8MfHrwP5w90Pih0ud8', '223344556', NULL, NOW(), NOW());
 
 -- ============================================
 -- RELACIONES USUARIO-ROL

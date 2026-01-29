@@ -43,7 +43,13 @@ class UpdateUserRequest extends BaseFormRequest
                 Rule::unique('users', 'email')->ignore($userId),
             ],
             'password' => ['sometimes', 'nullable', 'string', 'min:8', new StrongPassword],
-            'identity_document' => ['sometimes', 'nullable', 'string', 'max:50'],
+            'identity_document' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'regex:/^[0-9]{9,50}$/',
+                Rule::unique('users', 'identity_document')->ignore($userId),
+            ],
         ];
     }
 
@@ -62,7 +68,8 @@ class UpdateUserRequest extends BaseFormRequest
             'password.string' => 'La contraseña debe ser texto',
             'password.min' => 'La contraseña debe tener al menos 8 caracteres',
             'identity_document.string' => 'El documento de identidad debe ser texto',
-            'identity_document.max' => 'El documento de identidad no puede exceder 50 caracteres',
+            'identity_document.regex' => 'El documento de identidad debe tener al menos 9 dígitos y contener solo números',
+            'identity_document.unique' => 'Este documento de identidad ya está registrado',
         ];
     }
 
