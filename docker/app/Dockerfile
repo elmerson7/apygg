@@ -51,6 +51,26 @@ COPY docker/app/entrypoint.sh /app/docker/app/entrypoint.sh
 COPY docker/app/entrypoint-wrapper.sh /app/docker/app/entrypoint-wrapper.sh
 RUN chmod +x /app/docker/app/entrypoint.sh /app/docker/app/entrypoint-wrapper.sh
 
+# Copiar código del proyecto (para CI/producción)
+# En desarrollo, esto se sobrescribe con el volumen montado
+COPY composer.json composer.lock ./
+
+# Instalar dependencias (incluyendo dev para CI, se puede sobrescribir con build arg)
+ARG INSTALL_DEV_DEPS=true
+RUN if [ "$INSTALL_DEV_DEPS" = "true" ]; then \
+        composer install --no-interaction --prefer-dist --no-scripts --no-autoloader; \
+    else \
+        composer install --no-interaction --prefer-dist --no-dev --no-scripts --no-autoloader; \
+    fi || true
+
+COPY . .
+
+# Completar instalación de Composer si hay autoloader
+RUN if [ -f composer.json ]; then composer dump-autoload --no-interaction --optimize || true; fi
+
+# Ajustar permisos del código copiado
+RUN chown -R appuser:appuser /app || true
+
 # Ejecutar como root para poder ajustar permisos, luego cambiar a appuser
 USER root
 
