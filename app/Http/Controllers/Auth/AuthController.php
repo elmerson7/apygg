@@ -9,6 +9,7 @@ use App\Http\Resources\Auth\AuthResource;
 use App\Models\User;
 use App\Services\AuthService;
 use App\Services\LogService;
+use Dedoc\Scramble\Attributes\BodyParameter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -26,6 +27,8 @@ class AuthController
     /**
      * Login de usuario
      */
+    #[BodyParameter('email', 'Email del usuario', required: true, example: 'admin@apygg.com')]
+    #[BodyParameter('password', 'Contraseña del usuario (mínimo 8 caracteres)', required: true, example: 'password')]
     public function login(LoginRequest $request): JsonResponse
     {
         $credentials = $request->only(['email', 'password']);
