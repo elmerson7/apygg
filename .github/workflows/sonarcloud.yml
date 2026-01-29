@@ -14,10 +14,12 @@
 #    - Add your repository as a new project
 # 3. Get your Project Key and Organization Key from SonarCloud
 #    - Click on "Information" at the bottom left
-#    - Copy/paste into the args parameter below
-# 4. Generate a token and add it to GitHub Secrets
-#    - SonarCloud > My account > Security
-#    - Add as SONAR_TOKEN secret in GitHub
+#    - Copy the Project Key and Organization Key
+# 4. Add secrets to GitHub Repository:
+#    - Go to Settings > Secrets and variables > Actions
+#    - Add SONAR_TOKEN: Generate token in SonarCloud > My account > Security
+#    - Add SONAR_PROJECT_KEY: Your project key from SonarCloud
+#    - Add SONAR_ORGANIZATION_KEY: Your organization key from SonarCloud
 
 name: SonarCloud Analysis
 
@@ -82,8 +84,8 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.projectKey=YOUR_PROJECT_KEY
-            -Dsonar.organization=YOUR_ORGANIZATION_KEY
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION_KEY }}
             -Dsonar.php.version=8.5
             -Dsonar.sources=app,config,routes
             -Dsonar.tests=tests
