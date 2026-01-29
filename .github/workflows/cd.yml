@@ -66,7 +66,7 @@ jobs:
           elif [ "${{ github.ref }}" == "refs/heads/staging" ]; then
             echo "strategy=cpanel" >> $GITHUB_OUTPUT
           elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            echo "strategy=railway" >> $GITHUB_OUTPUT
+            echo "strategy=cpanel" >> $GITHUB_OUTPUT
           else
             echo "strategy=blue-green" >> $GITHUB_OUTPUT
           fi
@@ -305,15 +305,19 @@ jobs:
         env:
           CPANEL_HOST: ${{ secrets.CPANEL_HOST }}
           CPANEL_USER: ${{ secrets.CPANEL_USER }}
+          CPANEL_PORT: ${{ secrets.CPANEL_PORT || '22' }}
           CPANEL_PATH: ${{ secrets.CPANEL_PATH || 'public_html/staging' }}
         run: |
           echo "🚀 Desplegando a cPanel (Staging)..."
           
           # Conectar por SSH y ejecutar comandos de despliegue
-          ssh -o StrictHostKeyChecking=no ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }} << 'EOF'
-            cd ${{ secrets.CPANEL_PATH || 'public_html/staging' }}
+          ssh -p ${CPANEL_PORT:-22} -o StrictHostKeyChecking=no ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }} << EOF
+            cd ${CPANEL_PATH:-public_html/staging}
             echo "📦 Actualizando código desde Git..."
-            git pull origin main || git pull origin staging
+            CURRENT_BRANCH=\$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "staging")
+            echo "📍 Rama actual en servidor: \$CURRENT_BRANCH"
+            git fetch origin
+            git pull origin \${CURRENT_BRANCH} || git pull origin staging || git pull origin main
             
             echo "📦 Instalando dependencias..."
             composer install --no-interaction --prefer-dist --no-dev --optimize-autoloader
