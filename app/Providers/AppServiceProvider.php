@@ -138,6 +138,17 @@ class AppServiceProvider extends ServiceProvider
             return new Logger('security', [$handler]);
         });
 
+        // Canal auth
+        Log::extend('auth', function ($app, $config) {
+            $level = Logger::toMonologLevel($config['level'] ?? 'debug');
+            $handler = DateOrganizedStreamHandler::create([
+                'filename' => 'auth.log',
+                'level' => $level,
+            ]);
+
+            return new Logger('auth', [$handler]);
+        });
+
         // Canal single (laravel.log) también organizado por fecha
         Log::extend('single', function ($app, $config) {
             $level = Logger::toMonologLevel($config['level'] ?? 'debug');

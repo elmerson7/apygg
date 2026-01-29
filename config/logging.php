@@ -152,6 +152,12 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'auth' => [
+            'driver' => 'auth',
+            'level' => env('LOG_LEVEL', 'debug'),
+            'replace_placeholders' => true,
+        ],
+
     ],
 
 ];
