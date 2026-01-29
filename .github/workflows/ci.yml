@@ -200,6 +200,7 @@ jobs:
           context: .
           file: ./docker/app/Dockerfile
           push: false
+          load: true
           tags: apygg:ci-test
           cache-from: type=gha
           cache-to: type=gha,mode=max
