@@ -225,7 +225,7 @@ class UserService
         }
 
         // Obtener roles anteriores para comparar
-        $previousRoleIds = $user->roles()->pluck('id')->toArray();
+        $previousRoleIds = $user->roles()->select('roles.id')->pluck('id')->toArray();
 
         // Sincronizar roles (reemplaza todos los roles existentes)
         $user->roles()->sync($roleIds);
@@ -296,7 +296,7 @@ class UserService
         $user = $this->find($userId);
 
         // Obtener permisos anteriores para comparar
-        $previousPermissionIds = $user->permissions()->pluck('id')->toArray();
+        $previousPermissionIds = $user->permissions()->select('permissions.id')->pluck('id')->toArray();
 
         $user->permissions()->sync($permissionIds);
 

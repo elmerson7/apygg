@@ -92,7 +92,7 @@ jobs:
       CACHE_STORE: redis
       SESSION_DRIVER: redis
       QUEUE_CONNECTION: redis
-      JWT_SECRET: test-jwt-secret-for-ci-only
+      JWT_SECRET: test-jwt-secret-for-ci-pipeline-only-must-be-at-least-32-characters-long-for-256-bits-minimum-requirement
       BROADCAST_CONNECTION: log
 
     steps:
