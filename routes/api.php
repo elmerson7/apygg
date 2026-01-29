@@ -24,9 +24,6 @@ Route::get('/', function () {
         'name' => 'APYGG API',
         'status' => 'running',
         'version' => config('app.version', '1.0.0'),
-        'environment' => config('app.env', 'production'),
-        'timestamp' => now()->toIso8601String(),
-        'deployed_at' => env('APP_DEPLOYED_AT', now()->toIso8601String()),
         'endpoints' => [
             'health' => '/health',
             'health_live' => '/health/live',

@@ -78,7 +78,31 @@ jobs:
         run: |
           ./vendor/bin/pest --coverage --coverage-xml=coverage.xml || true
 
+      - name: Check SonarCloud configuration
+        id: check-sonar
+        run: |
+          if [ -z "${{ secrets.SONAR_TOKEN }}" ] || \
+             [ -z "${{ secrets.SONAR_PROJECT_KEY }}" ] || \
+             [ -z "${{ secrets.SONAR_ORGANIZATION_KEY }}" ]; then
+            echo "⚠️ SonarCloud no está configurado. Saltando análisis."
+            echo "configured=false" >> $GITHUB_OUTPUT
+            echo ""
+            echo "Para configurar SonarCloud:"
+            echo "1. Ve a https://sonarcloud.io/ e inicia sesión con GitHub"
+            echo "2. Importa tu proyecto en SonarCloud"
+            echo "3. Obtén Project Key y Organization Key desde la página de información del proyecto"
+            echo "4. Genera un token en: https://sonarcloud.io/account/security/"
+            echo "5. Agrega estos secrets en GitHub:"
+            echo "   - SONAR_TOKEN"
+            echo "   - SONAR_PROJECT_KEY"
+            echo "   - SONAR_ORGANIZATION_KEY"
+          else
+            echo "✅ SonarCloud está configurado correctamente"
+            echo "configured=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Analyze with SonarCloud
+        if: steps.check-sonar.outputs.configured == 'true'
         uses: SonarSource/sonarcloud-github-action@4006f663ecaf1f8093e8e4abb9227f6041f52216
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
