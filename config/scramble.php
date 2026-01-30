@@ -90,7 +90,7 @@ return [
      * ```
      */
     'servers' => [
-        'Local' => '',
+        'Local' => env('APP_URL', 'http://localhost:8010'),
     ],
 
     /**
