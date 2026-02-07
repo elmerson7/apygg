@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - APYGG API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 2rem;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        .nav {
+            margin-bottom: 2rem;
+        }
+        .nav a {
+            color: #667eea;
+            text-decoration: none;
+            margin-right: 1rem;
+        }
+        .nav a:hover {
+            text-decoration: underline;
+        }
+        .section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .section h2 {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-right: 0.5rem;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .message {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+        }
+        .message.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .message.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .table-container {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .response {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .response pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 0.5rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="index.html">← Volver al índice</a>
+        </div>
+        
+        <h1>⚙️ Settings</h1>
+
+        <!-- List Settings -->
+        <div class="section">
+            <h2>Listar Settings</h2>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label for="filterGroup">Grupo:</label>
+                    <input type="text" id="filterGroup" placeholder="Filtrar por grupo">
+                </div>
+                <div class="form-group">
+                    <label for="filterIsPublic">Público:</label>
+                    <select id="filterIsPublic">
+                        <option value="">Todos</option>
+                        <option value="1">Sí</option>
+                        <option value="0">No</option>
+                    </select>
+                </div>
+            </div>
+            <button onclick="listSettings()">Listar Settings</button>
+            <div id="listMessage"></div>
+            <div id="listTable" class="table-container" style="display: none;"></div>
+            <div id="listResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Show Setting -->
+        <div class="section">
+            <h2>Ver Setting</h2>
+            <div class="form-group">
+                <label for="showSettingId">ID del Setting:</label>
+                <input type="text" id="showSettingId" placeholder="UUID del setting">
+            </div>
+            <button onclick="showSetting()">Ver Setting</button>
+            <div id="showMessage"></div>
+            <div id="showResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Get By Key -->
+        <div class="section">
+            <h2>Obtener por Key</h2>
+            <div class="form-group">
+                <label for="getByKeyKey">Key:</label>
+                <input type="text" id="getByKeyKey" placeholder="nombre_del_setting">
+            </div>
+            <button onclick="getByKey()">Obtener por Key</button>
+            <div id="getByKeyMessage"></div>
+            <div id="getByKeyResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Create Setting -->
+        <div class="section">
+            <h2>Crear Setting</h2>
+            <form id="createForm">
+                <div class="form-group">
+                    <label for="createKey">Key:</label>
+                    <input type="text" id="createKey" required placeholder="nombre_del_setting">
+                </div>
+                <div class="form-group">
+                    <label for="createValue">Value:</label>
+                    <textarea id="createValue" rows="3" required placeholder="Valor del setting"></textarea>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="createType">Tipo:</label>
+                        <select id="createType">
+                            <option value="string">String</option>
+                            <option value="integer">Integer</option>
+                            <option value="boolean">Boolean</option>
+                            <option value="array">Array</option>
+                            <option value="object">Object</option>
+                            <option value="json">JSON</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="createGroup">Grupo:</label>
+                        <input type="text" id="createGroup" placeholder="general">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="createDescription">Descripción:</label>
+                    <textarea id="createDescription" rows="2" placeholder="Descripción del setting"></textarea>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="createIsPublic">
+                            <label for="createIsPublic">Público</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="createIsEncrypted">
+                            <label for="createIsEncrypted">Encriptado</label>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit">Crear Setting</button>
+            </form>
+            <div id="createMessage"></div>
+            <div id="createResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Update Setting -->
+        <div class="section">
+            <h2>Actualizar Setting</h2>
+            <form id="updateForm">
+                <div class="form-group">
+                    <label for="updateSettingId">ID del Setting:</label>
+                    <input type="text" id="updateSettingId" required placeholder="UUID del setting">
+                </div>
+                <div class="form-group">
+                    <label for="updateValue">Value:</label>
+                    <textarea id="updateValue" rows="3" placeholder="Nuevo valor"></textarea>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="updateType">Tipo:</label>
+                        <select id="updateType">
+                            <option value="">Sin cambiar</option>
+                            <option value="string">String</option>
+                            <option value="integer">Integer</option>
+                            <option value="boolean">Boolean</option>
+                            <option value="array">Array</option>
+                            <option value="object">Object</option>
+                            <option value="json">JSON</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="updateGroup">Grupo:</label>
+                        <input type="text" id="updateGroup">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="updateDescription">Descripción:</label>
+                    <textarea id="updateDescription" rows="2"></textarea>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="updateIsPublic">
+                            <label for="updateIsPublic">Público</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="updateIsEncrypted">
+                            <label for="updateIsEncrypted">Encriptado</label>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit">Actualizar Setting</button>
+            </form>
+            <div id="updateMessage"></div>
+            <div id="updateResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Delete Setting -->
+        <div class="section">
+            <h2>Eliminar Setting</h2>
+            <div class="form-group">
+                <label for="deleteSettingId">ID del Setting:</label>
+                <input type="text" id="deleteSettingId" placeholder="UUID del setting">
+            </div>
+            <button onclick="deleteSetting()" class="btn-danger">Eliminar Setting</button>
+            <div id="deleteMessage"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.location.origin;
+        const TOKEN_KEY = 'apygg_jwt_token';
+
+        function getToken() {
+            return localStorage.getItem(TOKEN_KEY);
+        }
+
+        function getHeaders() {
+            const token = getToken();
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            return headers;
+        }
+
+        async function apiCall(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    headers: {
+                        ...getHeaders(),
+                        ...options.headers,
+                    },
+                });
+                return await response.json();
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        function showMessage(div, message, type) {
+            div.className = `message ${type}`;
+            div.textContent = message;
+            div.style.display = 'block';
+        }
+
+        // List Settings
+        async function listSettings() {
+            const messageDiv = document.getElementById('listMessage');
+            const responseDiv = document.getElementById('listResponse');
+            const tableDiv = document.getElementById('listTable');
+            const group = document.getElementById('filterGroup').value;
+            const isPublic = document.getElementById('filterIsPublic').value;
+
+            try {
+                let url = `${API_URL}/settings?`;
+                const params = [];
+                if (group) params.push(`group=${encodeURIComponent(group)}`);
+                if (isPublic !== '') params.push(`is_public=${isPublic}`);
+                url += params.join('&');
+
+                const data = await apiCall(url, { method: 'GET' });
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success && data.data) {
+                    const settings = Array.isArray(data.data) ? data.data : (data.data.data || []);
+                    if (settings.length > 0) {
+                        let table = '<table><thead><tr><th>ID</th><th>Key</th><th>Value</th><th>Tipo</th><th>Grupo</th></tr></thead><tbody>';
+                        settings.forEach(setting => {
+                            const value = setting.value ? (typeof setting.value === 'string' ? setting.value.substring(0, 50) : JSON.stringify(setting.value).substring(0, 50)) : '-';
+                            table += `<tr><td>${setting.id}</td><td>${setting.key}</td><td>${value}${value.length >= 50 ? '...' : ''}</td><td>${setting.type || '-'}</td><td>${setting.group || '-'}</td></tr>`;
+                        });
+                        table += '</tbody></table>';
+                        tableDiv.innerHTML = table;
+                        tableDiv.style.display = 'block';
+                        showMessage(messageDiv, `Se encontraron ${settings.length} setting(s)`, 'success');
+                    } else {
+                        showMessage(messageDiv, 'No se encontraron settings', 'info');
+                    }
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al listar settings', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Show Setting
+        async function showSetting() {
+            const settingId = document.getElementById('showSettingId').value;
+            const messageDiv = document.getElementById('showMessage');
+            const responseDiv = document.getElementById('showResponse');
+
+            if (!settingId) {
+                showMessage(messageDiv, 'Ingresa un ID de setting', 'error');
+                return;
+            }
+
+            try {
+                const data = await apiCall(`${API_URL}/settings/${settingId}`, { method: 'GET' });
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success) {
+                    showMessage(messageDiv, 'Setting obtenido exitosamente', 'success');
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al obtener setting', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Get By Key
+        async function getByKey() {
+            const key = document.getElementById('getByKeyKey').value;
+            const messageDiv = document.getElementById('getByKeyMessage');
+            const responseDiv = document.getElementById('getByKeyResponse');
+
+            if (!key) {
+                showMessage(messageDiv, 'Ingresa una key', 'error');
+                return;
+            }
+
+            try {
+                const data = await apiCall(`${API_URL}/settings/key/${encodeURIComponent(key)}`, { method: 'GET' });
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success) {
+                    showMessage(messageDiv, 'Setting obtenido exitosamente', 'success');
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al obtener setting', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Create Setting
+        document.getElementById('createForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const messageDiv = document.getElementById('createMessage');
+            const responseDiv = document.getElementById('createResponse');
+            const btn = e.target.querySelector('button[type="submit"]');
+
+            const formData = {
+                key: document.getElementById('createKey').value,
+                value: document.getElementById('createValue').value,
+                type: document.getElementById('createType').value,
+            };
+
+            const group = document.getElementById('createGroup').value;
+            if (group) formData.group = group;
+
+            const description = document.getElementById('createDescription').value;
+            if (description) formData.description = description;
+
+            formData.is_public = document.getElementById('createIsPublic').checked;
+            formData.is_encrypted = document.getElementById('createIsEncrypted').checked;
+
+            btn.disabled = true;
+            btn.innerHTML = 'Creando...<span class="loading"></span>';
+
+            try {
+                const data = await apiCall(`${API_URL}/settings`, {
+                    method: 'POST',
+                    body: JSON.stringify(formData),
+                });
+
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success) {
+                    showMessage(messageDiv, 'Setting creado exitosamente', 'success');
+                    e.target.reset();
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al crear setting', 'error');
+                    if (data.errors) {
+                        const errors = Object.values(data.errors).flat().join(', ');
+                        showMessage(messageDiv, `Errores: ${errors}`, 'error');
+                    }
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Crear Setting';
+            }
+        });
+
+        // Update Setting
+        document.getElementById('updateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const settingId = document.getElementById('updateSettingId').value;
+            const messageDiv = document.getElementById('updateMessage');
+            const responseDiv = document.getElementById('updateResponse');
+            const btn = e.target.querySelector('button[type="submit"]');
+
+            if (!settingId) {
+                showMessage(messageDiv, 'Ingresa un ID de setting', 'error');
+                return;
+            }
+
+            const formData = {};
+            const value = document.getElementById('updateValue').value;
+            if (value) formData.value = value;
+
+            const type = document.getElementById('updateType').value;
+            if (type) formData.type = type;
+
+            const group = document.getElementById('updateGroup').value;
+            if (group) formData.group = group;
+
+            const description = document.getElementById('updateDescription').value;
+            if (description) formData.description = description;
+
+            // Solo enviar si el checkbox fue modificado (esto es una simplificación)
+            // En una app real, necesitarías trackear el estado inicial
+            const isPublicCheckbox = document.getElementById('updateIsPublic');
+            if (isPublicCheckbox.checked || !isPublicCheckbox.checked) {
+                formData.is_public = isPublicCheckbox.checked;
+            }
+
+            const isEncryptedCheckbox = document.getElementById('updateIsEncrypted');
+            if (isEncryptedCheckbox.checked || !isEncryptedCheckbox.checked) {
+                formData.is_encrypted = isEncryptedCheckbox.checked;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = 'Actualizando...<span class="loading"></span>';
+
+            try {
+                const data = await apiCall(`${API_URL}/settings/${settingId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(formData),
+                });
+
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success) {
+                    showMessage(messageDiv, 'Setting actualizado exitosamente', 'success');
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al actualizar setting', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Actualizar Setting';
+            }
+        });
+
+        // Delete Setting
+        async function deleteSetting() {
+            const settingId = document.getElementById('deleteSettingId').value;
+            const messageDiv = document.getElementById('deleteMessage');
+
+            if (!settingId) {
+                showMessage(messageDiv, 'Ingresa un ID de setting', 'error');
+                return;
+            }
+
+            if (!confirm(`¿Estás seguro de eliminar el setting ${settingId}?`)) {
+                return;
+            }
+
+            try {
+                const data = await apiCall(`${API_URL}/settings/${settingId}`, { method: 'DELETE' });
+                if (data.success) {
+                    showMessage(messageDiv, 'Setting eliminado exitosamente', 'success');
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al eliminar setting', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

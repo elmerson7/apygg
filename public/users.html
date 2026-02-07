@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usuarios - APYGG API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 2rem;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        .nav {
+            margin-bottom: 2rem;
+        }
+        .nav a {
+            color: #667eea;
+            text-decoration: none;
+            margin-right: 1rem;
+        }
+        .nav a:hover {
+            text-decoration: underline;
+        }
+        .section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .section h2 {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-right: 0.5rem;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+        .message {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+        }
+        .message.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .message.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .table-container {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .response {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .response pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 0.5rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="index.html">← Volver al índice</a>
+        </div>
+        
+        <h1>👥 Usuarios</h1>
+
+        <!-- List Users -->
+        <div class="section">
+            <h2>Listar Usuarios</h2>
+            <div class="form-group">
+                <label for="searchUsers">Buscar:</label>
+                <input type="text" id="searchUsers" placeholder="Buscar por nombre o email">
+            </div>
+            <button onclick="listUsers()">Listar Usuarios</button>
+            <div id="listMessage"></div>
+            <div id="listTable" class="table-container" style="display: none;"></div>
+            <div id="listResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Show User -->
+        <div class="section">
+            <h2>Ver Usuario</h2>
+            <div class="form-group">
+                <label for="showUserId">ID del Usuario:</label>
+                <input type="text" id="showUserId" placeholder="UUID del usuario">
+            </div>
+            <button onclick="showUser()">Ver Usuario</button>
+            <div id="showMessage"></div>
+            <div id="showResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Create User -->
+        <div class="section">
+            <h2>Crear Usuario</h2>
+            <form id="createForm">
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="createName">Nombre:</label>
+                        <input type="text" id="createName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="createEmail">Email:</label>
+                        <input type="email" id="createEmail" required>
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="createPassword">Contraseña:</label>
+                        <input type="password" id="createPassword" required minlength="8">
+                    </div>
+                    <div class="form-group">
+                        <label for="createTimezone">Timezone:</label>
+                        <input type="text" id="createTimezone" placeholder="UTC">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="createIdentityDocument">Documento de Identidad:</label>
+                    <input type="text" id="createIdentityDocument">
+                </div>
+                <div class="form-group">
+                    <label for="createRoleIds">Role IDs (separados por comas):</label>
+                    <input type="text" id="createRoleIds" placeholder="uuid1, uuid2">
+                </div>
+                <button type="submit">Crear Usuario</button>
+            </form>
+            <div id="createMessage"></div>
+            <div id="createResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Update User -->
+        <div class="section">
+            <h2>Actualizar Usuario</h2>
+            <form id="updateForm">
+                <div class="form-group">
+                    <label for="updateUserId">ID del Usuario:</label>
+                    <input type="text" id="updateUserId" required placeholder="UUID del usuario">
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="updateName">Nombre:</label>
+                        <input type="text" id="updateName">
+                    </div>
+                    <div class="form-group">
+                        <label for="updateEmail">Email:</label>
+                        <input type="email" id="updateEmail">
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="updatePassword">Nueva Contraseña (opcional):</label>
+                        <input type="password" id="updatePassword" minlength="8">
+                    </div>
+                    <div class="form-group">
+                        <label for="updateTimezone">Timezone:</label>
+                        <input type="text" id="updateTimezone">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="updateIdentityDocument">Documento de Identidad:</label>
+                    <input type="text" id="updateIdentityDocument">
+                </div>
+                <button type="submit">Actualizar Usuario</button>
+            </form>
+            <div id="updateMessage"></div>
+            <div id="updateResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Delete User -->
+        <div class="section">
+            <h2>Eliminar Usuario</h2>
+            <div class="form-group">
+                <label for="deleteUserId">ID del Usuario:</label>
+                <input type="text" id="deleteUserId" placeholder="UUID del usuario">
+            </div>
+            <button onclick="deleteUser()" class="btn-danger">Eliminar Usuario</button>
+            <div id="deleteMessage"></div>
+        </div>
+
+        <!-- Restore User -->
+        <div class="section">
+            <h2>Restaurar Usuario</h2>
+            <div class="form-group">
+                <label for="restoreUserId">ID del Usuario:</label>
+                <input type="text" id="restoreUserId" placeholder="UUID del usuario eliminado">
+            </div>
+            <button onclick="restoreUser()" class="btn-success">Restaurar Usuario</button>
+            <div id="restoreMessage"></div>
+        </div>
+
+        <!-- Assign Roles -->
+        <div class="section">
+            <h2>Asignar Roles</h2>
+            <form id="assignRolesForm">
+                <div class="form-group">
+                    <label for="assignRolesUserId">ID del Usuario:</label>
+                    <input type="text" id="assignRolesUserId" required placeholder="UUID del usuario">
+                </div>
+                <div class="form-group">
+                    <label for="assignRolesRoleIds">Role IDs (separados por comas):</label>
+                    <input type="text" id="assignRolesRoleIds" required placeholder="uuid1, uuid2">
+                </div>
+                <button type="submit">Asignar Roles</button>
+            </form>
+            <div id="assignRolesMessage"></div>
+            <div id="assignRolesResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Remove Role -->
+        <div class="section">
+            <h2>Remover Rol</h2>
+            <div class="form-group">
+                <label for="removeRoleUserId">ID del Usuario:</label>
+                <input type="text" id="removeRoleUserId" placeholder="UUID del usuario">
+            </div>
+            <div class="form-group">
+                <label for="removeRoleRoleId">ID del Rol:</label>
+                <input type="text" id="removeRoleRoleId" placeholder="UUID del rol">
+            </div>
+            <button onclick="removeRole()" class="btn-danger">Remover Rol</button>
+            <div id="removeRoleMessage"></div>
+        </div>
+
+        <!-- Get Activity -->
+        <div class="section">
+            <h2>Actividad del Usuario</h2>
+            <div class="form-group">
+                <label for="activityUserId">ID del Usuario:</label>
+                <input type="text" id="activityUserId" placeholder="UUID del usuario">
+            </div>
+            <button onclick="getActivity()">Obtener Actividad</button>
+            <div id="activityMessage"></div>
+            <div id="activityResponse" class="response" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.location.origin;
+        const TOKEN_KEY = 'apygg_jwt_token';
+
+        function getToken() {
+            return localStorage.getItem(TOKEN_KEY);
+        }
+
+        function getHeaders() {
+            const token = getToken();
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            return headers;
+        }
+
+        async function apiCall(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    headers: {
+                        ...getHeaders(),
+                        ...options.headers,
+                    },
+                });
+                return await response.json();
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        function showMessage(div, message, type) {
+            div.className = `message ${type}`;
+            div.textContent = message;
+            div.style.display = 'block';
+        }
+
+        // List Users
+        async function listUsers() {
+            const messageDiv = document.getElementById('listMessage');
+            const responseDiv = document.getElementById('listResponse');
+            const tableDiv = document.getElementById('listTable');
+            const search = document.getElementById('searchUsers').value;
+
+            try {
+                let url = `${API_URL}/users`;
+                if (search) {
+                    url += `?search=${encodeURIComponent(search)}`;
+                }
+
+                const data = await apiCall(url, { method: 'GET' });
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success && data.data) {
+                    const users = Array.isArray(data.data) ? data.data : (data.data.data || []);
+                    if (users.length > 0) {
+                        let table = '<table><thead><tr><th>ID</th><th>Nombre</th><th>Email</th><th>Creado</th></tr></thead><tbody>';
+                        users.forEach(user => {
+                            table += `<tr><td>${user.id}</td><td>${user.name}</td><td>${user.email}</td><td>${user.created_at || ''}</td></tr>`;
+                        });
+                        table += '</tbody></table>';
+                        tableDiv.innerHTML = table;
+                        tableDiv.style.display = 'block';
+                        showMessage(messageDiv, `Se encontraron ${users.length} usuario(s)`, 'success');
+                    } else {
+                        showMessage(messageDiv, 'No se encontraron usuarios', 'info');
+                    }
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al listar usuarios', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Show User
+        async function showUser() {
+            const userId = document.getElementById('showUserId').value;
+            const messageDiv = document.getElementById('showMessage');
+            const responseDiv = document.getElementById('showResponse');
+
+            if (!userId) {
+                showMessage(messageDiv, 'Ingresa un ID de usuario', 'error');
+                return;
+            }
+
+            try {
+                const data = await apiCall(`${API_URL}/users/${userId}`, { method: 'GET' });
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success) {
+                    showMessage(messageDiv, 'Usuario obtenido exitosamente', 'success');
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al obtener usuario', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Create User
+        document.getElementById('createForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const messageDiv = document.getElementById('createMessage');
+            const responseDiv = document.getElementById('createResponse');
+            const btn = e.target.querySelector('button[type="submit"]');
+
+            const formData = {
+                name: document.getElementById('createName').value,
+                email: document.getElementById('createEmail').value,
+                password: document.getElementById('createPassword').value,
+            };
+
+            const timezone = document.getElementById('createTimezone').value;
+            if (timezone) formData.timezone = timezone;
+
+            const identityDocument = document.getElementById('createIdentityDocument').value;
+            if (identityDocument) formData.identity_document = identityDocument;
+
+            const roleIds = document.getElementById('createRoleIds').value;
+            if (roleIds) {
+                formData.role_ids = roleIds.split(',').map(id => id.trim()).filter(id => id);
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = 'Creando...<span class="loading"></span>';
+
+            try {
+                const data = await apiCall(`${API_URL}/users`, {
+                    method: 'POST',
+                    body: JSON.stringify(formData),
+                });
+
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success) {
+                    showMessage(messageDiv, 'Usuario creado exitosamente', 'success');
+                    e.target.reset();
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al crear usuario', 'error');
+                    if (data.errors) {
+                        const errors = Object.values(data.errors).flat().join(', ');
+                        showMessage(messageDiv, `Errores: ${errors}`, 'error');
+                    }
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Crear Usuario';
+            }
+        });
+
+        // Update User
+        document.getElementById('updateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userId = document.getElementById('updateUserId').value;
+            const messageDiv = document.getElementById('updateMessage');
+            const responseDiv = document.getElementById('updateResponse');
+            const btn = e.target.querySelector('button[type="submit"]');
+
+            if (!userId) {
+                showMessage(messageDiv, 'Ingresa un ID de usuario', 'error');
+                return;
+            }
+
+            const formData = {};
+            const name = document.getElementById('updateName').value;
+            if (name) formData.name = name;
+
+            const email = document.getElementById('updateEmail').value;
+            if (email) formData.email = email;
+
+            const password = document.getElementById('updatePassword').value;
+            if (password) formData.password = password;
+
+            const timezone = document.getElementById('updateTimezone').value;
+            if (timezone) formData.timezone = timezone;
+
+            const identityDocument = document.getElementById('updateIdentityDocument').value;
+            if (identityDocument) formData.identity_document = identityDocument;
+
+            btn.disabled = true;
+            btn.innerHTML = 'Actualizando...<span class="loading"></span>';
+
+            try {
+                const data = await apiCall(`${API_URL}/users/${userId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(formData),
+                });
+
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success) {
+                    showMessage(messageDiv, 'Usuario actualizado exitosamente', 'success');
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al actualizar usuario', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Actualizar Usuario';
+            }
+        });
+
+        // Delete User
+        async function deleteUser() {
+            const userId = document.getElementById('deleteUserId').value;
+            const messageDiv = document.getElementById('deleteMessage');
+
+            if (!userId) {
+                showMessage(messageDiv, 'Ingresa un ID de usuario', 'error');
+                return;
+            }
+
+            if (!confirm(`¿Estás seguro de eliminar el usuario ${userId}?`)) {
+                return;
+            }
+
+            try {
+                const data = await apiCall(`${API_URL}/users/${userId}`, { method: 'DELETE' });
+                if (data.success) {
+                    showMessage(messageDiv, 'Usuario eliminado exitosamente', 'success');
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al eliminar usuario', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Restore User
+        async function restoreUser() {
+            const userId = document.getElementById('restoreUserId').value;
+            const messageDiv = document.getElementById('restoreMessage');
+
+            if (!userId) {
+                showMessage(messageDiv, 'Ingresa un ID de usuario', 'error');
+                return;
+            }
+
+            try {
+                const data = await apiCall(`${API_URL}/users/${userId}/restore`, { method: 'POST' });
+                if (data.success) {
+                    showMessage(messageDiv, 'Usuario restaurado exitosamente', 'success');
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al restaurar usuario', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Assign Roles
+        document.getElementById('assignRolesForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userId = document.getElementById('assignRolesUserId').value;
+            const roleIdsStr = document.getElementById('assignRolesRoleIds').value;
+            const messageDiv = document.getElementById('assignRolesMessage');
+            const responseDiv = document.getElementById('assignRolesResponse');
+            const btn = e.target.querySelector('button[type="submit"]');
+
+            if (!userId || !roleIdsStr) {
+                showMessage(messageDiv, 'Completa todos los campos', 'error');
+                return;
+            }
+
+            const roleIds = roleIdsStr.split(',').map(id => id.trim()).filter(id => id);
+
+            btn.disabled = true;
+            btn.innerHTML = 'Asignando...<span class="loading"></span>';
+
+            try {
+                const data = await apiCall(`${API_URL}/users/${userId}/roles`, {
+                    method: 'POST',
+                    body: JSON.stringify({ role_ids: roleIds }),
+                });
+
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success) {
+                    showMessage(messageDiv, 'Roles asignados exitosamente', 'success');
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al asignar roles', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Asignar Roles';
+            }
+        });
+
+        // Remove Role
+        async function removeRole() {
+            const userId = document.getElementById('removeRoleUserId').value;
+            const roleId = document.getElementById('removeRoleRoleId').value;
+            const messageDiv = document.getElementById('removeRoleMessage');
+
+            if (!userId || !roleId) {
+                showMessage(messageDiv, 'Completa todos los campos', 'error');
+                return;
+            }
+
+            try {
+                const data = await apiCall(`${API_URL}/users/${userId}/roles/${roleId}`, { method: 'DELETE' });
+                if (data.success) {
+                    showMessage(messageDiv, 'Rol removido exitosamente', 'success');
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al remover rol', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Get Activity
+        async function getActivity() {
+            const userId = document.getElementById('activityUserId').value;
+            const messageDiv = document.getElementById('activityMessage');
+            const responseDiv = document.getElementById('activityResponse');
+
+            if (!userId) {
+                showMessage(messageDiv, 'Ingresa un ID de usuario', 'error');
+                return;
+            }
+
+            try {
+                const data = await apiCall(`${API_URL}/users/${userId}/activity`, { method: 'GET' });
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success) {
+                    showMessage(messageDiv, 'Actividad obtenida exitosamente', 'success');
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al obtener actividad', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Keys - APYGG API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 2rem;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        .nav {
+            margin-bottom: 2rem;
+        }
+        .nav a {
+            color: #667eea;
+            text-decoration: none;
+            margin-right: 1rem;
+        }
+        .nav a:hover {
+            text-decoration: underline;
+        }
+        .section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .section h2 {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-right: 0.5rem;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        .message {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+        }
+        .message.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .message.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .message.warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+        }
+        .table-container {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .response {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .response pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 0.5rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+        .key-display {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="index.html">← Volver al índice</a>
+        </div>
+        
+        <h1>🔑 API Keys</h1>
+
+        <!-- List API Keys -->
+        <div class="section">
+            <h2>Listar API Keys</h2>
+            <button onclick="listApiKeys()">Listar API Keys</button>
+            <div id="listMessage"></div>
+            <div id="listTable" class="table-container" style="display: none;"></div>
+            <div id="listResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Show API Key -->
+        <div class="section">
+            <h2>Ver API Key</h2>
+            <div class="form-group">
+                <label for="showApiKeyId">ID de la API Key:</label>
+                <input type="text" id="showApiKeyId" placeholder="UUID de la API Key">
+            </div>
+            <button onclick="showApiKey()">Ver API Key</button>
+            <div id="showMessage"></div>
+            <div id="showResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Create API Key -->
+        <div class="section">
+            <h2>Crear API Key</h2>
+            <form id="createForm">
+                <div class="form-group">
+                    <label for="createName">Nombre:</label>
+                    <input type="text" id="createName" required placeholder="Mi API Key">
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="createExpiresAt">Fecha de Expiración (opcional):</label>
+                        <input type="datetime-local" id="createExpiresAt">
+                    </div>
+                    <div class="form-group">
+                        <label for="createEnvironment">Ambiente:</label>
+                        <select id="createEnvironment">
+                            <option value="live">Live</option>
+                            <option value="test">Test</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="createScopes">Scopes (separados por comas, opcional):</label>
+                    <input type="text" id="createScopes" placeholder="read, write">
+                </div>
+                <button type="submit">Crear API Key</button>
+            </form>
+            <div id="createMessage"></div>
+            <div id="createKeyDisplay" class="key-display" style="display: none;"></div>
+            <div id="createResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Delete API Key -->
+        <div class="section">
+            <h2>Eliminar API Key</h2>
+            <div class="form-group">
+                <label for="deleteApiKeyId">ID de la API Key:</label>
+                <input type="text" id="deleteApiKeyId" placeholder="UUID de la API Key">
+            </div>
+            <button onclick="deleteApiKey()" class="btn-danger">Eliminar API Key</button>
+            <div id="deleteMessage"></div>
+        </div>
+
+        <!-- Rotate API Key -->
+        <div class="section">
+            <h2>Rotar API Key</h2>
+            <form id="rotateForm">
+                <div class="form-group">
+                    <label for="rotateApiKeyId">ID de la API Key:</label>
+                    <input type="text" id="rotateApiKeyId" required placeholder="UUID de la API Key">
+                </div>
+                <div class="form-group">
+                    <label for="rotateName">Nuevo Nombre (opcional):</label>
+                    <input type="text" id="rotateName" placeholder="Nuevo nombre">
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="rotateScopes">Nuevos Scopes (separados por comas, opcional):</label>
+                        <input type="text" id="rotateScopes" placeholder="read, write">
+                    </div>
+                    <div class="form-group">
+                        <label for="rotateEnvironment">Ambiente:</label>
+                        <select id="rotateEnvironment">
+                            <option value="live">Live</option>
+                            <option value="test">Test</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn-warning">Rotar API Key</button>
+            </form>
+            <div id="rotateMessage"></div>
+            <div id="rotateKeyDisplay" class="key-display" style="display: none;"></div>
+            <div id="rotateResponse" class="response" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.location.origin;
+        const TOKEN_KEY = 'apygg_jwt_token';
+
+        function getToken() {
+            return localStorage.getItem(TOKEN_KEY);
+        }
+
+        function getHeaders() {
+            const token = getToken();
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            return headers;
+        }
+
+        async function apiCall(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    headers: {
+                        ...getHeaders(),
+                        ...options.headers,
+                    },
+                });
+                return await response.json();
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        function showMessage(div, message, type) {
+            div.className = `message ${type}`;
+            div.textContent = message;
+            div.style.display = 'block';
+        }
+
+        // List API Keys
+        async function listApiKeys() {
+            const messageDiv = document.getElementById('listMessage');
+            const responseDiv = document.getElementById('listResponse');
+            const tableDiv = document.getElementById('listTable');
+
+            try {
+                const data = await apiCall(`${API_URL}/api-keys`, { method: 'GET' });
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success && data.data) {
+                    const keys = Array.isArray(data.data) ? data.data : [];
+                    if (keys.length > 0) {
+                        let table = '<table><thead><tr><th>ID</th><th>Nombre</th><th>Último Uso</th><th>Expira</th><th>Estado</th></tr></thead><tbody>';
+                        keys.forEach(key => {
+                            const expiresAt = key.expires_at ? new Date(key.expires_at).toLocaleDateString() : 'Nunca';
+                            const lastUsed = key.last_used_at ? new Date(key.last_used_at).toLocaleDateString() : 'Nunca';
+                            const isExpired = key.expires_at && new Date(key.expires_at) < new Date();
+                            const status = isExpired ? 'Expirada' : 'Activa';
+                            table += `<tr><td>${key.id}</td><td>${key.name}</td><td>${lastUsed}</td><td>${expiresAt}</td><td>${status}</td></tr>`;
+                        });
+                        table += '</tbody></table>';
+                        tableDiv.innerHTML = table;
+                        tableDiv.style.display = 'block';
+                        showMessage(messageDiv, `Se encontraron ${keys.length} API Key(s)`, 'success');
+                    } else {
+                        showMessage(messageDiv, 'No se encontraron API Keys', 'info');
+                    }
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al listar API Keys', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Show API Key
+        async function showApiKey() {
+            const apiKeyId = document.getElementById('showApiKeyId').value;
+            const messageDiv = document.getElementById('showMessage');
+            const responseDiv = document.getElementById('showResponse');
+
+            if (!apiKeyId) {
+                showMessage(messageDiv, 'Ingresa un ID de API Key', 'error');
+                return;
+            }
+
+            try {
+                const data = await apiCall(`${API_URL}/api-keys/${apiKeyId}`, { method: 'GET' });
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success) {
+                    showMessage(messageDiv, 'API Key obtenida exitosamente', 'success');
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al obtener API Key', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Create API Key
+        document.getElementById('createForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const messageDiv = document.getElementById('createMessage');
+            const responseDiv = document.getElementById('createResponse');
+            const keyDisplay = document.getElementById('createKeyDisplay');
+            const btn = e.target.querySelector('button[type="submit"]');
+
+            const formData = {
+                name: document.getElementById('createName').value,
+            };
+
+            const expiresAt = document.getElementById('createExpiresAt').value;
+            if (expiresAt) {
+                formData.expires_at = expiresAt;
+            }
+
+            const environment = document.getElementById('createEnvironment').value;
+            if (environment) {
+                formData.environment = environment;
+            }
+
+            const scopes = document.getElementById('createScopes').value;
+            if (scopes) {
+                formData.scopes = scopes.split(',').map(s => s.trim()).filter(s => s);
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = 'Creando...<span class="loading"></span>';
+
+            try {
+                const data = await apiCall(`${API_URL}/api-keys`, {
+                    method: 'POST',
+                    body: JSON.stringify(formData),
+                });
+
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success && data.data) {
+                    if (data.data.key) {
+                        keyDisplay.style.display = 'block';
+                        keyDisplay.innerHTML = `<strong>⚠️ IMPORTANTE: Guarda esta key de forma segura. No se volverá a mostrar.</strong><br><br><strong>API Key:</strong><br>${data.data.key}`;
+                        showMessage(messageDiv, 'API Key creada exitosamente. ¡Guarda la key ahora!', 'warning');
+                    } else {
+                        showMessage(messageDiv, 'API Key creada exitosamente', 'success');
+                    }
+                    e.target.reset();
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al crear API Key', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Crear API Key';
+            }
+        });
+
+        // Delete API Key
+        async function deleteApiKey() {
+            const apiKeyId = document.getElementById('deleteApiKeyId').value;
+            const messageDiv = document.getElementById('deleteMessage');
+
+            if (!apiKeyId) {
+                showMessage(messageDiv, 'Ingresa un ID de API Key', 'error');
+                return;
+            }
+
+            if (!confirm(`¿Estás seguro de eliminar la API Key ${apiKeyId}?`)) {
+                return;
+            }
+
+            try {
+                const data = await apiCall(`${API_URL}/api-keys/${apiKeyId}`, { method: 'DELETE' });
+                if (data.success) {
+                    showMessage(messageDiv, 'API Key eliminada exitosamente', 'success');
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al eliminar API Key', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Rotate API Key
+        document.getElementById('rotateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const apiKeyId = document.getElementById('rotateApiKeyId').value;
+            const messageDiv = document.getElementById('rotateMessage');
+            const responseDiv = document.getElementById('rotateResponse');
+            const keyDisplay = document.getElementById('rotateKeyDisplay');
+            const btn = e.target.querySelector('button[type="submit"]');
+
+            if (!apiKeyId) {
+                showMessage(messageDiv, 'Ingresa un ID de API Key', 'error');
+                return;
+            }
+
+            const formData = {};
+
+            const name = document.getElementById('rotateName').value;
+            if (name) formData.name = name;
+
+            const environment = document.getElementById('rotateEnvironment').value;
+            if (environment) {
+                formData.environment = environment;
+            }
+
+            const scopes = document.getElementById('rotateScopes').value;
+            if (scopes) {
+                formData.scopes = scopes.split(',').map(s => s.trim()).filter(s => s);
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = 'Rotando...<span class="loading"></span>';
+
+            try {
+                const data = await apiCall(`${API_URL}/api-keys/${apiKeyId}/rotate`, {
+                    method: 'POST',
+                    body: JSON.stringify(formData),
+                });
+
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success && data.data) {
+                    if (data.data.key) {
+                        keyDisplay.style.display = 'block';
+                        keyDisplay.innerHTML = `<strong>⚠️ IMPORTANTE: Guarda esta key de forma segura. No se volverá a mostrar.</strong><br><br><strong>Nueva API Key:</strong><br>${data.data.key}<br><br><strong>Key antigua expira:</strong> ${data.data.old_key_expires_at || 'N/A'}`;
+                        showMessage(messageDiv, 'API Key rotada exitosamente. ¡Guarda la nueva key ahora!', 'warning');
+                    } else {
+                        showMessage(messageDiv, 'API Key rotada exitosamente', 'success');
+                    }
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al rotar API Key', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Rotar API Key';
+            }
+        });
+    </script>
+</body>
+</html>

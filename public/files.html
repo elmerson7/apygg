@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archivos - APYGG API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 2rem;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        .nav {
+            margin-bottom: 2rem;
+        }
+        .nav a {
+            color: #667eea;
+            text-decoration: none;
+            margin-right: 1rem;
+        }
+        .nav a:hover {
+            text-decoration: underline;
+        }
+        .section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .section h2 {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        input[type="file"] {
+            padding: 0.5rem;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-right: 0.5rem;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+        .message {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+        }
+        .message.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .message.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .table-container {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .response {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .response pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 0.5rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="index.html">← Volver al índice</a>
+        </div>
+        
+        <h1>📁 Archivos</h1>
+
+        <!-- List Files -->
+        <div class="section">
+            <h2>Listar Archivos</h2>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label for="filterType">Tipo:</label>
+                    <select id="filterType">
+                        <option value="">Todos</option>
+                        <option value="image">Imagen</option>
+                        <option value="document">Documento</option>
+                        <option value="video">Video</option>
+                        <option value="audio">Audio</option>
+                        <option value="archive">Archivo</option>
+                        <option value="other">Otro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="filterCategory">Categoría:</label>
+                    <input type="text" id="filterCategory" placeholder="Categoría">
+                </div>
+            </div>
+            <button onclick="listFiles()">Listar Archivos</button>
+            <div id="listMessage"></div>
+            <div id="listTable" class="table-container" style="display: none;"></div>
+            <div id="listResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Show File -->
+        <div class="section">
+            <h2>Ver Archivo</h2>
+            <div class="form-group">
+                <label for="showFileId">ID del Archivo:</label>
+                <input type="text" id="showFileId" placeholder="UUID del archivo">
+            </div>
+            <button onclick="showFile()">Ver Archivo</button>
+            <div id="showMessage"></div>
+            <div id="showResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Upload File -->
+        <div class="section">
+            <h2>Subir Archivo</h2>
+            <form id="uploadForm">
+                <div class="form-group">
+                    <label for="uploadFile">Archivo:</label>
+                    <input type="file" id="uploadFile" required>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="uploadCategory">Categoría:</label>
+                        <input type="text" id="uploadCategory" placeholder="default">
+                    </div>
+                    <div class="form-group">
+                        <label for="uploadDescription">Descripción:</label>
+                        <input type="text" id="uploadDescription">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="uploadIsPublic">
+                        <label for="uploadIsPublic">Archivo público</label>
+                    </div>
+                </div>
+                <button type="submit">Subir Archivo</button>
+            </form>
+            <div id="uploadMessage"></div>
+            <div id="uploadResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Update File -->
+        <div class="section">
+            <h2>Actualizar Metadatos</h2>
+            <form id="updateForm">
+                <div class="form-group">
+                    <label for="updateFileId">ID del Archivo:</label>
+                    <input type="text" id="updateFileId" required placeholder="UUID del archivo">
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="updateCategory">Categoría:</label>
+                        <input type="text" id="updateCategory">
+                    </div>
+                    <div class="form-group">
+                        <label for="updateDescription">Descripción:</label>
+                        <input type="text" id="updateDescription">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="updateIsPublic">
+                        <label for="updateIsPublic">Archivo público</label>
+                    </div>
+                </div>
+                <button type="submit">Actualizar Metadatos</button>
+            </form>
+            <div id="updateMessage"></div>
+            <div id="updateResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Delete File -->
+        <div class="section">
+            <h2>Eliminar Archivo</h2>
+            <div class="form-group">
+                <label for="deleteFileId">ID del Archivo:</label>
+                <input type="text" id="deleteFileId" placeholder="UUID del archivo">
+            </div>
+            <button onclick="deleteFile()" class="btn-danger">Eliminar Archivo</button>
+            <div id="deleteMessage"></div>
+        </div>
+
+        <!-- Download File -->
+        <div class="section">
+            <h2>Descargar Archivo</h2>
+            <div class="form-group">
+                <label for="downloadFileId">ID del Archivo:</label>
+                <input type="text" id="downloadFileId" placeholder="UUID del archivo">
+            </div>
+            <button onclick="downloadFile()" class="btn-success">Descargar Archivo</button>
+            <div id="downloadMessage"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.location.origin;
+        const TOKEN_KEY = 'apygg_jwt_token';
+
+        function getToken() {
+            return localStorage.getItem(TOKEN_KEY);
+        }
+
+        function getHeaders(includeContentType = true) {
+            const token = getToken();
+            const headers = {};
+            if (includeContentType) {
+                headers['Content-Type'] = 'application/json';
+            }
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            return headers;
+        }
+
+        async function apiCall(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    headers: {
+                        ...getHeaders(!options.isFormData),
+                        ...options.headers,
+                    },
+                });
+                return await response.json();
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        function showMessage(div, message, type) {
+            div.className = `message ${type}`;
+            div.textContent = message;
+            div.style.display = 'block';
+        }
+
+        // List Files
+        async function listFiles() {
+            const messageDiv = document.getElementById('listMessage');
+            const responseDiv = document.getElementById('listResponse');
+            const tableDiv = document.getElementById('listTable');
+            const type = document.getElementById('filterType').value;
+            const category = document.getElementById('filterCategory').value;
+
+            try {
+                let url = `${API_URL}/files?`;
+                const params = [];
+                if (type) params.push(`type=${encodeURIComponent(type)}`);
+                if (category) params.push(`category=${encodeURIComponent(category)}`);
+                url += params.join('&');
+
+                const data = await apiCall(url, { method: 'GET' });
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success && data.data) {
+                    const files = Array.isArray(data.data) ? data.data : (data.data.data || []);
+                    if (files.length > 0) {
+                        let table = '<table><thead><tr><th>ID</th><th>Nombre</th><th>Tipo</th><th>Tamaño</th><th>Categoría</th></tr></thead><tbody>';
+                        files.forEach(file => {
+                            const size = file.size ? `${(file.size / 1024).toFixed(2)} KB` : '-';
+                            table += `<tr><td>${file.id}</td><td>${file.name}</td><td>${file.type || '-'}</td><td>${size}</td><td>${file.category || '-'}</td></tr>`;
+                        });
+                        table += '</tbody></table>';
+                        tableDiv.innerHTML = table;
+                        tableDiv.style.display = 'block';
+                        showMessage(messageDiv, `Se encontraron ${files.length} archivo(s)`, 'success');
+                    } else {
+                        showMessage(messageDiv, 'No se encontraron archivos', 'info');
+                    }
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al listar archivos', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Show File
+        async function showFile() {
+            const fileId = document.getElementById('showFileId').value;
+            const messageDiv = document.getElementById('showMessage');
+            const responseDiv = document.getElementById('showResponse');
+
+            if (!fileId) {
+                showMessage(messageDiv, 'Ingresa un ID de archivo', 'error');
+                return;
+            }
+
+            try {
+                const data = await apiCall(`${API_URL}/files/${fileId}`, { method: 'GET' });
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success) {
+                    showMessage(messageDiv, 'Archivo obtenido exitosamente', 'success');
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al obtener archivo', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Upload File
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const messageDiv = document.getElementById('uploadMessage');
+            const responseDiv = document.getElementById('uploadResponse');
+            const btn = e.target.querySelector('button[type="submit"]');
+            const fileInput = document.getElementById('uploadFile');
+
+            if (!fileInput.files || fileInput.files.length === 0) {
+                showMessage(messageDiv, 'Selecciona un archivo', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            const category = document.getElementById('uploadCategory').value;
+            if (category) formData.append('category', category);
+
+            const description = document.getElementById('uploadDescription').value;
+            if (description) formData.append('description', description);
+
+            const isPublic = document.getElementById('uploadIsPublic').checked;
+            formData.append('is_public', isPublic ? '1' : '0');
+
+            btn.disabled = true;
+            btn.innerHTML = 'Subiendo...<span class="loading"></span>';
+
+            try {
+                const token = getToken();
+                const response = await fetch(`${API_URL}/files`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                    body: formData,
+                });
+
+                const data = await response.json();
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success) {
+                    showMessage(messageDiv, 'Archivo subido exitosamente', 'success');
+                    e.target.reset();
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al subir archivo', 'error');
+                    if (data.errors) {
+                        const errors = Object.values(data.errors).flat().join(', ');
+                        showMessage(messageDiv, `Errores: ${errors}`, 'error');
+                    }
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Subir Archivo';
+            }
+        });
+
+        // Update File
+        document.getElementById('updateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fileId = document.getElementById('updateFileId').value;
+            const messageDiv = document.getElementById('updateMessage');
+            const responseDiv = document.getElementById('updateResponse');
+            const btn = e.target.querySelector('button[type="submit"]');
+
+            if (!fileId) {
+                showMessage(messageDiv, 'Ingresa un ID de archivo', 'error');
+                return;
+            }
+
+            const formData = {};
+            const category = document.getElementById('updateCategory').value;
+            if (category) formData.category = category;
+
+            const description = document.getElementById('updateDescription').value;
+            if (description) formData.description = description;
+
+            formData.is_public = document.getElementById('updateIsPublic').checked;
+
+            btn.disabled = true;
+            btn.innerHTML = 'Actualizando...<span class="loading"></span>';
+
+            try {
+                const data = await apiCall(`${API_URL}/files/${fileId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(formData),
+                });
+
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success) {
+                    showMessage(messageDiv, 'Archivo actualizado exitosamente', 'success');
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al actualizar archivo', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Actualizar Metadatos';
+            }
+        });
+
+        // Delete File
+        async function deleteFile() {
+            const fileId = document.getElementById('deleteFileId').value;
+            const messageDiv = document.getElementById('deleteMessage');
+
+            if (!fileId) {
+                showMessage(messageDiv, 'Ingresa un ID de archivo', 'error');
+                return;
+            }
+
+            if (!confirm(`¿Estás seguro de eliminar el archivo ${fileId}?`)) {
+                return;
+            }
+
+            try {
+                const data = await apiCall(`${API_URL}/files/${fileId}`, { method: 'DELETE' });
+                if (data.success) {
+                    showMessage(messageDiv, 'Archivo eliminado exitosamente', 'success');
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al eliminar archivo', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Download File
+        async function downloadFile() {
+            const fileId = document.getElementById('downloadFileId').value;
+            const messageDiv = document.getElementById('downloadMessage');
+
+            if (!fileId) {
+                showMessage(messageDiv, 'Ingresa un ID de archivo', 'error');
+                return;
+            }
+
+            try {
+                const token = getToken();
+                const response = await fetch(`${API_URL}/files/${fileId}/download`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    const contentDisposition = response.headers.get('Content-Disposition');
+                    const filename = contentDisposition
+                        ? contentDisposition.split('filename=')[1]?.replace(/"/g, '') || `file-${fileId}`
+                        : `file-${fileId}`;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    showMessage(messageDiv, 'Archivo descargado exitosamente', 'success');
+                } else {
+                    const data = await response.json();
+                    showMessage(messageDiv, data.message || 'Error al descargar archivo', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

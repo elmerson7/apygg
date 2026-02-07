@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webhooks - APYGG API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 2rem;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        .nav {
+            margin-bottom: 2rem;
+        }
+        .nav a {
+            color: #667eea;
+            text-decoration: none;
+            margin-right: 1rem;
+        }
+        .nav a:hover {
+            text-decoration: underline;
+        }
+        .section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .section h2 {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-right: 0.5rem;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+        .message {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+        }
+        .message.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .message.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .message.warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+        }
+        .table-container {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .response {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .response pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 0.5rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+        .secret-display {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="index.html">← Volver al índice</a>
+        </div>
+        
+        <h1>🔔 Webhooks</h1>
+
+        <!-- List Webhooks -->
+        <div class="section">
+            <h2>Listar Webhooks</h2>
+            <button onclick="listWebhooks()">Listar Webhooks</button>
+            <div id="listMessage"></div>
+            <div id="listTable" class="table-container" style="display: none;"></div>
+            <div id="listResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Show Webhook -->
+        <div class="section">
+            <h2>Ver Webhook</h2>
+            <div class="form-group">
+                <label for="showWebhookId">ID del Webhook:</label>
+                <input type="text" id="showWebhookId" placeholder="UUID del webhook">
+            </div>
+            <button onclick="showWebhook()">Ver Webhook</button>
+            <div id="showMessage"></div>
+            <div id="showResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Create Webhook -->
+        <div class="section">
+            <h2>Crear Webhook</h2>
+            <form id="createForm">
+                <div class="form-group">
+                    <label for="createName">Nombre:</label>
+                    <input type="text" id="createName" required placeholder="Mi Webhook">
+                </div>
+                <div class="form-group">
+                    <label for="createUrl">URL:</label>
+                    <input type="url" id="createUrl" required placeholder="https://example.com/webhook">
+                </div>
+                <div class="form-group">
+                    <label for="createEvents">Eventos (separados por comas):</label>
+                    <input type="text" id="createEvents" required placeholder="user.created, user.updated">
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="createSecret">Secret (opcional, se genera automáticamente si no se proporciona):</label>
+                        <input type="text" id="createSecret" placeholder="Dejar vacío para generar automático">
+                    </div>
+                    <div class="form-group">
+                        <label for="createStatus">Estado:</label>
+                        <select id="createStatus">
+                            <option value="active">Activo</option>
+                            <option value="inactive">Inactivo</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="createTimeout">Timeout (segundos):</label>
+                        <input type="number" id="createTimeout" value="30" min="1" max="300">
+                    </div>
+                    <div class="form-group">
+                        <label for="createMaxRetries">Máximo de Reintentos:</label>
+                        <input type="number" id="createMaxRetries" value="3" min="0" max="10">
+                    </div>
+                </div>
+                <button type="submit">Crear Webhook</button>
+            </form>
+            <div id="createMessage"></div>
+            <div id="createResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Update Webhook -->
+        <div class="section">
+            <h2>Actualizar Webhook</h2>
+            <form id="updateForm">
+                <div class="form-group">
+                    <label for="updateWebhookId">ID del Webhook:</label>
+                    <input type="text" id="updateWebhookId" required placeholder="UUID del webhook">
+                </div>
+                <div class="form-group">
+                    <label for="updateName">Nombre:</label>
+                    <input type="text" id="updateName">
+                </div>
+                <div class="form-group">
+                    <label for="updateUrl">URL:</label>
+                    <input type="url" id="updateUrl">
+                </div>
+                <div class="form-group">
+                    <label for="updateEvents">Eventos (separados por comas):</label>
+                    <input type="text" id="updateEvents" placeholder="user.created, user.updated">
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="updateStatus">Estado:</label>
+                        <select id="updateStatus">
+                            <option value="">Sin cambiar</option>
+                            <option value="active">Activo</option>
+                            <option value="inactive">Inactivo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="updateTimeout">Timeout (segundos):</label>
+                        <input type="number" id="updateTimeout" min="1" max="300">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="updateMaxRetries">Máximo de Reintentos:</label>
+                    <input type="number" id="updateMaxRetries" min="0" max="10">
+                </div>
+                <button type="submit">Actualizar Webhook</button>
+            </form>
+            <div id="updateMessage"></div>
+            <div id="updateResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Delete Webhook -->
+        <div class="section">
+            <h2>Eliminar Webhook</h2>
+            <div class="form-group">
+                <label for="deleteWebhookId">ID del Webhook:</label>
+                <input type="text" id="deleteWebhookId" placeholder="UUID del webhook">
+            </div>
+            <button onclick="deleteWebhook()" class="btn-danger">Eliminar Webhook</button>
+            <div id="deleteMessage"></div>
+        </div>
+
+        <!-- Rotate Secret -->
+        <div class="section">
+            <h2>Rotar Secret</h2>
+            <form id="rotateForm">
+                <div class="form-group">
+                    <label for="rotateWebhookId">ID del Webhook:</label>
+                    <input type="text" id="rotateWebhookId" required placeholder="UUID del webhook">
+                </div>
+                <div class="form-group">
+                    <label for="rotateGracePeriod">Período de Gracia (días, opcional, default: 7):</label>
+                    <input type="number" id="rotateGracePeriod" value="7" min="0" max="30">
+                </div>
+                <button type="submit" class="btn-warning">Rotar Secret</button>
+            </form>
+            <div id="rotateMessage"></div>
+            <div id="rotateSecretDisplay" class="secret-display" style="display: none;"></div>
+            <div id="rotateResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Get Deliveries -->
+        <div class="section">
+            <h2>Historial de Entregas</h2>
+            <div class="form-group">
+                <label for="deliveriesWebhookId">ID del Webhook:</label>
+                <input type="text" id="deliveriesWebhookId" placeholder="UUID del webhook">
+            </div>
+            <button onclick="getDeliveries()">Obtener Entregas</button>
+            <div id="deliveriesMessage"></div>
+            <div id="deliveriesTable" class="table-container" style="display: none;"></div>
+            <div id="deliveriesResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Retry Delivery -->
+        <div class="section">
+            <h2>Reenviar Entrega Fallida</h2>
+            <div class="form-group">
+                <label for="retryWebhookId">ID del Webhook:</label>
+                <input type="text" id="retryWebhookId" placeholder="UUID del webhook">
+            </div>
+            <div class="form-group">
+                <label for="retryDeliveryId">ID de la Entrega:</label>
+                <input type="text" id="retryDeliveryId" placeholder="UUID de la entrega">
+            </div>
+            <button onclick="retryDelivery()" class="btn-success">Reenviar Entrega</button>
+            <div id="retryMessage"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.location.origin;
+        const TOKEN_KEY = 'apygg_jwt_token';
+
+        function getToken() {
+            return localStorage.getItem(TOKEN_KEY);
+        }
+
+        function getHeaders() {
+            const token = getToken();
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            return headers;
+        }
+
+        async function apiCall(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    headers: {
+                        ...getHeaders(),
+                        ...options.headers,
+                    },
+                });
+                return await response.json();
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        function showMessage(div, message, type) {
+            div.className = `message ${type}`;
+            div.textContent = message;
+            div.style.display = 'block';
+        }
+
+        // List Webhooks
+        async function listWebhooks() {
+            const messageDiv = document.getElementById('listMessage');
+            const responseDiv = document.getElementById('listResponse');
+            const tableDiv = document.getElementById('listTable');
+
+            try {
+                const data = await apiCall(`${API_URL}/webhooks`, { method: 'GET' });
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success && data.data) {
+                    const webhooks = Array.isArray(data.data) ? data.data : [];
+                    if (webhooks.length > 0) {
+                        let table = '<table><thead><tr><th>ID</th><th>Nombre</th><th>URL</th><th>Estado</th><th>Entregas</th></tr></thead><tbody>';
+                        webhooks.forEach(webhook => {
+                            const events = Array.isArray(webhook.events) ? webhook.events.join(', ') : '-';
+                            table += `<tr><td>${webhook.id}</td><td>${webhook.name}</td><td>${webhook.url}</td><td>${webhook.status || 'active'}</td><td>${webhook.deliveries_count || 0}</td></tr>`;
+                        });
+                        table += '</tbody></table>';
+                        tableDiv.innerHTML = table;
+                        tableDiv.style.display = 'block';
+                        showMessage(messageDiv, `Se encontraron ${webhooks.length} webhook(s)`, 'success');
+                    } else {
+                        showMessage(messageDiv, 'No se encontraron webhooks', 'info');
+                    }
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al listar webhooks', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Show Webhook
+        async function showWebhook() {
+            const webhookId = document.getElementById('showWebhookId').value;
+            const messageDiv = document.getElementById('showMessage');
+            const responseDiv = document.getElementById('showResponse');
+
+            if (!webhookId) {
+                showMessage(messageDiv, 'Ingresa un ID de webhook', 'error');
+                return;
+            }
+
+            try {
+                const data = await apiCall(`${API_URL}/webhooks/${webhookId}`, { method: 'GET' });
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success) {
+                    showMessage(messageDiv, 'Webhook obtenido exitosamente', 'success');
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al obtener webhook', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Create Webhook
+        document.getElementById('createForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const messageDiv = document.getElementById('createMessage');
+            const responseDiv = document.getElementById('createResponse');
+            const btn = e.target.querySelector('button[type="submit"]');
+
+            const formData = {
+                name: document.getElementById('createName').value,
+                url: document.getElementById('createUrl').value,
+                events: document.getElementById('createEvents').value.split(',').map(e => e.trim()).filter(e => e),
+                status: document.getElementById('createStatus').value,
+            };
+
+            const secret = document.getElementById('createSecret').value;
+            if (secret) formData.secret = secret;
+
+            const timeout = document.getElementById('createTimeout').value;
+            if (timeout) formData.timeout = parseInt(timeout);
+
+            const maxRetries = document.getElementById('createMaxRetries').value;
+            if (maxRetries) formData.max_retries = parseInt(maxRetries);
+
+            btn.disabled = true;
+            btn.innerHTML = 'Creando...<span class="loading"></span>';
+
+            try {
+                const data = await apiCall(`${API_URL}/webhooks`, {
+                    method: 'POST',
+                    body: JSON.stringify(formData),
+                });
+
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success) {
+                    showMessage(messageDiv, 'Webhook creado exitosamente', 'success');
+                    e.target.reset();
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al crear webhook', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Crear Webhook';
+            }
+        });
+
+        // Update Webhook
+        document.getElementById('updateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const webhookId = document.getElementById('updateWebhookId').value;
+            const messageDiv = document.getElementById('updateMessage');
+            const responseDiv = document.getElementById('updateResponse');
+            const btn = e.target.querySelector('button[type="submit"]');
+
+            if (!webhookId) {
+                showMessage(messageDiv, 'Ingresa un ID de webhook', 'error');
+                return;
+            }
+
+            const formData = {};
+            const name = document.getElementById('updateName').value;
+            if (name) formData.name = name;
+
+            const url = document.getElementById('updateUrl').value;
+            if (url) formData.url = url;
+
+            const events = document.getElementById('updateEvents').value;
+            if (events) {
+                formData.events = events.split(',').map(e => e.trim()).filter(e => e);
+            }
+
+            const status = document.getElementById('updateStatus').value;
+            if (status) formData.status = status;
+
+            const timeout = document.getElementById('updateTimeout').value;
+            if (timeout) formData.timeout = parseInt(timeout);
+
+            const maxRetries = document.getElementById('updateMaxRetries').value;
+            if (maxRetries) formData.max_retries = parseInt(maxRetries);
+
+            btn.disabled = true;
+            btn.innerHTML = 'Actualizando...<span class="loading"></span>';
+
+            try {
+                const data = await apiCall(`${API_URL}/webhooks/${webhookId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(formData),
+                });
+
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success) {
+                    showMessage(messageDiv, 'Webhook actualizado exitosamente', 'success');
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al actualizar webhook', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Actualizar Webhook';
+            }
+        });
+
+        // Delete Webhook
+        async function deleteWebhook() {
+            const webhookId = document.getElementById('deleteWebhookId').value;
+            const messageDiv = document.getElementById('deleteMessage');
+
+            if (!webhookId) {
+                showMessage(messageDiv, 'Ingresa un ID de webhook', 'error');
+                return;
+            }
+
+            if (!confirm(`¿Estás seguro de eliminar el webhook ${webhookId}?`)) {
+                return;
+            }
+
+            try {
+                const data = await apiCall(`${API_URL}/webhooks/${webhookId}`, { method: 'DELETE' });
+                if (data.success) {
+                    showMessage(messageDiv, 'Webhook eliminado exitosamente', 'success');
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al eliminar webhook', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Rotate Secret
+        document.getElementById('rotateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const webhookId = document.getElementById('rotateWebhookId').value;
+            const messageDiv = document.getElementById('rotateMessage');
+            const responseDiv = document.getElementById('rotateResponse');
+            const secretDisplay = document.getElementById('rotateSecretDisplay');
+            const btn = e.target.querySelector('button[type="submit"]');
+
+            if (!webhookId) {
+                showMessage(messageDiv, 'Ingresa un ID de webhook', 'error');
+                return;
+            }
+
+            const formData = {};
+            const gracePeriod = document.getElementById('rotateGracePeriod').value;
+            if (gracePeriod) {
+                formData.grace_period_days = parseInt(gracePeriod);
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = 'Rotando...<span class="loading"></span>';
+
+            try {
+                const data = await apiCall(`${API_URL}/webhooks/${webhookId}/rotate-secret`, {
+                    method: 'POST',
+                    body: JSON.stringify(formData),
+                });
+
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success && data.data) {
+                    if (data.data.new_secret) {
+                        secretDisplay.style.display = 'block';
+                        secretDisplay.innerHTML = `<strong>⚠️ IMPORTANTE: Guarda este secret de forma segura. No se volverá a mostrar.</strong><br><br><strong>Nuevo Secret:</strong><br>${data.data.new_secret}<br><br><strong>Secret anterior expira:</strong> ${data.data.old_secret_expires_at || 'N/A'}`;
+                        showMessage(messageDiv, 'Secret rotado exitosamente. ¡Guarda el nuevo secret ahora!', 'warning');
+                    } else {
+                        showMessage(messageDiv, 'Secret rotado exitosamente', 'success');
+                    }
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al rotar secret', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Rotar Secret';
+            }
+        });
+
+        // Get Deliveries
+        async function getDeliveries() {
+            const webhookId = document.getElementById('deliveriesWebhookId').value;
+            const messageDiv = document.getElementById('deliveriesMessage');
+            const responseDiv = document.getElementById('deliveriesResponse');
+            const tableDiv = document.getElementById('deliveriesTable');
+
+            if (!webhookId) {
+                showMessage(messageDiv, 'Ingresa un ID de webhook', 'error');
+                return;
+            }
+
+            try {
+                const data = await apiCall(`${API_URL}/webhooks/${webhookId}/deliveries`, { method: 'GET' });
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success && data.data) {
+                    const deliveries = Array.isArray(data.data) ? data.data : [];
+                    if (deliveries.length > 0) {
+                        let table = '<table><thead><tr><th>ID</th><th>Evento</th><th>Estado</th><th>Intentos</th><th>Creado</th></tr></thead><tbody>';
+                        deliveries.forEach(delivery => {
+                            table += `<tr><td>${delivery.id}</td><td>${delivery.event_type || '-'}</td><td>${delivery.status || '-'}</td><td>${delivery.attempts || 0}</td><td>${delivery.created_at || '-'}</td></tr>`;
+                        });
+                        table += '</tbody></table>';
+                        tableDiv.innerHTML = table;
+                        tableDiv.style.display = 'block';
+                        showMessage(messageDiv, `Se encontraron ${deliveries.length} entrega(s)`, 'success');
+                    } else {
+                        showMessage(messageDiv, 'No se encontraron entregas', 'info');
+                    }
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al obtener entregas', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Retry Delivery
+        async function retryDelivery() {
+            const webhookId = document.getElementById('retryWebhookId').value;
+            const deliveryId = document.getElementById('retryDeliveryId').value;
+            const messageDiv = document.getElementById('retryMessage');
+
+            if (!webhookId || !deliveryId) {
+                showMessage(messageDiv, 'Completa todos los campos', 'error');
+                return;
+            }
+
+            try {
+                const data = await apiCall(`${API_URL}/webhooks/${webhookId}/deliveries/${deliveryId}/retry`, {
+                    method: 'POST',
+                });
+                if (data.success) {
+                    showMessage(messageDiv, 'Entrega reenviada exitosamente', 'success');
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al reenviar entrega', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

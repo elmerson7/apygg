@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autenticación - APYGG API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 2rem;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        .nav {
+            margin-bottom: 2rem;
+        }
+        .nav a {
+            color: #667eea;
+            text-decoration: none;
+            margin-right: 1rem;
+        }
+        .nav a:hover {
+            text-decoration: underline;
+        }
+        .auth-status {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+        .auth-status.authenticated {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .auth-status.not-authenticated {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .section h2 {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .message {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+        }
+        .message.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .message.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .message.info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .response {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .response pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 0.5rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="index.html">← Volver al índice</a>
+        </div>
+        
+        <h1>🔐 Autenticación</h1>
+        
+        <div id="authStatus" class="auth-status not-authenticated">
+            No autenticado
+        </div>
+
+        <!-- Login -->
+        <div class="section">
+            <h2>Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email:</label>
+                    <input type="email" id="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Contraseña:</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit">Iniciar Sesión</button>
+            </form>
+            <div id="loginMessage"></div>
+            <div id="loginResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Register -->
+        <div class="section">
+            <h2>Registro</h2>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="registerName">Nombre:</label>
+                    <input type="text" id="registerName" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerEmail">Email:</label>
+                    <input type="email" id="registerEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">Contraseña:</label>
+                    <input type="password" id="registerPassword" required minlength="8">
+                </div>
+                <div class="form-group">
+                    <label for="registerPasswordConfirmation">Confirmar Contraseña:</label>
+                    <input type="password" id="registerPasswordConfirmation" required minlength="8">
+                </div>
+                <button type="submit">Registrarse</button>
+            </form>
+            <div id="registerMessage"></div>
+            <div id="registerResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Me -->
+        <div class="section">
+            <h2>Mi Perfil</h2>
+            <button id="meBtn" onclick="getMe()">Obtener Mi Perfil</button>
+            <div id="meMessage"></div>
+            <div id="meResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Refresh -->
+        <div class="section">
+            <h2>Refresh Token</h2>
+            <button id="refreshBtn" onclick="refreshToken()">Renovar Token</button>
+            <div id="refreshMessage"></div>
+            <div id="refreshResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Logout -->
+        <div class="section">
+            <h2>Cerrar Sesión</h2>
+            <button id="logoutBtn" onclick="logout()" class="btn-danger">Cerrar Sesión</button>
+            <div id="logoutMessage"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.location.origin;
+        const TOKEN_KEY = 'apygg_jwt_token';
+        const REFRESH_TOKEN_KEY = 'apygg_refresh_token';
+
+        // Verificar estado de autenticación al cargar
+        updateAuthStatus();
+
+        // Login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const messageDiv = document.getElementById('loginMessage');
+            const responseDiv = document.getElementById('loginResponse');
+            const btn = e.target.querySelector('button[type="submit"]');
+
+            btn.disabled = true;
+            btn.innerHTML = 'Iniciando sesión...<span class="loading"></span>';
+
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success && data.data) {
+                    if (data.data.access_token) {
+                        localStorage.setItem(TOKEN_KEY, data.data.access_token);
+                        if (data.data.refresh_token) {
+                            localStorage.setItem(REFRESH_TOKEN_KEY, data.data.refresh_token);
+                        }
+                        updateAuthStatus();
+                        showMessage(messageDiv, 'Login exitoso', 'success');
+                    }
+                } else {
+                    showMessage(messageDiv, data.message || 'Error en el login', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${error.message}</pre>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Iniciar Sesión';
+            }
+        });
+
+        // Register
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const passwordConfirmation = document.getElementById('registerPasswordConfirmation').value;
+            const messageDiv = document.getElementById('registerMessage');
+            const responseDiv = document.getElementById('registerResponse');
+            const btn = e.target.querySelector('button[type="submit"]');
+
+            if (password !== passwordConfirmation) {
+                showMessage(messageDiv, 'Las contraseñas no coinciden', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = 'Registrando...<span class="loading"></span>';
+
+            try {
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name, email, password, password_confirmation: passwordConfirmation })
+                });
+
+                const data = await response.json();
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success && data.data) {
+                    if (data.data.access_token) {
+                        localStorage.setItem(TOKEN_KEY, data.data.access_token);
+                        if (data.data.refresh_token) {
+                            localStorage.setItem(REFRESH_TOKEN_KEY, data.data.refresh_token);
+                        }
+                        updateAuthStatus();
+                        showMessage(messageDiv, 'Registro exitoso', 'success');
+                    }
+                } else {
+                    showMessage(messageDiv, data.message || 'Error en el registro', 'error');
+                    if (data.errors) {
+                        const errors = Object.values(data.errors).flat().join(', ');
+                        showMessage(messageDiv, `Errores: ${errors}`, 'error');
+                    }
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${error.message}</pre>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Registrarse';
+            }
+        });
+
+        // Get Me
+        async function getMe() {
+            const messageDiv = document.getElementById('meMessage');
+            const responseDiv = document.getElementById('meResponse');
+            const btn = document.getElementById('meBtn');
+            const token = localStorage.getItem(TOKEN_KEY);
+
+            if (!token) {
+                showMessage(messageDiv, 'Debes iniciar sesión primero', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = 'Obteniendo...<span class="loading"></span>';
+
+            try {
+                const response = await fetch(`${API_URL}/auth/me`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success) {
+                    showMessage(messageDiv, 'Perfil obtenido exitosamente', 'success');
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al obtener perfil', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${error.message}</pre>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Obtener Mi Perfil';
+            }
+        }
+
+        // Refresh Token
+        async function refreshToken() {
+            const messageDiv = document.getElementById('refreshMessage');
+            const responseDiv = document.getElementById('refreshResponse');
+            const btn = document.getElementById('refreshBtn');
+            const token = localStorage.getItem(TOKEN_KEY);
+
+            if (!token) {
+                showMessage(messageDiv, 'No hay token disponible. Debes iniciar sesión primero', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = 'Renovando...<span class="loading"></span>';
+
+            try {
+                const response = await fetch(`${API_URL}/auth/refresh`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (data.success && data.data) {
+                    if (data.data.access_token) {
+                        localStorage.setItem(TOKEN_KEY, data.data.access_token);
+                        if (data.data.refresh_token) {
+                            localStorage.setItem(REFRESH_TOKEN_KEY, data.data.refresh_token);
+                        }
+                        updateAuthStatus();
+                        showMessage(messageDiv, 'Token renovado exitosamente', 'success');
+                    }
+                } else {
+                    showMessage(messageDiv, data.message || 'Error al renovar token', 'error');
+                }
+            } catch (error) {
+                showMessage(messageDiv, `Error: ${error.message}`, 'error');
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<pre>${error.message}</pre>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Renovar Token';
+            }
+        }
+
+        // Logout
+        async function logout() {
+            const messageDiv = document.getElementById('logoutMessage');
+            const btn = document.getElementById('logoutBtn');
+            const token = localStorage.getItem(TOKEN_KEY);
+
+            if (!token) {
+                localStorage.removeItem(TOKEN_KEY);
+                localStorage.removeItem(REFRESH_TOKEN_KEY);
+                updateAuthStatus();
+                showMessage(messageDiv, 'Sesión cerrada (no había token)', 'info');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = 'Cerrando sesión...<span class="loading"></span>';
+
+            try {
+                const response = await fetch(`${API_URL}/auth/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+                
+                localStorage.removeItem(TOKEN_KEY);
+                localStorage.removeItem(REFRESH_TOKEN_KEY);
+                updateAuthStatus();
+                
+                if (data.success) {
+                    showMessage(messageDiv, 'Sesión cerrada exitosamente', 'success');
+                } else {
+                    showMessage(messageDiv, 'Sesión cerrada localmente', 'info');
+                }
+            } catch (error) {
+                localStorage.removeItem(TOKEN_KEY);
+                localStorage.removeItem(REFRESH_TOKEN_KEY);
+                updateAuthStatus();
+                showMessage(messageDiv, 'Sesión cerrada localmente', 'info');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Cerrar Sesión';
+            }
+        }
+
+        // Utilidades
+        function updateAuthStatus() {
+            const token = localStorage.getItem(TOKEN_KEY);
+            const statusDiv = document.getElementById('authStatus');
+            
+            if (token) {
+                statusDiv.className = 'auth-status authenticated';
+                statusDiv.innerHTML = '✅ Autenticado - Token disponible';
+            } else {
+                statusDiv.className = 'auth-status not-authenticated';
+                statusDiv.innerHTML = '❌ No autenticado';
+            }
+        }
+
+        function showMessage(div, message, type) {
+            div.className = `message ${type}`;
+            div.textContent = message;
+            div.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
