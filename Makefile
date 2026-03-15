@@ -11,7 +11,7 @@ export GROUP_ID
 # Comando por defecto: mostrar help
 .DEFAULT_GOAL := help
 
-.PHONY: build up down restart logs ps sh composer art key migrate seed jwt meilisearch-key scout horizon reverb tinker fix-permissions ensure-env clear test test-watch test-parallel test-coverage pint pint-test phpstan help
+.PHONY: build up down restart logs ps sh composer art key migrate seed schema jwt meilisearch-key scout horizon reverb octane octane-reload fix-permissions ensure-env clear test test-filter test-watch test-parallel test-coverage pint pint-test phpstan help
 
 # Asegurar que env/${ENV}.env existe antes de build/up
 ensure-env:
@@ -63,6 +63,9 @@ art:
 test:
 	$(DC) exec app composer test
 
+test-filter:
+	$(DC) exec app ./vendor/bin/pest --filter='$(filter)'
+
 test-watch:
 	$(DC) exec app composer test:watch
 
@@ -82,6 +85,9 @@ migrate:
 
 seed:
 	$(DC) exec app php artisan db:seed --force
+
+schema:
+	$(DC) exec app php artisan db:schema-dump
 
 jwt:
 	@echo "Generando clave JWT..."
@@ -127,6 +133,11 @@ horizon:
 
 reverb:
 	$(DC) exec reverb php artisan reverb:restart || true
+
+octane: octane-reload
+
+octane-reload:
+	$(DC) exec app php artisan octane:reload || true
 
 clear:
 	$(DC) exec app php artisan optimize:clear
@@ -203,6 +214,7 @@ help:
 	@echo ""
 	@echo "TESTING:"
 	@printf "  %-20s %s\n" "test" "Ejecutar tests"
+	@printf "  %-20s %s\n" "test-filter filter=NOMBRE" "Ejecutar tests que coincidan con NOMBRE"
 	@printf "  %-20s %s\n" "test-watch" "Ejecutar tests en modo watch"
 	@printf "  %-20s %s\n" "test-parallel" "Ejecutar tests en paralelo"
 	@printf "  %-20s %s\n" "test-coverage" "Ejecutar tests con cobertura"
@@ -215,6 +227,7 @@ help:
 	@echo "BASE DE DATOS:"
 	@printf "  %-20s %s\n" "migrate" "Ejecutar migraciones"
 	@printf "  %-20s %s\n" "seed" "Ejecutar seeders"
+	@printf "  %-20s %s\n" "schema" "Exportar esquema BD a database/schema.sql"
 	@printf "  %-20s %s\n" "db-size [table]" "Ver tamaño de BD o tabla específica"
 	@echo ""
 	@echo "CONFIGURACIÓN:"
@@ -223,7 +236,7 @@ help:
 	@printf "  %-20s %s\n" "meilisearch-key" "Generar clave para Meilisearch"
 	@printf "  %-20s %s\n" "ensure-env" "Crear archivo .env si no existe"
 	@echo ""
-	@echo "BÚSQUEDA (SCOUT):"
+	@echo "BÚSQL UEDA (SCOUT):"
 	@printf "  %-20s %s\n" "scout" "Sincronizar configuración de índices"
 	@printf "  %-20s %s\n" "scout-sync" "Sincronizar configuración"
 	@printf "  %-20s %s\n" "scout-import" "Importar todos los modelos"
@@ -233,6 +246,8 @@ help:
 	@echo "COLAS/BROADCASTING:"
 	@printf "  %-20s %s\n" "horizon" "Reiniciar Laravel Horizon"
 	@printf "  %-20s %s\n" "reverb" "Reiniciar Laravel Reverb"
+	@printf "  %-20s %s\n" "octane" "Recargar Laravel Octane (sin downtime)"
+	@printf "  %-20s %s\n" "octane-reload" "Alias de 'octane'"
 	@echo ""
 	@echo "UTILIDADES:"
 	@printf "  %-20s %s\n" "cors-check" "Verificar configuración CORS"
