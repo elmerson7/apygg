@@ -1,1288 +1,191 @@
-# Lista de Tareas - API Boilerplate APYGG Laravel 12
+# TASKS.md — Gaps del Boilerplate APYGG
 
-## Fase 1: Setup Inicial y Configuración Base (Semana 1-2)
-
-### 1.1 Preparación del Entorno con Docker
-- [x] Crear `docker-compose.yml` básico con servicios:
-  - [x] Servicio PHP 8.5 con extensiones (pdo_pgsql, redis, opcache, gd, intl, zip)
-  - [x] Servicio PostgreSQL 18 para desarrollo
-  - [x] Servicio Redis 7 para cache y colas
-  - [x] Networks y volumes básicos
-- [x] Crear `docker/app/Dockerfile` optimizado para desarrollo
-- [x] Crear `.dockerignore` para optimización
-- [x] Probar que todos los servicios inicien correctamente: `docker compose --profile dev up -d`
-  - ✅ **Build exitoso**: Configuración DNS en docker-compose.yml (`network: host` y DNS explícitos) resolvió el problema
-  - ✅ **Servicios corriendo**: `apygg_app`, `apygg_postgres`, `apygg_redis` están activos
-  - ✅ **Postgres y Redis**: Healthy y funcionando correctamente
-  - ✅ **App**: Corriendo (esperando instalación de Laravel en Fase 1.2)
-  - ✅ **Networks y Volumes**: Creados correctamente (`apygg_network`, `apygg_pgdata`, `apygg_redisdata`)
-
-### 1.2 Instalación del Proyecto Laravel
-- [x] Crear proyecto Laravel 12 usando contenedor PHP:
-  - [x] Instalado en directorio temporal y movido preservando archivos existentes
-- [x] Configurar nombre del proyecto como `apygg` en `composer.json` (configurado: "apygg/apygg")
-- [x] Establecer namespaces base: `App\Core`, `App\Modules`, `App\Infrastructure`, `App\Helpers` (configurados en autoload PSR-4)
-- [x] Configurar autoloading PSR-4 en `composer.json` (configurado: App\\, App\\Core\\, App\\Modules\\, App\\Infrastructure\\, App\\Helpers\\, Database\\Factories\\, Database\\Seeders\\)
-- [x] Generar APP_KEY con `php artisan key:generate` (generado: base64:iCH/uJimLpT0lA5OjcmanhnilbrDIDaOPh18U9wxP+E=)
-- [x] Instalar Laravel Octane con FrankenPHP (instalado: v2.13.3, configurado OCTANE_SERVER=frankenphp en .env)
-- [x] Verificar que la aplicación funcione en `http://localhost:8010` (✅ funcionando correctamente)
-
-### 1.3 Estructura de Directorios
-- [x] Crear estructura base `app/Http/`
-  - [x] `Controllers/Controller.php` (BaseController - existe)
-  - [x] `Controllers/Auth/` (carpeta creada)
-  - [x] `Controllers/Users/` (carpeta creada)
-  - [x] `Controllers/Profiles/` (carpeta creada)
-  - [x] `Controllers/Logs/` (carpeta creada)
-  - [x] `Controllers/Health/` (carpeta creada)
-  - [x] `Requests/BaseFormRequest.php` (BaseRequest - creado)
-  - [x] `Requests/Auth/` (carpeta creada)
-  - [x] `Requests/Users/` (carpeta creada)
-  - [x] `Resources/BaseResource.php` (BaseResource - creado)
-  - [x] `Resources/Auth/` (carpeta creada)
-  - [x] `Resources/Users/` (carpeta creada)
-  - [x] `Middleware/` (carpeta creada - ForceJsonResponse creado, TraceId, RateLimitLogger, SecurityLogger, CacheControl, Idempotency se crearán en fases posteriores)
-- [x] Crear estructura `app/Models/`
-  - [x] `Model.php` (BaseModel - creado)
-  - [x] `User.php` (existe)
-  - [x] `Logs/` (carpeta creada)
-- [x] Crear directorio `app/Services/`
-  - [x] `Logging/` (carpeta creada)
-- [x] Crear directorio `app/Traits/` (carpeta creada)
-- [x] Crear directorio `app/Logging/` (carpeta creada)
-- [x] Crear directorio `app/Listeners/Security/` (carpeta creada)
-- [x] Crear directorio `app/Providers/` (ya existe)
-- [x] Crear estructura `routes/`
-  - [x] `api.php` (rutas principales - existe)
-  - [x] `api/auth.php` (creado)
-  - [x] `api/users.php` (creado)
-- [x] Crear directorio `tests/Unit/`, `tests/Feature/` (existen)
-- [x] Crear directorio `database/migrations/`, `database/seeders/` (existen)
-- [x] Crear directorio `docker/` (ya existe)
-- [x] Crear directorio `docs/` (ya existe)
-
-### 1.4 Archivos de Configuración de Entornos
-- [x] Crear `.env.example` base documentado (182 líneas, 73 líneas de comentarios, todas las variables necesarias documentadas)
-- [x] Crear `dev.env.example` con debugging habilitado (40 líneas, solo variables Docker: DB_HOST, REDIS_HOST, MEILISEARCH_HOST, etc.)
-- [x] Crear `staging.env.example` con valores cercanos a producción (36 líneas, solo variables Docker)
-- [x] Crear `prod.env.example` con optimizaciones de seguridad (39 líneas, solo variables Docker, incluye PgBouncer)
-- [x] Crear `.env` local para desarrollo (existe con APP_KEY generado: base64:iCH/uJimLpT0lA5OjcmanhnilbrDIDaOPh18U9wxP+E=)
-
-### 1.5 Instalación de Dependencias Esenciales (Solo las Críticas)
-- [x] Instalar dependencias mínimas para desarrollo inicial:
-  - [x] `php-open-source-saver/jwt-auth` v2.8.3 para autenticación JWT básica (instalado: v2.8.3, configuración publicada: config/jwt.php)
-  - [x] `laravel/octane` v2.13.3 con driver FrankenPHP (instalado: v2.13.4, configurado OCTANE_SERVER=frankenphp en .env)
-- [x] Ejecutar `composer install` dentro del contenedor (composer install ejecutado, vendor/autoload.php existe, todas las dependencias instaladas)
-- [x] NOTA: Otras dependencias (Reverb, Telescope, Scout, Horizon, etc.) se instalarán cuando sus servicios estén listos
+Análisis de lo que falta para que este sea un **boilerplate robusto**.
 
 ---
 
-## Fase 2: Configuración Inicial de Base de Datos (Semana 1-2)
+## ✅ Lo que YA existe
 
-### 2.1 Configuración de PostgreSQL Básica
-- [x] Configurar conexión PostgreSQL principal en `config/database.php` (conexión 'pgsql' configurada)
-- [x] Nombre de base de datos: `apygg` (configurado en .env: DB_DATABASE=apygg)
-- [x] Configurar pool de conexiones optimizado (configurado: 'pool' => env('DB_POOL', 10) en config/database.php, DB_POOL=10 en .env)
-- [x] Establecer timeout de conexión (configurado: 'timeout' => env('DB_TIMEOUT', 5) en config/database.php, DB_TIMEOUT=5 en .env)
-- [x] Crear base de datos `apygg` en servidor PostgreSQL (Docker) (creada y verificada)
-- [x] Verificar conectividad desde el contenedor (php artisan db:show funciona correctamente)
-
-### 2.2 Configuración de PgBouncer (Connection Pooler)
-- [x] Agregar servicio `pgbouncer` en `docker-compose.yml` con imagen oficial (configurado: imagen pgbouncer/pgbouncer:latest, perfil "prod")
-- [x] Configurar PgBouncer para modo `transaction` (recomendado para Laravel) (configurado: PGBOUNCER_POOL_MODE=transaction)
-- [x] Configurar pool size: `default_pool_size=25`, `max_client_conn=100` (configurado: PGBOUNCER_DEFAULT_POOL_SIZE=25, PGBOUNCER_MAX_CLIENT_CONN=100)
-- [x] Crear archivo de configuración `docker/pgbouncer/pgbouncer.ini` (archivo creado y configurado)
-- [x] Configurar autenticación con `userlist.txt` o variables de entorno (usando variables de entorno) (configurado: PGBOUNCER_AUTH_TYPE=md5, usando variables de entorno)
-- [x] Exponer puerto 6432 (PgBouncer) en lugar de 5432 (PostgreSQL directo) para producción (puerto 8017:6432 configurado)
-- [x] Actualizar variables de entorno: `DB_HOST=pgbouncer` para producción (configurado en env/prod.env.example: DB_HOST=pgbouncer, DB_PORT=6432)
-- [x] Mantener conexión directa a PostgreSQL en desarrollo (sin PgBouncer) (configurado en env/dev.env.example: DB_HOST=postgres, DB_PORT=5432)
-- [x] Documentar cuándo usar PgBouncer vs conexión directa (README.md creado) (documentación completa en docker/pgbouncer/README.md)
-- [x] NOTA: PgBouncer es opcional pero recomendado para producción con alta carga
-
-### 2.3 Primeras Migraciones Base (Esenciales)
-- [x] Crear migración para tabla `users` con UUID como PK (creada: 2024_01_01_000001_create_users_table.php, UUID como PRIMARY KEY)
-  - ⚠️ **Nota**: `sessions.user_id` es `bigInteger` (tabla del sistema Laravel), por lo que no hay relación directa con `users.id` (UUID). La tabla `sessions` se mantiene con `bigInteger` para compatibilidad.
-- [x] Crear migración para tabla `roles` (creada: 2024_01_01_000002_create_roles_table.php, UUID como PRIMARY KEY)
-- [x] Crear migración para tabla `permissions` (creada: 2024_01_01_000003_create_permissions_table.php, UUID como PRIMARY KEY)
-- [x] Crear migración para tabla `role_permission` (pivot) (creada: 2024_01_01_000004_create_role_permission_table.php, ID como PK con FKs UUID)
-- [x] Crear migración para tabla `user_role` (pivot) (creada: 2024_01_01_000005_create_user_role_table.php, ID como PK con FKs UUID)
-- [x] Crear migración para tabla `user_permission` (creada: 2024_01_01_000006_create_user_permission_table.php, ID como PK con FKs UUID)
-- [x] Ejecutar migraciones: `php artisan migrate` (todas las migraciones ejecutadas correctamente, batch [2])
-- [x] Verificar que las tablas se crearon correctamente (todas las tablas existen: users con UUID, roles con UUID, permissions con UUID, role_permission, user_role, user_permission)
-
-### 2.4 Configuración de Redis para Cache y Colas
-- [x] Configurar Redis como driver en `config/cache.php` (default: redis) (configurado: CACHE_STORE=redis en .env, Redis disponible en stores)
-- [x] Configurar Redis para sesiones en `config/session.php` (default: redis) (configurado: SESSION_DRIVER=redis en .env)
-- [x] Configurar Redis como driver de colas en `config/queue.php` (default: redis) (configurado: QUEUE_CONNECTION=redis en .env)
-- [x] Crear colas con prioridades: high, default, low (conexiones: redis-high, redis-default, redis-low) (creadas en config/queue.php: redis-high, redis-default, redis-low)
-- [x] Configurar timeout (60 segundos) (retry_after: 60) (configurado: REDIS_QUEUE_RETRY_AFTER=60 en .env, aplicado a todas las conexiones Redis)
-- [x] Configurar reintentos (3 intentos con backoff exponencial) (max_retries: 3, decorrelated_jitter) (configurado: REDIS_MAX_RETRIES=3, REDIS_BACKOFF_ALGORITHM=decorrelated_jitter en .env y config/database.php)
-- [x] Probar conectividad Redis desde Laravel (comando: php artisan redis:test) (verificado: Redis funciona correctamente, ping exitoso)
-
-### 2.5 Migraciones de Logs Básicas (Versión Simplificada)
-- [x] Crear migración para tabla `logs_api` (sin particionamiento por ahora) (creada: 2024_01_01_000007_create_api_logs_table.php, ID como PK, trace_id UUID, user_id UUID, índices en trace_id, user_id, created_at)
-- [x] Crear migración para tabla `logs_security` (sin particionamiento por ahora) (creada: 2024_01_01_000009_create_security_logs_table.php, ID como PK, trace_id UUID, user_id UUID, event_type enum, índices en trace_id, user_id, event_type, created_at)
-- [x] Crear migración para tabla `logs_activity` (sin particionamiento por ahora) (creada: 2024_01_01_000010_create_activity_logs_table.php, ID como PK, user_id UUID, model_type/model_id, action enum, índices en user_id, model_type/model_id, action, created_at)
-- [x] Crear índices básicos por created_at (índices creados en todas las tablas de logs: created_at, user_id, trace_id, y otros campos relevantes según tipo de log)
-- [x] NOTA: Particionamiento avanzado se implementará en Fase 9
-- [x] Ejecutar migraciones (todas las migraciones ejecutadas correctamente, batch [3], tablas creadas: logs_api, logs_security, logs_activity)
-
-### 2.6 Migraciones de Autenticación Básica
-- [x] Crear migración para tabla `password_reset_tokens` (creada en 2024_01_01_000001_create_users_table.php, tabla del sistema Laravel)
-- [x] Crear migración para tabla `jwt_blacklist` (creada: 2024_01_01_000011_create_jwt_blacklist_table.php, ID como PK, jti único, user_id UUID, expires_at, índices en jti, user_id, expires_at, created_at)
-- [x] Crear migración para tabla `api_keys` (creada: 2024_01_01_000012_create_api_keys_table.php, UUID como PK, user_id UUID FK, name, key único, scopes JSON, last_used_at, expires_at, soft deletes)
-- [x] Crear migración para tabla `sessions` (si se usa) (creada en 2024_01_01_000001_create_users_table.php, tabla del sistema Laravel)
-- [x] Ejecutar migraciones (todas las migraciones ejecutadas correctamente, batch [4], tablas creadas: jwt_blacklist, api_keys; password_reset_tokens y sessions ya existían)
+- Auth, Roles, Permissions, ApiKeys, Webhooks, Files, Notifications (FCM), Settings
+- Middlewares: RateLimit adaptativo, CORS, Security Headers, IP Whitelist, ETag, TraceId, Compression
+- Services bien segregados por responsabilidad
+- CI/CD: `ci.yml`, `cd.yml`, SonarCloud, Dependabot
+- Docker + Makefile
+- Telescope, Sentry, Backup, Cache, LogService
 
 ---
 
-## Fase 3: Infraestructura Core - Componentes Base (Semana 3-4)
-
-### 3.1 Implementación de Clases Base
-- [x] Crear `BaseController` en `app/Core/Controllers/`
-  - [x] Métodos CRUD base: index(), show(), store(), update(), destroy()
-  - [x] Métodos de respuesta: sendSuccess(), sendError(), sendPaginated()
-  - [x] Método loadRelations() para eager loading
-  - [x] Manejo de paginación estándar
-  - [x] Filtrado y ordenamiento
-- [x] Crear `BaseRequest` en `app/Core/Requests/`
-  - [x] Validación común de UUIDs, emails, fechas
-  - [x] Método authorize() con políticas
-  - [x] Sanitización automática
-  - [x] Mensajes de error en español
-- [x] Crear `BaseResource` en `app/Core/Resources/`
-  - [x] Formato estándar de respuestas
-  - [x] Método whenLoaded() para relaciones opcionales
-  - [x] Manejo de metadatos
-- [x] Crear `BaseModel` en `app/Core/Models/`
-  - [x] Timestamps por defecto
-  - [x] Soft deletes
-  - [x] UUID como primary key
-  - [x] Scopes comunes: active(), inactive(), recent(), oldest()
-
-### 3.2 Implementación de Traits Reutilizables
-- [x] Crear trait `HasUuid` en `app/Core/Traits/`
-  - [x] Generación automática de UUID en evento creating
-  - [x] Configuración de primary key
-- [x] Crear trait `LogsActivity` en `app/Core/Traits/`
-  - [x] Registro automático mediante Observers
-  - [x] Captura de antes/después
-  - [x] Filtrado de campos sensibles
-- [x] Crear trait `SoftDeletesWithUser` en `app/Core/Traits/`
-  - [x] Extiende soft deletes nativo
-  - [x] Registro de usuario que eliminó
-- [x] Crear trait `Searchable` en `app/Core/Traits/`
-  - [x] Integración con Meilisearch
-- [x] Crear trait `HasApiTokens` en `app/Core/Traits/`
-  - [x] Métodos para crear, revocar, listar tokens
-
-### 3.3 Reglas de Validación Reutilizables
-- [x] Crear `ValidUuid` en `app/Core/Rules/`
-- [x] Crear `ValidEmail` en `app/Core/Rules/`
-- [x] Crear `ValidPhone` en `app/Core/Rules/`
-- [x] Crear `ExistsInDatabase` en `app/Core/Rules/`
-- [x] Crear `UniqueInDatabase` en `app/Core/Rules/`
-- [x] Crear `StrongPassword` en `app/Core/Rules/`
-- [x] Crear `ValidDateRange` en `app/Core/Rules/`
-- [x] Crear `ValidJson` en `app/Core/Rules/`
-- [x] Crear `ValidBase64Image` en `app/Core/Rules/`
-- [x] Todos con mensajes de error en español
-
-### 3.4 Implementación de Servicios Base
-- [x] Crear `CacheService` en `app/Infrastructure/Services/`
-  - [x] Métodos: get(), set(), forget(), remember()
-  - [x] Tags para invalidación selectiva
-  - [x] Método getAllMetrics()
-- [x] Crear `LogService` en `app/Infrastructure/Services/`
-  - [x] Métodos: log(), logApi(), logActivity(), logSecurity(), logError()
-  - [x] Integración con Sentry
-  - [x] Contexto enriquecido (trace_id, user_id, IP)
-- [x] Crear `NotificationService` en `app/Infrastructure/Services/`
-  - [x] Métodos para email, SMS, push, database
-  - [x] Colas asíncronas
-  - [x] Historial de notificaciones
-- [x] Crear `SecurityService` en `app/Infrastructure/Services/`
-  - [x] Encriptación/desencriptación
-  - [x] Hashing de contraseñas
-  - [x] Validación de IP whitelist
-  - [x] Detección de comportamiento sospechoso
-- [x] Crear `FileService` en `app/Infrastructure/Services/`
-  - [x] Métodos: upload(), delete(), getUrl(), exists()
-  - [x] Validación de archivos
-  - [x] Manejo de imágenes
-
-### 3.5 Helpers y Utilidades
-- [x] Crear `ApiResponse` en `app/Helpers/`
-  - [x] Métodos estáticos para respuestas estándar
-  - [x] Formato RFC 7807 para errores
-  - [x] Headers estándar incluidos
-- [x] Crear `DateHelper` en `app/Helpers/`
-  - [x] Formateo de fechas
-  - [x] Conversión de timezones
-  - [x] Cálculo de diferencias
-- [x] Crear `SecurityHelper` en `app/Helpers/`
-  - [x] Generación de tokens seguros
-  - [x] Validación de contraseñas
-  - [x] Sanitización de HTML
-- [x] Crear `StringHelper` en `app/Helpers/`
-  - [x] Slugs, truncamiento
-  - [x] Conversión de casos
-  - [x] Enmascaramiento de datos sensibles
-
----
-
-## Fase 4: Manejo Global de Excepciones (Semana 4)
-
-### 4.1 Exception Handler Personalizado
-- [x] Crear/Modificar `app/Exceptions/Handler.php`
-  - [x] Método render() personalizado (en bootstrap/app.php)
-  - [x] Transformación automática a RFC 7807
-  - [x] Manejo específico de excepciones comunes (404, 422, 500, etc.)
-  - [x] Logging automático de errores (ahora solo en Sentry)
-  - [x] Integración con Sentry para errores críticos
-- [x] Crear excepciones personalizadas en `app/Exceptions/`
-  - [x] `ApiException`
-  - [x] `BusinessLogicException`
-  - [x] `ExternalServiceException`
-- [x] Configurar formato estándar de errores
-
----
-
-## Fase 5: Sistema de Autenticación (Semana 5)
-
-### 5.1 Configuración de JWT
-- [x] Instalar y publicar configuración de `php-open-source-saver/jwt-auth`
-- [x] Generar `JWT_SECRET` seguro
-- [x] Configurar tiempos de expiración (access: 15 min, refresh: 7 días)
-- [x] Crear migración y tabla `jwt_blacklist`
-- [x] Configurar claims estándar (iss, aud, exp, iat, sub)
-- [x] Implementar `JWTSubject` en modelo `User`
-- [x] Configurar guard `api` con driver `jwt` en `config/auth.php`
-
-### 5.2 Autenticación JWT - AuthController
-- [x] Crear `app/Modules/Auth/Controllers/AuthController.php`
-  - [x] `POST /auth/login` - Login con email/contraseña
-  - [x] `POST /auth/register` - Registro (si está habilitado)
-  - [x] `POST /auth/logout` - Logout y revocación
-  - [x] `POST /auth/refresh` - Renovar token
-  - [x] `GET /auth/me` - Datos del usuario autenticado
-- [x] Crear `LoginRequest` y `RegisterRequest` con validaciones
-- [x] Crear `AuthResource` para transformar respuestas
-
-### 5.3 Servicios de Autenticación
-- [x] Crear `TokenService` en `app/Modules/Auth/Services/`
-  - [x] Generación de access tokens
-  - [x] Generación de refresh tokens
-  - [x] Validación de tokens
-  - [x] Revocación de tokens
-  - [x] Renovación con rotación
-- [x] Crear `AuthService` en `app/Modules/Auth/Services/`
-  - [x] Método authenticate($credentials)
-  - [x] Método generateTokens($user)
-  - [x] Método refreshToken($token)
-  - [x] Método revokeToken($token)
-  - [x] Manejo de intentos fallidos
-
-### 5.4 Recuperación de Contraseña
-- [x] Crear `PasswordController` en `app/Modules/Auth/Controllers/`
-  - [x] `POST /api/auth/forgot-password`
-  - [x] `POST /api/auth/reset-password`
-  - [x] `POST /api/auth/change-password`
-- [x] Crear `PasswordRequest` con validaciones (ForgotPasswordRequest, ResetPasswordRequest, ChangePasswordRequest)
-- [x] Implementar lógica de tokens de reset con expiración (PasswordService)
-- [x] Crear notificación de recuperación de contraseña (ResetPasswordNotification)
-
-### 5.5 Rutas de Autenticación
-- [x] Crear `routes/api/auth.php` con estructura modular
-- [x] Registrar rutas en `routes/api.php` usando `require`
-- [x] Aplicar middleware de rate limiting a endpoints de auth (5 req/min para públicos, 30 req/min para protegidos)
-
----
-
-## Fase 6: Sistema RBAC (Semana 6)
-
-### 6.1 Modelos de RBAC
-- [x] Crear `Role` en `app/Modules/Users/Models/`
-  - [x] Campos: id (UUID), name, display_name, description
-  - [x] Relación con permissions (muchos-a-muchos)
-  - [x] Relación con users (muchos-a-muchos)
-  - [x] Métodos helper: hasPermission(), assignPermission(), removePermission()
-- [x] Crear `Permission` en `app/Modules/Users/Models/`
-  - [x] Campos: id (UUID), name, display_name, resource, action, description
-  - [x] Relación con roles (muchos-a-muchos)
-  - [x] Relación con users (muchos-a-muchos para permisos directos)
-  - [x] Scopes: forResource(), forAction(), forResourceAndAction()
-- [x] Agregar relaciones roles() y permissions() al modelo `User`
-
-### 6.2 Servicios de RBAC
-- [x] Crear `RoleService` en `app/Services/`
-  - [x] Métodos CRUD para roles
-  - [x] Método assignPermission()
-  - [x] Método removePermission()
-  - [x] Método syncPermissions()
-  - [x] Cache y auditoría integrados
-- [x] Crear `PermissionService` en `app/Services/`
-  - [x] Métodos CRUD para permisos
-  - [x] Métodos de validación (validateNameFormat, validateNameUnique, validateResourceAction)
-  - [x] Filtros por recurso y acción
-  - [x] Cache y auditoría integrados
-
-### 6.3 Policies de Laravel
-- [x] Crear `UserPolicy` en `app/Policies/`
-  - [x] Métodos: viewAny, view, create, update, delete, restore, forceDelete
-  - [x] Verificación de permisos con RBAC
-  - [x] Logging de acciones autorizadas
-- [x] Crear `RolePolicy` en `app/Policies/`
-  - [x] Métodos: viewAny, view, create, update, delete
-  - [x] Métodos adicionales: assignPermission, removePermission
-  - [x] Protección especial para rol 'admin'
-- [x] Crear `PermissionPolicy` en `app/Policies/`
-  - [x] Métodos: viewAny, view, create, update, delete
-  - [x] Solo administradores pueden crear/actualizar/eliminar
-- [x] Crear `AuthServiceProvider` y registrar policies
-- [x] Agregar métodos helper al modelo User (hasPermission, hasRole, isAdmin)
-
-### 6.4 Middleware de RBAC
-- [x] Crear `CheckPermission` middleware
-  - [x] Verificación de permisos RBAC
-  - [x] Soporte para múltiples permisos (OR)
-  - [x] Logging de accesos denegados
-- [x] Crear `CheckRole` middleware
-  - [x] Verificación de roles RBAC
-  - [x] Soporte para múltiples roles (OR)
-  - [x] Logging de accesos denegados
-- [x] Registrar middleware en `bootstrap/app.php` (Laravel 12)
-  - [x] Alias 'permission' y 'role' registrados
-
-### 6.5 Seeders de RBAC
-- [x] Crear `RoleSeeder` con roles base: Admin, User, Guest
-  - [x] Roles con descripciones y display names
-- [x] Crear `PermissionSeeder` con permisos base
-  - [x] Estructura recurso.accion (users.create, roles.read, etc.)
-  - [x] Permisos para: users, roles, permissions, posts, categories, comments
-  - [x] Display names y descripciones automáticas
-- [x] Asignar permisos iniciales a roles según jerarquía
-  - [x] Admin: Todos los permisos
-  - [x] User: Permisos básicos (create, read, update, delete en posts/comments/categories)
-  - [x] Guest: Solo lectura (read en todos los recursos)
-- [x] Registrar en `DatabaseSeeder`
-
----
-
-## Fase 7: Módulo de Usuarios (Semana 7)
-
-### 7.1 Modelo User y Relaciones
-- [x] Crear/Extender `User` en `app/Models/` (no se usa carpeta modules)
-  - [x] Aplicar traits: HasUuids (nativo), LogsActivity, SoftDeletesWithUser, HasApiTokens
-  - [x] Relaciones: roles(), permissions(), apiTokens(), activityLogs()
-  - [x] Scopes: active(), inactive(), byEmail(), byRole()
-  - [x] Métodos helper: isAdmin(), hasPermission(), hasAnyPermission(), hasAllPermissions(), hasRole(), hasAnyRole()
-
-### 7.2 UserController y Endpoints
-- [x] Crear `UserController` en `app/Http/Controllers/Users/`
-  - [x] `GET /users` - Listar con paginación, filtrado, ordenamiento
-  - [x] `GET /users/{id}` - Obtener usuario específico (con UserDetailResource)
-  - [x] `POST /users` - Crear usuario (solo con permiso users.create)
-  - [x] `PUT /users/{id}` - Actualizar usuario (con autorización por policy)
-  - [x] `DELETE /users/{id}` - Eliminar usuario (soft delete, solo con permiso users.delete)
-  - [x] `POST /users/{id}/restore` - Restaurar usuario (con permiso users.restore)
-  - [x] `POST /users/{id}/roles` - Asignar roles (con permiso users.update)
-  - [x] `DELETE /users/{id}/roles/{roleId}` - Remover rol (con permiso users.update)
-  - [x] `GET /users/{id}/activity` - Historial de actividad
-  - [x] Usa UserService para lógica de negocio
-  - [x] Autorización con Policies
-  - [x] Rutas configuradas en `routes/api/users.php`
-
-### 7.3 Form Requests de Usuario
-- [x] Crear `StoreUserRequest`
-  - [x] Validación: email único, password fuerte, nombre requerido
-  - [x] Validación de UUIDs para roles
-  - [x] Sanitización automática (heredada de BaseFormRequest)
-  - [x] Mensajes personalizados en español
-- [x] Crear `UpdateUserRequest`
-  - [x] Validación: email único (excepto si es el mismo usuario)
-  - [x] Campos opcionales con `sometimes` y `nullable`
-  - [x] Sanitización automática (heredada de BaseFormRequest)
-  - [x] Mensajes personalizados en español
-- [x] Crear `AssignRoleRequest`
-  - [x] Validación de array de roles (mínimo 1, máximo 10)
-  - [x] Validación de UUIDs y existencia de roles
-  - [x] Validación de roles duplicados (`distinct`)
-  - [x] Sanitización automática (heredada de BaseFormRequest)
-  - [x] Mensajes personalizados en español
-
-### 7.4 Resources de Usuario
-- [x] Crear `UserResource` - Transformación básica
-  - [x] Campos básicos: id, name, email, email_verified_at
-  - [x] Relaciones opcionales: roles, permissions (solo si se cargan)
-  - [x] Timestamps formateados en ISO 8601
-  - [x] Oculta información sensible
-- [x] Crear `UserDetailResource` - Con permisos y tokens
-  - [x] Información completa del usuario
-  - [x] Roles con descripción
-  - [x] Permisos directos asignados
-  - [x] Permisos efectivos (combinando roles + directos, sin duplicados)
-  - [x] API Tokens (solo para propio usuario o admin)
-  - [x] Historial de actividad (opcional con eager loading)
-  - [x] Control de visibilidad según permisos
-  - [x] Información adicional: is_admin, last_login_at
-
-### 7.5 UserService y Lógica
-- [x] Crear `UserService` en `app/Services/`
-  - [x] Métodos CRUD: create(), update(), delete(), restore(), find()
-  - [x] Gestión de roles: assignRoles(), removeRole()
-  - [x] Gestión de permisos: assignPermissions(), removePermission()
-  - [x] Búsqueda con filtros avanzados: list() con paginación, búsqueda por texto, filtro por rol/email
-  - [x] Integración con CacheService (TTL 1 hora)
-  - [x] Integración con LogService (auditoría de acciones)
-  - [x] Validación de email único
-  - [x] Hash automático de passwords
-  - [x] Asignación de rol 'user' por defecto
-  - [x] Protección contra remover último rol de admin
-  - [x] Método getActivityLogs() para historial de actividad
-  - [x] Notificación de bienvenida (implementado con WelcomeNotification usando MailMessage, sin Blade)
-
-### 7.6 Rutas de Usuarios
-- [x] Crear `routes/api/users.php`
-- [x] Registrar rutas en `routes/api.php` con `require`
-- [x] Aplicar middleware de autenticación (`auth:api`)
-- [x] Aplicar middleware de autorización (`permission:`)
-- [x] Prefijo `users` configurado correctamente
-- [x] Rutas CRUD básicas: GET, POST, PUT, DELETE
-- [x] Rutas adicionales: restore, assignRoles, removeRole, getActivity
-- [x] Nombres de rutas asignados (route names)
-
-### 7.7 Tests de Usuarios
-- [x] Tests unitarios de UserService
-- [x] Tests de integración para endpoints CRUD
-- [x] Tests de permisos y roles
-
----
-
-## Fase 8: Feature Flags (Semana 7)
-
-### 8.1 Configuración de Feature Flags
-- [x] Crear `config/features.php` con array de features
-  - [x] Estructura simple: enabled, description
-- [x] Crear helper `Feature` class
-  - [x] Método estático `enabled()`
-  - [x] Cache automático de configuración
-- [x] Documentar cómo migrar a base de datos en el futuro
-
----
-
-## Fase 9: Sistema de Logging y Auditoría (Semana 8)
-
-### 9.1 Migraciones de Logs (ya creadas en Fase 2)
-- [x] Verificar migraciones de: logs_api, logs_security, logs_activity
-  - [x] ✅ Todas las migraciones están creadas y ejecutadas correctamente
-  - [x] ✅ Estructura correcta según estrategia del proyecto (ID auto-incrementable para logs)
-  - [x] ✅ Índices correctos para optimización
-  - [x] ✅ Verificación documentada en `docs/fase9-revision-migraciones-logs.md`
-
-### 9.2 Modelos de Logs
-- [x] Crear `ApiLog` en `app/Infrastructure/Logging/Models/`
-  - [x] ✅ Modelo creado con scopes útiles (byTraceId, byUserId, byMethod, slowRequests, etc.)
-  - [x] ✅ Usa ID auto-incrementable (NO UUID como primary key según estrategia)
-  - [x] ✅ Campos UUID (trace_id, user_id) manejados como campos normales
-- [x] ~~Crear `ErrorLog` en `app/Infrastructure/Logging/Models/`~~ (Eliminado - ahora se usa solo Sentry)
-  - [x] ✅ Modelo creado con constantes de severidad
-  - [x] ✅ Métodos helper (markAsResolved, isResolved)
-  - [x] ✅ Scopes para filtrar por severidad y estado
-- [x] Crear `SecurityLog` en `app/Infrastructure/Logging/Models/`
-  - [x] ✅ Modelo creado con constantes de tipos de eventos
-  - [x] ✅ Scopes para eventos críticos y sospechosos
-  - [x] ✅ Método isCritical() para identificar eventos importantes
-- [x] Crear `ActivityLog` en `app/Infrastructure/Logging/Models/`
-  - [x] ✅ Modelo creado con relación polimórfica al modelo auditado
-  - [x] ✅ Métodos helper (getChangedFields, hasChanges)
-  - [x] ✅ Scopes para filtrar por acción (created, updated, deleted, restored)
-- [x] **NO aplicar trait HasUuid** (correcto según estrategia: logs usan ID auto-incrementable)
-
-### 9.3 Loggers Especializados
-- [x] Crear `ActivityLogger` en `app/Infrastructure/Logging/Loggers/`
-  - [x] ✅ Logger creado con métodos: log(), logCreated(), logUpdated(), logDeleted(), logRestored()
-  - [x] ✅ Filtrado automático de campos sensibles (password, token, etc.)
-  - [x] ✅ Captura de cambios antes/después (old_values, new_values)
-  - [x] ✅ Listo para usar con Observers (ver Fase 9.4 para implementación de Observers)
-- [x] Crear `AuthLogger` en `app/Infrastructure/Logging/Loggers/`
-  - [x] ✅ Métodos: logLoginSuccess(), logLoginFailure(), logPasswordChanged(), logTokenRevoked()
-  - [x] ✅ Registro de intentos de login con IP y user agent
-  - [x] ✅ Detección automática de patrones sospechosos (múltiples fallos)
-  - [x] ✅ Cache de intentos fallidos con TTL configurable
-  - [x] ✅ Métodos helper: hasSuspiciousActivity(), getFailedAttempts(), clearFailedAttempts()
-- [x] Crear `SecurityLogger` en `app/Infrastructure/Logging/Loggers/`
-  - [x] ✅ Métodos: logPermissionDenied(), logSuspiciousActivity(), logAccountLocked(), logAccountUnlocked()
-  - [x] ✅ Registro de eventos de seguridad con contexto completo
-  - [x] ✅ Método genérico logEvent() para eventos personalizados
-  - [x] ✅ Listo para usar en middleware (ver Fase 10 para implementación de middleware)
-- [x] Crear `ApiLogger` en `app/Infrastructure/Logging/Loggers/`
-  - [x] ✅ Método logRequest() para registrar requests/responses completos
-  - [x] ✅ Sanitización automática de datos sensibles (headers, body, query)
-  - [x] ✅ Cálculo automático de tiempo de respuesta
-  - [x] ✅ Exclusión configurable de rutas (health, ping, telescope, etc.)
-  - [x] ✅ Listo para usar en middleware (ver Fase 10 para implementación de middleware)
-
-### 9.4 Configuración de Canales
-- [x] ~~Crear canal `database_logs`~~ (NO necesario - decisión arquitectónica: logs van en tablas, no canal separado)
-- [x] ~~Configurar `LogService` para usar canal database~~ (NO necesario)
-- [x] Integración con Sentry para errores críticos
-  - [x] ✅ Configurado canal `sentry` con niveles por entorno
-  - [x] ✅ Dev: solo `critical` (evita spam en desarrollo)
-  - [x] ✅ Staging/Prod: `error` y superior
-  - [x] ✅ LogService actualizado para usar canal `sentry` automáticamente
-- [x] Configurar niveles de log por canal y entorno
-  - [x] ✅ Archivos (`single`/`daily`): dev=`debug`, staging/prod=`error`
-  - [x] ✅ Sentry: dev=`critical`, staging/prod=`error`
-  - [x] ✅ Slack: dev=`critical`, prod=`error`
-  - [x] ✅ Configuración automática según `APP_ENV`
-
-### 9.5 Tests de Logging
-- [x] Tests de que los logs se registran correctamente
-  - [x] Tests completos para ActivityLogger (created, updated, deleted, filtrado de campos sensibles)
-  - [x] Tests completos para AuthLogger (login success/failure, password changed, detección de actividad sospechosa)
-  - [x] Tests completos para SecurityLogger (permission denied, suspicious activity, account locked)
-  - [x] Tests completos para ApiLogger (log request, exclusión de paths, sanitización de datos)
-  - [x] Tests de modelos (ActivityLog, SecurityLog, ApiLog)
-  - [x] Tests de scopes y métodos helper
-- [x] Tests de captura de contexto (trace_id, user_id, IP)
-
----
-
-## Fase 10: Middleware y Seguridad (Semana 9)
-
-### 10.1 Middleware Personalizados
-- [x] Crear `TraceIdMiddleware` en `app/Http/Middleware/`
-  - [x] Generación de UUID único por request
-  - [x] Inyección en headers (X-Trace-ID)
-- [x] Crear `SecurityLoggerMiddleware`
-  - [x] Registro de eventos de seguridad
-  - [x] Detección de patrones anómalos
-- [x] Crear `RateLimitLoggerMiddleware`
-  - [x] Registro de intentos bloqueados
-  - [x] Alertas de abuso
-- [x] Crear `CorsMiddleware`
-  - [x] Configuración por entorno
-  - [x] Whitelist de dominios
-  - [x] Headers permitidos
-- [x] ~~Crear `ApiVersionMiddleware`~~ (Cancelado: No se versionará la API)
-  - [x] ~~Headers de versión~~ (Cancelado)
-  - [x] ~~Routing condicional~~ (Cancelado)
-- [x] Crear `TransformRequestMiddleware`
-  - [x] Normalización de requests
-- [x] Crear `TransformResponseMiddleware`
-  - [x] Transformación de respuestas
-- [x] Crear `SanitizeInput` middleware
-  - [x] Limpieza de inputs
-
-### 10.2 Configuración de CORS
-- [x] Crear `config/cors.php`
-  - [x] `allowed_origins` por entorno (dev, staging, prod: todos usan ALLOWED_ORIGINS desde env)
-  - [x] `allowed_methods`, `allowed_headers` (GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD)
-  - [x] `exposed_headers`, `max_age` (3600 segundos por defecto)
-  - [x] `supports_credentials` (true por defecto)
-- [x] Crear middleware `CorsMiddleware` en `app/Http/Middleware/`
-- [x] Registrar middleware en `bootstrap/app.php`
-
-### 10.3 Rate Limiting Adaptativo
-- [x] Crear `config/rate-limiting.php`
-- [x] Configurar límites por endpoint:
-  - [x] Auth endpoints: 5 por minuto
-  - [x] Lectura: 60 por minuto
-  - [x] Escritura: 30 por minuto
-  - [x] Admin: 10 por minuto
-- [x] Headers informativos en respuestas
-- [x] Implementar en middleware
-
-### 10.4 Headers de Seguridad
-- [x] Crear `SecurityHeadersMiddleware`
-  - [x] X-Frame-Options, X-Content-Type-Options
-  - [x] X-XSS-Protection, Strict-Transport-Security
-  - [x] Content-Security-Policy, Referrer-Policy
-
-### 10.5 Otros Middleware
-- [x] Crear `IpWhitelist` middleware para endpoints críticos
-- [x] Registrar todos los middleware en `bootstrap/app.php` (Laravel 12 usa bootstrap/app.php en lugar de Kernel.php)
-
----
-
-## Fase 11: Health Checks y Monitoreo (Semana 9)
-
-### 11.1 Health Check Endpoints
-- [x] Crear `HealthController` en `app/Http/Controllers/Health/`
-  - [x] `GET /health` - Health check básico sin autenticación (alias de ready)
-  - [x] `GET /health/live` - Liveness probe (solo verifica que la app responde)
-  - [x] `GET /health/ready` - Readiness probe (verifica servicios críticos: DB, Redis)
-  - [x] `GET /health/detailed` - Health check completo (autenticado, verifica todos los servicios)
-- [x] Implementar verificaciones de servicios:
-  - [x] Database conectividad (con latencia en ms)
-  - [x] Redis conectividad (con latencia en ms y prueba de read/write)
-  - [x] Meilisearch (opcional, solo si está configurado)
-  - [x] Horizon (opcional, solo si está instalado)
-- [x] Respuestas rápidas y ligeras (timeout máximo 2-3 segundos)
-- [x] Formato JSON estándar con status, timestamp y servicios
-- [x] Excluidos de rate limiting y logging excesivo
-- [x] Versión de aplicación en config/app.php
-
-### 11.2 Configuración para Kubernetes
-- [x] Documentar probes recomendadas (documentación completa en `docs/kubernetes-health-checks.md`)
-- [x] Documentar timeouts y thresholds (valores recomendados por escenario: desarrollo, producción, alta carga)
-- [x] Ejemplos de configuración de Deployment completo
-- [x] Troubleshooting común y comandos útiles
-- [x] Explicación de Liveness, Readiness y Startup probes
-
-### 11.3 Laravel Telescope (Desarrollo)
-- [x] Instalar y publicar Telescope (versión 5.16.1 instalada, migraciones ejecutadas)
-- [x] Configurar dashboard en `/telescope` (path configurado, registrado en bootstrap/providers.php)
-- [x] Filtros para datos sensibles (configurados en CacheWatcher y RequestWatcher: password, token, api_token, secret, key, authorization)
-- [x] Deshabilitar en producción (configurado para habilitarse solo en local/dev, con variable TELESCOPE_ENABLED)
-- [x] Rutas ignoradas: health*, telescope*, horizon* (configurado en ignore_paths)
-- [x] Autorización configurada en AppServiceProvider (solo desarrollo)
-
----
-
-## Fase 12: Procesamiento Asíncrono con Colas (Semana 10)
-
-### 12.1 Configuración de Colas
-- [x] Configurar Redis como driver en `config/queue.php`
-- [x] Crear colas con prioridades: high, default, low
-- [x] Configurar timeout (60 segundos)
-- [x] Configurar reintentos (3 intentos con backoff exponencial)
-
-### 12.2 Jobs Base
-- [x] Crear `Job` en `app/Jobs/`
-  - [x] Logging integrado
-  - [x] Manejo de excepciones
-  - [x] Retry automático
-  - [x] Notificaciones de fallos
-
-### 12.3 Jobs Específicos
-- [x] Crear `SendWelcomeEmailJob`
-- [x] Crear `SendPasswordResetEmailJob`
-- [x] Crear `SendNotificationJob`
-- [x] Crear `ProcessApiLogJob`
-- [x] Crear `ProcessActivityLogJob`
-
-### 12.4 Laravel Horizon
-- [x] Instalar Horizon
-- [x] Configurar workers en `config/horizon.php`
-- [x] Configuración de colas por prioridad
-- [x] Dashboard accesible en `/horizon`
-
-### 12.5 Scheduler de Tareas
-- [x] Configurar en `routes/console.php` (Laravel 12):
-  - [x] Limpieza JWT blacklist: cada hora (`CleanJwtBlacklistCommand`)
-  - [x] Limpieza tokens de reset: cada 24h (`CleanPasswordResetTokensCommand`)
-  - [x] Limpieza de logs antiguos: diariamente (`CleanOldLogsCommand`)
-  - [x] Generación de reportes: semanalmente (`GenerateReportsCommand`)
-  - [x] Backup de base de datos: diariamente (`BackupDatabaseCommand`)
-  - [x] Sincronización de índices de búsqueda: cada hora (`SyncSearchIndexesCommand`)
-  - [x] Verificación de salud: cada 5 minutos (`HealthCheckCommand`)
-
----
-
-## Fase 13: Sistema de Eventos y Listeners (Semana 10-11)
-
-### 13.1 Estructura de Eventos
-- [x] Crear directorios: `app/Events/`, `app/Listeners/`
-- [x] Configurar `EventServiceProvider`
-
-### 13.2 Eventos de Usuario
-- [x] Crear `UserCreated` event
-- [x] Crear `UserUpdated` event
-- [x] Crear `UserDeleted` event
-- [x] Crear `UserRestored` event
-- [x] Crear `UserLoggedIn` event
-- [x] Crear `UserLoggedOut` event
-
-### 13.3 Eventos de Autorización
-- [x] Crear `RoleAssigned` event
-- [x] Crear `RoleRemoved` event
-- [x] Crear `PermissionGranted` event
-- [x] Crear `PermissionRevoked` event
-
-### 13.4 Listeners
-- [x] Crear `LogUserActivity` listener
-- [x] Crear `LogAuthEvents` listener
-- [x] Crear `SendWelcomeEmail` listener
-- [x] Crear `InvalidateUserCache` listener
-- [x] Crear `InvalidatePermissionsCache` listener
-- [x] Registrar en `EventServiceProvider`
-
----
-
-## Fase 14: API Keys y Autenticación Avanzada (Semana 11)
-
-### 14.1 Modelo de API Keys
-- [x] Crear `ApiKey` en `app/Models/` (estructura estándar, sin app/Modules)
-  - [x] Campos: name, key (hashed SHA256), user_id, scopes (JSON), last_used_at, expires_at
-  - [x] Prefijo identificable: `apygg_live_`, `apygg_test_` (configurado en config/api-keys.php)
-  - [x] Relación belongsTo con User
-  - [x] Scopes: active(), expired(), byUser()
-  - [x] Métodos: isExpired(), isActive(), hasScope(), hasAnyScope(), hasAllScopes()
-  - [x] Soft deletes habilitado
-
-### 14.2 Controlador de API Keys
-- [x] Crear `ApiKeyController` en `app/Http/Controllers/ApiKeys/`
-  - [x] `GET /api-keys` - Listar keys del usuario autenticado (con paginación)
-  - [x] `POST /api-keys` - Crear nueva key (retorna key completa solo en creación)
-  - [x] `GET /api-keys/{id}` - Ver detalles de key específica
-  - [x] `DELETE /api-keys/{id}` - Revocar key
-  - [x] `POST /api-keys/{id}/rotate` - Rotación de key (generar nueva con período de gracia)
-  - [x] Usa `auth:api` middleware (JWT) para autenticación
-  - [x] Form Requests: StoreApiKeyRequest, RotateApiKeyRequest
-  - [x] Resource: ApiKeyResource (nunca expone hash de key)
-
-### 14.3 Middleware de API Keys
-- [x] Crear `AuthenticateApiKey` middleware en `app/Http/Middleware/`
-  - [x] Lee API Key de header `X-API-Key` o `Authorization: Bearer {key}`
-  - [x] Valida key por hash SHA256, verifica expiración y estado activo
-  - [x] Autentica usuario asociado con `auth()->loginUsingId()`
-  - [x] Actualiza `last_used_at` en background
-  - [x] Registra uso en SecurityLog
-  - [x] Registrado como alias `auth:api-key` en bootstrap/app.php
-- [x] Crear `CheckApiKeyScope` middleware en `app/Http/Middleware/`
-  - [x] Verifica que request fue autenticado con API Key (no JWT)
-  - [x] Valida scopes requeridos contra scopes de la key
-  - [x] Soporte para scope wildcard `*` (acceso total)
-  - [x] Registra denegación en SecurityLog
-  - [x] Registrado como alias `api-key-scope` en bootstrap/app.php
-
-### 14.4 Sistema de Scopes
-- [x] Definir scopes granulares en `config/api-keys.php`: `users.read`, `users.write`, `users.create`, `users.delete`, etc.
-- [x] Formato de scopes: `resource.action` (compatible con permisos RBAC)
-- [x] Asignación de múltiples scopes por key (array JSON)
-- [x] Validación de scopes en Form Requests (regex: `resource.action` o `*`)
-- [x] Validación de scopes disponibles contra lista configurada
-- [x] Scope wildcard `*` para acceso total
-
-### 14.5 Servicios y Configuración
-- [x] Crear `ApiKeyService` en `app/Services/`
-  - [x] Métodos CRUD: create(), update(), delete(), find(), list()
-  - [x] Método rotate() con período de gracia (7 días)
-  - [x] Método validate() con cache (5 min TTL)
-  - [x] Integración con CacheService y LogService
-- [x] Crear `config/api-keys.php` con configuración completa
-  - [x] Prefijos: `apygg_live_`, `apygg_test_`
-  - [x] Longitud de key: 64 caracteres
-  - [x] Lista de scopes disponibles
-  - [x] Período de gracia para rotación: 7 días
-  - [x] TTL de cache: 5 minutos
-
-### 14.6 Factory y Tests
-- [x] Crear `ApiKeyFactory` en `database/factories/`
-  - [x] Genera keys con prefijos correctos (live/test)
-  - [x] Scopes aleatorios de lista válida
-  - [x] Estados: neverExpires(), expired(), withAllScopes(), withoutScopes()
-
----
-
-## Fase 15: Búsqueda con Meilisearch (Opcional, Semana 12)
-
-### 15.1 Configuración de Meilisearch
-- [x] Instalar Meilisearch en Docker (si está disponible) (servicio configurado en docker-compose.yml)
-- [x] Instalar Laravel Scout y driver (ya instalados: laravel/scout ^10.17, meilisearch/meilisearch-php ^1.15)
-- [x] Configurar en `config/scout.php` (driver: meilisearch, batch size: 500)
-- [x] Configurar batch size y sincronización (chunk.searchable: 500, chunk.unsearchable: 500)
-
-### 15.2 Modelos Searchable
-- [x] Aplicar trait `Searchable` a User
-- [x] Implementar `toSearchableArray()`
-- [x] Configurar filtros y facetas
-- [x] Sincronizar índices: `php artisan scout:import`
-
-### 15.3 SearchController
-- [x] Crear endpoint `GET /search` (sin versión según reglas del proyecto)
-- [x] Búsqueda global en múltiples modelos
-- [x] Filtros y facetas
-
----
-
-## Fase 2.5: Instalación de Dependencias Adicionales (Semana 2)
-
-### 2.5.1 Dependencias de Observabilidad y Desarrollo
-- [x] Instalar `laravel/telescope` para observabilidad en desarrollo (instalado: ^5.16.1 en require-dev)
-- [x] Instalar `spatie/laravel-query-builder` para filtros estandarizados (instalado: ^6.4.0)
-- [x] Instalar `dedoc/scramble` para documentación automática de API (instalado: ^0.13.10)
-- [x] Ejecutar `composer install` (ejecutado correctamente)
-
-### 2.5.2 Dependencias de Funcionalidades Avanzadas (Opcionales)
-- [x] Instalar `laravel/reverb` para WebSockets nativo (instalado: ^1.5)
-- [x] Instalar `laravel/scout` para búsqueda full-text (instalado: ^10.17)
-- [x] Instalar `laravel/horizon` para gestión de colas avanzada (instalado: ^5.43)
-- [x] Instalar `sentry/sentry-laravel` para logging de errores (instalado: ^4.15, configurado en config/sentry.php)
-- [x] Ejecutar `composer install` (ejecutado correctamente)
-
-### 2.5.3 Configuración de FrankenPHP
-- [x] Configurar FrankenPHP para desarrollo y producción
-  - [x] Puerto configurable (PORT para PaaS como Railway) (configurado: PORT=${PORT:-8000} en entrypoint.sh)
-  - [x] SSL automático en producción (Let's Encrypt) (configurado: Caddyfile con SSL opcional mediante USE_FRANKENPHP_SSL)
-  - [x] Compresión HTTP habilitada (configurado: encode zstd gzip en Caddyfile)
-  - [x] Rate limiting a nivel de aplicación (ya implementado: AdaptiveRateLimitingMiddleware en Laravel)
-- [x] Probar FrankenPHP en contenedor (funcionando correctamente)
-- [x] Documentación creada en `docs/frankenphp-configuration.md`
-
----
-
-## Fase 16: Documentación de API Interactiva (Semana 13)
-
-### 17.1 Instalación de Scramble
-- [x] Instalar `dedoc/scramble` (ya estaba instalado en Fase 2.5.1: ^0.13.10)
-- [x] Publicar configuración (publicado: config/scramble.php)
-- [x] Configurar en `config/scramble.php` (configurado: título, descripción, versión, tema)
-- [x] Configurar Gate `viewApiDocs` en AppServiceProvider para acceso en desarrollo
-- [x] Actualizar ruta en routes/api.php para apuntar a `/docs/api`
-
-### 17.2 Documentación Automática
-- [x] Verificar que todos los endpoints estén documentados (20 rutas detectadas: auth, users, api-keys, health)
-- [x] Documentación de Form Requests (Scramble genera automáticamente desde validaciones)
-- [x] Documentación de Resources (Scramble genera esquemas automáticamente)
-- [x] Ejemplos de requests/responses (Scramble genera ejemplos básicos automáticamente)
-- [x] Documentación de autenticación (endpoints documentados, validaciones y esquemas generados)
-
-### 17.3 Dashboard de Scramble
-- [x] Acceder a `/docs/api` (interfaz web funcionando correctamente)
-- [x] Verificar que esté generada correctamente (OpenAPI JSON disponible en `/docs/api.json`)
-- [x] Probar endpoints interactivos (interfaz Stoplight Elements funcionando)
-
----
-
-## Fase 17: Factories y Seeders para Testing (Semana 13)
-
-### 18.1 Factories
-- [x] Crear `UserFactory` en `database/factories/` (creado)
-  - [x] Estados: admin(), inactive(), verified() (todos implementados)
-  - [x] Relaciones: withRoles(), withPermissions() (ambos implementados)
-- [x] Crear `RoleFactory` (creado con withPermissions())
-- [x] Crear `PermissionFactory` (creado con forResource())
-- [x] Crear `ApiKeyFactory` (creado con estados: live(), test(), neverExpires(), expired(), withAllScopes(), withoutScopes())
-- [x] Crear `ActivityLogFactory` (creado con estados: created(), updated(), deleted(), restored())
-- [x] Crear `SecurityLogFactory` (creado con estados: loginSuccess(), loginFailure(), permissionDenied(), suspiciousActivity(), accountLocked())
-
-### 18.2 Seeders Base
-- [x] Crear `RoleSeeder` - Roles: Admin, User, Guest (creado con 6 roles: admin, manager, user, guest, moderator, editor)
-- [x] Crear `PermissionSeeder` - Permisos base del sistema (creado con 30 permisos organizados por recursos: users, roles, permissions, posts, comments, system)
-- [x] Crear `UserSeeder` - Usuario admin y de prueba (creado con 12 usuarios incluyendo admin@apygg.com y usuarios de prueba)
-- [x] Actualizar `DatabaseSeeder` con orden correcto (orden: RoleSeeder → PermissionSeeder → UserSeeder)
-
-### 18.3 TestDataSeeder
-- [x] Crear seeders base que insertan usuarios, permisos y roles (completado con RoleSeeder, PermissionSeeder, UserSeeder)
-  - [x] Usuarios de prueba (UserSeeder crea 12 usuarios con diferentes roles)
-  - [x] Roles y permisos de prueba (RoleSeeder y PermissionSeeder crean roles y permisos base)
-  - [x] Asignación de roles a usuarios (UserSeeder asigna roles a usuarios)
-- [x] Documentar uso y opciones (documentado en docs/seeders-guide.md)
-
----
-
-## Fase 18: Testing (Semana 14-15)
-
-### 19.1 Configuración de Pest
-- [x] Instalar Pest y pest-plugin-laravel (instalado: pestphp/pest ^4.0, pest-plugin-laravel ^4.0)
-- [x] Configurar `tests/Pest.php` con helpers y expectativas (configurado)
-- [x] Migrar tests existentes de PHPUnit a Pest (migrados)
-- [x] Eliminar PHPUnit del proyecto (eliminado)
-- [x] Crear `TestCase` base mejorado en `tests/TestCase.php` (creado)
-  - [x] Setup y teardown comunes (setUp() con seedRolesAndPermissions())
-  - [x] Helpers: actingAsUser(), loginAs(), createUser(), createAdmin() (todos implementados)
-  - [x] Métodos de aserción personalizados: assertApiSuccess(), assertApiError(), assertPermissionDenied(), assertUnauthorized() (todos implementados)
-  - [x] Seed automático de roles/permisos base (seedRolesAndPermissions() en setUp())
-
-### 19.2 Tests Unitarios
-- [ ] Tests de BaseController
-- [ ] Tests de BaseModel
-- [ ] Tests de Traits
-- [ ] Tests de Services: AuthService, UserService, etc.
-- [ ] Tests de Helpers: ApiResponse, DateHelper, etc.
+## 🔴 Crítico (sin esto no es robusto)
+
+### 1. Testing — casi vacío
+
+Solo existen `ExampleTest.php`, `UserControllerTest.php` y `UserPermissionsTest.php`.
+
+- [ ] Tests de Auth (login, register, logout, refresh, forgot-password)
+- [ ] Tests de ApiKeys (crear, listar, revocar, rotar)
+- [ ] Tests de Webhooks (crear, entregar, reintentar)
+- [ ] Tests de Files (subir, eliminar, descargar)
+- [ ] Tests de Roles y Permissions (CRUD, asignación)
+- [ ] Tests de Settings
+- [ ] Tests de cada Middleware (RateLimit, CORS, IpWhitelist, CheckRole, CheckPermission, etc.)
+- [ ] Tests unitarios de cada Service (AuthService, UserService, TokenService, ApiKeyService, WebhookService, FileService, CacheService, LogService, SecurityService, NotificationService, PasswordService, RoleService, PermissionService)
+- [ ] Tests unitarios de Helpers (ApiResponse, DateHelper, SecurityHelper, StringHelper)
 - [ ] Tests de Rules de validación
+- [ ] Tests de Health endpoints
+- [ ] Objetivo: cobertura mínima del 80% en código crítico
 
-### 19.3 Tests de Integración
-- [ ] Tests de Auth endpoints: login, register, logout, refresh
-- [ ] Tests de CRUD de usuarios
-- [ ] Tests de asignación de roles
-- [ ] Tests de permisos y policies
-- [ ] Tests de health checks
-- [ ] Tests de rate limiting
+### 2. Contratos / Interfaces
 
-### 19.4 Tests de Performance
-- [ ] Tests de carga básicos
-- [ ] Identificación de bottlenecks
-- [ ] Profiling de queries lentas
+No existe `app/Contracts` ni `app/Interfaces`.
 
-### 19.5 Cobertura de Código
-- [ ] Ejecutar tests con cobertura: `pest --coverage`
-- [ ] Target inicial: 80% en código crítico
-- [ ] Aumentar cobertura gradualmente
-- [ ] Usar `--coverage-html` para reporte visual
+- [ ] Crear `AuthServiceInterface`
+- [ ] Crear `UserServiceInterface`
+- [ ] Crear `TokenServiceInterface`
+- [ ] Crear `ApiKeyServiceInterface`
+- [ ] Crear `WebhookServiceInterface`
+- [ ] Crear `FileServiceInterface`
+- [ ] Crear `CacheServiceInterface`
+- [ ] Crear `LogServiceInterface`
+- [ ] Crear `NotificationServiceInterface`
+- [ ] Crear `SecurityServiceInterface`
+- [ ] Crear `PermissionServiceInterface`
+- [ ] Crear `RoleServiceInterface`
+- [ ] Bindear interfaces en un `ServiceProvider` dedicado
 
----
+### 3. Repository Pattern
 
-## Fase 19: Configuraciones Adicionales (Semana 15)
+No existe `app/Repositories`.
 
-### 20.1 Configuración de Cache
-- [x] Configurar Redis como driver en `config/cache.php` (configurado: default = redis en config/cache.php)
-- [x] Configurar TTL por tipo de dato (configurado en CacheService: user=3600s, entity=7200s, search=1800s, default=3600s)
-- [x] Configurar tags para invalidación (implementado en CacheService con métodos forgetTag/forgetTags)
-- [x] Cache warming automático (comando `cache:warm` creado, scheduler configurado para ejecución diaria a las 01:00)
-
-### 20.2 Configuración de Sesiones
-- [x] Configurar Redis para sesiones (configurado: SESSION_DRIVER=redis en .env.example, config/session.php con driver redis)
-- [x] Configurar lifetime (120 minutos) (configurado: SESSION_LIFETIME=120 en config/session.php)
-- [x] Seguridad de cookies: httpOnly, secure, sameSite (configurado: http_only=true, secure configurable via SESSION_SECURE_COOKIE, same_site='lax' en config/session.php)
-- ⚠️ **Nota**: Las sesiones NO se usan en API REST stateless (este proyecto usa JWT y API Keys). La configuración está lista por si se implementan WebSockets (Laravel Reverb) en el futuro.
-
-### 20.3 Configuración de Archivos
-- [x] Crear `config/files.php` (creado con límites de tamaño por tipo, tipos MIME permitidos, políticas de retención, rutas de almacenamiento, configuración de procesamiento de imágenes)
-- [x] Crear `FileService` (ya creado en Fase 3, métodos: upload, delete, getUrl, exists, uploadImage, getInfo, copy, move)
-- [x] Crear `FileController` endpoints (creado: index, show, store, update, destroy, download)
-- [x] Crear modelo `File` y migraciones (creado modelo File con UUID, relaciones, scopes, métodos helper; migración con campos completos: user_id, name, filename, path, url, disk, mime_type, extension, size, type, category, description, metadata, is_public, expires_at)
-- [x] Crear Form Requests (StoreFileRequest, UpdateFileRequest)
-- [x] Crear Resources (FileResource)
-- [x] Crear rutas (routes/api/files.php con endpoints CRUD y download)
-
-### 20.4 Configuración de Mail
-- [x] Configurar driver SMTP en `config/mail.php` (configurado: SMTP con encryption, timeout, verify_peer; también soporta SES, Postmark, Resend)
-- [x] Queue para emails asíncrono (notificaciones usan ShouldQueue, NotificationService usa Mail::queue(), jobs configurados con Redis)
-- [x] Templates base en Markdown (templates HTML publicados en resources/views/vendor/mail, MailMessage genera HTML automáticamente)
-- [x] Configuración por entorno (default: 'log' en desarrollo, 'smtp' en producción según APP_ENV)
+- [ ] Crear `UserRepository`
+- [ ] Crear `RoleRepository`
+- [ ] Crear `PermissionRepository`
+- [ ] Crear `ApiKeyRepository`
+- [ ] Crear `WebhookRepository`
+- [ ] Crear `FileRepository`
+- [ ] Crear `RepositoryInterface` base
+- [ ] Actualizar Services para usar Repositories en vez de Eloquent directo
 
 ---
 
-## Fase 20: Seguridad Avanzada (Semana 16)
+## 🟡 Importante (mejora calidad del boilerplate)
 
-### 21.1 IP Whitelisting
-- [x] Crear `config/security.php` (creado con configuración completa: ip_whitelist, ip_blacklist, critical_endpoints, endpoint_whitelists, log_blocked_attempts)
-- [x] Middleware `IpWhitelist` para endpoints críticos (creado IpWhitelistMiddleware, registrado como alias 'ip.whitelist' en bootstrap/app.php)
-- [x] Logging de intentos bloqueados (implementado en IpWhitelistMiddleware usando LogService::logSecurity)
+### 4. DTOs (Data Transfer Objects)
 
+No existe `app/DTOs`.
 
-### 21.2 Protección contra Ataques
-- [x] CSRF tokens (para web si aplica) (no aplica para API REST stateless - métodos helper disponibles en SecurityService/SecurityHelper por si se necesita en el futuro)
-- [x] SQL Injection: verificar Eloquent (protegido: Eloquent y Query Builder usan prepared statements automáticamente, no hay queries raw vulnerables, documentado en docs/eloquent-vs-query-builder.md)
-- [x] XSS: sanitización verificada (implementado: SanitizeInput middleware activo en stack global, SecurityHelper::sanitizeHtml() y escapeHtml(), exclusión de campos sensibles)
-- [x] Brute force: rate limiting verificado (implementado: AdaptiveRateLimitingMiddleware activo, auth: 5 req/min por IP, read: 60 req/min, write: 30 req/min, admin: 10 req/min, RateLimitLoggerMiddleware para logging)
+- [ ] Crear `LoginDTO`
+- [ ] Crear `RegisterDTO`
+- [ ] Crear `CreateUserDTO`
+- [ ] Crear `UpdateUserDTO`
+- [ ] Crear `CreateApiKeyDTO`
+- [ ] Crear `CreateWebhookDTO`
+- [ ] Reemplazar arrays sueltos en Services por DTOs tipados
 
-### 21.3 Validación de Inputs
-- [x] Revisar todas las Form Requests (revisadas 13 Form Requests: BaseFormRequest, StoreUserRequest, UpdateUserRequest, LoginRequest, RegisterRequest, ResetPasswordRequest, ChangePasswordRequest, ForgotPasswordRequest, AssignRoleRequest, StoreApiKeyRequest, RotateApiKeyRequest, StoreFileRequest, UpdateFileRequest)
-- [x] Validar rangos, tipos, formatos (implementado: min/max para strings, arrays, números; tipos: string, email, uuid, boolean, array, file, date; formatos: regex para scopes, date_format, url; validaciones: exists, unique, confirmed, distinct; reglas custom: StrongPassword, ValidUuid, ValidEmail, ValidPhone, ValidJson, ValidDateRange, ValidBase64Image, ExistsInDatabase, UniqueInDatabase)
-- [x] Pruebas de inputs maliciosos (protegido: sanitización automática en BaseFormRequest::sanitizeInput() y SanitizeInput middleware global; validación de tipos previene inyección de tipos incorrectos; Eloquent previene SQL injection; SecurityHelper::sanitizeHtml() previene XSS; regex valida formatos específicos; límites de tamaño previenen DoS)
+### 5. Documentación de API (OpenAPI/Swagger)
 
----
+No hay `openapi.yaml` ni integración con Scramble/L5-Swagger.
 
-## Fase 21: Optimizaciones de Performance (Semana 16)
+- [ ] Instalar `dedoc/scramble` o `darkaonline/l5-swagger`
+- [ ] Configurar auto-generación desde Form Requests y Resources
+- [ ] Publicar documentación en `/docs/api`
+- [ ] Documentar autenticación JWT y API Keys
+- [ ] Documentar todos los endpoints existentes
 
-### 22.1 Optimizaciones de Base de Datos
-- [x] Revisar índices en todas las tablas (implementado: índices en todas las foreign keys, campos de búsqueda frecuente (email, name, created_at), índices compuestos para consultas complejas (user_id+created_at, event_type+created_at, model_type+model_id, user_id+type, request_method+request_path), unique constraints en campos únicos (email, name, key, jti), índices en campos de filtrado (type, category, action, event_type, response_status, expires_at))
-- [x] Eager loading verificado en endpoints (implementado: Controller base con método `loadRelations()` que permite eager loading mediante parámetro `include`, UserController con `allowedRelations = ['roles', 'permissions', 'activityLogs', 'apiTokens']`, UserService::find() y UserService::list() usan `User::with(['roles', 'permissions'])`, UserService::restore() usa `fresh(['roles', 'permissions'])`, FileController hereda funcionalidad de Controller base)
-- [x] Análisis de queries lentas con EXPLAIN (pendiente para producción: requiere herramienta de monitoreo o comando artisan para análisis periódico, mencionado en PLAN_ACCION.md como optimización avanzada opcional, se implementará cuando sea necesario según métricas de producción)
-- [x] Optimización de índices según uso real (pendiente para producción: requiere análisis de producción con datos reales, se debe hacer después de tener métricas de uso, mencionado en PLAN_ACCION.md como optimización avanzada opcional)
+### 6. Enums centralizados
 
-### 22.2 Optimizaciones de Cache
-- [x] Cache de queries frecuentes (implementado: CacheService con métodos remember(), rememberUser(), rememberEntity(), rememberSearch(), UserService cachea usuarios con TTL 3600s, RoleService cachea roles con TTL 3600s, PermissionService cachea permisos con TTL 3600s, ApiKeyService cachea validación de API keys, WarmCacheCommand pre-calienta cache de roles, permisos, configuraciones y usuarios recientes, TTLs configurados: user=1h, entity=2h, search=30min, default=1h)
-- [x] Cache de respuestas API de solo lectura (opcional avanzado: no hay middleware CacheResponse implementado, mencionado en PLAN_ACCION.md sección 25.1 como optimización avanzada opcional, se implementará cuando sea necesario según métricas de producción, cache de datos/queries ya implementado es suficiente para la mayoría de casos)
-- [x] Cache de permisos de usuario (implementado: PermissionService cachea permisos individuales y listados, UserService cachea usuarios con relaciones roles/permissions, WarmCacheCommand pre-calienta permisos y roles, cache con tags para invalidación selectiva, métodos rememberEntity() y rememberUser() para cache especializado)
-- [x] Invalidación inteligente basada en eventos (implementado: InvalidateUserCache listener invalida cache cuando se crea/actualiza/elimina/restaura usuario mediante eventos UserCreated/UserUpdated/UserDeleted/UserRestored, InvalidatePermissionsCache listener invalida cache cuando cambian roles/permisos mediante eventos RoleAssigned/RoleRemoved/PermissionGranted/PermissionRevoked, invalidación por tags: user:{id}, user:{id}:permissions, user:{id}:roles, users, permissions, roles, invalidación en cascada cuando se actualiza usuario)
+No existe `app/Enums`.
 
-### 22.3 Optimizaciones de Código
-- [x] Opcache habilitado en producción (implementado: opcache instalado en Dockerfile, habilitado en php.ini con opcache.enable=1, opcache.validate_timestamps=0 para producción, opcache.jit_buffer_size=64M, configuración lista para producción)
-- [x] Composer dump-autoload -o (implementado: agregado en entrypoint.sh para producción, se ejecuta automáticamente cuando APP_ENV no es dev/local/development, ejecuta `composer dump-autoload -o --no-interaction` antes de `php artisan optimize`, mejora rendimiento del autoloader en producción)
-- [x] Revisión de N+1 queries (implementado: UserService::find() y UserService::list() usan User::with(['roles', 'permissions']), RoleService::find() y RoleService::all() usan Role::with('permissions'), Controller base tiene método loadRelations() para eager loading mediante parámetro ?include=relations, UserController usa load() cuando es necesario, WarmCacheCommand usa load(['roles', 'permissions']), documentación en docs/eloquent-vs-query-builder.md sobre evitar N+1)
-- [x] Profiling con Xdebug si es necesario (opcional: no instalado por defecto, se puede agregar cuando sea necesario para debugging específico, mencionado en PLAN_ACCION.md como herramienta opcional para análisis avanzado)
+- [ ] Crear `UserStatusEnum` (active, inactive, banned)
+- [ ] Crear `RoleEnum` (admin, user, guest)
+- [ ] Crear `ApiKeyScopeEnum`
+- [ ] Crear `WebhookEventEnum`
+- [ ] Crear `LogActionEnum` (created, updated, deleted, restored)
+- [ ] Crear `FileTypeEnum`
+- [ ] Reemplazar strings hardcodeados por Enums en Models y Services
 
----
+### 7. Socialite completo
 
-## Fase 22: Backups y Recuperación (Semana 17)
+`SocialAuthService.php` solo tiene 1.4KB — parece incompleto.
 
-### 23.1 Sistema de Backups
-- [x] Crear comando artisan `backup:create` (implementado: BackupCreateCommand con opciones --database, --files, --no-compress, --no-upload, crea backups de BD con compresión y subida a remoto opcional, BackupService centraliza lógica de creación)
-- [x] Comando `backup:restore` (implementado: BackupRestoreCommand con confirmación de seguridad, busca backups en local y remoto, soporta backups comprimidos, restaura con pg_restore, incluye verificación de integridad)
-- [x] Comando `backup:list` (implementado: BackupListCommand lista backups locales y remotos, filtros por tipo, formato table/json, muestra tamaño, fecha, ubicación, compresión, estadísticas de retención)
-- [x] Retención configurada: 7 días (diarios), 30 (semanales), 90 (mensuales) (implementado: BackupCleanCommand limpia backups antiguos, política configurable en config/backups.php, mantiene diarios últimos 7 días, semanales últimos 30 días, mensuales últimos 90 días, programado diariamente a las 4 AM)
-- [x] Scheduler para backups automáticos a las 3 AM (implementado: backup:create --database programado diariamente a las 3 AM, backup:clean programado a las 4 AM, sin overlapping para evitar conflictos)
-- [x] Almacenamiento seguro (S3 o servidor remoto) (implementado: BackupService::uploadToRemote() sube automáticamente a S3/MinIO, si falla la subida el backup se mantiene en storage local como respaldo, configuración en config/backups.php con BACKUP_REMOTE_ENABLED=true por defecto, BACKUP_REMOTE_DISK, BACKUP_REMOTE_PATH, soporta cualquier disco de Laravel Filesystem, manejo de errores mejorado con mensajes claros si el bucket no existe)
-- [x] Compresión con gzip (implementado: compresión automática con gzip, configurable con BACKUP_COMPRESSION_ENABLED, soporta descompresión automática en restore, formato configurable gzip/bzip2)
+- [ ] Implementar login con Google
+- [ ] Implementar login con GitHub
+- [ ] Endpoint `GET /auth/social/{provider}/redirect`
+- [ ] Endpoint `GET /auth/social/{provider}/callback`
+- [ ] Configurar providers en `config/services.php`
+- [ ] Crear `SocialAccount` model y migración (user_id, provider, provider_id, token)
 
-### 23.2 Verificación de Backups
-- [x] Test de restauración en entorno de staging (verificado: comando `backup:restore` probado exitosamente con backups comprimidos en formato custom, detección automática de formato custom vs SQL plano, restauración con `pg_restore` para formato custom y `psql` para SQL plano, manejo correcto de archivos temporales y limpieza automática)
-- [x] Documentación de procedimientos (implementado: documentación completa en `docs/backups-system.md` con comandos disponibles, configuración, políticas de retención, uso de S3/MinIO, troubleshooting detallado incluyendo `php artisan test:s3` para diagnóstico de conexión S3, ejemplos de uso y procedimientos de restauración)
+### 8. Factories faltantes
 
----
+Faltan factories para varios modelos.
 
-## Fase 23: CI/CD y Automatización (Semana 17-18)
+- [ ] Crear `WebhookFactory`
+- [ ] Crear `WebhookDeliveryFactory`
+- [ ] Crear `FileFactory`
+- [ ] Crear `DeviceTokenFactory`
+- [ ] Crear `SettingsFactory`
+- [ ] Crear `JwtBlacklistFactory`
 
-### 24.1 Pipeline de CI
-- [x] Configurar en GitHub Actions / GitLab CI / Jenkins (implementado: workflow completo en `.github/workflows/ci.yml` con GitHub Actions, ejecuta en push/PR a main/develop)
-- [x] Etapa Lint: PHP CS Fixer, PHPStan nivel 9 (implementado: Laravel Pint para formateo, PHPStan nivel 5 configurado según phpstan.neon del proyecto, ejecuta en job `lint` con timeout de 10 minutos)
-- [x] Etapa Tests: Tests unitarios + feature con cobertura (implementado: Pest con cobertura, servicios PostgreSQL 18 y Redis 7 configurados, migraciones automáticas, upload de cobertura a Codecov, ejecuta en job `test` con timeout de 15 minutos)
-- [x] Etapa Security: Dependabot, Snyk (implementado: Dependabot configurado en `.github/dependabot.yml` para Composer y GitHub Actions, escaneo semanal, Snyk integrado en workflow con soporte opcional mediante SNYK_TOKEN secret, composer audit incluido, ejecuta en job `security` con timeout de 10 minutos)
-- [x] Etapa Build: Docker image build (implementado: construcción de imagen Docker usando Dockerfile en `docker/app/Dockerfile`, verificación de imagen con tests básicos, cache de build habilitado, ejecuta en job `build` con timeout de 15 minutos, solo se ejecuta si lint, test y security pasan)
+### 9. Console Commands documentados
 
-### 24.2 Pre-commit Hooks
-- [x] Validación de sintaxis PHP (implementado: pre-commit hook valida sintaxis con `php -l` en archivos staged, ejecuta dentro de contenedor Docker, falla commit si hay errores) - **NOTA: Hooks desinstalados por preferencia del usuario, scripts disponibles en `scripts/git-hooks/` para instalación opcional**
-- [x] PHP CS Fixer automático (implementado: Pint se ejecuta automáticamente en archivos staged, formatea código según PSR-12, agrega archivos modificados al staging automáticamente) - **NOTA: Hooks desinstalados por preferencia del usuario**
-- [x] Validación de mensajes (Conventional Commits) (implementado: commit-msg hook valida formato `tipo(scope): descripción`, soporta tipos feat/fix/docs/style/refactor/test/chore/perf/ci/build/revert, valida longitud mínima de descripción, permite excepciones para merge/revert) - **NOTA: Hooks desinstalados por preferencia del usuario**
-- [x] Prevención de console.log, dd() (implementado: pre-commit hook detecta dd(), dump(), var_dump(), console.log() en archivos staged, falla commit si encuentra código de debug, permite saltar con --no-verify) - **NOTA: Hooks desinstalados por preferencia del usuario**
-- [x] Tests locales deben pasar (implementado: pre-commit hook ejecuta tests opcionales, puede saltarse con SKIP_TESTS=true, hooks detectan automáticamente si Docker está corriendo y se saltan si no está disponible, instalación con `make install-hooks` o `./scripts/install-git-hooks.sh`, documentación completa en `docs/git-hooks.md`) - **NOTA: Hooks desinstalados por preferencia del usuario, scripts disponibles para instalación opcional cuando se desee**
+El directorio `app/Console` existe pero faltan commands robustos.
 
-### 24.3 Despliegue Automático
-- [x] Blue-Green deployment (implementado: workflow CD en `.github/workflows/cd.yml` con job `blue-green-deploy`, script `scripts/deploy/blue-green.sh` con lógica completa de Blue-Green, despliegue a entorno inactivo, health checks automáticos, cambio instantáneo de tráfico, zero-downtime garantizado, cleanup opcional de entorno antiguo)
-- [x] Canary deployments con feature flags (implementado: job `canary-deploy` en workflow CD, script `scripts/deploy/canary.sh` con despliegue gradual 10%→50%→100%, monitoreo de métricas en cada etapa, verificación de feature flags, rollback automático si métricas fallan, integración con sistemas de feature flags)
-- [x] Rollback automático en caso de fallo (implementado: job `rollback` en workflow CD que se ejecuta automáticamente si cualquier estrategia falla, script `scripts/deploy/rollback.sh` con detección automática de versión anterior, rollback según estrategia usada, verificación post-rollback con health checks, notificaciones automáticas, soporte para rollback manual mediante workflow_dispatch)
-- [x] Zero-downtime deployments (implementado: todas las estrategias garantizan zero-downtime mediante health checks antes de cambiar tráfico, Blue-Green con cambio instantáneo, Canary con despliegue gradual sin interrupciones, Rolling con batches pequeños, verificación continua de salud, rollback automático si falla cualquier etapa)
+- [ ] Verificar que todos los Commands tengan `--help` descriptivo
+- [ ] Crear `UserCreateCommand` (crear usuarios desde CLI)
+- [ ] Crear `UserRoleAssignCommand` (asignar roles desde CLI)
+- [ ] Crear `ApiKeyCreateCommand` (generar API keys desde CLI)
+- [ ] Documentar todos los commands disponibles en README
 
 ---
 
-## Fase 24: Internacionalización (i18n) - Preparado para Expansión (Semana 18)
+## 🟢 Nice-to-have (boilerplate de referencia)
 
-### 25.1 Configuración Base
-- [x] Español (`es`) como idioma por defecto (implementado: config/app.php con locale='es' por defecto, APP_LOCALE=es en .env.example, fallback_locale='es', faker_locale='es_ES')
-- [x] Archivos de traducción en `resources/lang/es.json` (implementado: archivo JSON con traducciones de validación, atributos, autenticación y mensajes generales, estructura preparada para expansión)
-- [x] Mensajes de validación en español (implementado: traducciones completas en es.json para todas las reglas de validación comunes, atributos traducidos, mensajes de error y éxito)
-- [x] Documentación de cómo agregar idiomas (implementado: documentación completa en docs/internationalization.md con ejemplos de uso, guía para agregar nuevos idiomas, mejores prácticas, y estructura de traducciones)
+### 10. CHANGELOG.md
 
-### 25.2 Manejo de Timezones
-- [x] Timezone por defecto en `config/app.php` (implementado: timezone configurado como 'UTC' en config/app.php, estándar para almacenamiento de fechas)
-- [x] Helper `DateHelper` con métodos de formateo (implementado: DateHelper completo con métodos format, toSpanish, toIso8601, convertTimezone, diffForHumans, now, today, yesterday, tomorrow, y más métodos de formateo y conversión)
-- [x] Estructura preparada para preferencia de timezone por usuario (implementado: campo timezone agregado a tabla users en migración existente, nullable con default 'UTC', agregado a fillable del modelo User, método getTimezone() en User que retorna timezone del usuario o UTC por defecto)
-- [x] Documentación de implementación futura (implementado: documentación completa en docs/internationalization.md con sección de timezones, ejemplos de uso de DateHelper, guía para preferencia por usuario, ejemplos de middleware para timezone automático, mejores prácticas y referencias)
+- [ ] Crear `CHANGELOG.md` con formato [Keep a Changelog](https://keepachangelog.com)
+- [ ] Documentar versión actual y cambios principales
+- [ ] Configurar en CI para actualización automática en releases
 
----
+### 11. CONTRIBUTING.md
 
-## Fase 25: Webhooks (Opcional, Semana 19)
-
-### 26.1 Configuración de Webhooks
-- [x] Crear modelo `Webhook`
-- [x] Crear modelo `WebhookDelivery` (WebhookEvent no es necesario, se usa configuración)
-- [x] Eventos suscribibles definidos en `config/webhooks.php`
-
-### 26.2 Delivery y Reintentos
-- [x] Cola dedicada para webhooks (configurada en config/queue.php: redis-webhooks)
-- [x] Reintentos exponenciales (implementado en SendWebhookJob con backoff configurable)
-- [x] Dead letter queue (usando failed_jobs de Laravel, método failed() en SendWebhookJob)
-- [x] Tracking de entregas (WebhookDelivery model con estados y métodos helper)
-
-### 26.3 Seguridad
-- [x] Firma HMAC-SHA256 (implementada en WebhookService::generateSignature y validación en validateSignature)
-- [x] Validación de timestamp (implementada en WebhookService::validateTimestamp para prevenir replay attacks)
-- [x] Rotación de secrets (implementada en Webhook::rotateSecret con período de gracia, comando cleanup)
-
-### 26.4 Dashboard
-- [x] Endpoint para ver webhooks configurados (GET /webhooks, GET /webhooks/{id})
-- [x] Historial de entregas (GET /webhooks/{id}/deliveries)
-- [x] Reenvío manual de fallos (POST /webhooks/{id}/deliveries/{deliveryId}/retry)
-- [x] CRUD completo de webhooks (POST, PUT, DELETE)
-- [x] Rotación de secrets (POST /webhooks/{id}/rotate-secret)
-
----
-
-## Fase 26: WebSockets con Reverb (Opcional, Semana 19)
-
-**NOTA**: WebSockets es completamente OPCIONAL. Para habilitarlo, configurar `BROADCAST_CONNECTION=reverb` en `.env`. Si no se configura, la API funciona normalmente con REST.
-
-### 27.1 Instalación de Reverb
-- [x] Instalar `laravel/reverb` v1.7.0
-- [x] Configurar servidor WebSocket (config/reverb.php)
-- [x] Configuración de broadcasting (config/broadcasting.php)
-
-### 27.2 Eventos y Channels
-- [x] Definir canales en `routes/channels.php` (públicos, privados, presencia)
-- [x] Crear eventos de broadcasting (UserCreatedBroadcast, NotificationBroadcast)
-- [x] Implementar autorización de canales con JWT (BroadcastAuthController)
-
-### 27.3 Frontend Integration
-- [x] Documentación consolidada (docs/websockets.md) - Backend y Frontend en un solo archivo breve
-- [x] Ejemplos rápidos para Vue.js, Nuxt y Capacitor
-- [x] Documentar cómo habilitar/deshabilitar WebSockets
-
----
-
-## Fase 27: Caché Avanzado (Opcional, Semana 20)
-
-### 28.1 Cache Warming
-- [x] Comando artisan `cache:warm` (implementado en app/Console/Commands/WarmCacheCommand.php)
-- [x] Cache warming automático post-deployment (script scripts/post-deploy.sh creado, scheduler diario a las 01:00)
-- [x] Cache de datos frecuentes (roles, permisos, configuraciones, usuarios recientes, webhooks, índices de búsqueda)
-
-### 28.2 CDN Integration
-- [x] ~~Integración con Cloudflare (opcional)~~ **NO APLICA** - API REST pura sin assets estáticos
-- [x] ~~Cache de assets estáticos~~ **NO APLICA** - Frontends externos (Vue.js/Nuxt) se sirven desde sus propios servidores
-- [x] ~~Purge automático de cache~~ **NO APLICA** - Cache se maneja en backend (Redis)
-
-### 28.3 Cache Invalidation Inteligente
-- [x] Listeners para invalidación automática (InvalidateUserCache, InvalidatePermissionsCache)
-- [x] Invalidación por tags (CacheService::forgetTag, forgetTags implementados)
-- [x] Invalidación masiva por patrón (CacheService::forgetPattern, forgetPatternScan implementados)
-- [x] Observers automáticos (ApiKeyObserver, WebhookObserver)
-- [x] Comando artisan cache:invalidate para invalidación manual
-
-### 28.4 Métricas
-- [x] Monitoreo de hit rate (implementado: tracking automático de hits/misses en CacheService, método getAllMetrics() con cálculo de hit rate, comando cache:metrics para monitoreo)
-- [x] Alertas cuando hit rate baja de 70% (implementado: comando cache:metrics con umbral configurable, alertas automáticas con logging a LogService y Sentry, scheduler cada hora)
-- [x] Recomendaciones de optimización (implementado: sistema de recomendaciones basado en hit rate, memoria y número de keys, prioridades high/medium/low, acciones sugeridas específicas)
-
----
-
-## Fase 28: Documentación Final (Semana 20-21)
-
-### 29.1 ARCHITECTURE.md
-- [ ] Descripción general de la arquitectura
-- [ ] Diagramas de componentes (C4)
-- [ ] Flujos de datos principales
-- [ ] Decisiones arquitectónicas (ADRs)
-- [ ] Patrones utilizados
-- [ ] Estructura de directorios
-
-### 29.2 README.md
-- [ ] Descripción del proyecto
-- [ ] Stack tecnológico
-- [ ] Requisitos del sistema
-- [ ] Instrucciones de instalación
-- [ ] Configuración de entornos
-- [ ] Comandos útiles
-- [ ] Guía de contribución
-- [ ] Licencia
-
-### 29.3 Documentación de Desarrollo
-- [ ] Cómo agregar un nuevo módulo
-- [ ] Cómo agregar un nuevo endpoint
-- [ ] Cómo agregar tests
+- [ ] Crear `CONTRIBUTING.md`
+- [ ] Guía de setup local
 - [ ] Convenciones de código
-- [ ] Estándares de commits
-- [ ] Proceso de desarrollo
+- [ ] Proceso de PR y code review
+- [ ] Estándares de commits (Conventional Commits)
 
-### 29.4 Documentación de Operaciones
-- [ ] Despliegue en diferentes entornos
-- [ ] Configuración de Kubernetes (si aplica)
-- [ ] Health checks y monitoreo
-- [ ] Logs y debugging
-- [ ] Performance tuning
-- [ ] Disaster recovery
+### 12. ARCHITECTURE.md
 
----
+- [ ] Descripción de la arquitectura del boilerplate
+- [ ] Diagramas de componentes
+- [ ] Flujos principales (auth, request lifecycle)
+- [ ] Decisiones arquitectónicas (ADRs)
+- [ ] Cómo agregar un nuevo módulo
 
-## Fase 29: Makefile y Comandos Útiles (Semana 21)
+### 13. Multi-tenancy (base)
 
-### 30.1 Creación de Makefile
-- [ ] Setup: `make install`, `make setup`
-- [ ] Docker: `make up`, `make down`, `make restart`, `make logs`
-- [ ] Tests: `make test`, `make test-unit`, `make test-coverage`
-- [ ] Código: `make lint`, `make format`
-- [ ] Base de datos: `make db-fresh`, `make db-seed`
-- [ ] Cache: `make cache-clear`, `make optimize`
-- [ ] Documentación en Makefile con `make help`
+- [ ] Evaluar si el boilerplate debe soportar multi-tenancy
+- [ ] Si aplica: agregar `tenant_id` a tablas principales
+- [ ] Crear middleware `ResolveTenant`
+- [ ] Scopes globales por tenant en BaseModel
 
----
+### 14. Stubs personalizados
 
-## Fase 30: Testing Final e Integración (Semana 22)
-
-### 31.1 Pruebas de Integración Completas
-- [ ] Escenarios end-to-end
-- [ ] Tests con datos realistas
-- [ ] Pruebas de performance bajo carga
-- [ ] Tests de seguridad (OWASP top 10)
-
-### 31.2 Manual Testing
-- [ ] Testing manual de todos los endpoints
-- [ ] Verificación con herramientas como Postman/Insomnia
-- [ ] Testing en diferentes navegadores (si aplica)
-
-### 31.3 Load Testing
-- [ ] Tests de carga con Apache Bench o wrk
-- [ ] Identificación de límites de sistema
-- [ ] Reporte de resultados
+- [ ] Publicar stubs de Laravel (`php artisan stub:publish`)
+- [ ] Personalizar stub de Controller para usar BaseController
+- [ ] Personalizar stub de Model para usar BaseModel con UUID
+- [ ] Personalizar stub de Request para usar BaseFormRequest
+- [ ] Personalizar stub de Resource para usar BaseResource
 
 ---
 
-## Fase 31: Preparación para Producción (Semana 22-23)
+## 📋 Orden de Prioridad Recomendado
 
-### 32.1 Configuración de Producción
-- [ ] `.env.production` con todas las variables necesarias
-- [ ] Certificados SSL/TLS configurados
-- [ ] HTTPS forzado
-- [ ] Secrets seguros en variables de entorno
-
-### 32.2 Optimizaciones Finales
-- [ ] `php artisan config:cache`
-- [ ] `php artisan route:cache`
-- [ ] `php artisan view:cache`
-- [ ] `composer install --no-dev`
-- [ ] Comprobación de performance final
-
-### 32.3 Seguridad Final
-- [ ] Verificación de todos los headers de seguridad
-- [ ] OWASP checklist completada
-- [ ] Escaneo de vulnerabilidades
-- [ ] Revisión de secretos (no expuestos)
-
-### 32.4 Monitoreo
-- [ ] Configuración de Sentry
-- [ ] Configuración de Prometheus/Grafana (si aplica)
-- [ ] Dashboards de monitoreo
-- [ ] Alertas configuradas
-
----
-
-## Fase 32: Despliegue y Lanzamiento (Semana 23-24)
-
-### 33.1 Despliegue a Staging
-- [ ] Despliegue a ambiente de staging
-- [ ] Smoke tests
-- [ ] Verificación de funcionalidad
-- [ ] Tests de load en staging
-
-### 33.2 Despliegue a Producción
-- [ ] Último backup pre-deployment
-- [ ] Despliegue usando blue-green o canary
-- [ ] Verificación de health checks
-- [ ] Monitoreo intensivo post-deployment
-- [ ] Logs y alertas siendo monitoreados
-
-### 33.3 Post-Launch
-- [ ] Documentación de deployment
-- [ ] Runbook para rollback si es necesario
-- [ ] Debriefing y lecciones aprendidas
-- [ ] Plan de mantenimiento futuro
-
----
-
-## Notas Importantes:
-
-✅ **Orden de Ejecución**: Cada fase está ordenada para minimizar dependencias  
-✅ **Sin MVP**: Este proyecto es completo desde el inicio, no hay MVP  
-✅ **Todas las Características**: Incluye auth, logging, tests, CI/CD, documentación, etc.  
-✅ **Tiempo Estimado**: ~24 semanas para equipo de 2-3 personas  
-✅ **Iteración**: Las fases pueden ejecutarse en paralelo cuando sea posible  
-
-**Próximos Pasos:**
-1. Comenzar con Fase 1 (Setup)
-2. Establecer timeline realista según disponibilidad del equipo
-3. Revisar y ajustar fases según necesidades específicas
-4. Crear subtareas más granulares dentro de cada fase
-5. Asignar responsabilidades del equipo
-
----
-
-## 📝 Registro de Cambios Realizados
-
-### Cambios en Fase 1:
-- **Fase 1.1**: Movido Docker al inicio (era Fase 16)
-- **Fase 1.2**: Creación de proyecto Laravel via contenedor Docker
-- **Fase 1.5**: Solo dependencias críticas, resto movido a Fase 2.5
-
-### Cambios en Fase 2:
-- **Fase 2**: Configuración temprana de PostgreSQL y Redis
-- **Fase 2.2**: Migraciones básicas primero, avanzadas después
-- **Fase 2.3**: Redis configurado temprano para soporte de dependencias
-- **Fase 2.4**: Logs básicos, particionamiento avanzado en Fase 9
-- **Fase 2.5**: Dependencias adicionales escalonadas
-
-### Eliminaciones:
-- **Fase 16 original**: Eliminada (Docker movido a Fase 1.1)
-- **Fases renumeradas**: 17-33 → 16-32
-
-### Beneficios de los Cambios:
-✅ **Desarrollo sin PHP local**: Docker disponible desde el inicio
-✅ **Dependencias escalonadas**: Solo lo esencial primero
-✅ **Servicios temprano**: PostgreSQL y Redis disponibles para Fase 1
-✅ **Migraciones lógicas**: Básico primero, avanzado después
-✅ **Flujo más realista**: Elimina dependencias imposibles
-
+1. **Interfaces** → primero para no romper nada al agregar Repositories
+2. **Repositories** → desacoplar DB de Services
+3. **Tests** → cubrir código existente antes de agregar más
+4. **DTOs** → mejorar tipado en Services existentes
+5. **Enums** → limpiar strings hardcodeados
+6. **Factories faltantes** → habilitar más tests
+7. **Documentación API** → Scramble sobre código ya existente
+8. **Socialite** → feature nueva
+9. **CHANGELOG + CONTRIBUTING + ARCHITECTURE** → documentación final
