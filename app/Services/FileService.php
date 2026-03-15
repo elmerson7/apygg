@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -37,12 +36,19 @@ class FileService
             try {
                 Storage::disk($disk)->setVisibility($storedPath, 'public');
             } catch (\Throwable $e) {
-                Log::warning('No se pudo establecer visibilidad pública en S3/Minio', [
+                LogService::warning('No se pudo establecer visibilidad pública en S3/Minio', [
                     'path' => $storedPath,
                     'error' => $e->getMessage(),
-                ]);
+                ], 'files');
             }
         }
+
+        LogService::info('Archivo subido', [
+            'path' => $storedPath,
+            'disk' => $disk,
+            'size' => $file->getSize(),
+            'mime_type' => $file->getMimeType(),
+        ], 'files');
 
         return [
             'path' => $storedPath,
@@ -99,7 +105,7 @@ class FileService
 
             Storage::disk($disk)->put($fullPath, $image->stream());
 
-            return [
+            $result = [
                 'path' => $fullPath,
                 'url' => Storage::disk($disk)->url($fullPath),
                 'filename' => $filename,
@@ -109,6 +115,16 @@ class FileService
                 'height' => $image->height(),
                 'disk' => $disk,
             ];
+
+            LogService::info('Imagen subida con procesamiento', [
+                'path' => $fullPath,
+                'disk' => $disk,
+                'width' => $image->width(),
+                'height' => $image->height(),
+                'mime_type' => $image->mime(),
+            ], 'files');
+
+            return $result;
         }
 
         return self::upload($file, $path);
@@ -122,11 +138,21 @@ class FileService
         $disk = $disk ?? self::$defaultDisk;
 
         try {
-            return Storage::disk($disk)->exists($path)
+            $deleted = Storage::disk($disk)->exists($path)
                 ? Storage::disk($disk)->delete($path)
                 : false;
+
+            if ($deleted) {
+                LogService::info('Archivo eliminado', ['path' => $path, 'disk' => $disk], 'files');
+            }
+
+            return $deleted;
         } catch (\Exception $e) {
-            Log::error('Failed to delete file', ['path' => $path, 'disk' => $disk, 'error' => $e->getMessage()]);
+            LogService::error('Error al eliminar archivo', [
+                'path' => $path,
+                'disk' => $disk,
+                'error' => $e->getMessage(),
+            ], 'files');
 
             return false;
         }
@@ -149,7 +175,11 @@ class FileService
                 ? Storage::disk($disk)->url($path)
                 : null;
         } catch (\Exception $e) {
-            Log::error('Failed to get file URL', ['path' => $path, 'disk' => $disk, 'error' => $e->getMessage()]);
+            LogService::error('Error al obtener URL de archivo', [
+                'path' => $path,
+                'disk' => $disk,
+                'error' => $e->getMessage(),
+            ], 'files');
 
             return null;
         }
@@ -166,16 +196,22 @@ class FileService
 
         try {
             if (! Storage::disk($disk)->exists($path)) {
-                Log::warning('File does not exist for temporary URL', ['path' => $path, 'disk' => $disk]);
+                LogService::warning('Archivo no encontrado para URL temporal', [
+                    'path' => $path,
+                    'disk' => $disk,
+                ], 'files');
 
                 return null;
             }
 
             return Storage::disk($disk)->temporaryUrl($path, now()->addMinutes($minutes));
         } catch (\Exception $e) {
-            Log::error('Failed to generate temporary URL', [
-                'path' => $path, 'disk' => $disk, 'minutes' => $minutes, 'error' => $e->getMessage(),
-            ]);
+            LogService::error('Error al generar URL temporal', [
+                'path' => $path,
+                'disk' => $disk,
+                'minutes' => $minutes,
+                'error' => $e->getMessage(),
+            ], 'files');
 
             return null;
         }
@@ -196,7 +232,7 @@ class FileService
 
         $root = $baseUrl !== '' ? $baseUrl : $endpoint;
         if ($root === '') {
-            Log::warning('S3 URL incompleta: falta AWS_URL o AWS_ENDPOINT en .env');
+            LogService::warning('S3 URL incompleta: falta AWS_URL o AWS_ENDPOINT en .env', [], 'files');
 
             return $path !== '' ? '/'.$path : '/';
         }
@@ -259,7 +295,11 @@ class FileService
         try {
             return Storage::disk($disk)->copy($fromPath, $toPath);
         } catch (\Exception $e) {
-            Log::error('Failed to copy file', ['from' => $fromPath, 'to' => $toPath, 'error' => $e->getMessage()]);
+            LogService::error('Error al copiar archivo', [
+                'from' => $fromPath,
+                'to' => $toPath,
+                'error' => $e->getMessage(),
+            ], 'files');
 
             return false;
         }
@@ -275,7 +315,11 @@ class FileService
         try {
             return Storage::disk($disk)->move($fromPath, $toPath);
         } catch (\Exception $e) {
-            Log::error('Failed to move file', ['from' => $fromPath, 'to' => $toPath, 'error' => $e->getMessage()]);
+            LogService::error('Error al mover archivo', [
+                'from' => $fromPath,
+                'to' => $toPath,
+                'error' => $e->getMessage(),
+            ], 'files');
 
             return false;
         }
