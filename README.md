@@ -281,17 +281,35 @@ docker compose exec app php artisan tinker
 ```
 apygg/
 ├── app/
-│   ├── Core/           # Clases base del sistema
-│   ├── Modules/        # Módulos de la aplicación
-│   ├── Infrastructure/ # Servicios de infraestructura
-│   ├── Helpers/         # Helpers y utilidades
-│   └── ...
-├── config/             # Archivos de configuración
-├── database/           # Migraciones y seeders
-├── docker/             # Configuración Docker
-├── env/                # Variables de entorno por ambiente
-├── routes/             # Rutas de la aplicación
-└── tests/              # Tests
+│   ├── Console/           # Comandos de consola
+│   ├── Events/            # Eventos de la aplicación
+│   ├── Exceptions/        # Manejo de excepciones
+│   ├── Helpers/           # Helpers y utilidades
+│   ├── Http/
+│   │   ├── Controllers/   # Controladores
+│   │   ├── Middleware/    # Middleware
+│   │   ├── Requests/      # Form Requests
+│   │   └── Resources/     # API Resources
+│   ├── Jobs/              # Jobs para colas
+│   ├── Listeners/         # Listeners de eventos
+│   ├── Logging/           # Configuración de logs
+│   ├── Mail/              # Plantillas de email
+│   ├── Models/            # Modelos Eloquent
+│   ├── Notifications/     # Notificaciones
+│   ├── Observers/         # Observers de modelos
+│   ├── Policies/          # Políticas de autorización
+│   ├── Providers/         # Service Providers
+│   ├── Rules/             # Rules de validación
+│   ├── Services/          # Servicios de negocio
+│   └── Traits/            # Traits reutilizables
+├── config/                # Archivos de configuración
+├── database/              # Migraciones y seeders
+├── docker/                # Configuración Docker
+├── env/                   # Variables de entorno por ambiente
+├── routes/
+│   ├── api.php            # Punto de entrada de rutas
+│   └── api/               # Módulos de rutas (uno por dominio)
+└── tests/                 # Tests
 ```
 
 ## 🔧 Configuración de Entornos
@@ -307,6 +325,45 @@ El proyecto soporta múltiples entornos mediante perfiles de Docker Compose:
 ENV=staging make up
 ENV=prod make build
 ```
+
+## 🌐 Convenciones de Rutas
+
+Este proyecto **NO utiliza el prefijo `/api/`** en las rutas.
+
+### Estructura por Sistema
+
+Las rutas se organizan según el sistema que las consume:
+
+| Sistema | Prefijo | Descripción | Ejemplo |
+|---------|---------|-------------|---------|
+| **Público** | *(ninguno)* | Rutas públicas sin prefijo | `/auth/login`, `/search` |
+| **Usuario autenticado** | `/user` | Endpoints del usuario en sesión | `/user/profile`, `/user/preferences` |
+| **Admin** | `/admin` | Gestión y administración | `/admin/users`, `/admin/roles` |
+
+### Ejemplos
+
+```
+POST /auth/login          → Login público
+GET  /user/profile        → Perfil del usuario autenticado
+PUT  /user/preferences    → Actualizar preferencias
+GET  /admin/roles         → Listar roles (admin)
+DELETE /admin/roles/{id}  → Eliminar rol (admin)
+```
+
+### Módulos disponibles en `routes/api/`
+
+| Archivo | Prefijo | Descripción |
+|---------|---------|-------------|
+| `auth.php` | *(ninguno)* | Login, registro, refresh token |
+| `user.php` | `/user` | Perfil y preferencias del usuario |
+| `users.php` | `/users` | CRUD de usuarios |
+| `roles.php` | `/admin` | Roles, permisos y activity logs |
+| `api-keys.php` | `/admin` | Gestión de API Keys |
+| `files.php` | *(ninguno)* | Subida y descarga de archivos |
+| `search.php` | *(ninguno)* | Búsqueda global |
+| `webhooks.php` | *(ninguno)* | Webhooks entrantes |
+| `chat.php` | *(ninguno)* | Chat en tiempo real |
+| `settings.php` | *(ninguno)* | Configuraciones globales |
 
 ## 📚 Documentación Adicional
 

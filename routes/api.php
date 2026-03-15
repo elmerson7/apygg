@@ -12,6 +12,11 @@ use Illuminate\Support\Facades\Route;
 | Rutas directas en la raíz (sin prefijo /api ni versión)
 | Todas las respuestas son JSON (forzado por ForceJsonResponse middleware)
 |
+| Convención de prefijos:
+|   - Sin prefijo  → rutas públicas (auth, search, files, webhooks)
+|   - /user        → usuario autenticado (perfil, preferencias)
+|   - /admin       → gestión administrativa (roles, permisos, api-keys)
+|
 | Estructura modular: cada módulo tiene su archivo en routes/api/
 |
 */
@@ -31,11 +36,10 @@ Route::get('/', function () {
             'health_detailed' => '/health/detailed',
             'search' => '/search',
             'webhooks' => '/webhooks',
-            'documentation' => '/docs/api', // Scramble API Documentation
+            'documentation' => '/docs/api',
         ],
     ];
 
-    // Agregar información de WebSockets si está habilitado
     if ($broadcastingEnabled) {
         $response['websockets'] = [
             'enabled' => true,
@@ -55,25 +59,28 @@ Route::get('/health/live', [HealthController::class, 'live']);
 Route::get('/health/ready', [HealthController::class, 'ready']);
 Route::middleware(['auth:api'])->get('/health/detailed', [HealthController::class, 'detailed']);
 
-// Cargar rutas modulares
+// ── Módulos de rutas ──────────────────────────────────────────────────────────
+// Público
 require __DIR__.'/api/auth.php';
-require __DIR__.'/api/users.php';
-require __DIR__.'/api/api-keys.php';
 require __DIR__.'/api/files.php';
 require __DIR__.'/api/search.php';
 require __DIR__.'/api/webhooks.php';
 require __DIR__.'/api/chat.php';
 require __DIR__.'/api/settings.php';
 
+// Usuario autenticado (/user)
+require __DIR__.'/api/user.php';
+
+// Gestión de usuarios
+require __DIR__.'/api/users.php';
+
+// Admin (/admin)
+require __DIR__.'/api/api-keys.php';
+require __DIR__.'/api/roles.php';
+// ─────────────────────────────────────────────────────────────────────────────
+
 Route::prefix('test/sentry')->group(function () {
     Route::get('/info', [TestSentryController::class, 'info']);
     Route::post('/logs', [TestSentryController::class, 'testLogs']);
     Route::post('/exception', [TestSentryController::class, 'testException']);
 });
-
-// Rutas con API Key (para servicios/integraciones)
-// Route::middleware(['auth:api-key'])->group(function () {
-//     Route::prefix('webhooks')->group(function () {
-//         // Webhooks para integraciones
-//     });
-// });
