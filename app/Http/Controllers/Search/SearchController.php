@@ -8,7 +8,6 @@ use App\Http\Resources\Search\SearchResource;
 use App\Http\Resources\Users\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
-use Laravel\Scout\Searchable;
 
 /**
  * SearchController
@@ -18,9 +17,6 @@ use Laravel\Scout\Searchable;
  */
 class SearchController extends Controller
 {
-    /**
-     * Mapeo de modelos a sus resources correspondientes
-     */
     protected array $modelResources = [
         User::class => UserResource::class,
     ];
@@ -33,7 +29,7 @@ class SearchController extends Controller
         $query = $request->input('q');
         $modelsToSearch = $request->getModelsToSearch();
         $filters = $request->input('filters', []);
-        $perPage = min(max(1, (int) $request->input('per_page', 15)), 100);
+        $perPage = min(max(1, (int) $request->input('per_page', 20)), 100);
         $page = max(1, (int) $request->input('page', 1));
 
         $results = [];
@@ -60,8 +56,6 @@ class SearchController extends Controller
     }
 
     /**
-     * Buscar en un modelo específico
-     *
      * @return array<string, mixed>
      */
     protected function searchModel(
@@ -71,29 +65,19 @@ class SearchController extends Controller
         int $perPage,
         int $page
     ): array {
-        // Verificar que el modelo use el trait Searchable
         if (! $this->isModelSearchable($modelClass)) {
-            return [
-                'model' => class_basename($modelClass),
-                'total' => 0,
-                'data' => [],
-            ];
+            return ['model' => class_basename($modelClass), 'total' => 0, 'data' => []];
         }
 
-        // Realizar búsqueda con Scout
         $builder = $modelClass::search($query);
 
-        // Aplicar filtros si existen
         foreach ($filters as $field => $value) {
             if ($value !== null && $value !== '') {
                 $builder->where($field, $value);
             }
         }
 
-        // Paginar resultados
         $paginatedResults = $builder->paginate($perPage, 'page', $page);
-
-        // Transformar resultados usando el resource correspondiente
         $resourceClass = $this->modelResources[$modelClass] ?? null;
         $transformedData = $paginatedResults->items();
 
@@ -113,7 +97,7 @@ class SearchController extends Controller
     }
 
     /**
-     * Verificar si un modelo es searchable
+     * Verificar si el modelo usa el trait Searchable (FQCN inline — evita error fatal)
      */
     protected function isModelSearchable(string $modelClass): bool
     {
@@ -123,19 +107,14 @@ class SearchController extends Controller
 
         $traits = class_uses_recursive($modelClass);
 
-        return isset($traits[Searchable::class]) ||
+        return isset($traits[\Laravel\Scout\Searchable::class]) ||
             isset($traits[\App\Traits\Searchable::class]);
     }
 
-    /**
-     * Obtener la clave del modelo para usar en respuestas
-     */
     protected function getModelKey(string $modelClass): string
     {
-        $availableModels = [
+        return [
             User::class => 'users',
-        ];
-
-        return $availableModels[$modelClass] ?? strtolower(class_basename($modelClass));
+        ][$modelClass] ?? strtolower(class_basename($modelClass));
     }
 }
