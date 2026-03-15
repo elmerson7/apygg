@@ -49,18 +49,17 @@ class UserService
             $data['password'] = Hash::make($data['password']);
         }
 
+        // Establecer estado activo por defecto si no se especifica
+        if (! isset($data['state_id'])) {
+            $data['state_id'] = 1; // 1 = activo
+        }
+
         // Crear usuario
         $user = User::create($data);
 
-        // Asignar roles si se proporcionan
+        // Asignar roles
         if (! empty($roleIds)) {
             $user->roles()->sync($roleIds);
-        } else {
-            // Asignar rol 'user' por defecto si no se especifica
-            $defaultRole = Role::where('name', 'user')->first();
-            if ($defaultRole) {
-                $user->roles()->attach($defaultRole->id);
-            }
         }
 
         // Limpiar cache
@@ -73,7 +72,7 @@ class UserService
     }
 
     /**
-     * Actualizar un usuario existente
+     * Actualizar un usuario existente.
      *
      * @param  string  $userId  ID del usuario
      * @param  array  $data  Datos a actualizar
@@ -109,6 +108,53 @@ class UserService
         event(new \App\Events\UserUpdated($user, $oldAttributes));
 
         return $user->fresh(['roles', 'permissions']);
+    }
+
+    /**
+     * Actualizar preferencias del usuario (se guardan como JSON en users.preferences).
+     * Normaliza el payload: sms, push, email en la raíz se mueven dentro de "notifications".
+     * Estructura final: theme, language, notifications: { sms, push, email }.
+     *
+     * @param  string  $userId  ID del usuario
+     * @param  array  $preferences  Objeto de preferencias (se serializa a JSON)
+     *
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el usuario no existe
+     */
+    public function updatePreferences(string $userId, array $preferences): User
+    {
+        $user = $this->find($userId);
+        $normalized = $this->normalizePreferencesPayload($preferences);
+        $existing = is_array($user->preferences) ? $user->preferences : [];
+        $merged = array_replace_recursive($existing, $normalized);
+        $user->update(['preferences' => $merged]);
+        $this->clearCache($userId);
+
+        return $user->fresh(['roles', 'permissions']);
+    }
+
+    /**
+     * Normaliza el payload de preferencias: mueve sms, push, email de la raíz a notifications.
+     *
+     * @param  array<string, mixed>  $preferences
+     * @return array<string, mixed>
+     */
+    protected function normalizePreferencesPayload(array $preferences): array
+    {
+        $notificationKeys = ['sms', 'push', 'email'];
+        $atRoot = array_intersect_key($preferences, array_flip($notificationKeys));
+        if ($atRoot === []) {
+            return $preferences;
+        }
+        $out = $preferences;
+        foreach ($notificationKeys as $key) {
+            unset($out[$key]);
+        }
+        $out['notifications'] = array_replace_recursive(
+            $out['notifications'] ?? [],
+            $atRoot
+        );
+
+        return $out;
     }
 
     /**
@@ -170,38 +216,54 @@ class UserService
     }
 
     /**
-     * Listar usuarios con paginación y filtros
+     * Listar usuarios con paginación y filtros.
      *
-     * @param  array  $filters  Filtros ['search', 'role', 'email', 'per_page']
+     * @param  array  $filters  Filtros ['search', 'per_page', 'page', 'include', 'role', 'exclude_roles']
      */
     public function list(array $filters = []): LengthAwarePaginator
     {
-        $perPage = $filters['per_page'] ?? 15;
+        $perPage = (int) ($filters['per_page'] ?? 20);
+        $perPage = min(max(1, $perPage), 500);
+        $page = max(1, (int) ($filters['page'] ?? 1));
         $search = $filters['search'] ?? null;
+        $include = $filters['include'] ?? '';
         $role = $filters['role'] ?? null;
-        $email = $filters['email'] ?? null;
+        $excludeRoles = $filters['exclude_roles'] ?? null;
 
-        $query = User::with(['roles', 'permissions']);
+        $relations = ['roles'];
+        if ($include !== '') {
+            $requested = array_map('trim', explode(',', $include));
+            if (in_array('permissions', $requested, true)) {
+                $relations[] = 'permissions';
+            }
+        }
+        $query = User::with($relations);
 
-        // Aplicar búsqueda si existe (usar ILIKE para PostgreSQL case-insensitive)
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'ILIKE', "%{$search}%")
-                    ->orWhere('email', 'ILIKE', "%{$search}%");
+        if ($role && trim((string) $role) !== '') {
+            $query->whereHas('roles', function ($q) use ($role) {
+                $q->where('roles.name', trim($role))->where('roles.guard_name', 'api');
             });
         }
 
-        // Filtrar por email
-        if ($email) {
-            $query->byEmail($email);
+        if ($excludeRoles && trim((string) $excludeRoles) !== '') {
+            $rolesToExclude = array_map('trim', explode(',', $excludeRoles));
+            $query->whereDoesntHave('roles', function ($q) use ($rolesToExclude) {
+                $q->whereIn('roles.name', $rolesToExclude)->where('roles.guard_name', 'api');
+            });
         }
 
-        // Filtrar por rol
-        if ($role) {
-            $query->byRole($role);
+        // Aplicar búsqueda (ILIKE para PostgreSQL case-insensitive)
+        if ($search && trim($search) !== '') {
+            $searchPattern = '%'.trim($search).'%';
+            $query->where(function ($q) use ($searchPattern) {
+                $q->where('first_name', 'ILIKE', $searchPattern)
+                    ->orWhere('last_name', 'ILIKE', $searchPattern)
+                    ->orWhere('email', 'ILIKE', $searchPattern)
+                    ->orWhere('identity_document', 'ILIKE', $searchPattern);
+            });
         }
 
-        return $query->orderBy('created_at', 'desc')->paginate($perPage);
+        return $query->orderBy('created_at', 'desc')->paginate($perPage, ['*'], 'page', $page);
     }
 
     /**
@@ -227,7 +289,7 @@ class UserService
         // Obtener roles anteriores para comparar
         $previousRoleIds = $user->roles()->select('roles.id')->pluck('id')->toArray();
 
-        // Sincronizar roles (reemplaza todos los roles existentes)
+        // Sincronizar roles
         $user->roles()->sync($roleIds);
 
         // Limpiar cache
@@ -303,7 +365,7 @@ class UserService
         // Limpiar cache
         $this->clearCache($userId);
 
-        // Disparar eventos para permisos nuevos y removidos
+        // Disparar eventos
         $newPermissionIds = array_diff($permissionIds, $previousPermissionIds);
         $removedPermissionIds = array_diff($previousPermissionIds, $permissionIds);
 
@@ -345,7 +407,6 @@ class UserService
         // Disparar evento PermissionRevoked
         event(new \App\Events\PermissionRevoked($user, $permission));
 
-        // Log de auditoría
         LogService::info('Permiso removido de usuario', [
             'user_id' => $userId,
             'permission_id' => $permissionId,
@@ -362,7 +423,7 @@ class UserService
      *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el usuario no existe
      */
-    public function getActivityLogs(string $userId, int $perPage = 15): LengthAwarePaginator
+    public function getActivityLogs(string $userId, int $perPage = 20): LengthAwarePaginator
     {
         $user = $this->find($userId);
 
