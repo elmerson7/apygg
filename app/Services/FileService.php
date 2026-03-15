@@ -6,7 +6,6 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Intervention\Image\Facades\Image;
 
 /**
  * FileService
@@ -15,19 +14,12 @@ use Intervention\Image\Facades\Image;
  */
 class FileService
 {
-    /**
-     * Disco de almacenamiento por defecto
-     */
     protected static string $defaultDisk = 'public';
 
     /**
      * Subir archivo
      *
-     * @param  UploadedFile  $file  Archivo a subir
-     * @param  string  $path  Ruta donde guardar (ej: 'avatars', 'documents')
-     * @param  string|null  $filename  Nombre personalizado (null = generar automático)
-     * @param  string|null  $disk  Disco de almacenamiento (null = usar default)
-     * @return array ['path' => string, 'url' => string, 'size' => int]
+     * @return array ['path', 'url', 'filename', 'size', 'mime_type', 'disk']
      */
     public static function upload(
         UploadedFile $file,
@@ -36,25 +28,25 @@ class FileService
         ?string $disk = null
     ): array {
         $disk = $disk ?? self::$defaultDisk;
-
-        // Validar archivo
         self::validateFile($file);
-
-        // Generar nombre único si no se proporciona
         $filename = $filename ?? self::generateFilename($file);
-
-        // Construir ruta completa
-        $fullPath = rtrim($path, '/').'/'.$filename;
-
-        // Guardar archivo
         $storedPath = Storage::disk($disk)->putFileAs($path, $file, $filename);
 
-        // Obtener URL pública
-        $url = Storage::disk($disk)->url($storedPath);
+        // S3/Minio: marcar como público
+        if ($disk === 's3') {
+            try {
+                Storage::disk($disk)->setVisibility($storedPath, 'public');
+            } catch (\Throwable $e) {
+                Log::warning('No se pudo establecer visibilidad pública en S3/Minio', [
+                    'path' => $storedPath,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
 
         return [
             'path' => $storedPath,
-            'url' => $url,
+            'url' => self::getUrl($storedPath, $disk),
             'filename' => $filename,
             'size' => $file->getSize(),
             'mime_type' => $file->getMimeType(),
@@ -63,18 +55,15 @@ class FileService
     }
 
     /**
-     * Subir imagen con procesamiento
+     * Subir imagen con procesamiento opcional (resize/formato)
      *
-     * @param  UploadedFile  $file  Imagen a subir
-     * @param  string  $path  Ruta donde guardar
-     * @param  array  $options  Opciones: width, height, quality, format
+     * @param  array  $options  width, height, quality, format
      */
     public static function uploadImage(
         UploadedFile $file,
         string $path = 'images',
         array $options = []
     ): array {
-        // Validar que sea imagen
         if (! str_starts_with($file->getMimeType(), 'image/')) {
             throw new \InvalidArgumentException('El archivo debe ser una imagen.');
         }
@@ -82,49 +71,37 @@ class FileService
         $width = $options['width'] ?? null;
         $height = $options['height'] ?? null;
         $quality = $options['quality'] ?? 90;
-        $format = $options['format'] ?? null; // jpg, png, webp
+        $format = $options['format'] ?? null;
 
-        // Procesar imagen si se especifican dimensiones
         if ($width || $height) {
-            // Verificar si Intervention Image está disponible
-            if (! class_exists(Image::class)) {
+            if (! class_exists(\Intervention\Image\Facades\Image::class)) {
                 throw new \RuntimeException('Intervention Image package is required for image processing.');
             }
 
-            $image = Image::make($file);
+            $image = \Intervention\Image\Facades\Image::make($file);
 
             if ($width && $height) {
                 $image->fit($width, $height);
             } elseif ($width) {
-                $image->resize($width, null, function ($constraint) {
-                    $constraint->aspectRatio();
-                });
+                $image->resize($width, null, fn ($c) => $c->aspectRatio());
             } elseif ($height) {
-                $image->resize(null, $height, function ($constraint) {
-                    $constraint->aspectRatio();
-                });
+                $image->resize(null, $height, fn ($c) => $c->aspectRatio());
             }
 
-            // Cambiar formato si se especifica
             if ($format) {
                 $image->encode($format, $quality);
             }
 
-            // Generar nombre único
             $extension = $format ?? $file->getClientOriginalExtension();
             $filename = self::generateFilename($file, $extension);
-
-            // Guardar imagen procesada
             $fullPath = rtrim($path, '/').'/'.$filename;
             $disk = self::$defaultDisk;
 
             Storage::disk($disk)->put($fullPath, $image->stream());
 
-            $url = Storage::disk($disk)->url($fullPath);
-
             return [
                 'path' => $fullPath,
-                'url' => $url,
+                'url' => Storage::disk($disk)->url($fullPath),
                 'filename' => $filename,
                 'size' => strlen($image->stream()->getContents()),
                 'mime_type' => $image->mime(),
@@ -134,58 +111,70 @@ class FileService
             ];
         }
 
-        // Si no hay procesamiento, usar upload normal
         return self::upload($file, $path);
     }
 
     /**
      * Eliminar archivo
-     *
-     * @param  string  $path  Ruta del archivo
-     * @param  string|null  $disk  Disco de almacenamiento
      */
     public static function delete(string $path, ?string $disk = null): bool
     {
         $disk = $disk ?? self::$defaultDisk;
 
         try {
-            if (Storage::disk($disk)->exists($path)) {
-                return Storage::disk($disk)->delete($path);
-            }
-
-            return false;
+            return Storage::disk($disk)->exists($path)
+                ? Storage::disk($disk)->delete($path)
+                : false;
         } catch (\Exception $e) {
-            Log::error('Failed to delete file', [
-                'path' => $path,
-                'disk' => $disk,
-                'error' => $e->getMessage(),
-            ]);
+            Log::error('Failed to delete file', ['path' => $path, 'disk' => $disk, 'error' => $e->getMessage()]);
 
             return false;
         }
     }
 
     /**
-     * Obtener URL pública del archivo
-     *
-     * @param  string  $path  Ruta del archivo
-     * @param  string|null  $disk  Disco de almacenamiento
+     * Obtener URL pública del archivo.
+     * Para S3/Minio construye la URL explícitamente usando buildS3Url().
      */
     public static function getUrl(string $path, ?string $disk = null): ?string
     {
         $disk = $disk ?? self::$defaultDisk;
 
         try {
-            if (Storage::disk($disk)->exists($path)) {
-                return Storage::disk($disk)->url($path);
+            if ($disk === 's3') {
+                return self::buildS3Url($path);
             }
 
-            return null;
+            return Storage::disk($disk)->exists($path)
+                ? Storage::disk($disk)->url($path)
+                : null;
         } catch (\Exception $e) {
-            Log::error('Failed to get file URL', [
-                'path' => $path,
-                'disk' => $disk,
-                'error' => $e->getMessage(),
+            Log::error('Failed to get file URL', ['path' => $path, 'disk' => $disk, 'error' => $e->getMessage()]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Obtener URL temporal con expiración (para archivos privados S3/Minio).
+     *
+     * @param  int  $minutes  Minutos de expiración (default 720 = 12h)
+     */
+    public static function getTemporaryUrl(string $path, ?string $disk = null, int $minutes = 720): ?string
+    {
+        $disk = $disk ?? self::$defaultDisk;
+
+        try {
+            if (! Storage::disk($disk)->exists($path)) {
+                Log::warning('File does not exist for temporary URL', ['path' => $path, 'disk' => $disk]);
+
+                return null;
+            }
+
+            return Storage::disk($disk)->temporaryUrl($path, now()->addMinutes($minutes));
+        } catch (\Exception $e) {
+            Log::error('Failed to generate temporary URL', [
+                'path' => $path, 'disk' => $disk, 'minutes' => $minutes, 'error' => $e->getMessage(),
             ]);
 
             return null;
@@ -193,104 +182,52 @@ class FileService
     }
 
     /**
-     * Verificar si archivo existe
-     *
-     * @param  string  $path  Ruta del archivo
-     * @param  string|null  $disk  Disco de almacenamiento
+     * Construir URL pública para disco S3/Minio (path-style).
+     * Usa AWS_URL (pública) en lugar del endpoint interno.
+     * Formato: {url}/{bucket}/{path}
      */
-    public static function exists(string $path, ?string $disk = null): bool
+    protected static function buildS3Url(string $path): string
     {
-        $disk = $disk ?? self::$defaultDisk;
+        $path = ltrim($path, '/');
+        $baseUrl = rtrim(config('filesystems.disks.s3.url', ''), '/');
+        $endpoint = rtrim(config('filesystems.disks.s3.endpoint', ''), '/');
+        $bucket = config('filesystems.disks.s3.bucket', '');
+        $usePathStyle = config('filesystems.disks.s3.use_path_style_endpoint', true);
 
-        return Storage::disk($disk)->exists($path);
+        $root = $baseUrl !== '' ? $baseUrl : $endpoint;
+        if ($root === '') {
+            Log::warning('S3 URL incompleta: falta AWS_URL o AWS_ENDPOINT en .env');
+
+            return $path !== '' ? '/'.$path : '/';
+        }
+
+        if ($usePathStyle && $bucket !== '') {
+            return $root.'/'.$bucket.'/'.$path;
+        }
+
+        return $root.'/'.$path;
     }
 
     /**
-     * Obtener tamaño del archivo
-     *
-     * @param  string  $path  Ruta del archivo
-     * @param  string|null  $disk  Disco de almacenamiento
-     * @return int|null Tamaño en bytes
+     * Verificar si archivo existe
+     */
+    public static function exists(string $path, ?string $disk = null): bool
+    {
+        return Storage::disk($disk ?? self::$defaultDisk)->exists($path);
+    }
+
+    /**
+     * Obtener tamaño del archivo en bytes
      */
     public static function getSize(string $path, ?string $disk = null): ?int
     {
         $disk = $disk ?? self::$defaultDisk;
 
         try {
-            if (Storage::disk($disk)->exists($path)) {
-                return Storage::disk($disk)->size($path);
-            }
-
-            return null;
+            return Storage::disk($disk)->exists($path) ? Storage::disk($disk)->size($path) : null;
         } catch (\Exception $e) {
             return null;
         }
-    }
-
-    /**
-     * Validar archivo antes de subir
-     *
-     * @throws \InvalidArgumentException
-     */
-    protected static function validateFile(UploadedFile $file): void
-    {
-        // Validar tamaño máximo usando nueva configuración de files.php
-        $maxSize = config('files.max_sizes.default', 10 * 1024 * 1024); // 10MB por defecto
-        if ($file->getSize() > $maxSize) {
-            throw new \InvalidArgumentException('El archivo excede el tamaño máximo permitido.');
-        }
-
-        // Validar tipo MIME permitido usando nueva configuración
-        $allAllowedMimes = [];
-        foreach (config('files.allowed_mimes', []) as $categoryMimes) {
-            $allAllowedMimes = array_merge($allAllowedMimes, $categoryMimes);
-        }
-        $allAllowedMimes = array_unique($allAllowedMimes);
-
-        if (empty($allAllowedMimes)) {
-            // Fallback a valores por defecto si no hay configuración
-            $allAllowedMimes = [
-                'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-                'application/pdf', 'application/msword',
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            ];
-        }
-
-        if (! in_array($file->getMimeType(), $allAllowedMimes)) {
-            throw new \InvalidArgumentException('Tipo de archivo no permitido.');
-        }
-
-        // Validar extensión usando nueva configuración
-        $allAllowedExtensions = [];
-        foreach (config('files.allowed_extensions', []) as $categoryExtensions) {
-            $allAllowedExtensions = array_merge($allAllowedExtensions, $categoryExtensions);
-        }
-        $allAllowedExtensions = array_unique($allAllowedExtensions);
-
-        if (empty($allAllowedExtensions)) {
-            // Fallback a valores por defecto
-            $allAllowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx'];
-        }
-
-        $extension = strtolower($file->getClientOriginalExtension());
-        if (! in_array($extension, $allAllowedExtensions)) {
-            throw new \InvalidArgumentException('Extensión de archivo no permitida.');
-        }
-    }
-
-    /**
-     * Generar nombre único para archivo
-     *
-     * @param  string|null  $extension  Extensión personalizada
-     */
-    protected static function generateFilename(UploadedFile $file, ?string $extension = null): string
-    {
-        $extension = $extension ?? $file->getClientOriginalExtension();
-        $baseName = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
-        $timestamp = now()->format('YmdHis');
-        $random = Str::random(8);
-
-        return "{$baseName}_{$timestamp}_{$random}.{$extension}";
     }
 
     /**
@@ -299,7 +236,6 @@ class FileService
     public static function getInfo(string $path, ?string $disk = null): ?array
     {
         $disk = $disk ?? self::$defaultDisk;
-
         if (! self::exists($path, $disk)) {
             return null;
         }
@@ -315,10 +251,6 @@ class FileService
 
     /**
      * Copiar archivo
-     *
-     * @param  string  $fromPath  Ruta origen
-     * @param  string  $toPath  Ruta destino
-     * @param  string|null  $disk  Disco de almacenamiento
      */
     public static function copy(string $fromPath, string $toPath, ?string $disk = null): bool
     {
@@ -327,11 +259,7 @@ class FileService
         try {
             return Storage::disk($disk)->copy($fromPath, $toPath);
         } catch (\Exception $e) {
-            Log::error('Failed to copy file', [
-                'from' => $fromPath,
-                'to' => $toPath,
-                'error' => $e->getMessage(),
-            ]);
+            Log::error('Failed to copy file', ['from' => $fromPath, 'to' => $toPath, 'error' => $e->getMessage()]);
 
             return false;
         }
@@ -339,10 +267,6 @@ class FileService
 
     /**
      * Mover archivo
-     *
-     * @param  string  $fromPath  Ruta origen
-     * @param  string  $toPath  Ruta destino
-     * @param  string|null  $disk  Disco de almacenamiento
      */
     public static function move(string $fromPath, string $toPath, ?string $disk = null): bool
     {
@@ -351,13 +275,54 @@ class FileService
         try {
             return Storage::disk($disk)->move($fromPath, $toPath);
         } catch (\Exception $e) {
-            Log::error('Failed to move file', [
-                'from' => $fromPath,
-                'to' => $toPath,
-                'error' => $e->getMessage(),
-            ]);
+            Log::error('Failed to move file', ['from' => $fromPath, 'to' => $toPath, 'error' => $e->getMessage()]);
 
             return false;
         }
+    }
+
+    /**
+     * Validar archivo antes de subir
+     *
+     * @throws \InvalidArgumentException
+     */
+    protected static function validateFile(UploadedFile $file): void
+    {
+        $maxSize = config('files.max_sizes.default', 10 * 1024 * 1024);
+        if ($file->getSize() > $maxSize) {
+            throw new \InvalidArgumentException('El archivo excede el tamaño máximo permitido.');
+        }
+
+        $allAllowedMimes = array_unique(array_merge(...array_values(config('files.allowed_mimes', []))));
+        if (empty($allAllowedMimes)) {
+            $allAllowedMimes = [
+                'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+                'application/pdf', 'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            ];
+        }
+        if (! in_array($file->getMimeType(), $allAllowedMimes)) {
+            throw new \InvalidArgumentException('Tipo de archivo no permitido.');
+        }
+
+        $allAllowedExtensions = array_unique(array_merge(...array_values(config('files.allowed_extensions', []))));
+        if (empty($allAllowedExtensions)) {
+            $allAllowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx'];
+        }
+        $extension = strtolower($file->getClientOriginalExtension());
+        if (! in_array($extension, $allAllowedExtensions)) {
+            throw new \InvalidArgumentException('Extensión de archivo no permitida.');
+        }
+    }
+
+    /**
+     * Generar nombre único para archivo
+     */
+    protected static function generateFilename(UploadedFile $file, ?string $extension = null): string
+    {
+        $extension = $extension ?? $file->getClientOriginalExtension();
+        $baseName = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
+
+        return "{$baseName}_".now()->format('YmdHis').'_'.Str::random(8).".$extension";
     }
 }
