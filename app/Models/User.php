@@ -8,6 +8,9 @@ use App\Traits\HasApiTokens;
 use App\Traits\LogsActivity;
 use App\Traits\Searchable;
 use App\Traits\SoftDeletesWithUser;
+use Carbon\Carbon;
+use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -30,14 +33,14 @@ use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
  * @property string|null $provider_id
  * @property array|null $preferences
  * @property string|null $deleted_by
- * @property \Carbon\Carbon $email_verified_at
- * @property \Carbon\Carbon $created_at
- * @property \Carbon\Carbon $updated_at
- * @property \Carbon\Carbon|null $deleted_at
+ * @property Carbon $email_verified_at
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ * @property Carbon|null $deleted_at
  */
 class User extends Authenticatable implements JWTSubject
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, HasUuids, LogsActivity, Notifiable, Searchable, SoftDeletes, SoftDeletesWithUser;
 
     /**
@@ -262,8 +265,8 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Scope para filtrar usuarios activos (no eliminados)
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeActive($query)
     {
@@ -273,8 +276,8 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Scope para filtrar usuarios inactivos (eliminados)
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeInactive($query)
     {
@@ -284,8 +287,8 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Scope para filtrar por email
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeByEmail($query, string $email)
     {
@@ -295,9 +298,9 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Scope para filtrar usuarios por rol
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  Builder  $query
      * @param  string|array  $roleName  Nombre del rol o array de nombres
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     public function scopeByRole($query, string|array $roleName)
     {

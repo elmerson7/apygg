@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * File Model
@@ -170,7 +171,7 @@ class File extends Model
      */
     public function exists(): bool
     {
-        return \Illuminate\Support\Facades\Storage::disk($this->disk)->exists($this->path);
+        return Storage::disk($this->disk)->exists($this->path);
     }
 
     /**
@@ -183,7 +184,7 @@ class File extends Model
         }
 
         if ($this->exists()) {
-            return \Illuminate\Support\Facades\Storage::disk($this->disk)->url($this->path);
+            return Storage::disk($this->disk)->url($this->path);
         }
 
         return null;

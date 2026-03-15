@@ -9,9 +9,11 @@ use App\Http\Requests\Users\UpdateUserRequest;
 use App\Http\Resources\Users\UserDetailResource;
 use App\Http\Resources\Users\UserResource;
 use App\Models\User;
+use App\Rules\StrongPassword;
 use App\Services\UserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 /**
  * UserController
@@ -137,9 +139,9 @@ class UserController extends Controller
                 'string',
                 'email',
                 'max:255',
-                \Illuminate\Validation\Rule::unique('users', 'email')->ignore($id),
+                Rule::unique('users', 'email')->ignore($id),
             ],
-            'password' => ['sometimes', 'string', 'min:8', new \App\Rules\StrongPassword],
+            'password' => ['sometimes', 'string', 'min:8', new StrongPassword],
         ];
 
         $messages = [

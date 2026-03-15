@@ -2,9 +2,15 @@
 
 namespace App\Services;
 
+use App\Models\Logs\ActivityLog;
+use App\Models\Logs\ApiLog;
+use App\Models\Logs\SecurityLog;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Sentry\SentrySdk;
+use Sentry\Severity;
+use Sentry\State\Scope;
 
 /**
  * LogService
@@ -77,7 +83,7 @@ class LogService
         // Enviar a Sentry usando captura directa (más confiable que el canal)
         // NO enviar a Sentry durante tests
         $shouldSendToSentry = false;
-        if (class_exists(\Sentry\SentrySdk::class) && ! app()->runningUnitTests()) {
+        if (class_exists(SentrySdk::class) && ! app()->runningUnitTests()) {
             $env = config('app.env', 'dev');
             // No enviar a Sentry si estamos en modo testing o en consola (tests)
             if ($env === 'testing' || app()->runningInConsole()) {
@@ -261,11 +267,11 @@ class LogService
      */
     protected static function saveApiLog(array $data, array $context): void
     {
-        if (! class_exists(\App\Models\Logs\ApiLog::class)) {
+        if (! class_exists(ApiLog::class)) {
             return;
         }
 
-        \App\Models\Logs\ApiLog::create([
+        ApiLog::create([
             'trace_id' => $context['trace_id'],
             'user_id' => $context['user_id'],
             'method' => $data['method'],
@@ -283,11 +289,11 @@ class LogService
      */
     protected static function saveActivityLog(array $data, array $context): void
     {
-        if (! class_exists(\App\Models\Logs\ActivityLog::class)) {
+        if (! class_exists(ActivityLog::class)) {
             return;
         }
 
-        \App\Models\Logs\ActivityLog::create([
+        ActivityLog::create([
             'user_id' => $context['user_id'],
             'model_type' => $data['model_type'],
             'model_id' => $data['model_id'],
@@ -304,11 +310,11 @@ class LogService
      */
     protected static function saveSecurityLog(array $data, array $context): void
     {
-        if (! class_exists(\App\Models\Logs\SecurityLog::class)) {
+        if (! class_exists(SecurityLog::class)) {
             return;
         }
 
-        \App\Models\Logs\SecurityLog::create([
+        SecurityLog::create([
             'trace_id' => $context['trace_id'],
             'user_id' => $context['user_id'],
             'event_type' => $data['event_type'],
@@ -324,18 +330,18 @@ class LogService
      */
     protected static function logToSentry(string $level, string $message, array $context, ?\Throwable $exception = null): void
     {
-        if (! class_exists(\Sentry\SentrySdk::class)) {
+        if (! class_exists(SentrySdk::class)) {
             return;
         }
 
         try {
             $sentryLevel = match ($level) {
-                'debug' => \Sentry\Severity::debug(),
-                'info' => \Sentry\Severity::info(),
-                'warning' => \Sentry\Severity::warning(),
-                'error' => \Sentry\Severity::error(),
-                'critical' => \Sentry\Severity::fatal(),
-                default => \Sentry\Severity::error(),
+                'debug' => Severity::debug(),
+                'info' => Severity::info(),
+                'warning' => Severity::warning(),
+                'error' => Severity::error(),
+                'critical' => Severity::fatal(),
+                default => Severity::error(),
             };
 
             if ($exception) {
@@ -345,7 +351,7 @@ class LogService
             }
 
             // Agregar contexto adicional
-            \Sentry\configureScope(function (\Sentry\State\Scope $scope) use ($context) {
+            \Sentry\configureScope(function (Scope $scope) use ($context) {
                 foreach ($context as $key => $value) {
                     // setContext requiere un array, setTag para valores simples
                     if (is_array($value)) {

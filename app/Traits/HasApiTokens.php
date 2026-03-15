@@ -2,6 +2,8 @@
 
 namespace App\Traits;
 
+use App\Models\ApiKey;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 /**
@@ -33,8 +35,8 @@ trait HasApiTokens
      */
     protected function getApiKeyClass(): string
     {
-        if (class_exists(\App\Models\ApiKey::class)) {
-            return \App\Models\ApiKey::class;
+        if (class_exists(ApiKey::class)) {
+            return ApiKey::class;
         }
 
         // Fallback a namespace alternativo si existe
@@ -68,9 +70,9 @@ trait HasApiTokens
      * @param  array  $scopes  Scopes/permissions del token
      * @param  \DateTimeInterface|null  $expiresAt  Fecha de expiración (null = sin expiración)
      */
-    public function createApiKey(string $name, array $scopes = [], ?\DateTimeInterface $expiresAt = null): \Illuminate\Database\Eloquent\Model
+    public function createApiKey(string $name, array $scopes = [], ?\DateTimeInterface $expiresAt = null): Model
     {
-        /** @var class-string<\Illuminate\Database\Eloquent\Model> $apiKeyClass */
+        /** @var class-string<Model> $apiKeyClass */
         $apiKeyClass = $this->getApiKeyClass();
         $key = Str::random(64); // Generar clave aleatoria de 64 caracteres
 
@@ -114,7 +116,7 @@ trait HasApiTokens
      *
      * @param  string  $token  Token a verificar
      */
-    public function findApiKeyByToken(string $token): ?\Illuminate\Database\Eloquent\Model
+    public function findApiKeyByToken(string $token): ?Model
     {
         $hashedToken = hash('sha256', $token);
 

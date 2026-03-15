@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Events\UserLoggedIn;
+use App\Events\UserLoggedOut;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
@@ -115,7 +117,7 @@ class AuthService
             ], 'security');
 
             // Disparar evento UserLoggedIn
-            event(new \App\Events\UserLoggedIn(
+            event(new UserLoggedIn(
                 $user,
                 $ipAddress,
                 request()->userAgent()
@@ -182,9 +184,9 @@ class AuthService
      * Obtener usuario desde refresh token
      *
      * @param  string  $refreshToken  Refresh token
-     * @return \App\Models\User|null Usuario o null si el token es inválido
+     * @return User|null Usuario o null si el token es inválido
      */
-    public function getUserFromRefreshToken(string $refreshToken): ?\App\Models\User
+    public function getUserFromRefreshToken(string $refreshToken): ?User
     {
         return $this->tokenService->getUserFromToken($refreshToken);
     }
@@ -213,7 +215,7 @@ class AuthService
                     ], 'security');
 
                     // Disparar evento UserLoggedOut solo si tenemos usuario
-                    event(new \App\Events\UserLoggedOut(
+                    event(new UserLoggedOut(
                         $user,
                         request()->ip()
                     ));

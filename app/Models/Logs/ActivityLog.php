@@ -2,6 +2,10 @@
 
 namespace App\Models\Logs;
 
+use App\Models\User;
+use Database\Factories\ActivityLogFactory;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,11 +31,11 @@ class ActivityLog extends Model
     /**
      * Create a new factory instance for the model.
      *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory<static>
+     * @return Factory<static>
      */
     protected static function newFactory()
     {
-        return \Database\Factories\ActivityLogFactory::new();
+        return ActivityLogFactory::new();
     }
 
     /**
@@ -84,7 +88,7 @@ class ActivityLog extends Model
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     /**
@@ -98,8 +102,8 @@ class ActivityLog extends Model
     /**
      * Scope para filtrar por usuario
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeByUserId($query, string $userId)
     {
@@ -109,8 +113,8 @@ class ActivityLog extends Model
     /**
      * Scope para filtrar por tipo de modelo
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeByModelType($query, string $modelType)
     {
@@ -120,8 +124,8 @@ class ActivityLog extends Model
     /**
      * Scope para filtrar por modelo específico
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeByModel($query, string $modelType, string $modelId)
     {
@@ -132,8 +136,8 @@ class ActivityLog extends Model
     /**
      * Scope para filtrar por acción
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeByAction($query, string $action)
     {
@@ -143,8 +147,8 @@ class ActivityLog extends Model
     /**
      * Scope para filtrar creaciones
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeCreated($query)
     {
@@ -154,8 +158,8 @@ class ActivityLog extends Model
     /**
      * Scope para filtrar actualizaciones
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeUpdated($query)
     {
@@ -165,8 +169,8 @@ class ActivityLog extends Model
     /**
      * Scope para filtrar eliminaciones
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeDeleted($query)
     {
@@ -176,8 +180,8 @@ class ActivityLog extends Model
     /**
      * Scope para filtrar restauraciones
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeRestored($query)
     {
@@ -187,8 +191,8 @@ class ActivityLog extends Model
     /**
      * Scope para filtrar por rango de fechas
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeDateRange($query, ?string $startDate = null, ?string $endDate = null)
     {
@@ -206,8 +210,8 @@ class ActivityLog extends Model
     /**
      * Scope para ordenar por más recientes
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeRecent($query)
     {

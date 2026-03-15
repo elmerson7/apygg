@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Users;
 
 use App\Http\Requests\BaseFormRequest;
+use App\Models\User;
 
 /**
  * AssignRoleRequest
@@ -17,7 +18,7 @@ class AssignRoleRequest extends BaseFormRequest
      */
     public function authorize(): bool
     {
-        $user = \App\Models\User::findOrFail($this->route('id'));
+        $user = User::findOrFail($this->route('id'));
 
         return $this->user()->can('update', $user);
     }

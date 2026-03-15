@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\DeviceToken;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -130,7 +131,7 @@ class FcmService
      */
     public static function invalidateToken(string $token): void
     {
-        \App\Models\DeviceToken::where('token', $token)->delete();
+        DeviceToken::where('token', $token)->delete();
 
         Log::info('FCM token invalidated', ['token' => substr($token, 0, 20).'...']);
     }

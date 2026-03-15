@@ -2,9 +2,18 @@
 
 namespace App\Services;
 
+use App\Events\PermissionGranted;
+use App\Events\PermissionRevoked;
+use App\Events\RoleAssigned;
+use App\Events\RoleRemoved;
+use App\Events\UserCreated;
+use App\Events\UserDeleted;
+use App\Events\UserRestored;
+use App\Events\UserUpdated;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Hash;
 
@@ -66,7 +75,7 @@ class UserService
         $this->clearCache();
 
         // Disparar evento UserCreated
-        event(new \App\Events\UserCreated($user));
+        event(new UserCreated($user));
 
         return $user->fresh(['roles', 'permissions']);
     }
@@ -77,7 +86,7 @@ class UserService
      * @param  string  $userId  ID del usuario
      * @param  array  $data  Datos a actualizar
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el usuario no existe
+     * @throws ModelNotFoundException Si el usuario no existe
      * @throws \InvalidArgumentException Si el email ya existe
      */
     public function update(string $userId, array $data): User
@@ -105,7 +114,7 @@ class UserService
         $this->clearCache($userId);
 
         // Disparar evento UserUpdated
-        event(new \App\Events\UserUpdated($user, $oldAttributes));
+        event(new UserUpdated($user, $oldAttributes));
 
         return $user->fresh(['roles', 'permissions']);
     }
@@ -118,7 +127,7 @@ class UserService
      * @param  string  $userId  ID del usuario
      * @param  array  $preferences  Objeto de preferencias (se serializa a JSON)
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el usuario no existe
+     * @throws ModelNotFoundException Si el usuario no existe
      */
     public function updatePreferences(string $userId, array $preferences): User
     {
@@ -162,7 +171,7 @@ class UserService
      *
      * @param  string  $userId  ID del usuario
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el usuario no existe
+     * @throws ModelNotFoundException Si el usuario no existe
      */
     public function delete(string $userId): bool
     {
@@ -173,7 +182,7 @@ class UserService
         $this->clearCache($userId);
 
         // Disparar evento UserDeleted
-        event(new \App\Events\UserDeleted($user));
+        event(new UserDeleted($user));
 
         return $deleted;
     }
@@ -183,7 +192,7 @@ class UserService
      *
      * @param  string  $userId  ID del usuario
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el usuario no existe
+     * @throws ModelNotFoundException Si el usuario no existe
      */
     public function restore(string $userId): User
     {
@@ -194,7 +203,7 @@ class UserService
         $this->clearCache($userId);
 
         // Disparar evento UserRestored
-        event(new \App\Events\UserRestored($user));
+        event(new UserRestored($user));
 
         return $user->fresh(['roles', 'permissions']);
     }
@@ -204,7 +213,7 @@ class UserService
      *
      * @param  string  $userId  ID del usuario
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el usuario no existe
+     * @throws ModelNotFoundException Si el usuario no existe
      */
     public function find(string $userId): User
     {
@@ -272,7 +281,7 @@ class UserService
      * @param  string  $userId  ID del usuario
      * @param  array  $roleIds  IDs de roles a asignar
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el usuario no existe
+     * @throws ModelNotFoundException Si el usuario no existe
      */
     public function assignRoles(string $userId, array $roleIds): User
     {
@@ -302,14 +311,14 @@ class UserService
         foreach ($newRoleIds as $roleId) {
             $role = Role::find($roleId);
             if ($role) {
-                event(new \App\Events\RoleAssigned($user, $role));
+                event(new RoleAssigned($user, $role));
             }
         }
 
         foreach ($removedRoleIds as $roleId) {
             $role = Role::find($roleId);
             if ($role) {
-                event(new \App\Events\RoleRemoved($user, $role));
+                event(new RoleRemoved($user, $role));
             }
         }
 
@@ -322,7 +331,7 @@ class UserService
      * @param  string  $userId  ID del usuario
      * @param  string  $roleId  ID del rol a remover
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el usuario o rol no existe
+     * @throws ModelNotFoundException Si el usuario o rol no existe
      */
     public function removeRole(string $userId, string $roleId): User
     {
@@ -340,7 +349,7 @@ class UserService
         $this->clearCache($userId);
 
         // Disparar evento RoleRemoved
-        event(new \App\Events\RoleRemoved($user, $role));
+        event(new RoleRemoved($user, $role));
 
         return $user->fresh(['roles', 'permissions']);
     }
@@ -351,7 +360,7 @@ class UserService
      * @param  string  $userId  ID del usuario
      * @param  array  $permissionIds  IDs de permisos a asignar
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el usuario no existe
+     * @throws ModelNotFoundException Si el usuario no existe
      */
     public function assignPermissions(string $userId, array $permissionIds): User
     {
@@ -372,14 +381,14 @@ class UserService
         foreach ($newPermissionIds as $permissionId) {
             $permission = Permission::find($permissionId);
             if ($permission) {
-                event(new \App\Events\PermissionGranted($user, $permission));
+                event(new PermissionGranted($user, $permission));
             }
         }
 
         foreach ($removedPermissionIds as $permissionId) {
             $permission = Permission::find($permissionId);
             if ($permission) {
-                event(new \App\Events\PermissionRevoked($user, $permission));
+                event(new PermissionRevoked($user, $permission));
             }
         }
 
@@ -392,7 +401,7 @@ class UserService
      * @param  string  $userId  ID del usuario
      * @param  string  $permissionId  ID del permiso a remover
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el usuario no existe
+     * @throws ModelNotFoundException Si el usuario no existe
      */
     public function removePermission(string $userId, string $permissionId): User
     {
@@ -405,7 +414,7 @@ class UserService
         $this->clearCache($userId);
 
         // Disparar evento PermissionRevoked
-        event(new \App\Events\PermissionRevoked($user, $permission));
+        event(new PermissionRevoked($user, $permission));
 
         LogService::info('Permiso removido de usuario', [
             'user_id' => $userId,
@@ -421,7 +430,7 @@ class UserService
      * @param  string  $userId  ID del usuario
      * @param  int  $perPage  Número de resultados por página
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el usuario no existe
+     * @throws ModelNotFoundException Si el usuario no existe
      */
     public function getActivityLogs(string $userId, int $perPage = 20): LengthAwarePaginator
     {

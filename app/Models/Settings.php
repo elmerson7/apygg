@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use App\Services\SecurityService;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Log;
+
 /**
  * Settings Model
  *
@@ -59,9 +63,9 @@ class Settings extends Model
     /**
      * Scope para filtrar por grupo
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  Builder  $query
      * @param  string  $group  Grupo a filtrar
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     public function scopeByGroup($query, string $group)
     {
@@ -71,8 +75,8 @@ class Settings extends Model
     /**
      * Scope para filtrar solo settings públicos
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopePublic($query)
     {
@@ -82,8 +86,8 @@ class Settings extends Model
     /**
      * Scope para filtrar solo settings encriptados
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeEncrypted($query)
     {
@@ -93,9 +97,9 @@ class Settings extends Model
     /**
      * Scope para buscar por key exacta
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  Builder  $query
      * @param  string  $key  Key a buscar
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     public function scopeByKey($query, string $key)
     {
@@ -114,9 +118,9 @@ class Settings extends Model
         }
 
         try {
-            return \App\Services\SecurityService::decrypt($this->value);
+            return SecurityService::decrypt($this->value);
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::warning('Failed to decrypt setting value', [
+            Log::warning('Failed to decrypt setting value', [
                 'setting_id' => $this->id,
                 'key' => $this->key,
                 'error' => $e->getMessage(),

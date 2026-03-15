@@ -4,6 +4,10 @@ namespace App\Providers;
 
 use App\Listeners\LogAuthenticationEvents;
 use App\Logging\DateOrganizedStreamHandler;
+use App\Models\ApiKey;
+use App\Models\Webhook;
+use App\Observers\ApiKeyObserver;
+use App\Observers\WebhookObserver;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
@@ -41,12 +45,12 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Registrar Observers para invalidación automática de cache
-        if (class_exists(\App\Models\ApiKey::class)) {
-            \App\Models\ApiKey::observe(\App\Observers\ApiKeyObserver::class);
+        if (class_exists(ApiKey::class)) {
+            ApiKey::observe(ApiKeyObserver::class);
         }
 
-        if (class_exists(\App\Models\Webhook::class)) {
-            \App\Models\Webhook::observe(\App\Observers\WebhookObserver::class);
+        if (class_exists(Webhook::class)) {
+            Webhook::observe(WebhookObserver::class);
         }
         // Registrar listeners para eventos de autenticación
         Event::listen(Login::class, [LogAuthenticationEvents::class, 'handleLogin']);

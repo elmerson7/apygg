@@ -4,6 +4,8 @@ namespace App\Console\Commands;
 
 use App\Models\Permission;
 use App\Models\Role;
+use App\Models\User;
+use App\Models\Webhook;
 use App\Services\CacheService;
 use App\Services\LogService;
 use App\Services\PermissionService;
@@ -176,7 +178,7 @@ class WarmCacheCommand extends Command
         try {
             // Pre-cargar usuarios recientes (no eliminados, ordenados por fecha de creación)
             // Limitamos a 50 para no sobrecargar el sistema
-            $users = \App\Models\User::orderBy('created_at', 'desc')
+            $users = User::orderBy('created_at', 'desc')
                 ->limit(50)
                 ->get();
 
@@ -210,8 +212,8 @@ class WarmCacheCommand extends Command
         $count = 0;
 
         try {
-            if (class_exists(\App\Models\Webhook::class)) {
-                $webhooks = \App\Models\Webhook::where('status', 'active')->get();
+            if (class_exists(Webhook::class)) {
+                $webhooks = Webhook::where('status', 'active')->get();
 
                 foreach ($webhooks as $webhook) {
                     CacheService::set("webhook:{$webhook->id}", [

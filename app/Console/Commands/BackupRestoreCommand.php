@@ -4,7 +4,9 @@ namespace App\Console\Commands;
 
 use App\Services\BackupService;
 use App\Services\LogService;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * BackupRestoreCommand
@@ -129,7 +131,7 @@ class BackupRestoreCommand extends Command
         $config = config('backups');
         if ($config['remote']['enabled']) {
             try {
-                $disk = \Illuminate\Support\Facades\Storage::disk($config['remote']['disk']);
+                $disk = Storage::disk($config['remote']['disk']);
                 $remotePath = rtrim($config['remote']['path'], '/').'/'.$input;
 
                 if ($disk->exists($remotePath)) {
@@ -152,13 +154,13 @@ class BackupRestoreCommand extends Command
         $isRemote = str_starts_with($backupPath, 's3://') || ! file_exists($backupPath);
 
         if ($isRemote) {
-            $disk = \Illuminate\Support\Facades\Storage::disk(config('backups.remote.disk'));
+            $disk = Storage::disk(config('backups.remote.disk'));
             $size = $disk->size($backupPath);
             $lastModified = $disk->lastModified($backupPath);
-            $createdAt = \Carbon\Carbon::createFromTimestamp($lastModified);
+            $createdAt = Carbon::createFromTimestamp($lastModified);
         } else {
             $size = filesize($backupPath);
-            $createdAt = \Carbon\Carbon::createFromTimestamp(filemtime($backupPath));
+            $createdAt = Carbon::createFromTimestamp(filemtime($backupPath));
         }
 
         return [

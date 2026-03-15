@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Aws\S3\Exception\S3Exception;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -168,7 +169,7 @@ class BackupService
                 try {
                     // Intentar verificar acceso al bucket listando archivos
                     $disk->files($config['remote']['path']);
-                } catch (\Aws\S3\Exception\S3Exception $e) {
+                } catch (S3Exception $e) {
                     if ($e->getAwsErrorCode() === 'NoSuchBucket') {
                         throw new \RuntimeException(
                             "El bucket '{$diskConfig['bucket']}' no existe en S3/MinIO. ".
@@ -192,7 +193,7 @@ class BackupService
             // Subir a S3/MinIO
             try {
                 $uploaded = $disk->put($remotePath, $content);
-            } catch (\Aws\S3\Exception\S3Exception $e) {
+            } catch (S3Exception $e) {
                 // Error específico de AWS S3
                 $awsMessage = $e->getAwsErrorMessage() ?? $e->getMessage();
                 $awsCode = $e->getAwsErrorCode() ?? 'Unknown';
@@ -208,7 +209,7 @@ class BackupService
             }
 
             return $remotePath;
-        } catch (\Aws\S3\Exception\S3Exception $e) {
+        } catch (S3Exception $e) {
             // Error específico de AWS S3
             $message = $e->getAwsErrorMessage() ?? $e->getMessage();
 

@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Users;
 
 use App\Http\Resources\BaseResource;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 /**
@@ -118,7 +119,7 @@ class UserDetailResource extends BaseResource
      * Obtener permisos efectivos del usuario
      * Combina permisos de roles y permisos directos, eliminando duplicados
      *
-     * @param  \App\Models\User  $user
+     * @param  User  $user
      */
     protected function getEffectivePermissions($user): array
     {

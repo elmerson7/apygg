@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use Laravel\Scout\Searchable;
 
 class SyncSearchIndexesCommand extends Command
 {
@@ -28,7 +29,7 @@ class SyncSearchIndexesCommand extends Command
 
             // Sincronizar usuarios si tienen el trait Searchable
             $traits = class_uses_recursive(User::class);
-            $hasSearchable = isset($traits[\Laravel\Scout\Searchable::class]) || isset($traits[\App\Traits\Searchable::class]);
+            $hasSearchable = isset($traits[Searchable::class]) || isset($traits[\App\Traits\Searchable::class]);
 
             if ($hasSearchable) {
                 $this->info('Sincronizando usuarios...');

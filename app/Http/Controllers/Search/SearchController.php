@@ -8,6 +8,7 @@ use App\Http\Resources\Search\SearchResource;
 use App\Http\Resources\Users\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Laravel\Scout\Searchable;
 
 /**
  * SearchController
@@ -122,7 +123,7 @@ class SearchController extends Controller
 
         $traits = class_uses_recursive($modelClass);
 
-        return isset($traits[\Laravel\Scout\Searchable::class]) ||
+        return isset($traits[Searchable::class]) ||
             isset($traits[\App\Traits\Searchable::class]);
     }
 

@@ -7,7 +7,9 @@ use App\Http\Requests\ApiKeys\RotateApiKeyRequest;
 use App\Http\Requests\ApiKeys\StoreApiKeyRequest;
 use App\Http\Resources\ApiKeys\ApiKeyResource;
 use App\Models\ApiKey;
+use App\Models\User;
 use App\Services\ApiKeyService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -66,13 +68,13 @@ class ApiKeyController extends Controller
     public function store($request): JsonResponse
     {
         /** @var StoreApiKeyRequest $request */
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = $request->user();
         $validated = $request->validated();
 
         $name = $validated['name'];
         $scopes = $validated['scopes'] ?? [];
-        $expiresAt = isset($validated['expires_at']) ? \Carbon\Carbon::parse($validated['expires_at']) : null;
+        $expiresAt = isset($validated['expires_at']) ? Carbon::parse($validated['expires_at']) : null;
         $environment = $validated['environment'] ?? 'live';
 
         $result = $this->apiKeyService->create($user, $name, $scopes, $expiresAt, $environment);

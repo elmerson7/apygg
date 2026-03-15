@@ -2,6 +2,10 @@
 
 namespace App\Models\Logs;
 
+use App\Models\User;
+use Database\Factories\SecurityLogFactory;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -26,11 +30,11 @@ class SecurityLog extends Model
     /**
      * Create a new factory instance for the model.
      *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory<static>
+     * @return Factory<static>
      */
     protected static function newFactory()
     {
-        return \Database\Factories\SecurityLogFactory::new();
+        return SecurityLogFactory::new();
     }
 
     /**
@@ -91,7 +95,7 @@ class SecurityLog extends Model
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     /**
@@ -99,14 +103,14 @@ class SecurityLog extends Model
      */
     public function apiLog(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Logs\ApiLog::class, 'trace_id', 'trace_id');
+        return $this->belongsTo(ApiLog::class, 'trace_id', 'trace_id');
     }
 
     /**
      * Scope para filtrar por trace_id
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeByTraceId($query, string $traceId)
     {
@@ -116,8 +120,8 @@ class SecurityLog extends Model
     /**
      * Scope para filtrar por usuario
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeByUserId($query, string $userId)
     {
@@ -127,8 +131,8 @@ class SecurityLog extends Model
     /**
      * Scope para filtrar por tipo de evento
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeByEventType($query, string $eventType)
     {
@@ -138,8 +142,8 @@ class SecurityLog extends Model
     /**
      * Scope para filtrar intentos de login fallidos
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeLoginFailures($query)
     {
@@ -149,8 +153,8 @@ class SecurityLog extends Model
     /**
      * Scope para filtrar actividades sospechosas
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeSuspiciousActivity($query)
     {
@@ -160,8 +164,8 @@ class SecurityLog extends Model
     /**
      * Scope para filtrar por IP
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeByIpAddress($query, string $ipAddress)
     {
@@ -171,8 +175,8 @@ class SecurityLog extends Model
     /**
      * Scope para filtrar por rango de fechas
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeDateRange($query, ?string $startDate = null, ?string $endDate = null)
     {
@@ -190,8 +194,8 @@ class SecurityLog extends Model
     /**
      * Scope para ordenar por más recientes
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeRecent($query)
     {

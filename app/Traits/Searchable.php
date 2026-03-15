@@ -2,6 +2,8 @@
 
 namespace App\Traits;
 
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Laravel\Scout\Builder;
 use Laravel\Scout\Searchable as ScoutSearchable;
 
 /**
@@ -80,7 +82,7 @@ trait Searchable
     /**
      * Realizar búsqueda con filtros adicionales.
      */
-    public static function searchWithFilters(string $query, array $filters = []): \Laravel\Scout\Builder
+    public static function searchWithFilters(string $query, array $filters = []): Builder
     {
         $builder = static::search($query);
 
@@ -97,7 +99,7 @@ trait Searchable
     /**
      * Realizar búsqueda con ordenamiento.
      */
-    public static function searchWithSort(string $query, string $sortBy = 'created_at', string $direction = 'desc'): \Laravel\Scout\Builder
+    public static function searchWithSort(string $query, string $sortBy = 'created_at', string $direction = 'desc'): Builder
     {
         return static::search($query)->orderBy($sortBy, $direction);
     }
@@ -105,7 +107,7 @@ trait Searchable
     /**
      * Realizar búsqueda paginada.
      */
-    public static function searchPaginated(string $query, int $perPage = 15, int $page = 1): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    public static function searchPaginated(string $query, int $perPage = 15, int $page = 1): LengthAwarePaginator
     {
         return static::search($query)
             ->paginate($perPage, 'page', $page);

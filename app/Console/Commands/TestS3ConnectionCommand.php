@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Aws\S3\Exception\S3Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 
@@ -49,7 +50,7 @@ class TestS3ConnectionCommand extends Command
 
                 $this->line('Intentando subir archivo...');
                 $uploaded = $disk->put($testPath, 'test content');
-            } catch (\Aws\S3\Exception\S3Exception $e) {
+            } catch (S3Exception $e) {
                 $this->error('Excepción AWS S3:');
                 $this->line('Mensaje: '.$e->getMessage());
                 $this->line('Código: '.$e->getAwsErrorCode());

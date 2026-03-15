@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\ApiException;
 use App\Helpers\ApiResponse;
 use App\Services\LogService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Sentry\SentrySdk;
 use Sentry\Severity;
 
 /**
@@ -19,7 +22,7 @@ class TestSentryController extends Controller
     /**
      * Probar envío de diferentes niveles de log a Sentry
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function testLogs(Request $request)
     {
@@ -53,7 +56,7 @@ class TestSentryController extends Controller
         }
 
         // Probar captura directa de Sentry
-        if (class_exists(\Sentry\SentrySdk::class)) {
+        if (class_exists(SentrySdk::class)) {
             try {
                 $severityMap = [
                     'debug' => Severity::debug(),
@@ -90,7 +93,7 @@ class TestSentryController extends Controller
     /**
      * Probar captura de excepción
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function testException(Request $request)
     {
@@ -101,12 +104,12 @@ class TestSentryController extends Controller
                 'generic' => throw new \Exception('Test generic exception for Sentry'),
                 'runtime' => throw new \RuntimeException('Test runtime exception for Sentry'),
                 'invalid_argument' => throw new \InvalidArgumentException('Test invalid argument exception for Sentry'),
-                'custom' => throw new \App\Exceptions\ApiException('Test custom API exception', 500),
+                'custom' => throw new ApiException('Test custom API exception', 500),
                 default => throw new \Exception('Unknown exception type'),
             };
         } catch (\Exception $e) {
             // Capturar excepción en Sentry
-            if (class_exists(\Sentry\SentrySdk::class)) {
+            if (class_exists(SentrySdk::class)) {
                 \Sentry\captureException($e);
             }
 
@@ -132,7 +135,7 @@ class TestSentryController extends Controller
     /**
      * Información sobre configuración de Sentry
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function info()
     {

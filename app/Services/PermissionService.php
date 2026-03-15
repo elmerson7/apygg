@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Permission;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
@@ -76,7 +77,7 @@ class PermissionService
      * @param  string  $permissionId  ID del permiso
      * @param  array  $data  Datos a actualizar
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el permiso no existe
+     * @throws ModelNotFoundException Si el permiso no existe
      * @throws \InvalidArgumentException Si los datos son inválidos
      */
     public function update(string $permissionId, array $data): Permission
@@ -118,7 +119,7 @@ class PermissionService
      *
      * @param  string  $permissionId  ID del permiso
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el permiso no existe
+     * @throws ModelNotFoundException Si el permiso no existe
      * @throws \Exception Si el permiso está asignado a roles
      */
     public function delete(string $permissionId): bool
@@ -152,7 +153,7 @@ class PermissionService
      *
      * @param  string  $permissionId  ID del permiso
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el permiso no existe
+     * @throws ModelNotFoundException Si el permiso no existe
      */
     public function find(string $permissionId): Permission
     {

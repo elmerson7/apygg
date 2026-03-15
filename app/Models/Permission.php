@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
@@ -76,9 +77,9 @@ class Permission extends Model
     /**
      * Scope para filtrar permisos por recurso
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  Builder  $query
      * @param  string  $resource  Nombre del recurso
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     public function scopeForResource($query, string $resource)
     {
@@ -88,9 +89,9 @@ class Permission extends Model
     /**
      * Scope para filtrar permisos por acción
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  Builder  $query
      * @param  string  $action  Nombre de la acción
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     public function scopeForAction($query, string $action)
     {
@@ -100,10 +101,10 @@ class Permission extends Model
     /**
      * Scope para filtrar permisos por recurso y acción
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  Builder  $query
      * @param  string  $resource  Nombre del recurso
      * @param  string  $action  Nombre de la acción
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     public function scopeForResourceAndAction($query, string $resource, string $action)
     {

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -72,7 +73,7 @@ class PasswordService
         }
 
         // Verificar expiración (1 hora)
-        $createdAt = \Carbon\Carbon::parse($record->created_at);
+        $createdAt = Carbon::parse($record->created_at);
         if ($createdAt->addMinutes($this->tokenExpirationMinutes)->isPast()) {
             // Token expirado, eliminarlo
             $this->deleteResetToken($email);

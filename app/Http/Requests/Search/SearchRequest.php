@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Search;
 
 use App\Http\Requests\BaseFormRequest;
+use App\Models\User;
 use Illuminate\Validation\Rule;
 
 /**
@@ -17,7 +18,7 @@ class SearchRequest extends BaseFormRequest
      * Modelos disponibles para búsqueda
      */
     protected array $availableModels = [
-        'users' => \App\Models\User::class,
+        'users' => User::class,
     ];
 
     /**

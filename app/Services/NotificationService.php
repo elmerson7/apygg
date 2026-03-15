@@ -3,6 +3,10 @@
 namespace App\Services;
 
 use App\Mail\SimpleMail;
+use App\Models\NotificationHistory;
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -84,14 +88,14 @@ class NotificationService
      * @param  string|null  $type  Tipo de notificación
      */
     public static function sendDatabase(
-        \Illuminate\Contracts\Auth\Authenticatable $notifiable,
+        Authenticatable $notifiable,
         string $title,
         string $message,
         array $data = [],
         ?string $type = null
     ): bool {
         try {
-            $notifiable->notify(new class($title, $message, $data, $type) extends \Illuminate\Notifications\Notification
+            $notifiable->notify(new class($title, $message, $data, $type) extends Notification
             {
                 public function __construct(
                     public string $title,
@@ -265,8 +269,8 @@ class NotificationService
     {
         try {
             // Guardar en tabla de historial si existe
-            if (class_exists(\App\Models\NotificationHistory::class)) {
-                \App\Models\NotificationHistory::create([
+            if (class_exists(NotificationHistory::class)) {
+                NotificationHistory::create([
                     'channel' => $channel,
                     'recipient' => is_array($recipient) ? json_encode($recipient) : $recipient,
                     'subject' => $subject,
@@ -284,14 +288,14 @@ class NotificationService
      * @param  string|null  $channel  Filtrar por canal
      * @param  int  $limit  Límite de resultados
      */
-    public static function getHistory(?string $channel = null, int $limit = 50): \Illuminate\Database\Eloquent\Collection
+    public static function getHistory(?string $channel = null, int $limit = 50): Collection
     {
-        if (! class_exists(\App\Models\NotificationHistory::class)) {
+        if (! class_exists(NotificationHistory::class)) {
             // Retornar colección vacía si la clase no existe
-            return new \Illuminate\Database\Eloquent\Collection([]);
+            return new Collection([]);
         }
 
-        $query = \App\Models\NotificationHistory::query()
+        $query = NotificationHistory::query()
             ->orderBy('sent_at', 'desc')
             ->limit($limit);
 

@@ -6,6 +6,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Intervention\Image\Facades\Image;
 
 /**
  * FileService
@@ -86,11 +87,11 @@ class FileService
         // Procesar imagen si se especifican dimensiones
         if ($width || $height) {
             // Verificar si Intervention Image está disponible
-            if (! class_exists(\Intervention\Image\Facades\Image::class)) {
+            if (! class_exists(Image::class)) {
                 throw new \RuntimeException('Intervention Image package is required for image processing.');
             }
 
-            $image = \Intervention\Image\Facades\Image::make($file);
+            $image = Image::make($file);
 
             if ($width && $height) {
                 $image->fit($width, $height);

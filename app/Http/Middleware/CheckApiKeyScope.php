@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\ApiKey;
+use App\Models\User;
 use App\Services\Logging\SecurityLogger;
 use Closure;
 use Illuminate\Http\Request;
@@ -83,7 +84,7 @@ class CheckApiKeyScope
             // Registrar intento de acceso denegado por falta de scope
             $user = $apiKey->user;
             SecurityLogger::logPermissionDenied(
-                $user instanceof \App\Models\User ? $user : null,
+                $user instanceof User ? $user : null,
                 'api_key_scope_required: '.implode('|', $checkedScopes),
                 $request->path(),
                 $request

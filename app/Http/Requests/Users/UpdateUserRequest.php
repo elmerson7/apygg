@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Users;
 
 use App\Http\Requests\BaseFormRequest;
+use App\Models\User;
 use App\Rules\StrongPassword;
 use Illuminate\Validation\Rule;
 
@@ -20,7 +21,7 @@ class UpdateUserRequest extends BaseFormRequest
      */
     public function authorize(): bool
     {
-        $user = \App\Models\User::findOrFail($this->route('id'));
+        $user = User::findOrFail($this->route('id'));
 
         return $this->user()->can('update', $user);
     }

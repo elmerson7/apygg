@@ -2,6 +2,7 @@
 
 namespace App\Services\Logging;
 
+use App\Models\ApiKey;
 use App\Models\Logs\SecurityLog;
 use App\Models\User;
 use App\Services\LogService;
@@ -181,11 +182,11 @@ class SecurityLogger
     /**
      * Registrar uso de API Key
      *
-     * @param  \App\Models\ApiKey  $apiKey  API Key utilizada
+     * @param  ApiKey  $apiKey  API Key utilizada
      * @param  Request|null  $request  Request actual
      */
     public static function logApiKeyUsage(
-        \App\Models\ApiKey $apiKey,
+        ApiKey $apiKey,
         ?Request $request = null
     ): ?SecurityLog {
         try {

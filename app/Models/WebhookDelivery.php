@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
@@ -76,8 +77,8 @@ class WebhookDelivery extends Model
     /**
      * Scope para filtrar entregas pendientes
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopePending($query)
     {
@@ -87,8 +88,8 @@ class WebhookDelivery extends Model
     /**
      * Scope para filtrar entregas exitosas
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeSuccessful($query)
     {
@@ -98,8 +99,8 @@ class WebhookDelivery extends Model
     /**
      * Scope para filtrar entregas fallidas
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeFailed($query)
     {
@@ -109,8 +110,8 @@ class WebhookDelivery extends Model
     /**
      * Scope para filtrar por webhook
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeByWebhook($query, string $webhookId)
     {
@@ -120,8 +121,8 @@ class WebhookDelivery extends Model
     /**
      * Scope para filtrar por tipo de evento
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeByEventType($query, string $eventType)
     {

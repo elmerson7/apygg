@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -119,8 +120,8 @@ class Webhook extends Model
     /**
      * Scope para filtrar webhooks activos
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeActive($query)
     {
@@ -130,8 +131,8 @@ class Webhook extends Model
     /**
      * Scope para filtrar webhooks inactivos
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeInactive($query)
     {
@@ -141,8 +142,8 @@ class Webhook extends Model
     /**
      * Scope para filtrar webhooks pausados
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopePaused($query)
     {
@@ -152,8 +153,8 @@ class Webhook extends Model
     /**
      * Scope para filtrar por usuario
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeByUser($query, string $userId)
     {
@@ -163,8 +164,8 @@ class Webhook extends Model
     /**
      * Scope para filtrar webhooks que escuchan un evento específico
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeForEvent($query, string $eventType)
     {

@@ -6,6 +6,7 @@ use App\Services\LogService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
+use Meilisearch\Client;
 
 class HealthCheckCommand extends Command
 {
@@ -44,7 +45,7 @@ class HealthCheckCommand extends Command
             // Verificar Meilisearch (opcional)
             if (config('scout.driver') === 'meilisearch') {
                 try {
-                    $client = app(\Meilisearch\Client::class);
+                    $client = app(Client::class);
                     $client->health();
                     $this->info('✓ Meilisearch: OK');
                 } catch (\Exception $e) {

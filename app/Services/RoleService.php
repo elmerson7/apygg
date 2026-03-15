@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\QueryException;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
@@ -32,7 +34,7 @@ class RoleService
      *
      * @param  array  $data  Datos del rol ['name', 'display_name', 'description']
      *
-     * @throws \Illuminate\Database\QueryException Si el nombre ya existe
+     * @throws QueryException Si el nombre ya existe
      */
     public function create(array $data): Role
     {
@@ -65,7 +67,7 @@ class RoleService
      * @param  string  $roleId  ID del rol
      * @param  array  $data  Datos a actualizar
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el rol no existe
+     * @throws ModelNotFoundException Si el rol no existe
      */
     public function update(string $roleId, array $data): Role
     {
@@ -98,7 +100,7 @@ class RoleService
      *
      * @param  string  $roleId  ID del rol
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el rol no existe
+     * @throws ModelNotFoundException Si el rol no existe
      * @throws \Exception Si el rol tiene usuarios asignados
      */
     public function delete(string $roleId): bool
@@ -130,7 +132,7 @@ class RoleService
      *
      * @param  string  $roleId  ID del rol
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el rol no existe
+     * @throws ModelNotFoundException Si el rol no existe
      */
     public function find(string $roleId): Role
     {
@@ -193,7 +195,7 @@ class RoleService
      * @param  string  $roleId  ID del rol
      * @param  string  $permissionId  ID o nombre del permiso
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el rol o permiso no existe
+     * @throws ModelNotFoundException Si el rol o permiso no existe
      */
     public function assignPermission(string $roleId, string $permissionId): Role
     {
@@ -229,7 +231,7 @@ class RoleService
      * @param  string  $roleId  ID del rol
      * @param  string  $permissionId  ID o nombre del permiso
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el rol o permiso no existe
+     * @throws ModelNotFoundException Si el rol o permiso no existe
      */
     public function removePermission(string $roleId, string $permissionId): Role
     {
@@ -263,7 +265,7 @@ class RoleService
      * @param  string  $roleId  ID del rol
      * @param  array  $permissionIds  Array de IDs o nombres de permisos
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el rol no existe
+     * @throws ModelNotFoundException Si el rol no existe
      */
     public function syncPermissions(string $roleId, array $permissionIds): Role
     {
@@ -303,7 +305,7 @@ class RoleService
      *
      * @param  string  $roleId  ID del rol
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el rol no existe
+     * @throws ModelNotFoundException Si el rol no existe
      */
     public function getPermissions(string $roleId): Collection
     {
@@ -318,7 +320,7 @@ class RoleService
      * @param  string  $roleId  ID del rol
      * @param  string  $permissionName  Nombre del permiso
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el rol no existe
+     * @throws ModelNotFoundException Si el rol no existe
      */
     public function hasPermission(string $roleId, string $permissionName): bool
     {

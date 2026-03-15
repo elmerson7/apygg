@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\ApiKey;
 use App\Models\User;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Str;
 
@@ -89,7 +90,7 @@ class ApiKeyService
      * @param  string  $keyId  ID de la key
      * @param  array  $data  Datos a actualizar
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si la key no existe
+     * @throws ModelNotFoundException Si la key no existe
      */
     public function update(string $keyId, array $data): ApiKey
     {
@@ -124,7 +125,7 @@ class ApiKeyService
      *
      * @param  string  $keyId  ID de la key
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si la key no existe
+     * @throws ModelNotFoundException Si la key no existe
      */
     public function revoke(string $keyId): bool
     {
@@ -154,7 +155,7 @@ class ApiKeyService
      * @param  string  $environment  Entorno (live o test)
      * @return array Array con la nueva key completa y el modelo ApiKey
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si la key no existe
+     * @throws ModelNotFoundException Si la key no existe
      */
     public function rotate(string $keyId, ?string $newName = null, ?array $newScopes = null, string $environment = 'live'): array
     {
@@ -254,7 +255,7 @@ class ApiKeyService
      *
      * @param  string  $keyId  ID de la key
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si la key no existe
+     * @throws ModelNotFoundException Si la key no existe
      */
     public function find(string $keyId): ApiKey
     {

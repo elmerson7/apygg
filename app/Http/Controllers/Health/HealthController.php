@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Health;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
+use Laravel\Horizon\Horizon;
+use Meilisearch\Client;
 
 class HealthController extends Controller
 {
@@ -81,7 +84,7 @@ class HealthController extends Controller
     /**
      * Health check básico (alias de ready para compatibilidad)
      */
-    public function check(\Illuminate\Http\Request $request): JsonResponse
+    public function check(Request $request): JsonResponse
     {
         return $this->ready();
     }
@@ -151,8 +154,8 @@ class HealthController extends Controller
             try {
                 $startTime = microtime(true);
                 // Verificar si la clase existe antes de usarla
-                if (class_exists(\Meilisearch\Client::class)) {
-                    $client = app(\Meilisearch\Client::class);
+                if (class_exists(Client::class)) {
+                    $client = app(Client::class);
                     $health = $client->health();
                     $latency = round((microtime(true) - $startTime) * 1000, 2);
 
@@ -178,12 +181,12 @@ class HealthController extends Controller
         }
 
         // Verificar Horizon (opcional)
-        if (class_exists(\Laravel\Horizon\Horizon::class)) {
+        if (class_exists(Horizon::class)) {
             try {
                 $startTime = microtime(true);
                 // Verificar si Horizon está disponible y tiene el método status
-                if (method_exists(\Laravel\Horizon\Horizon::class, 'status')) {
-                    $horizonStatus = \Laravel\Horizon\Horizon::status();
+                if (method_exists(Horizon::class, 'status')) {
+                    $horizonStatus = Horizon::status();
                     $latency = round((microtime(true) - $startTime) * 1000, 2);
 
                     $services['horizon'] = [

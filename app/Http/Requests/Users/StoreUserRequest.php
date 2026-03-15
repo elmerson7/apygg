@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Users;
 
 use App\Http\Requests\BaseFormRequest;
+use App\Models\User;
 use App\Rules\StrongPassword;
 
 /**
@@ -18,7 +19,7 @@ class StoreUserRequest extends BaseFormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('create', \App\Models\User::class);
+        return $this->user()->can('create', User::class);
     }
 
     /**
