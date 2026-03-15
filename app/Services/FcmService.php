@@ -48,7 +48,7 @@ class FcmService
 
         $response = Http::asForm()->post('https://oauth2.googleapis.com/token', [
             'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-            'assertion'  => $jwt,
+            'assertion' => $jwt,
         ]);
 
         if (! $response->successful()) {
@@ -74,9 +74,9 @@ class FcmService
             $accessToken = self::getAccessToken();
 
             $message = array_merge([
-                'token'        => $token,
+                'token' => $token,
                 'notification' => ['title' => $title, 'body' => $body],
-                'data'         => array_map('strval', $data),
+                'data' => array_map('strval', $data),
             ], $extra);
 
             $response = Http::withToken($accessToken)
@@ -91,9 +91,9 @@ class FcmService
 
             if (! $response->successful()) {
                 Log::warning('FCM send failed', [
-                    'token'  => substr($token, 0, 20).'...',
+                    'token' => substr($token, 0, 20).'...',
                     'status' => $response->status(),
-                    'body'   => $response->body(),
+                    'body' => $response->body(),
                 ]);
 
                 return false;

@@ -24,7 +24,7 @@ class WalletPolicy
 
         if ($allowed) {
             LogService::info('Operación de crédito en wallet autorizada', [
-                'user_id'   => $user->id,
+                'user_id' => $user->id,
                 'wallet_id' => $wallet->id,
             ], 'security');
         }

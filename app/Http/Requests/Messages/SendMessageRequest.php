@@ -10,9 +10,9 @@ class SendMessageRequest extends BaseFormRequest
     {
         return [
             'conversation_id' => ['required', 'uuid'],
-            'body'            => ['required_without:attachments', 'nullable', 'string', 'max:2000'],
-            'attachments'     => ['required_without:body', 'nullable', 'array', 'max:5'],
-            'attachments.*'   => ['uuid'],
+            'body' => ['required_without:attachments', 'nullable', 'string', 'max:2000'],
+            'attachments' => ['required_without:body', 'nullable', 'array', 'max:5'],
+            'attachments.*' => ['uuid'],
         ];
     }
 
@@ -20,8 +20,8 @@ class SendMessageRequest extends BaseFormRequest
     {
         return [
             'conversation_id' => 'conversación',
-            'body'            => 'mensaje',
-            'attachments'     => 'archivos adjuntos',
+            'body' => 'mensaje',
+            'attachments' => 'archivos adjuntos',
         ];
     }
 }

@@ -9,7 +9,7 @@ class MarkReadRequest extends BaseFormRequest
     public function rules(): array
     {
         return [
-            'message_ids'   => ['required', 'array', 'min:1'],
+            'message_ids' => ['required', 'array', 'min:1'],
             'message_ids.*' => ['uuid'],
         ];
     }

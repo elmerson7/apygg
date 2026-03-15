@@ -4,7 +4,6 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 /**
@@ -32,12 +31,12 @@ class ETagMiddleware
         $content = $response->getContent();
 
         // Generar ETag
-        $etag = '"' . md5($content) . '"';
+        $etag = '"'.md5($content).'"';
         $response->setEtag($etag);
 
         // Last-Modified desde header existente o ahora
         if (! $response->headers->has('Last-Modified')) {
-            $response->headers->set('Last-Modified', gmdate('D, d M Y H:i:s') . ' GMT');
+            $response->headers->set('Last-Modified', gmdate('D, d M Y H:i:s').' GMT');
         }
 
         // Cache-Control
@@ -49,7 +48,7 @@ class ETagMiddleware
         $ifNoneMatch = $request->header('If-None-Match');
         if ($ifNoneMatch && $ifNoneMatch === $etag) {
             return response('', 304, [
-                'ETag'          => $etag,
+                'ETag' => $etag,
                 'Last-Modified' => $response->headers->get('Last-Modified'),
                 'Cache-Control' => $response->headers->get('Cache-Control'),
             ]);
@@ -57,15 +56,15 @@ class ETagMiddleware
 
         // Verificar If-Modified-Since
         $ifModifiedSince = $request->header('If-Modified-Since');
-        $lastModified    = $response->headers->get('Last-Modified');
+        $lastModified = $response->headers->get('Last-Modified');
 
         if ($ifModifiedSince && $lastModified) {
             $ifModifiedSinceTs = strtotime($ifModifiedSince);
-            $lastModifiedTs    = strtotime($lastModified);
+            $lastModifiedTs = strtotime($lastModified);
 
             if ($ifModifiedSinceTs >= $lastModifiedTs) {
                 return response('', 304, [
-                    'ETag'          => $etag,
+                    'ETag' => $etag,
                     'Last-Modified' => $lastModified,
                     'Cache-Control' => $response->headers->get('Cache-Control'),
                 ]);

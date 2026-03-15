@@ -58,28 +58,28 @@ class SocialAuthController
                 ->stateless()
                 ->user();
 
-            $user   = $this->socialAuthService->findOrCreateUser($socialUser, $provider);
+            $user = $this->socialAuthService->findOrCreateUser($socialUser, $provider);
             $tokens = $this->socialAuthService->generateTokens($user);
 
             LogService::info('Login social exitoso', [
-                'user_id'  => $user->id,
+                'user_id' => $user->id,
                 'provider' => $provider,
-                'ip'       => $request->ip(),
+                'ip' => $request->ip(),
             ], 'security');
 
             return ApiResponse::success(
                 new AuthResource([
-                    'user'          => $user,
-                    'access_token'  => $tokens['access_token'],
+                    'user' => $user,
+                    'access_token' => $tokens['access_token'],
                     'refresh_token' => $tokens['refresh_token'],
-                    'token_type'    => 'bearer',
+                    'token_type' => 'bearer',
                 ]),
                 'Login social exitoso'
             );
         } catch (\Exception $e) {
             LogService::error('Error en login social', [
                 'provider' => $provider,
-                'error'    => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             return ApiResponse::error('Error al autenticar con '.$provider, 500);
@@ -98,7 +98,7 @@ class SocialAuthController
         }
 
         $request->validate([
-            'code'         => 'required|string',
+            'code' => 'required|string',
             'redirect_uri' => 'required|url',
         ]);
 
@@ -108,28 +108,28 @@ class SocialAuthController
                 ->redirectUrl($request->redirect_uri)
                 ->userFromCode($request->code);
 
-            $user   = $this->socialAuthService->findOrCreateUser($socialUser, $provider);
+            $user = $this->socialAuthService->findOrCreateUser($socialUser, $provider);
             $tokens = $this->socialAuthService->generateTokens($user);
 
             LogService::info('Login social móvil exitoso', [
-                'user_id'  => $user->id,
+                'user_id' => $user->id,
                 'provider' => $provider,
-                'ip'       => $request->ip(),
+                'ip' => $request->ip(),
             ], 'security');
 
             return ApiResponse::success(
                 new AuthResource([
-                    'user'          => $user,
-                    'access_token'  => $tokens['access_token'],
+                    'user' => $user,
+                    'access_token' => $tokens['access_token'],
                     'refresh_token' => $tokens['refresh_token'],
-                    'token_type'    => 'bearer',
+                    'token_type' => 'bearer',
                 ]),
                 'Login social móvil exitoso'
             );
         } catch (\Exception $e) {
             LogService::error('Error en login social móvil', [
                 'provider' => $provider,
-                'error'    => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             return ApiResponse::error('Error al autenticar con '.$provider, 500);

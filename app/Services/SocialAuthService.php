@@ -25,7 +25,7 @@ class SocialAuthService
             // Actualizar provider si no lo tenía
             if (! $user->provider) {
                 $user->update([
-                    'provider'    => $provider,
+                    'provider' => $provider,
                     'provider_id' => $socialUser->getId(),
                 ]);
             }
@@ -34,10 +34,10 @@ class SocialAuthService
         }
 
         return User::create([
-            'name'        => $socialUser->getName() ?? $socialUser->getNickname() ?? 'Usuario',
-            'email'       => $socialUser->getEmail(),
-            'password'    => Hash::make(Str::random(32)),
-            'provider'    => $provider,
+            'name' => $socialUser->getName() ?? $socialUser->getNickname() ?? 'Usuario',
+            'email' => $socialUser->getEmail(),
+            'password' => Hash::make(Str::random(32)),
+            'provider' => $provider,
             'provider_id' => $socialUser->getId(),
         ]);
     }

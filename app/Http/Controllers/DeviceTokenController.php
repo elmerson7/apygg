@@ -22,8 +22,8 @@ class DeviceTokenController extends Controller
     public function store(Request $request): JsonResponse
     {
         $request->validate([
-            'token'     => ['required', 'string', 'max:512'],
-            'platform'  => ['required', 'string', 'in:ios,android,web'],
+            'token' => ['required', 'string', 'max:512'],
+            'platform' => ['required', 'string', 'in:ios,android,web'],
             'device_id' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -32,11 +32,11 @@ class DeviceTokenController extends Controller
         // Upsert: si ya existe el token para este user/device, actualizar
         DeviceToken::updateOrCreate(
             [
-                'user_id'   => $user->id,
+                'user_id' => $user->id,
                 'device_id' => $request->device_id,
             ],
             [
-                'token'    => $request->token,
+                'token' => $request->token,
                 'platform' => $request->platform,
             ]
         );

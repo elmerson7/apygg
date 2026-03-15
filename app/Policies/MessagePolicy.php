@@ -39,7 +39,7 @@ class MessagePolicy
 
         if ($allowed) {
             LogService::info('Intento de eliminar mensaje autorizado', [
-                'user_id'    => $user->id,
+                'user_id' => $user->id,
                 'message_id' => $message->id,
             ], 'security');
         }

@@ -11,7 +11,7 @@ class ListProductsRequest extends BaseFormRequest
         return [
             'category' => ['nullable', 'string', 'in:gifts,superlikes,boosts,premium'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
-            'page'     => ['nullable', 'integer', 'min:1'],
+            'page' => ['nullable', 'integer', 'min:1'],
         ];
     }
 }

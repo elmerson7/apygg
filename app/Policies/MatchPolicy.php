@@ -29,7 +29,7 @@ class MatchPolicy
 
         if ($allowed) {
             LogService::info('Intento de eliminar match autorizado', [
-                'user_id'  => $user->id,
+                'user_id' => $user->id,
                 'match_id' => $match->id,
             ], 'security');
         }
