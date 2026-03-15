@@ -55,12 +55,9 @@ class TransformRequestMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Transformar solo si hay datos en el request
         if ($request->isMethod('GET')) {
-            // Para GET, transformar query parameters
             $this->transformArray($request->query->all(), $request->query);
         } else {
-            // Para POST, PUT, PATCH, DELETE, transformar body
             $this->transformArray($request->all(), $request);
         }
 
@@ -74,12 +71,10 @@ class TransformRequestMiddleware
     {
         foreach ($data as $key => $value) {
             if (is_array($value)) {
-                // Recursión para arrays anidados
                 $this->transformArray($value, $target);
             } else {
                 $transformed = $this->transformValue($key, $value);
 
-                // Actualizar el valor transformado
                 if ($target instanceof Request) {
                     $requestData = $target->all();
                     $this->setNestedValue($requestData, $key, $transformed);
@@ -96,30 +91,24 @@ class TransformRequestMiddleware
      */
     private function transformValue(string $key, $value)
     {
-        // Convertir strings vacíos a null
         if ($value === '' || $value === null) {
             return null;
         }
 
-        // Normalizar nombre del campo (snake_case)
         $normalizedKey = Str::snake($key);
 
-        // Convertir a booleano si corresponde
         if ($this->shouldBeBoolean($normalizedKey, $value)) {
             return $this->toBoolean($value);
         }
 
-        // Convertir a número si corresponde
         if ($this->shouldBeNumeric($normalizedKey, $value)) {
             return $this->toNumeric($value);
         }
 
-        // Normalizar fechas (ISO 8601)
         if ($this->isDateField($normalizedKey) && is_string($value)) {
             return $this->normalizeDate($value);
         }
 
-        // Normalizar strings (trim ya hecho por SanitizeInput)
         if (is_string($value)) {
             return $this->normalizeString($value);
         }
@@ -132,14 +121,12 @@ class TransformRequestMiddleware
      */
     private function shouldBeBoolean(string $key, $value): bool
     {
-        // Verificar por nombre del campo
         foreach ($this->booleanFields as $field) {
             if (str_contains($key, $field)) {
                 return true;
             }
         }
 
-        // Verificar por valor (si es "true", "false", "1", "0")
         if (is_string($value)) {
             $lower = strtolower(trim($value));
 
@@ -173,18 +160,30 @@ class TransformRequestMiddleware
 
     /**
      * Verificar si un campo debe ser numérico
+     * Excluye UUIDs para evitar conversión incorrecta
      */
     private function shouldBeNumeric(string $key, $value): bool
     {
-        // Verificar por nombre del campo
+        // No convertir UUIDs a números
+        if (is_string($value) && $this->isUuid($value)) {
+            return false;
+        }
+
         foreach ($this->numericFields as $field) {
             if (str_ends_with($key, '_'.$field) || $key === $field) {
                 return true;
             }
         }
 
-        // Verificar si el valor es numérico
         return is_numeric($value) && ! is_string($value) || (is_string($value) && is_numeric(trim($value)));
+    }
+
+    /**
+     * Verificar si un valor es un UUID válido
+     */
+    private function isUuid(string $value): bool
+    {
+        return preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', trim($value)) === 1;
     }
 
     /**
@@ -193,7 +192,6 @@ class TransformRequestMiddleware
     private function toNumeric($value)
     {
         if (is_numeric($value)) {
-            // Si tiene punto decimal, retornar float, sino int
             return str_contains((string) $value, '.') ? (float) $value : (int) $value;
         }
 
@@ -232,12 +230,8 @@ class TransformRequestMiddleware
         }
 
         try {
-            // Intentar parsear la fecha
-            $date = Carbon::parse($value);
-
-            return $date->toIso8601String();
+            return Carbon::parse($value)->toIso8601String();
         } catch (\Exception $e) {
-            // Si no se puede parsear, retornar el valor original
             return $value;
         }
     }
@@ -247,8 +241,6 @@ class TransformRequestMiddleware
      */
     private function normalizeString(string $value): string
     {
-        // Ya está trimed por SanitizeInput
-        // Normalizar espacios múltiples
         return preg_replace('/\s+/', ' ', $value);
     }
 
