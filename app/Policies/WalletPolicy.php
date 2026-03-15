@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Models\User;
+use App\Models\Wallet;
 use App\Services\LogService;
 
 /**
@@ -13,12 +14,12 @@ use App\Services\LogService;
  */
 class WalletPolicy
 {
-    public function view(User $user, \App\Models\Wallet $wallet): bool
+    public function view(User $user, Wallet $wallet): bool
     {
         return $user->id === $wallet->user_id;
     }
 
-    public function credit(User $user, \App\Models\Wallet $wallet): bool
+    public function credit(User $user, Wallet $wallet): bool
     {
         $allowed = $user->hasPermission('wallet.credit') || $user->id === $wallet->user_id;
 
@@ -32,7 +33,7 @@ class WalletPolicy
         return $allowed;
     }
 
-    public function debit(User $user, \App\Models\Wallet $wallet): bool
+    public function debit(User $user, Wallet $wallet): bool
     {
         return $user->id === $wallet->user_id;
     }

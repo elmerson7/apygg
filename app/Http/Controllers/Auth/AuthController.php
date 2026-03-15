@@ -209,7 +209,7 @@ class AuthController
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'email_verified_at' => $user->email_verified_at?->toIso8601String(),
+                'email_verified_at' => $user->email_verified_at ? $user->email_verified_at->toIso8601String() : null,
                 'created_at' => $user->created_at->toIso8601String(),
                 'updated_at' => $user->updated_at->toIso8601String(),
             ], 'Usuario obtenido exitosamente');

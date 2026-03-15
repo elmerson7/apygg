@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Jobs\SendWebhookJob;
 use App\Models\Webhook;
 use App\Models\WebhookDelivery;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -253,9 +254,9 @@ class WebhookService
     /**
      * Obtener webhooks activos que escuchan un evento específico
      *
-     * @return \Illuminate\Database\Eloquent\Collection<int, Webhook>
+     * @return Collection<int, Webhook>
      */
-    public function getWebhooksForEvent(string $eventType): \Illuminate\Database\Eloquent\Collection
+    public function getWebhooksForEvent(string $eventType): Collection
     {
         return Webhook::forEvent($eventType)->get();
     }

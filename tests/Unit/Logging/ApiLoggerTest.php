@@ -4,6 +4,7 @@ use App\Models\User;
 use App\Services\Logging\ApiLogger;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 beforeEach(function () {
@@ -141,7 +142,7 @@ test('calcula tiempo de respuesta si no se proporciona', function () {
 });
 
 test('captura usuario autenticado si existe', function () {
-    \Illuminate\Support\Facades\Auth::login($this->user);
+    Auth::login($this->user);
 
     $request = Request::create('/users', 'GET');
     $response = new Response([], 200);

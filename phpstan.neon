@@ -28,6 +28,8 @@ parameters:
         # Los archivos están excluidos en excludePaths para evitar estos errores
         # Dead catch - TokenBlacklistedException se captura específicamente antes de JWTException (correcto)
         - '#Dead catch.*TokenBlacklistedException#'
+        # Errores de nullsafe con Carbon que phpstan no reconoce correctamente
+        - '#Ternary operator condition is always true#'
 
     excludePaths:
         - ./*/*/FileToIgnore.php

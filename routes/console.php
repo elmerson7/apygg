@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
@@ -17,7 +18,7 @@ Schedule::command('jwt:clean-blacklist')
     ->hourly()
     ->withoutOverlapping()
     ->onFailure(function () {
-        \Illuminate\Support\Facades\Log::error('Falló la limpieza de JWT blacklist');
+        Log::error('Falló la limpieza de JWT blacklist');
     });
 
 // Limpieza de tokens de recuperación de contraseña expirados: cada 24 horas
@@ -25,7 +26,7 @@ Schedule::command('auth:clean-reset-tokens')
     ->daily()
     ->withoutOverlapping()
     ->onFailure(function () {
-        \Illuminate\Support\Facades\Log::error('Falló la limpieza de tokens de reset de contraseña');
+        Log::error('Falló la limpieza de tokens de reset de contraseña');
     });
 
 // Limpieza de logs antiguos: cada día a las 2 AM
@@ -33,7 +34,7 @@ Schedule::command('logs:clean')
     ->dailyAt('02:00')
     ->withoutOverlapping()
     ->onFailure(function () {
-        \Illuminate\Support\Facades\Log::error('Falló la limpieza de logs antiguos');
+        Log::error('Falló la limpieza de logs antiguos');
     });
 
 // Generación de reportes: cada semana (lunes) a las 8 AM
@@ -41,7 +42,7 @@ Schedule::command('reports:generate')
     ->weeklyOn(1, '8:00') // Lunes a las 8 AM
     ->withoutOverlapping()
     ->onFailure(function () {
-        \Illuminate\Support\Facades\Log::error('Falló la generación de reportes');
+        Log::error('Falló la generación de reportes');
     });
 
 // Backup de base de datos: cada día a las 3 AM
@@ -49,7 +50,7 @@ Schedule::command('backup:create --database')
     ->dailyAt('03:00')
     ->withoutOverlapping()
     ->onFailure(function () {
-        \Illuminate\Support\Facades\Log::error('Falló el backup de base de datos');
+        Log::error('Falló el backup de base de datos');
     });
 
 // Limpieza de backups antiguos: cada día a las 4 AM (después de crear backup)
@@ -57,7 +58,7 @@ Schedule::command('backup:clean')
     ->dailyAt('04:00')
     ->withoutOverlapping()
     ->onFailure(function () {
-        \Illuminate\Support\Facades\Log::error('Falló la limpieza de backups antiguos');
+        Log::error('Falló la limpieza de backups antiguos');
     });
 
 // Sincronización de índices de búsqueda: cada hora
@@ -65,7 +66,7 @@ Schedule::command('search:sync-indexes')
     ->hourly()
     ->withoutOverlapping()
     ->onFailure(function () {
-        \Illuminate\Support\Facades\Log::error('Falló la sincronización de índices de búsqueda');
+        Log::error('Falló la sincronización de índices de búsqueda');
     });
 
 // Verificación de salud de servicios: cada 5 minutos
@@ -73,7 +74,7 @@ Schedule::command('health:check')
     ->everyFiveMinutes()
     ->withoutOverlapping()
     ->onFailure(function () {
-        \Illuminate\Support\Facades\Log::error('Health check falló');
+        Log::error('Health check falló');
     });
 
 // Cache warming automático: después de migraciones y al inicio del día
@@ -82,7 +83,7 @@ Schedule::command('cache:warm')
     ->dailyAt('01:00')
     ->withoutOverlapping()
     ->onFailure(function () {
-        \Illuminate\Support\Facades\Log::error('Cache warming falló');
+        Log::error('Cache warming falló');
     });
 
 // Monitoreo de métricas de caché: cada hora
@@ -90,7 +91,7 @@ Schedule::command('cache:metrics --alert-threshold=70')
     ->hourly()
     ->withoutOverlapping()
     ->onFailure(function () {
-        \Illuminate\Support\Facades\Log::error('Monitoreo de métricas de caché falló');
+        Log::error('Monitoreo de métricas de caché falló');
     });
 
 // Cache warming después de migraciones (si se ejecutan migraciones automáticamente)

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -138,8 +139,8 @@ class UserSeeder extends Seeder
         // Asignar permisos directos adicionales al Test User
         $testUser = User::where('email', 'test@apygg.com')->first();
         if ($testUser) {
-            $postsDeleteAny = \App\Models\Permission::where('name', 'posts.delete-any')->first();
-            $commentsModerate = \App\Models\Permission::where('name', 'comments.moderate')->first();
+            $postsDeleteAny = Permission::where('name', 'posts.delete-any')->first();
+            $commentsModerate = Permission::where('name', 'comments.moderate')->first();
 
             if ($postsDeleteAny) {
                 $testUser->permissions()->syncWithoutDetaching([$postsDeleteAny->id]);

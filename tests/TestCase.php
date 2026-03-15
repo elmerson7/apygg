@@ -6,7 +6,10 @@ use App\Models\Permission;
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Testing\TestResponse;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 abstract class TestCase extends BaseTestCase
@@ -14,14 +17,14 @@ abstract class TestCase extends BaseTestCase
     /**
      * Creates the application.
      *
-     * @return \Illuminate\Foundation\Application
+     * @return Application
      */
     public function createApplication()
     {
         $app = require __DIR__.'/../bootstrap/app.php';
 
         // Asegurar que la aplicación está completamente inicializada
-        $app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+        $app->make(Kernel::class)->bootstrap();
 
         // Forzar entorno de testing para evitar envío a Sentry
         $app['config']->set('app.env', 'testing');
@@ -96,7 +99,7 @@ abstract class TestCase extends BaseTestCase
     /**
      * Assert that the response is a successful API response.
      *
-     * @param  \Illuminate\Testing\TestResponse  $response
+     * @param  TestResponse  $response
      */
     protected function assertApiSuccess($response, int $status = 200): void
     {
@@ -110,7 +113,7 @@ abstract class TestCase extends BaseTestCase
     /**
      * Assert that the response is an error API response.
      *
-     * @param  \Illuminate\Testing\TestResponse  $response
+     * @param  TestResponse  $response
      */
     protected function assertApiError($response, int $status = 400): void
     {
@@ -125,7 +128,7 @@ abstract class TestCase extends BaseTestCase
     /**
      * Assert that the response indicates permission denied.
      *
-     * @param  \Illuminate\Testing\TestResponse  $response
+     * @param  TestResponse  $response
      */
     protected function assertPermissionDenied($response): void
     {
@@ -138,7 +141,7 @@ abstract class TestCase extends BaseTestCase
     /**
      * Assert that the response indicates unauthorized.
      *
-     * @param  \Illuminate\Testing\TestResponse  $response
+     * @param  TestResponse  $response
      */
     protected function assertUnauthorized($response): void
     {

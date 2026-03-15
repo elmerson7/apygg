@@ -5,16 +5,17 @@ namespace Database\Factories;
 use App\Models\Logs\ActivityLog;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Logs\ActivityLog>
+ * @extends Factory<ActivityLog>
  */
 class ActivityLogFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      *
-     * @var class-string<\App\Models\Logs\ActivityLog>
+     * @var class-string<ActivityLog>
      */
     protected $model = ActivityLog::class;
 
@@ -28,7 +29,7 @@ class ActivityLogFactory extends Factory
         return [
             'user_id' => User::factory(),
             'model_type' => User::class,
-            'model_id' => \Illuminate\Support\Str::uuid()->toString(),
+            'model_id' => Str::uuid()->toString(),
             'action' => fake()->randomElement([
                 ActivityLog::ACTION_CREATED,
                 ActivityLog::ACTION_UPDATED,

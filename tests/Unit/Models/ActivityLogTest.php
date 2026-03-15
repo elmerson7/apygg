@@ -1,7 +1,9 @@
 <?php
 
 use App\Models\Logs\ActivityLog;
+use App\Models\Role;
 use App\Models\User;
+use Illuminate\Support\Str;
 
 test('puede filtrar por usuario', function () {
     $user1 = User::factory()->create();
@@ -18,8 +20,8 @@ test('puede filtrar por usuario', function () {
 
 test('puede filtrar por tipo de modelo', function () {
     $user = User::factory()->create();
-    ActivityLog::factory()->forUser($user->id)->forModel(User::class, \Illuminate\Support\Str::uuid()->toString())->count(3)->create();
-    ActivityLog::factory()->forUser($user->id)->forModel(\App\Models\Role::class, \Illuminate\Support\Str::uuid()->toString())->count(2)->create();
+    ActivityLog::factory()->forUser($user->id)->forModel(User::class, Str::uuid()->toString())->count(3)->create();
+    ActivityLog::factory()->forUser($user->id)->forModel(Role::class, Str::uuid()->toString())->count(2)->create();
 
     $logs = ActivityLog::byUserId($user->id)->byModelType(User::class)->get();
 
@@ -33,7 +35,7 @@ test('puede filtrar por modelo específico', function () {
     $targetUserId = $targetUser->id;
 
     ActivityLog::factory()->forUser($user->id)->forModel(User::class, $targetUserId)->count(2)->create();
-    ActivityLog::factory()->forUser($user->id)->forModel(User::class, \Illuminate\Support\Str::uuid()->toString())->count(3)->create();
+    ActivityLog::factory()->forUser($user->id)->forModel(User::class, Str::uuid()->toString())->count(3)->create();
 
     $logs = ActivityLog::byUserId($user->id)->byModel(User::class, $targetUserId)->get();
 

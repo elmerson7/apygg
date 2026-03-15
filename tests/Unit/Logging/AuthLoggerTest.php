@@ -4,6 +4,7 @@ use App\Models\Logs\SecurityLog;
 use App\Models\User;
 use App\Services\Logging\AuthLogger;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 beforeEach(function () {
     Cache::flush();
@@ -99,7 +100,7 @@ test('puede registrar cambio de contraseña', function () {
 
 test('puede registrar revocación de token', function () {
     $user = User::factory()->create();
-    $tokenId = \Illuminate\Support\Str::uuid()->toString();
+    $tokenId = Str::uuid()->toString();
     $ipAddress = '192.168.1.1';
 
     $log = AuthLogger::logTokenRevoked($user, $tokenId, $ipAddress);

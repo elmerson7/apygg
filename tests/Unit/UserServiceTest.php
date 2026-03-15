@@ -3,7 +3,11 @@
 use App\Models\Role;
 use App\Models\User;
 use App\Services\UserService;
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\RoleSeeder;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
 
@@ -12,8 +16,8 @@ beforeEach(function () {
 
     // Seed roles y permisos base
     $this->seed([
-        \Database\Seeders\RoleSeeder::class,
-        \Database\Seeders\PermissionSeeder::class,
+        RoleSeeder::class,
+        PermissionSeeder::class,
     ]);
 });
 
@@ -74,7 +78,7 @@ test('lanza excepción si el email ya existe', function () {
     ];
 
     expect(fn () => $this->userService->create($userData))
-        ->toThrow(\InvalidArgumentException::class, "El email '{$email}' ya está en uso");
+        ->toThrow(InvalidArgumentException::class, "El email '{$email}' ya está en uso");
 });
 
 test('puede actualizar un usuario', function () {
@@ -96,7 +100,7 @@ test('lanza excepción si el email actualizado ya existe', function () {
     $user2 = User::factory()->create(['email' => 'user2@example.com']);
 
     expect(fn () => $this->userService->update($user1->id, ['email' => 'user2@example.com']))
-        ->toThrow(\InvalidArgumentException::class, "El email 'user2@example.com' ya está en uso");
+        ->toThrow(InvalidArgumentException::class, "El email 'user2@example.com' ya está en uso");
 });
 
 test('puede eliminar un usuario (soft delete)', function () {
@@ -186,8 +190,8 @@ test('puede obtener un usuario por ID', function () {
 
 test('lanza excepción si el usuario no existe al buscar', function () {
     // Usar un UUID válido que no existe en la BD
-    $nonExistentUuid = \Illuminate\Support\Str::uuid()->toString();
+    $nonExistentUuid = Str::uuid()->toString();
 
     expect(fn () => $this->userService->find($nonExistentUuid))
-        ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        ->toThrow(ModelNotFoundException::class);
 });

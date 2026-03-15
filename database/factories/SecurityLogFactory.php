@@ -8,14 +8,14 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Logs\SecurityLog>
+ * @extends Factory<SecurityLog>
  */
 class SecurityLogFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      *
-     * @var class-string<\App\Models\Logs\SecurityLog>
+     * @var class-string<SecurityLog>
      */
     protected $model = SecurityLog::class;
 

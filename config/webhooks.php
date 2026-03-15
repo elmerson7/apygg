@@ -1,5 +1,16 @@
 <?php
 
+use App\Events\PermissionGranted;
+use App\Events\PermissionRevoked;
+use App\Events\RoleAssigned;
+use App\Events\RoleRemoved;
+use App\Events\UserCreated;
+use App\Events\UserDeleted;
+use App\Events\UserLoggedIn;
+use App\Events\UserLoggedOut;
+use App\Events\UserRestored;
+use App\Events\UserUpdated;
+
 return [
 
     /*
@@ -23,18 +34,18 @@ return [
     */
     'events' => [
         // Eventos de Usuario
-        'user.created' => \App\Events\UserCreated::class,
-        'user.updated' => \App\Events\UserUpdated::class,
-        'user.deleted' => \App\Events\UserDeleted::class,
-        'user.restored' => \App\Events\UserRestored::class,
-        'user.logged_in' => \App\Events\UserLoggedIn::class,
-        'user.logged_out' => \App\Events\UserLoggedOut::class,
+        'user.created' => UserCreated::class,
+        'user.updated' => UserUpdated::class,
+        'user.deleted' => UserDeleted::class,
+        'user.restored' => UserRestored::class,
+        'user.logged_in' => UserLoggedIn::class,
+        'user.logged_out' => UserLoggedOut::class,
 
         // Eventos de Autorización
-        'role.assigned' => \App\Events\RoleAssigned::class,
-        'role.removed' => \App\Events\RoleRemoved::class,
-        'permission.granted' => \App\Events\PermissionGranted::class,
-        'permission.revoked' => \App\Events\PermissionRevoked::class,
+        'role.assigned' => RoleAssigned::class,
+        'role.removed' => RoleRemoved::class,
+        'permission.granted' => PermissionGranted::class,
+        'permission.revoked' => PermissionRevoked::class,
     ],
 
     /*

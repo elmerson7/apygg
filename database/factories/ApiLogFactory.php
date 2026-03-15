@@ -8,14 +8,14 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Logs\ApiLog>
+ * @extends Factory<ApiLog>
  */
 class ApiLogFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      *
-     * @var class-string<\App\Models\Logs\ApiLog>
+     * @var class-string<ApiLog>
      */
     protected $model = ApiLog::class;
 

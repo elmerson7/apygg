@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Models\Gift;
 use App\Models\User;
 use App\Services\LogService;
 
@@ -17,7 +18,7 @@ class GiftPolicy
         return true;
     }
 
-    public function view(User $user, \App\Models\Gift $gift): bool
+    public function view(User $user, Gift $gift): bool
     {
         return $user->id === $gift->sender_id || $user->id === $gift->receiver_id;
     }
@@ -27,7 +28,7 @@ class GiftPolicy
         return true;
     }
 
-    public function delete(User $user, \App\Models\Gift $gift): bool
+    public function delete(User $user, Gift $gift): bool
     {
         $allowed = $user->hasPermission('gifts.delete');
 

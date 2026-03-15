@@ -48,8 +48,9 @@ class DeviceTokenController extends Controller
      * DELETE /device-tokens
      * Invalida el token FCM del dispositivo (logout de notificaciones).
      */
-    public function destroy(Request $request): JsonResponse
+    public function destroy(?string $id = null): JsonResponse
     {
+        $request = request();
         $request->validate([
             'token' => ['required', 'string'],
         ]);

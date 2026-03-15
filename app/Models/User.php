@@ -17,6 +17,24 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 
+/**
+ * User Model
+ *
+ * @property string $id
+ * @property string $name
+ * @property string $email
+ * @property string $password
+ * @property string|null $timezone
+ * @property string|null $identity_document
+ * @property string|null $provider
+ * @property string|null $provider_id
+ * @property array|null $preferences
+ * @property string|null $deleted_by
+ * @property \Carbon\Carbon $email_verified_at
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ * @property \Carbon\Carbon|null $deleted_at
+ */
 class User extends Authenticatable implements JWTSubject
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -45,9 +63,12 @@ class User extends Authenticatable implements JWTSubject
         'name',
         'email',
         'password',
-        'timezone', // Preferencia de timezone del usuario
-        'identity_document', // Documento de identidad del usuario
-        'deleted_by', // Para SoftDeletesWithUser trait
+        'timezone',
+        'identity_document',
+        'deleted_by',
+        'provider',
+        'provider_id',
+        'preferences',
     ];
 
     /**
@@ -71,7 +92,8 @@ class User extends Authenticatable implements JWTSubject
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
-        'deleted_by' => 'string', // UUID del usuario que eliminó (para SoftDeletesWithUser)
+        'deleted_by' => 'string',
+        'preferences' => 'array',
     ];
 
     /**
@@ -232,6 +254,11 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(ActivityLog::class, 'user_id');
     }
 
+    public function deviceTokens(): HasMany
+    {
+        return $this->hasMany(DeviceToken::class, 'user_id');
+    }
+
     /**
      * Scope para filtrar usuarios activos (no eliminados)
      *
@@ -297,7 +324,7 @@ class User extends Authenticatable implements JWTSubject
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
-            'email_verified_at' => $this->email_verified_at?->timestamp,
+            'email_verified_at' => $this->email_verified_at ? $this->email_verified_at->timestamp : null,
             'timezone' => $this->timezone,
             'created_at' => $this->created_at->timestamp,
             'updated_at' => $this->updated_at->timestamp,

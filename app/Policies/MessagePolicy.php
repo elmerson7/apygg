@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Models\Message;
 use App\Models\User;
 use App\Services\LogService;
 
@@ -18,7 +19,7 @@ class MessagePolicy
         return true;
     }
 
-    public function view(User $user, \App\Models\Message $message): bool
+    public function view(User $user, Message $message): bool
     {
         return $user->id === $message->sender_id || $user->id === $message->receiver_id;
     }
@@ -28,12 +29,12 @@ class MessagePolicy
         return true;
     }
 
-    public function update(User $user, \App\Models\Message $message): bool
+    public function update(User $user, Message $message): bool
     {
         return $user->id === $message->sender_id;
     }
 
-    public function delete(User $user, \App\Models\Message $message): bool
+    public function delete(User $user, Message $message): bool
     {
         $allowed = $user->id === $message->sender_id || $user->hasPermission('messages.delete');
 

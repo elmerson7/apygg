@@ -41,7 +41,7 @@ test('ActivityLogger guarda contexto completo (user_id, IP)', function () {
 });
 
 test('ApiLogger guarda contexto completo (trace_id, user_id, IP, user_agent)', function () {
-    \Illuminate\Support\Facades\Auth::login($this->user);
+    Auth::login($this->user);
 
     $request = Request::create('/users', 'GET');
     $request->server->set('REMOTE_ADDR', $this->ipAddress);

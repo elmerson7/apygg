@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Models\User;
+use App\Models\UserMatch;
 use App\Services\LogService;
 
 /**
@@ -18,12 +19,12 @@ class MatchPolicy
         return true;
     }
 
-    public function view(User $user, \App\Models\Match $match): bool
+    public function view(User $user, UserMatch $match): bool
     {
         return $user->id === $match->user_id || $user->id === $match->target_id;
     }
 
-    public function delete(User $user, \App\Models\Match $match): bool
+    public function delete(User $user, UserMatch $match): bool
     {
         $allowed = $user->id === $match->user_id || $user->id === $match->target_id;
 

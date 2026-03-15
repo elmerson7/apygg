@@ -9,6 +9,8 @@ use App\Services\SocialAuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\GoogleProvider;
+use Laravel\Socialite\Two\FacebookProvider;
 
 /**
  * SocialAuthController
@@ -34,7 +36,10 @@ class SocialAuthController
             return ApiResponse::error('Proveedor no soportado', 422);
         }
 
-        $url = Socialite::driver($provider)
+        /** @var GoogleProvider|FacebookProvider $driver */
+        $driver = Socialite::driver($provider);
+
+        $url = $driver
             ->stateless()
             ->redirect()
             ->getTargetUrl();
@@ -54,7 +59,9 @@ class SocialAuthController
         }
 
         try {
-            $socialUser = Socialite::driver($provider)
+            /** @var GoogleProvider|FacebookProvider $driver */
+            $driver = Socialite::driver($provider);
+            $socialUser = $driver
                 ->stateless()
                 ->user();
 
@@ -103,9 +110,12 @@ class SocialAuthController
         ]);
 
         try {
-            $socialUser = Socialite::driver($provider)
+            /** @var GoogleProvider|FacebookProvider $driver */
+            $driver = Socialite::driver($provider);
+            $socialUser = $driver
                 ->stateless()
                 ->redirectUrl($request->redirect_uri)
+                /** @phpstan-ignore-next-line */
                 ->userFromCode($request->code);
 
             $user = $this->socialAuthService->findOrCreateUser($socialUser, $provider);

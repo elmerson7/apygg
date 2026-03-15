@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Auth\BroadcastAuthController;
 use App\Http\Controllers\Auth\PasswordController;
 use Illuminate\Support\Facades\Route;
 
@@ -29,7 +30,7 @@ Route::prefix('auth')->group(function () {
 // Solo funciona si BROADCAST_CONNECTION=reverb está configurado
 // NOTA: Laravel también crea una ruta automática en routes/web.php
 // Esta ruta usa el mismo endpoint pero con autenticación JWT para API
-Route::post('/broadcasting/auth', [\App\Http\Controllers\Auth\BroadcastAuthController::class, 'authenticate'])
+Route::post('/broadcasting/auth', [BroadcastAuthController::class, 'authenticate'])
     ->middleware('auth:api')
     ->name('broadcasting.auth');
 

@@ -3,6 +3,8 @@
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
@@ -11,8 +13,8 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     // Seed roles y permisos base
     $this->seed([
-        \Database\Seeders\RoleSeeder::class,
-        \Database\Seeders\PermissionSeeder::class,
+        RoleSeeder::class,
+        PermissionSeeder::class,
     ]);
 });
 
