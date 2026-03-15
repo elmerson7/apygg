@@ -7,21 +7,9 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
-|
-| Todas las rutas aquí son para API únicamente.
-| Rutas directas en la raíz (sin prefijo /api ni versión)
-| Todas las respuestas son JSON (forzado por ForceJsonResponse middleware)
-|
-| Convención de prefijos:
-|   - Sin prefijo  → rutas públicas (auth, search, files, webhooks)
-|   - /user        → usuario autenticado (perfil, preferencias)
-|   - /admin       → gestión administrativa (roles, permisos, api-keys)
-|
-| Estructura modular: cada módulo tiene su archivo en routes/api/
-|
 */
 
-// Ruta raíz: información de la API
+// Ruta raíz
 Route::get('/', function () {
     $broadcastingEnabled = config('broadcasting.default') !== 'null';
 
@@ -59,7 +47,7 @@ Route::get('/health/live', [HealthController::class, 'live']);
 Route::get('/health/ready', [HealthController::class, 'ready']);
 Route::middleware(['auth:api'])->get('/health/detailed', [HealthController::class, 'detailed']);
 
-// ── Módulos de rutas ──────────────────────────────────────────────────────────
+// ── Módulos de rutas ────────────────────────────────────────────────────────────────────
 // Público
 require __DIR__.'/api/auth.php';
 require __DIR__.'/api/files.php';
@@ -77,7 +65,8 @@ require __DIR__.'/api/users.php';
 // Admin (/admin)
 require __DIR__.'/api/api-keys.php';
 require __DIR__.'/api/roles.php';
-// ─────────────────────────────────────────────────────────────────────────────
+require __DIR__.'/api/logs.php';
+// ─────────────────────────────────────────────────────────────────────────────────
 
 Route::prefix('test/sentry')->group(function () {
     Route::get('/info', [TestSentryController::class, 'info']);
