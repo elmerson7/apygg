@@ -13,23 +13,10 @@ use App\Services\WebhookService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-/**
- * WebhookController
- *
- * Controlador para gestión de webhooks.
- */
 class WebhookController extends Controller
 {
     protected WebhookService $webhookService;
-
-    /**
-     * Modelo asociado al controlador
-     */
     protected ?string $model = Webhook::class;
-
-    /**
-     * Resource para transformar respuestas
-     */
     protected ?string $resource = WebhookResource::class;
 
     public function __construct(WebhookService $webhookService)
@@ -37,26 +24,21 @@ class WebhookController extends Controller
         $this->webhookService = $webhookService;
     }
 
-    /**
-     * Display a listing of webhooks for the authenticated user.
-     */
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        $perPage = min(max(1, (int) $request->get('per_page', 15)), 100);
+        $perPage = min(max(1, (int) $request->input('per_page', 20)), 100);
 
         $query = Webhook::query()
             ->where('user_id', $user->id)
             ->withCount('deliveries')
             ->orderBy('created_at', 'desc');
 
-        // Filtros
         if ($request->has('status')) {
-            $query->where('status', $request->get('status'));
+            $query->where('status', $request->input('status'));
         }
-
         if ($request->has('event')) {
-            $query->whereJsonContains('events', $request->get('event'));
+            $query->whereJsonContains('events', $request->input('event'));
         }
 
         $webhooks = $query->paginate($perPage);
@@ -74,8 +56,6 @@ class WebhookController extends Controller
     }
 
     /**
-     * Store a newly created webhook.
-     *
      * @param  StoreWebhookRequest  $request
      */
     public function store($request): JsonResponse
@@ -84,14 +64,11 @@ class WebhookController extends Controller
         $user = $request->user();
         $validated = $request->validated();
 
-        // Generar secret si no se proporciona
         if (empty($validated['secret'])) {
             $validated['secret'] = bin2hex(random_bytes(32));
         }
 
-        $webhook = Webhook::create(array_merge($validated, [
-            'user_id' => $user->id,
-        ]));
+        $webhook = Webhook::create(array_merge($validated, ['user_id' => $user->id]));
 
         return response()->json([
             'success' => true,
@@ -100,27 +77,18 @@ class WebhookController extends Controller
         ], 201);
     }
 
-    /**
-     * Display the specified webhook.
-     */
     public function show(Request $request, string $id): JsonResponse
     {
         $user = $request->user();
-
         $webhook = Webhook::with('user')
             ->withCount('deliveries')
             ->where('user_id', $user->id)
             ->findOrFail($id);
 
-        return response()->json([
-            'success' => true,
-            'data' => new WebhookResource($webhook),
-        ]);
+        return response()->json(['success' => true, 'data' => new WebhookResource($webhook)]);
     }
 
     /**
-     * Update the specified webhook.
-     *
      * @param  UpdateWebhookRequest  $request
      */
     public function update($request, string $id): JsonResponse
@@ -128,9 +96,7 @@ class WebhookController extends Controller
         /** @var UpdateWebhookRequest $request */
         $user = $request->user();
         $webhook = Webhook::where('user_id', $user->id)->findOrFail($id);
-
-        $validated = $request->validated();
-        $webhook->update($validated);
+        $webhook->update($request->validated());
 
         return response()->json([
             'success' => true,
@@ -139,31 +105,20 @@ class WebhookController extends Controller
         ]);
     }
 
-    /**
-     * Remove the specified webhook.
-     */
     public function destroy(string $id): JsonResponse
     {
         $user = request()->user();
         $webhook = Webhook::where('user_id', $user->id)->findOrFail($id);
-
         $webhook->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Webhook eliminado exitosamente',
-        ]);
+        return response()->json(['success' => true, 'message' => 'Webhook eliminado exitosamente']);
     }
 
-    /**
-     * Rotar el secret del webhook.
-     */
     public function rotateSecret(Request $request, string $id): JsonResponse
     {
         $user = $request->user();
         $webhook = Webhook::where('user_id', $user->id)->findOrFail($id);
-
-        $gracePeriodDays = (int) $request->get('grace_period_days', 7);
+        $gracePeriodDays = (int) $request->input('grace_period_days', 7);
         $result = $webhook->rotateSecret($gracePeriodDays);
 
         return response()->json([
@@ -179,26 +134,19 @@ class WebhookController extends Controller
         ]);
     }
 
-    /**
-     * Obtener historial de entregas de un webhook.
-     */
     public function deliveries(Request $request, string $id): JsonResponse
     {
         $user = $request->user();
         $webhook = Webhook::where('user_id', $user->id)->findOrFail($id);
+        $perPage = min(max(1, (int) $request->input('per_page', 20)), 100);
 
-        $perPage = min(max(1, (int) $request->get('per_page', 15)), 100);
+        $query = WebhookDelivery::where('webhook_id', $webhook->id)->orderBy('created_at', 'desc');
 
-        $query = WebhookDelivery::where('webhook_id', $webhook->id)
-            ->orderBy('created_at', 'desc');
-
-        // Filtros
         if ($request->has('status')) {
-            $query->where('status', $request->get('status'));
+            $query->where('status', $request->input('status'));
         }
-
         if ($request->has('event_type')) {
-            $query->where('event_type', $request->get('event_type'));
+            $query->where('event_type', $request->input('event_type'));
         }
 
         $deliveries = $query->paginate($perPage);
@@ -211,47 +159,32 @@ class WebhookController extends Controller
                 'per_page' => $deliveries->perPage(),
                 'total' => $deliveries->total(),
                 'last_page' => $deliveries->lastPage(),
-                'webhook' => [
-                    'id' => $webhook->id,
-                    'name' => $webhook->name,
-                ],
+                'webhook' => ['id' => $webhook->id, 'name' => $webhook->name],
             ],
         ]);
     }
 
-    /**
-     * Reenviar manualmente una entrega fallida.
-     */
     public function retryDelivery(Request $request, string $id, string $deliveryId): JsonResponse
     {
         $user = $request->user();
         $webhook = Webhook::where('user_id', $user->id)->findOrFail($id);
-        $delivery = WebhookDelivery::where('webhook_id', $webhook->id)
-            ->findOrFail($deliveryId);
+        $delivery = WebhookDelivery::where('webhook_id', $webhook->id)->findOrFail($deliveryId);
 
-        // Verificar que la entrega esté fallida
         if ($delivery->status !== WebhookDelivery::STATUS_FAILED) {
             return response()->json([
                 'success' => false,
                 'message' => 'Solo se pueden reenviar entregas fallidas',
-                'error' => [
-                    'type' => 'invalid_status',
-                    'code' => 'DELIVERY_NOT_FAILED',
-                ],
+                'error' => ['type' => 'invalid_status', 'code' => 'DELIVERY_NOT_FAILED'],
             ], 422);
         }
 
-        // Reintentar entrega
         $success = $this->webhookService->retryDelivery($delivery);
 
         if (! $success) {
             return response()->json([
                 'success' => false,
                 'message' => 'No se pudo reenviar la entrega. Verifica que el webhook esté activo y que no se haya excedido el máximo de reintentos',
-                'error' => [
-                    'type' => 'retry_failed',
-                    'code' => 'RETRY_FAILED',
-                ],
+                'error' => ['type' => 'retry_failed', 'code' => 'RETRY_FAILED'],
             ], 422);
         }
 
