@@ -360,6 +360,7 @@ class TokenService
             }
 
             // Obtener usuario del token ANTES de invalidarlo
+            // Obtener el ID del usuario desde el claim 'sub'
             $userId = $claims['sub'] ?? null;
             if (! $userId) {
                 throw new TokenInvalidException('Usuario no encontrado en el token');
@@ -372,6 +373,8 @@ class TokenService
             }
 
             // Revocar el refresh token antiguo (rotación)
+            // IMPORTANTE: invalidar después de obtener el usuario
+            // Configurar el token antes de invalidarlo
             $this->jwtAuth->setToken($refreshToken)->invalidate(true);
 
             // Generar nuevos tokens
