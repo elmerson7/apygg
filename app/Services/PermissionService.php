@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Permission;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
@@ -51,8 +50,10 @@ class PermissionService
             );
         }
 
+        /** @var Permission $permission */
         $permission = Permission::create([
             'name' => $data['name'],
+            'guard_name' => $data['guard_name'] ?? 'api',
             'display_name' => $data['display_name'] ?? $data['name'],
             'resource' => $data['resource'] ?? $this->extractResource($data['name']),
             'action' => $data['action'] ?? $this->extractAction($data['name']),
@@ -77,7 +78,7 @@ class PermissionService
      * @param  string  $permissionId  ID del permiso
      * @param  array  $data  Datos a actualizar
      *
-     * @throws ModelNotFoundException Si el permiso no existe
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el permiso no existe
      * @throws \InvalidArgumentException Si los datos son inválidos
      */
     public function update(string $permissionId, array $data): Permission
@@ -119,7 +120,7 @@ class PermissionService
      *
      * @param  string  $permissionId  ID del permiso
      *
-     * @throws ModelNotFoundException Si el permiso no existe
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el permiso no existe
      * @throws \Exception Si el permiso está asignado a roles
      */
     public function delete(string $permissionId): bool
@@ -153,7 +154,7 @@ class PermissionService
      *
      * @param  string  $permissionId  ID del permiso
      *
-     * @throws ModelNotFoundException Si el permiso no existe
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el permiso no existe
      */
     public function find(string $permissionId): Permission
     {
@@ -185,7 +186,7 @@ class PermissionService
      */
     public function list(array $filters = []): LengthAwarePaginator
     {
-        $perPage = $filters['per_page'] ?? 15;
+        $perPage = $filters['per_page'] ?? 20;
         $search = $filters['search'] ?? null;
         $resource = $filters['resource'] ?? null;
         $action = $filters['action'] ?? null;
@@ -194,7 +195,12 @@ class PermissionService
 
         // Aplicar búsqueda si existe
         if ($search) {
-            $query->search($search);
+            // Búsqueda usando where en lugar de search (compatible con Spatie)
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'ilike', "%{$search}%")
+                    ->orWhere('display_name', 'ilike', "%{$search}%")
+                    ->orWhere('description', 'ilike', "%{$search}%");
+            });
         }
 
         // Aplicar filtro por recurso
