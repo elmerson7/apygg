@@ -30,12 +30,31 @@ class SanitizeInput
     ];
 
     /**
+     * Campos que preservan saltos de línea (no se normalizan espacios)
+     * Específicamente para endpoints de clases donde description puede tener formato
+     */
+    private array $preserveNewlinesFields = [
+        'description',
+    ];
+
+    /**
+     * Rutas donde se preservan saltos de línea para ciertos campos
+     */
+    private array $preserveNewlinesRoutes = [
+        'admin/events/*/modules/*/classes',
+        'admin/events/*/modules/*/classes/*',
+    ];
+
+    /**
      * Handle an incoming request.
      *
-     * @param  Closure(Request): (Response)  $next
+     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Determinar si esta ruta preserva saltos de línea
+        $this->shouldPreserveNewlines = $this->checkPreserveNewlines($request);
+
         // Sanitizar solo si hay datos en el request
         if ($request->isMethod('GET')) {
             // Para GET, sanitizar query parameters
@@ -48,10 +67,38 @@ class SanitizeInput
         return $next($request);
     }
 
+    private bool $shouldPreserveNewlines = false;
+
+    /**
+     * Verificar si la ruta actual debe preservar saltos de línea
+     */
+    private function checkPreserveNewlines(Request $request): bool
+    {
+        $path = $request->path();
+
+        foreach ($this->preserveNewlinesRoutes as $pattern) {
+            $regex = str_replace(['*', '/'], ['.*', '\/'], $pattern);
+            if (preg_match("/^{$regex}$/", $path)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Verificar si el campo debe preservar saltos de línea
+     */
+    private function shouldPreserveNewlinesForField(string $field): bool
+    {
+        return $this->shouldPreserveNewlines
+            && in_array(strtolower($field), $this->preserveNewlinesFields, true);
+    }
+
     /**
      * Sanitizar array recursivamente
      */
-    private function sanitizeArray(array $data, $target): void
+    private function sanitizeArray(array $data, $target, ?string $parentField = null): void
     {
         foreach ($data as $key => $value) {
             // Saltar campos excluidos
@@ -61,10 +108,10 @@ class SanitizeInput
 
             if (is_array($value)) {
                 // Recursión para arrays anidados
-                $this->sanitizeArray($value, $target);
+                $this->sanitizeArray($value, $target, $key);
             } elseif (is_string($value)) {
                 // Sanitizar strings
-                $sanitized = $this->sanitizeString($value);
+                $sanitized = $this->sanitizeString($value, $key);
 
                 // Actualizar el valor sanitizado
                 if ($target instanceof Request) {
@@ -81,7 +128,7 @@ class SanitizeInput
     /**
      * Sanitizar string individual
      */
-    private function sanitizeString(string $value): string
+    private function sanitizeString(string $value, string $field = ''): string
     {
         // 1. Trim espacios en blanco
         $value = trim($value);
@@ -93,8 +140,13 @@ class SanitizeInput
         // Para campos de texto plano, eliminar todo HTML
         $value = SecurityHelper::sanitizeHtml($value);
 
-        // 4. Normalizar espacios múltiples a uno solo
-        $value = preg_replace('/\s+/', ' ', $value);
+        // 4. Normalizar espacios múltiples a uno solo (pero preservar saltos de línea si es necesario)
+        if ($this->shouldPreserveNewlinesForField($field)) {
+            // Preservar saltos de línea: solo normalizar espacios que no sean newlines
+            $value = preg_replace('/[ \t]+/', ' ', $value);
+        } else {
+            $value = preg_replace('/\s+/', ' ', $value);
+        }
 
         // 5. Convertir strings vacíos a null (se manejará después)
         if ($value === '') {
