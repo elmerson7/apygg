@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use Aws\S3\Exception\S3Exception;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -169,7 +168,7 @@ class BackupService
                 try {
                     // Intentar verificar acceso al bucket listando archivos
                     $disk->files($config['remote']['path']);
-                } catch (S3Exception $e) {
+                } catch (\Aws\S3\Exception\S3Exception $e) {
                     if ($e->getAwsErrorCode() === 'NoSuchBucket') {
                         throw new \RuntimeException(
                             "El bucket '{$diskConfig['bucket']}' no existe en S3/MinIO. ".
@@ -193,7 +192,7 @@ class BackupService
             // Subir a S3/MinIO
             try {
                 $uploaded = $disk->put($remotePath, $content);
-            } catch (S3Exception $e) {
+            } catch (\Aws\S3\Exception\S3Exception $e) {
                 // Error específico de AWS S3
                 $awsMessage = $e->getAwsErrorMessage() ?? $e->getMessage();
                 $awsCode = $e->getAwsErrorCode() ?? 'Unknown';
@@ -209,7 +208,7 @@ class BackupService
             }
 
             return $remotePath;
-        } catch (S3Exception $e) {
+        } catch (\Aws\S3\Exception\S3Exception $e) {
             // Error específico de AWS S3
             $message = $e->getAwsErrorMessage() ?? $e->getMessage();
 
@@ -388,26 +387,21 @@ class BackupService
         try {
             // Determinar si es formato custom (-F c) o SQL plano
             // Los backups en formato custom empiezan con "PGDMP" (magic bytes)
-            // Los backups SQL empiezan con texto SQL (--, CREATE, etc.)
             $isCustomFormat = false;
 
             if (file_exists($finalPath)) {
-                // Leer primeros bytes para detectar formato
                 $handle = fopen($finalPath, 'rb');
                 if ($handle) {
                     $header = fread($handle, 5);
                     fclose($handle);
 
-                    // Formato custom de PostgreSQL empieza con "PGDMP"
                     if ($header === 'PGDMP') {
                         $isCustomFormat = true;
                     } else {
-                        // Verificar si es texto SQL (empieza con --, CREATE, etc.)
                         $handle = fopen($finalPath, 'rb');
                         $firstLine = fgets($handle, 100);
                         fclose($handle);
 
-                        // Si no empieza con texto SQL común, podría ser custom
                         $isCustomFormat = ! (
                             str_starts_with(trim($firstLine), '--') ||
                             str_starts_with(trim($firstLine), 'CREATE') ||
@@ -419,7 +413,6 @@ class BackupService
             }
 
             if ($isCustomFormat) {
-                // Restaurar backup formato custom usando pg_restore
                 $command = sprintf(
                     'PGPASSWORD=%s pg_restore -h %s -p %s -U %s -d %s --clean --if-exists --no-owner --no-acl %s 2>&1',
                     escapeshellarg($password),
@@ -430,7 +423,6 @@ class BackupService
                     escapeshellarg($finalPath)
                 );
             } else {
-                // Restaurar backup SQL plano usando psql
                 $command = sprintf(
                     'PGPASSWORD=%s psql -h %s -p %s -U %s -d %s -f %s 2>&1',
                     escapeshellarg($password),
@@ -445,9 +437,7 @@ class BackupService
             exec($command, $output, $returnCode);
 
             if ($returnCode !== 0) {
-                $errorOutput = implode("\n", $output);
-
-                throw new \RuntimeException('Error al restaurar backup: '.$errorOutput);
+                throw new \RuntimeException('Error al restaurar backup: '.implode("\n", $output));
             }
 
             Log::info('Backup restaurado exitosamente', [
@@ -486,7 +476,6 @@ class BackupService
         $backups = self::listBackups(null, true);
         $now = now();
 
-        // Separar backups por tipo (diario, semanal, mensual)
         $dailyBackups = [];
         $weeklyBackups = [];
         $monthlyBackups = [];
@@ -495,27 +484,22 @@ class BackupService
             $createdAt = Carbon::parse($backup['created_at']);
             $daysOld = $now->diffInDays($createdAt);
 
-            // Determinar tipo según antigüedad
             if ($daysOld <= 7) {
                 $dailyBackups[] = $backup;
             } elseif ($daysOld <= 30) {
-                // Solo mantener uno por semana
                 $weekKey = $createdAt->format('Y-W');
                 if (! isset($weeklyBackups[$weekKey])) {
                     $weeklyBackups[$weekKey] = $backup;
                 } else {
-                    // Mantener el más reciente de la semana
                     if ($createdAt->gt(Carbon::parse($weeklyBackups[$weekKey]['created_at']))) {
                         $weeklyBackups[$weekKey] = $backup;
                     }
                 }
             } else {
-                // Solo mantener uno por mes
                 $monthKey = $createdAt->format('Y-m');
                 if (! isset($monthlyBackups[$monthKey])) {
                     $monthlyBackups[$monthKey] = $backup;
                 } else {
-                    // Mantener el más reciente del mes
                     if ($createdAt->gt(Carbon::parse($monthlyBackups[$monthKey]['created_at']))) {
                         $monthlyBackups[$monthKey] = $backup;
                     }
@@ -523,7 +507,6 @@ class BackupService
             }
         }
 
-        // Backups a mantener
         $backupsToKeep = array_merge(
             $dailyBackups,
             array_values($weeklyBackups),
@@ -531,7 +514,6 @@ class BackupService
         );
         $backupsToKeepFilenames = array_column($backupsToKeep, 'filename');
 
-        // Eliminar backups que no están en la lista de mantener
         foreach ($backups as $backup) {
             if (! in_array($backup['filename'], $backupsToKeepFilenames)) {
                 try {
@@ -554,7 +536,6 @@ class BackupService
                     ]);
                 }
             } else {
-                // Contar backups mantenidos
                 $createdAt = Carbon::parse($backup['created_at']);
                 $daysOld = $now->diffInDays($createdAt);
 
