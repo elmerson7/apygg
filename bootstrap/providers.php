@@ -7,4 +7,5 @@ return [
     Laravel\Horizon\HorizonServiceProvider::class,
     Laravel\Telescope\TelescopeServiceProvider::class,
     Sentry\Laravel\ServiceProvider::class,
+    App\Providers\ContractServiceProvider::class,
 ];
