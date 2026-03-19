@@ -101,7 +101,7 @@ No existe `app/Enums`.
 - [x] Crear `WebhookEventEnum`
 - [x] Crear `LogActionEnum` (created, updated, deleted, restored)
 - [x] Crear `FileTypeEnum`
-- [ ] Reemplazar strings hardcodeados por Enums en Models y Services
+- [x] Reemplazar strings hardcodeados por Enums en Models y Services
 
 ### 7. Socialite completo
 
@@ -118,12 +118,12 @@ No existe `app/Enums`.
 
 Faltan factories para varios modelos.
 
-- [ ] Crear `WebhookFactory`
-- [ ] Crear `WebhookDeliveryFactory`
-- [ ] Crear `FileFactory`
-- [ ] Crear `DeviceTokenFactory`
-- [ ] Crear `SettingsFactory`
-- [ ] Crear `JwtBlacklistFactory`
+- [x] Crear `WebhookFactory`
+- [x] Crear `WebhookDeliveryFactory`
+- [x] Crear `FileFactory`
+- [x] Crear `DeviceTokenFactory`
+- [x] Crear `SettingsFactory`
+- [x] Crear `JwtBlacklistFactory`
 
 ### 9. Console Commands documentados
 
