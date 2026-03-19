@@ -85,22 +85,22 @@ No existe `app/DTOs`.
 
 No hay `openapi.yaml` ni integración con Scramble/L5-Swagger.
 
-- [ ] Instalar `dedoc/scramble` o `darkaonline/l5-swagger`
-- [ ] Configurar auto-generación desde Form Requests y Resources
-- [ ] Publicar documentación en `/docs/api`
-- [ ] Documentar autenticación JWT y API Keys
-- [ ] Documentar todos los endpoints existentes
+- [x] Instalar `dedoc/scramble` o `darkaonline/l5-swagger`
+- [x] Configurar auto-generación desde Form Requests y Resources
+- [x] Publicar documentación en `/docs/api`
+- [x] Documentar autenticación JWT y API Keys
+- [x] Documentar todos los endpoints existentes
 
 ### 6. Enums centralizados
 
 No existe `app/Enums`.
 
-- [ ] Crear `UserStatusEnum` (active, inactive, banned)
-- [ ] Crear `RoleEnum` (admin, user, guest)
-- [ ] Crear `ApiKeyScopeEnum`
-- [ ] Crear `WebhookEventEnum`
-- [ ] Crear `LogActionEnum` (created, updated, deleted, restored)
-- [ ] Crear `FileTypeEnum`
+- [x] Crear `UserStatusEnum` (active, inactive, banned)
+- [x] Crear `RoleEnum` (admin, user, guest)
+- [x] Crear `ApiKeyScopeEnum`
+- [x] Crear `WebhookEventEnum`
+- [x] Crear `LogActionEnum` (created, updated, deleted, restored)
+- [x] Crear `FileTypeEnum`
 - [ ] Reemplazar strings hardcodeados por Enums en Models y Services
 
 ### 7. Socialite completo

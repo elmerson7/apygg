@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\WebhookStatusEnum;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -107,15 +108,7 @@ class Webhook extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    /**
-     * Relación con WebhookDeliveries
-     *
-     * Un webhook tiene múltiples entregas.
-     */
-    public function deliveries(): HasMany
-    {
-        return $this->hasMany(WebhookDelivery::class, 'webhook_id');
-    }
+
 
     /**
      * Scope para filtrar webhooks activos
@@ -125,7 +118,7 @@ class Webhook extends Model
      */
     public function scopeActive($query)
     {
-        return $query->where('status', 'active');
+        return $query->where('status', WebhookStatusEnum::active->value);
     }
 
     /**
@@ -136,7 +129,7 @@ class Webhook extends Model
      */
     public function scopeInactive($query)
     {
-        return $query->where('status', 'inactive');
+        return $query->where('status', WebhookStatusEnum::inactive->value);
     }
 
     /**
@@ -147,7 +140,7 @@ class Webhook extends Model
      */
     public function scopePaused($query)
     {
-        return $query->where('status', 'paused');
+        return $query->where('status', WebhookStatusEnum::paused->value);
     }
 
     /**

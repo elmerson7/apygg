@@ -33,7 +33,11 @@ class UpdateWebhookRequest extends BaseFormRequest
             'url' => ['sometimes', 'url', 'max:2048'],
             'events' => ['sometimes', 'nullable', 'array'],
             'events.*' => ['required', 'string', Rule::in($availableEvents)],
-            'status' => ['sometimes', 'string', Rule::in(['active', 'inactive', 'paused'])],
+            'status' => ['sometimes', 'string', Rule::in([
+                WebhookStatusEnum::active->value,
+                WebhookStatusEnum::inactive->value,
+                WebhookStatusEnum::paused->value
+            ])],
             'timeout' => ['sometimes', 'integer', 'min:5', 'max:300'],
             'max_retries' => ['sometimes', 'integer', 'min:1', 'max:10'],
         ];
