@@ -73,12 +73,12 @@ No existe `app/Repositories`.
 
 No existe `app/DTOs`.
 
-- [ ] Crear `LoginDTO`
-- [ ] Crear `RegisterDTO`
-- [ ] Crear `CreateUserDTO`
-- [ ] Crear `UpdateUserDTO`
-- [ ] Crear `CreateApiKeyDTO`
-- [ ] Crear `CreateWebhookDTO`
+- [x] Crear `LoginDTO`
+- [x] Crear `RegisterDTO`
+- [x] Crear `CreateUserDTO`
+- [x] Crear `UpdateUserDTO`
+- [x] Crear `CreateApiKeyDTO`
+- [x] Crear `CreateWebhookDTO`
 - [ ] Reemplazar arrays sueltos en Services por DTOs tipados
 
 ### 5. Documentación de API (OpenAPI/Swagger)
