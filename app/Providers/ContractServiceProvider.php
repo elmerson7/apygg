@@ -14,6 +14,14 @@ use App\Contracts\SecurityServiceInterface;
 use App\Contracts\TokenServiceInterface;
 use App\Contracts\UserServiceInterface;
 use App\Contracts\WebhookServiceInterface;
+use App\Contracts\UserRepositoryInterface;
+use App\Contracts\RoleRepositoryInterface;
+use App\Contracts\PermissionRepositoryInterface;
+use App\Contracts\ApiKeyRepositoryInterface;
+use App\Repositories\UserRepository;
+use App\Repositories\RoleRepository;
+use App\Repositories\PermissionRepository;
+use App\Repositories\ApiKeyRepository;
 use App\Services\ApiKeyService;
 use App\Services\AuthService;
 use App\Services\CacheService;
@@ -77,6 +85,12 @@ class ContractServiceProvider extends ServiceProvider
 
         // Role
         $this->app->bind(RoleServiceInterface::class, RoleService::class);
+
+        // Repositories
+        $this->app->bind(UserRepositoryInterface::class, UserRepository::class);
+        $this->app->bind(RoleRepositoryInterface::class, RoleRepository::class);
+        $this->app->bind(PermissionRepositoryInterface::class, PermissionRepository::class);
+        $this->app->bind(ApiKeyRepositoryInterface::class, ApiKeyRepository::class);
     }
 
     /**

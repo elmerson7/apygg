@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Contracts\UserRepositoryInterface;
+use App\Contracts\RoleRepositoryInterface;
 use App\Events\PermissionGranted;
 use App\Events\PermissionRevoked;
 use App\Events\RoleAssigned;
@@ -12,8 +14,6 @@ use App\Events\UserRestored;
 use App\Events\UserUpdated;
 use App\Models\Permission;
 use App\Models\Role;
-use App\Models\User;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Hash;
 
@@ -31,13 +31,37 @@ class UserService
     protected const CACHE_PREFIX = 'user:';
 
     /**
+     * @var UserRepositoryInterface
+     */
+    protected $userRepository;
+
+    /**
+     * @var RoleRepositoryInterface
+     */
+    protected $roleRepository;
+
+    /**
+     * Constructor
+     *
+     * @param  UserRepositoryInterface  $userRepository
+     * @param  RoleRepositoryInterface  $roleRepository
+     */
+    public function __construct(
+        UserRepositoryInterface $userRepository,
+        RoleRepositoryInterface $roleRepository
+    ) {
+        $this->userRepository = $userRepository;
+        $this->roleRepository = $roleRepository;
+    }
+
+    /**
      * Crear un nuevo usuario
      *
      * @throws \InvalidArgumentException Si el email ya existe
      */
     public function create(array $data, ?array $roleIds = null): User
     {
-        if (User::where('email', $data['email'])->exists()) {
+        if ($this->userRepository->findByEmail($data['email'])) {
             throw new \InvalidArgumentException("El email '{$data['email']}' ya está en uso");
         }
 
@@ -49,7 +73,7 @@ class UserService
             $data['state_id'] = 1;
         }
 
-        $user = User::create($data);
+        $user = $this->userRepository->create($data);
 
         if (! empty($roleIds)) {
             $user->roles()->sync($roleIds);
@@ -72,7 +96,7 @@ class UserService
         $user = $this->find($userId);
 
         if (isset($data['email']) && $data['email'] !== $user->email) {
-            if (User::where('email', $data['email'])->where('id', '!=', $userId)->exists()) {
+            if ($this->userRepository->findByEmail($data['email']) && $this->userRepository->findByEmail($data['email'])->id != $userId) {
                 throw new \InvalidArgumentException("El email '{$data['email']}' ya está en uso");
             }
         }
@@ -136,7 +160,7 @@ class UserService
     public function delete(string $userId): bool
     {
         $user = $this->find($userId);
-        $deleted = $user->delete();
+        $deleted = $this->userRepository->delete($userId);
         $this->clearCache($userId);
         event(new UserDeleted($user));
 
@@ -166,7 +190,9 @@ class UserService
     public function find(string $userId): User
     {
         return CacheService::remember(self::CACHE_PREFIX.$userId, self::CACHE_TTL, function () use ($userId) {
-            return User::with(['roles', 'permissions'])->findOrFail($userId);
+            $user = $this->userRepository->find($userId);
+            $user->load(['roles', 'permissions']);
+            return $user;
         });
     }
 

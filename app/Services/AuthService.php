@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
+use App\Contracts\UserRepositoryInterface;
 use App\Events\UserLoggedIn;
 use App\Events\UserLoggedOut;
-use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
@@ -22,6 +22,7 @@ use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
 class AuthService
 {
     protected TokenService $tokenService;
+    protected UserRepositoryInterface $userRepository;
 
     /**
      * Número máximo de intentos fallidos antes de bloquear
@@ -33,9 +34,12 @@ class AuthService
      */
     protected int $lockoutTime = 15;
 
-    public function __construct(TokenService $tokenService)
-    {
+    public function __construct(
+        TokenService $tokenService,
+        UserRepositoryInterface $userRepository
+    ) {
         $this->tokenService = $tokenService;
+        $this->userRepository = $userRepository;
     }
 
     /**
@@ -67,7 +71,7 @@ class AuthService
         }
 
         // Buscar usuario por identity_document
-        $user = User::where('identity_document', $identityDocument)->first();
+        $user = $this->userRepository->findByIdentityDocument($identityDocument);
 
         if (! $user) {
             $this->recordFailedAttempt($identityDocument, $ipAddress);
@@ -95,7 +99,7 @@ class AuthService
         // Esto permite migrar de bcrypt a argon2id automáticamente
         if (Hash::needsRehash($user->password)) {
             $user->password = Hash::make($password);
-            $user->save();
+            $this->userRepository->update(['password' => $user->password], $user->id);
 
             LogService::info('Contraseña rehasheada automáticamente durante login', [
                 'user_id' => $user->id,
@@ -188,7 +192,8 @@ class AuthService
      */
     public function getUserFromRefreshToken(string $refreshToken): ?User
     {
-        return $this->tokenService->getUserFromToken($refreshToken);
+        $userId = $this->tokenService->getUserFromToken($refreshToken)?->id;
+        return $userId ? $this->userRepository->find($userId) : null;
     }
 
     /**

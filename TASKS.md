@@ -38,32 +38,32 @@ Solo existen `ExampleTest.php`, `UserControllerTest.php` y `UserPermissionsTest.
 
 No existe `app/Contracts` ni `app/Interfaces`.
 
-- [ ] Crear `AuthServiceInterface`
-- [ ] Crear `UserServiceInterface`
-- [ ] Crear `TokenServiceInterface`
-- [ ] Crear `ApiKeyServiceInterface`
-- [ ] Crear `WebhookServiceInterface`
-- [ ] Crear `FileServiceInterface`
-- [ ] Crear `CacheServiceInterface`
-- [ ] Crear `LogServiceInterface`
-- [ ] Crear `NotificationServiceInterface`
-- [ ] Crear `SecurityServiceInterface`
-- [ ] Crear `PermissionServiceInterface`
-- [ ] Crear `RoleServiceInterface`
-- [ ] Bindear interfaces en un `ServiceProvider` dedicado
+- [x] Crear `AuthServiceInterface`
+- [x] Crear `UserServiceInterface`
+- [x] Crear `TokenServiceInterface`
+- [x] Crear `ApiKeyServiceInterface`
+- [x] Crear `WebhookServiceInterface`
+- [x] Crear `FileServiceInterface`
+- [x] Crear `CacheServiceInterface`
+- [x] Crear `LogServiceInterface`
+- [x] Crear `NotificationServiceInterface`
+- [x] Crear `SecurityServiceInterface`
+- [x] Crear `PermissionServiceInterface`
+- [x] Crear `RoleServiceInterface`
+- [x] Bindear interfaces en un `ServiceProvider` dedicado
 
 ### 3. Repository Pattern
 
 No existe `app/Repositories`.
 
-- [ ] Crear `UserRepository`
-- [ ] Crear `RoleRepository`
-- [ ] Crear `PermissionRepository`
-- [ ] Crear `ApiKeyRepository`
-- [ ] Crear `WebhookRepository`
-- [ ] Crear `FileRepository`
-- [ ] Crear `RepositoryInterface` base
-- [ ] Actualizar Services para usar Repositories en vez de Eloquent directo
+- [x] Crear `UserRepository`
+- [x] Crear `RoleRepository`
+- [x] Crear `PermissionRepository`
+- [x] Crear `ApiKeyRepository`
+- [x] Crear `WebhookRepository`
+- [x] Crear `FileRepository`
+- [x] Crear `RepositoryInterface` base
+- [x] Actualizar Services para usar Repositories en vez de Eloquent directo
 
 ---
 
