@@ -1,0 +1,35 @@
+<?php
+
+namespace {{ namespace }};
+
+use {{ rootNamespace }}Http\Resources\BaseResource;
+use Illuminate\Http\Request;
+
+class {{ collection }} extends BaseResource
+{
+    /**
+     * Transform the resource collection into an array.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(Request $request): array
+    {
+        return [
+            'data' => $this->collection,
+            $this->mergeWhen($this->resource instanceof \Illuminate\Pagination\AbstractPaginator, [
+                'meta' => [
+                    'current_page' => $this->resource->currentPage(),
+                    'last_page' => $this->resource->lastPage(),
+                    'per_page' => $this->resource->perPage(),
+                    'total' => $this->resource->total(),
+                ],
+                'links' => [
+                    'first' => $this->resource->url(1),
+                    'last' => $this->resource->url($this->resource->lastPage()),
+                    'prev' => $this->resource->previousPageUrl(),
+                    'next' => $this->resource->nextPageUrl(),
+                ],
+            ]),
+        ];
+    }
+}

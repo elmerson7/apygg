@@ -129,11 +129,11 @@ Faltan factories para varios modelos.
 
 El directorio `app/Console` existe pero faltan commands robustos.
 
-- [ ] Verificar que todos los Commands tengan `--help` descriptivo
-- [ ] Crear `UserCreateCommand` (crear usuarios desde CLI)
-- [ ] Crear `UserRoleAssignCommand` (asignar roles desde CLI)
-- [ ] Crear `ApiKeyCreateCommand` (generar API keys desde CLI)
-- [ ] Documentar todos los commands disponibles en README
+- [x] Verificar que todos los Commands tengan `--help` descriptivo
+- [x] Crear `UserCreateCommand` (crear usuarios desde CLI)
+- [x] Crear `UserRoleAssignCommand` (asignar roles desde CLI)
+- [x] Crear `ApiKeyCreateCommand` (generar API keys desde CLI)
+- [x] Documentar todos los commands disponibles en README
 
 ---
 
@@ -141,40 +141,41 @@ El directorio `app/Console` existe pero faltan commands robustos.
 
 ### 10. CHANGELOG.md
 
-- [ ] Crear `CHANGELOG.md` con formato [Keep a Changelog](https://keepachangelog.com)
-- [ ] Documentar versión actual y cambios principales
+- [x] Crear `CHANGELOG.md` con formato [Keep a Changelog](https://keepachangelog.com)
+- [x] Documentar versión actual y cambios principales
 - [ ] Configurar en CI para actualización automática en releases
 
 ### 11. CONTRIBUTING.md
 
-- [ ] Crear `CONTRIBUTING.md`
-- [ ] Guía de setup local
-- [ ] Convenciones de código
-- [ ] Proceso de PR y code review
-- [ ] Estándares de commits (Conventional Commits)
+- [x] Crear `CONTRIBUTING.md`
+- [x] Guía de setup local
+- [x] Convenciones de código
+- [x] Proceso de PR y code review
+- [x] Estándares de commits (Conventional Commits)
 
 ### 12. ARCHITECTURE.md
 
-- [ ] Descripción de la arquitectura del boilerplate
-- [ ] Diagramas de componentes
-- [ ] Flujos principales (auth, request lifecycle)
-- [ ] Decisiones arquitectónicas (ADRs)
-- [ ] Cómo agregar un nuevo módulo
+- [x] Descripción de la arquitectura del boilerplate
+- [x] Diagramas de componentes
+- [x] Flujos principales (auth, request lifecycle)
+- [x] Decisiones arquitectónicas (ADRs)
+- [x] Cómo agregar un nuevo módulo
 
 ### 13. Multi-tenancy (base)
 
-- [ ] Evaluar si el boilerplate debe soportar multi-tenancy
-- [ ] Si aplica: agregar `tenant_id` a tablas principales
-- [ ] Crear middleware `ResolveTenant`
-- [ ] Scopes globales por tenant en BaseModel
+- [x] Evaluar si el boilerplate debe soportar multi-tenancy (opt-in via config)
+- [x] Crear `Tenant` model con `tenant_id` migration
+- [x] Crear middleware `ResolveTenant`
+- [x] Crear `BelongsToTenant` trait y `TenantScope` global
 
 ### 14. Stubs personalizados
 
-- [ ] Publicar stubs de Laravel (`php artisan stub:publish`)
-- [ ] Personalizar stub de Controller para usar BaseController
-- [ ] Personalizar stub de Model para usar BaseModel con UUID
-- [ ] Personalizar stub de Request para usar BaseFormRequest
-- [ ] Personalizar stub de Resource para usar BaseResource
+- [x] Crear stubs en `stubs/` directory
+- [x] Personalizar stub de Controller para usar BaseController
+- [x] Personalizar stub de Model para usar BaseModel con UUID
+- [x] Personalizar stub de Request para usar BaseFormRequest
+- [x] Personalizar stub de Resource para usar BaseResource
+- [x] Crear stub de Repository adicional
 
 ---
 

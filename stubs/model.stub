@@ -1,0 +1,33 @@
+<?php
+
+namespace {{ namespace }};
+
+use {{ rootNamespace }}Models\Model as BaseModel;
+{% if hasFactory %}
+use {{ rootNamespace }}Database\Factories\{{ class }}Factory;
+{% endif %}
+
+class {{ class }} extends BaseModel
+{
+{% if hasFactory %}    /** @use HasFactory<{{ class }}Factory> */
+    use \Illuminate\Database\Eloquent\Factories\HasFactory;
+{% endif %}
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var list<string>
+     */
+    protected $fillable = [
+
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+
+    ];
+}

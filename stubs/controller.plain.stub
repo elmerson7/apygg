@@ -1,0 +1,45 @@
+<?php
+
+namespace {{ namespace }};
+
+use {{ rootNamespace }}Http\Controllers\Controller;
+{% if type === 'api' %}
+use {{ rootNamespace }}Http\Resources\{{ model }}Resource;
+use {{ rootNamespace }}Models\{{ model }};
+{% endif %}
+
+class {{ class }} extends Controller
+{
+{% if type === 'api' %}
+    /**
+     * Modelo asociado al controlador
+     */
+    protected ?string $model = {{ model }}::class;
+
+    /**
+     * Resource para transformar respuestas
+     */
+    protected ?string $resource = {{ model }}Resource::class;
+
+    /**
+     * Relaciones permitidas para eager loading
+     *
+     * @var array<string>
+     */
+    protected array $allowedRelations = [];
+
+    /**
+     * Campos permitidos para ordenamiento
+     *
+     * @var array<string>
+     */
+    protected array $allowedSortFields = ['created_at', 'updated_at'];
+
+    /**
+     * Campos permitidos para filtrado
+     *
+     * @var array<string>
+     */
+    protected array $allowedFilterFields = [];
+{% endif %}
+}
