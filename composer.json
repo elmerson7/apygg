@@ -22,7 +22,7 @@
         "meilisearch/meilisearch-php": "^1.15",
         "php-open-source-saver/jwt-auth": "^2.8",
         "sentry/sentry-laravel": "^4.15",
-        "spatie/laravel-permission": "^6.21",
+        "spatie/laravel-permission": "^7.2",
         "spatie/laravel-query-builder": "^6.4"
     },
     "require-dev": {
