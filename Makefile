@@ -9,17 +9,21 @@ ENV ?= dev
 USER_ID ?= $(shell id -u)
 GROUP_ID ?= $(shell id -g)
 
+# Leer PROJECT desde compose.env (si existe) para --project-name
+# Esto asegura que las imágenes y volúmenes usen el nombre correcto
+PROJECT_NAME := $(shell if [ -f compose.env ]; then grep '^PROJECT=' compose.env | cut -d= -f2; else echo "apygg"; fi)
+
 # Perfiles de Docker Compose por entorno:
 # - prod: activa pgbouncer (connection pooling para alta carga)
 # - search: activa meilisearch (motor de búsqueda full-text)
 PROFILES  = $(if $(filter prod,$(ENV)),--profile prod)
 PROFILES += $(if $(SEARCH),--profile search)
 
-# Docker Compose usa DOS archivos de entorno:
-# 1. compose.env → variables de infraestructura Docker (puertos, PROJECT, CONTAINER_PREFIX, USER_ID)
-# 2. .env → variables de Laravel (APP_ENV, DB_HOST, REDIS_HOST, etc.)
-# El último env-file tiene prioridad, por eso .env va después (para APP_ENV)
-DC := docker compose $(PROFILES) --env-file compose.env --env-file .env
+# Docker Compose usa:
+# --project-name → nombre del proyecto para imágenes y volúmenes
+# --env-file compose.env → variables de infraestructura Docker
+# --env-file .env → variables de Laravel
+DC := docker compose $(PROFILES) --project-name $(PROJECT_NAME) --env-file compose.env --env-file .env
 
 export USER_ID
 export GROUP_ID

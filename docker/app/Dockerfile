@@ -44,8 +44,9 @@ RUN groupadd -g ${GROUP_ID} appuser || true && \
     useradd -u ${USER_ID} -g ${GROUP_ID} -m -s /bin/bash appuser || true && \
     usermod -aG www-data appuser || true
 
-# Instalar gosu para cambio de usuario seguro (sin repetir apt-get update)
-RUN apt-get install -y --no-install-recommends gosu && rm -rf /var/lib/apt/lists/*
+# Instalar gosu para cambio de usuario seguro (descarga directa, no está en repos)
+RUN wget -q -O /usr/local/bin/gosu https://github.com/tianon/gosu/releases/download/1.17/gosu-amd64 \
+    && chmod +x /usr/local/bin/gosu
 
 # Copiar entrypoint y wrapper (el código del proyecto se monta como volumen en desarrollo)
 COPY docker/app/entrypoint.sh /app/docker/app/entrypoint.sh
