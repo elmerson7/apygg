@@ -26,6 +26,7 @@ use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
  * @property string $id
  * @property string $name
  * @property string $email
+ * @property string|null $username
  * @property string $password
  * @property string|null $timezone
  * @property string|null $identity_document
@@ -65,6 +66,7 @@ class User extends Authenticatable implements JWTSubject
     protected $fillable = [
         'name',
         'email',
+        'username',
         'password',
         'timezone',
         'identity_document',
@@ -327,6 +329,7 @@ class User extends Authenticatable implements JWTSubject
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
+            'username' => $this->username,
             'email_verified_at' => $this->email_verified_at ? $this->email_verified_at->timestamp : null,
             'timezone' => $this->timezone,
             'created_at' => $this->created_at->timestamp,
