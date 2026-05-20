@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('api_keys', function (Blueprint $table) {
-            $table->uuid('id')->primary()->default(DB::raw('gen_random_uuid()'));
-            $table->uuid('user_id');
+            $table->id();
+            $table->unsignedBigInteger('user_id');
             $table->string('name');
             $table->string('key', 64)->unique();
             $table->json('scopes')->nullable();

@@ -13,8 +13,8 @@ return new class extends Migration
     {
         if (! Schema::hasTable('webhook_deliveries')) {
             Schema::create('webhook_deliveries', function (Blueprint $table) {
-                $table->uuid('id')->primary()->default(DB::raw('gen_random_uuid()'));
-                $table->uuid('webhook_id');
+                $table->id();
+                $table->unsignedBigInteger('webhook_id');
                 $table->string('event_type'); // Tipo de evento (ej: 'user.created')
                 $table->json('payload'); // Payload enviado
                 $table->enum('status', ['pending', 'processing', 'success', 'failed'])->default('pending');

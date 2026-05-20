@@ -16,7 +16,7 @@ return new class extends Migration
         DB::statement('DROP TABLE IF EXISTS settings CASCADE');
 
         Schema::create('settings', function (Blueprint $table) {
-            $table->uuid('id')->primary()->default(DB::raw('gen_random_uuid()'));
+            $table->id();
             $table->string('key')->unique();
             $table->text('value')->nullable();
             $table->string('type')->default('string'); // string, integer, boolean, json, array

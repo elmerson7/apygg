@@ -2,31 +2,29 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Str;
 
 /**
  * Base Model
  *
  * Clase base para todos los modelos de la aplicación.
- * Proporciona UUID como primary key, soft deletes y scopes comunes.
+ * Proporciona ID auto-incrementable como primary key, soft deletes y scopes comunes.
  */
 abstract class Model extends EloquentModel
 {
-    use HasFactory, HasUuids, SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     /**
      * Indicates if the IDs are auto-incrementing.
      */
-    public $incrementing = false;
+    public $incrementing = true;
 
     /**
      * The "type" of the primary key ID.
      */
-    protected $keyType = 'string';
+    protected $keyType = 'int';
 
     /**
      * The attributes that should be cast.
@@ -45,13 +43,6 @@ abstract class Model extends EloquentModel
     protected static function boot(): void
     {
         parent::boot();
-
-        // Generar UUID automáticamente al crear
-        static::creating(function ($model) {
-            if (empty($model->{$model->getKeyName()})) {
-                $model->{$model->getKeyName()} = (string) Str::uuid();
-            }
-        });
     }
 
     /**

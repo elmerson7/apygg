@@ -13,8 +13,8 @@ return new class extends Migration
     {
         if (! Schema::hasTable('webhooks')) {
             Schema::create('webhooks', function (Blueprint $table) {
-                $table->uuid('id')->primary()->default(DB::raw('gen_random_uuid()'));
-                $table->uuid('user_id')->nullable();
+                $table->id();
+                $table->unsignedBigInteger('user_id')->nullable();
                 $table->string('name');
                 $table->string('url');
                 $table->string('secret')->nullable(); // Secret para firmar payloads

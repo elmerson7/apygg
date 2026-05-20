@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('logs_activity', function (Blueprint $table) {
             $table->id();
-            $table->uuid('user_id')->nullable();
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->string('model_type', 255);
-            $table->uuid('model_id');
+            $table->unsignedBigInteger('model_id');
             $table->enum('action', ['created', 'updated', 'deleted', 'restored']);
             $table->json('old_values')->nullable();
             $table->json('new_values')->nullable();

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('jwt_blacklist', function (Blueprint $table) {
             $table->id();
             $table->string('jti', 80)->unique();
-            $table->uuid('user_id')->nullable();
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->timestamp('expires_at');
             $table->timestamps();
 

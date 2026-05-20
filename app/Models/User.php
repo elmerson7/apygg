@@ -11,7 +11,6 @@ use App\Traits\SoftDeletesWithUser;
 use Carbon\Carbon;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -23,7 +22,7 @@ use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 /**
  * User Model
  *
- * @property string $id
+ * @property int $id
  * @property string $name
  * @property string $email
  * @property string|null $username
@@ -42,21 +41,21 @@ use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 class User extends Authenticatable implements JWTSubject
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, HasUuids, LogsActivity, Notifiable, Searchable, SoftDeletes, SoftDeletesWithUser;
+    use HasApiTokens, HasFactory, LogsActivity, Notifiable, Searchable, SoftDeletes, SoftDeletesWithUser;
 
     /**
      * Indicates if the IDs are auto-incrementing.
      *
      * @var bool
      */
-    public $incrementing = false;
+    public $incrementing = true;
 
     /**
      * The "type" of the primary key ID.
      *
      * @var string
      */
-    protected $keyType = 'string';
+    protected $keyType = 'int';
 
     /**
      * The attributes that are mass assignable.
@@ -97,7 +96,7 @@ class User extends Authenticatable implements JWTSubject
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
-        'deleted_by' => 'string',
+        'deleted_by' => 'integer',
         'preferences' => 'array',
     ];
 

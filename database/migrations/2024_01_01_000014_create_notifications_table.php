@@ -22,7 +22,7 @@ return new class extends Migration
         DB::statement('DROP INDEX IF EXISTS notifications_created_at_index CASCADE');
 
         Schema::create('notifications', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->id();
             $table->string('type');
             $table->morphs('notifiable'); // Crea notifiable_type y notifiable_id
             $table->text('data');

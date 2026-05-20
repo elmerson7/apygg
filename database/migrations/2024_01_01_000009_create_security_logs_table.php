@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('logs_security', function (Blueprint $table) {
             $table->id();
             $table->uuid('trace_id')->nullable();
-            $table->uuid('user_id')->nullable();
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->enum('event_type', [
                 'login_success',
                 'login_failure',

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('logs_api', function (Blueprint $table) {
             $table->id();
             $table->uuid('trace_id');
-            $table->uuid('user_id')->nullable();
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->string('request_method', 10);
             $table->string('request_path', 500);
             $table->json('request_query')->nullable();
