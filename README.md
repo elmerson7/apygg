@@ -404,11 +404,13 @@ Si al levantar el proyecto obtienes un error como `Bind for 0.0.0.0:8012 failed:
 
 Después de copiar `.env.example` a `.env`, verifica que estos valores coincidan con los de `compose.env`:
 
-| Variable | Ejemplo |
-|----------|---------|
-| APP_URL | http://localhost:8030 |
-| REVERB_PORT | 8032 |
-| REDIS_PORT | 8033 |
+| Variable | Valor compose.env | Valor en .env |
+|----------|-------------------|---------------|
+| APP_URL | http://localhost:8030 | http://localhost:8030 |
+| REVERB_PORT | 8032 | 8032 |
+| REDIS_PORT | 8033 | **6379** ⚠️ |
+
+**⚠️ IMPORTANTE:** `REDIS_PORT` en `.env` debe ser `6379` (puerto interno del contenedor), NO el puerto del host. Los demás puertos sí deben coincidir.
 
 Si `.env` tiene valores diferentes (ej: `REVERB_PORT=8012`), cámbialos para que coincidan con `compose.env`.
 
@@ -423,8 +425,10 @@ cp .env.example .env
 
 # 3. Ajusta los puertos en .env para que coincidan con compose.env
 # REVERB_PORT=8032
-# REDIS_PORT=8033
+# REDIS_PORT=6379
 ```
+
+**Nota:** `REDIS_PORT` debe ser siempre `6379` (puerto interno del contenedor Redis).
 # Luego ajusta los puertos en .env para que coincidan
 ```
 

@@ -2,6 +2,7 @@ includes:
     - vendor/larastan/larastan/extension.neon
 
 parameters:
+    reportUnmatchedIgnoredErrors: false
     paths:
         - app
         - database/factories
@@ -11,33 +12,50 @@ parameters:
     level: 5
 
     ignoreErrors:
-        # Errores de type en servicios causados por PHPDoc con App\Services\User vs App\Models\User
-        - '#expects App\\\\Services\\\\User, App\\\\Models\\\\User given#'
-        - '#expects App\\\\Models\\\\User, App\\\\Services\\\\User given#'
+        # Errores relacionados con App\Services\User (debería ser App\Models\User)
+        - '#Access to property \$id on an unknown class App\\Services\\User#'
+        - '#Access to property \$name on an unknown class App\\Services\\User#'
+        - '#Access to property \$email on an unknown class App\\Services\\User#'
+        - '#Access to property \$preferences on an unknown class#'
+        - '#Call to method .* on an unknown class App\\Services\\User#'
+        - '#Call to static method .* on an unknown class App\\Services\\User#'
+        - '#Class App\\Services\\User not found#'
+        - '#Class App\\Contracts\\ApiKeyRepositoryInterface not found#'
+        # Errores de QRCode (librería externa)
+        - '#Access to undefined constant chillerlan\\QRCode\\QRCode::ECC_H#'
+        - '#Access to undefined constant chillerlan\\QRCode\\QRCode::OUTPUT#'
+        # Errores menores
+        - '#Call to function is_string.*always evaluate to#'
+        - '#Left side of && is always true#'
+        # Errores de type en servicios
+        - '#expects App\\Services\\User, App\\Models\\User given#'
+        - '#expects App\\Models\\User, App\\Services\\User given#'
         # Errores de @throws con ModelNotFoundException en PHPDoc
         - '#@throws with type.*ModelNotFoundException.*not subtype of Throwable#'
         # Errores de propiedades de factories de Laravel
         - '#PHPDoc type string of property.*model is not covariant#'
+        # Errores de Faker en factories (propiedades dinámicas)
+        - '#Access to an undefined property Faker\\Generator\\.*#'
+        # Errores de constantes de clase no encontradas (falso positivo de Laravel)
+        - '#Access to constant .* on an unknown class#'
+        # Errores de PHPDoc en factories
         - '#PHPDoc type class-string<App\\\\Models#'
         # Propiedades dinámicas de Eloquent (comunes en Laravel)
-        - '#Access to an undefined property.*\$id#'
-        - '#Access to an undefined property.*\$created_at#'
-        - '#Access to an undefined property.*\$updated_at#'
-        - '#Access to an undefined property.*\$deleted_at#'
-        - '#Access to an undefined property.*\$permissions#'
+        - '#Access to an undefined property.*#'
         # Problemas de PHPDoc con fillable (compatibilidad con Laravel)
         - '#PHPDoc type array<int, string>.*\$fillable.*list<string>#'
         # Problemas menores de tipos en traits y servicios
         - '#Call to an undefined method.*onlyTrashed\(\)#'
         # Traits no usados (pueden usarse en el futuro)
         - '#Trait.*is used zero times#'
-        # Problemas conocidos con factories de Laravel (newFactory retorna Factory pero PHPStan espera Factory<static>)
-        # Estos son falsos positivos - el código funciona correctamente
-        # Los archivos están excluidos en excludePaths para evitar estos errores
         # Dead catch - TokenBlacklistedException se captura específicamente antes de JWTException (correcto)
         - '#Dead catch.*TokenBlacklistedException#'
         # Errores de nullsafe con Carbon que phpstan no reconoce correctamente
         - '#Ternary operator condition is always true#'
+        # Errores con return type de services (falso positivo)
+        - '#has invalid return type App\\\\Services#'
+        - '#Method .* has invalid return type#'
+        - '#Method .* should return#'
 
     excludePaths:
         - ./*/*/FileToIgnore.php

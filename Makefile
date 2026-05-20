@@ -30,7 +30,7 @@ export GROUP_ID
 
 .DEFAULT_GOAL := help
 
-.PHONY: validate build up down stop restart redeploy logs ps sh exec composer art key migrate seed schema jwt meilisearch-key scout flint test test-filter test-watch test-parallel test-coverage pint pint-test phpstan horizon reverb octane-reload clear storage-link cors-check fix-permissions help
+.PHONY: validate build up down stop restart redeploy logs ps sh exec composer art key migrate seed schema jwt meilisearch-key scout flint test test-filter test-watch test-parallel test-coverage pint pint-test phpstan horizon reverb octane clear storage-link cors-check fix-permissions help
 
 # ═══════════════════════════════════════════════════════════════════════
 # VALIDACIÓN
@@ -232,7 +232,7 @@ reverb:
 	$(DC) exec reverb php artisan reverb:restart || true
 
 # Recargar Octane sin downtime
-octane-reload:
+octane:
 	$(DC) exec app php artisan octane:reload || true
 
 # Limpiar caches
