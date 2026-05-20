@@ -3,8 +3,6 @@ set -e
 cd /app
 
 # Copiar archivo .env de Laravel si no existe
-# NOTA: env/dev.env debe existir ANTES de ejecutar docker compose up
-# porque Docker Compose lo lee antes de iniciar el contenedor
 if [ ! -f .env ] && [ -f .env.example ]; then
     echo "Copiando .env.example → .env..."
     cp .env.example .env

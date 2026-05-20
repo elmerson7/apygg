@@ -1,232 +1,127 @@
-name: ${COMPOSE_PROJECT_NAME:-apygg}
+name: ${PROJECT:-apygg}
 
-x-app-base: &app_base
+x-app: &app
   build:
     context: .
     dockerfile: docker/app/Dockerfile
-    network: host
     args:
       USER_ID: ${USER_ID:-1000}
       GROUP_ID: ${GROUP_ID:-1000}
   working_dir: /app
-  env_file:
-    - env/${APP_ENV}.env
-  dns:
-    - 8.8.8.8
-    - 8.8.4.4
-    - 1.1.1.1
+  env_file: .env
   volumes:
     - ./:/app
   restart: unless-stopped
   networks:
     - network
-  environment:
-    USER_ID: ${USER_ID:-1000}
-    GROUP_ID: ${GROUP_ID:-1000}
-
-x-app-dev: &app_dev
-  <<: *app_base
-  environment:
-    APP_ENV: ${APP_ENV:-dev}
-    APP_TIMEZONE: UTC
-    APP_DEBUG: "true"
-    LOG_LEVEL: "debug"
-
-x-app-prod: &app_prod
-  <<: *app_base
-  environment:
-    APP_ENV: ${APP_ENV:-prod}
-    APP_TIMEZONE: UTC
-    APP_DEBUG: "false"
-    LOG_LEVEL: "info"
-
-x-postgres-base: &postgres_base
-  build:
-    context: .
-    dockerfile: docker/postgres/Dockerfile
-  container_name: ${COMPOSE_CONTAINER_PREFIX:-apygg}_postgres
-  ports:
-    - "8011:5432"
-  volumes:
-    - pgdata:/var/lib/postgresql
-  healthcheck:
-    test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB || exit 1"]
-    interval: 10s
-    timeout: 3s
-    retries: 10
-  networks:
-    - network
-  restart: unless-stopped
-
-x-redis-base: &redis_base
-  build:
-    context: .
-    dockerfile: docker/redis/Dockerfile
-  container_name: ${COMPOSE_CONTAINER_PREFIX:-apygg}_redis
-  ports:
-    - "8014:6379"
-  volumes:
-    - redisdata:/data
-  healthcheck:
-    test: ["CMD", "redis-cli", "ping"]
-    interval: 5s
-    timeout: 3s
-    retries: 20
-  networks:
-    - network
-  restart: unless-stopped
 
 services:
   app:
-    <<: *app_dev
-    container_name: ${COMPOSE_CONTAINER_PREFIX:-apygg}_app
-    profiles: ["dev"]
+    <<: *app
+    container_name: ${CONTAINER_PREFIX:-apygg}_app
     ports:
-      - "8010:8000"
+      - "${APP_PORT:-8010}:8000"
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8000/health || exit 1"]
       interval: 10s
       timeout: 3s
       retries: 10
     depends_on:
-      redis:
-        condition: service_healthy
       postgres:
         condition: service_healthy
-
-  app-prod:
-    <<: *app_prod
-    container_name: ${COMPOSE_CONTAINER_PREFIX:-apygg}_app
-    profiles: ["prod"]
-    ports:
-      - "8010:8000"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/health || exit 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 10
-    depends_on:
-      redis-prod:
-        condition: service_healthy
-      pgbouncer:
+      redis:
         condition: service_healthy
 
   reverb:
-    <<: *app_base
-    container_name: ${COMPOSE_CONTAINER_PREFIX:-apygg}_reverb
-    profiles: ["dev", "staging"]
-    command: >
-      sh -lc 'if [ ! -d vendor ]; then composer install --no-interaction --prefer-dist; fi;
-              until getent hosts redis >/dev/null 2>&1; do sleep 0.5; done;
-              php artisan reverb:start --host=0.0.0.0 --port=8080'
+    <<: *app
+    container_name: ${CONTAINER_PREFIX:-apygg}_reverb
+    command: php artisan reverb:start --host=0.0.0.0 --port=8080
     ports:
-      - "8012:8080"
+      - "${REVERB_PORT:-8012}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080 || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
     depends_on:
       redis:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8080 || exit 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-
-  reverb-prod:
-    <<: *app_prod
-    container_name: ${COMPOSE_CONTAINER_PREFIX:-apygg}_reverb
-    profiles: ["prod"]
-    command: >
-      sh -lc 'if [ ! -d vendor ]; then composer install --no-interaction --prefer-dist; fi;
-              until getent hosts redis-prod >/dev/null 2>&1; do sleep 0.5; done;
-              php artisan reverb:start --host=0.0.0.0 --port=8080'
-    ports:
-      - "8012:8080"
-    depends_on:
-      redis-prod:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8080 || exit 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
 
   horizon:
-    <<: *app_base
-    container_name: ${COMPOSE_CONTAINER_PREFIX:-apygg}_horizon
-    profiles: ["dev", "staging"]
-    command: >
-      sh -lc 'if [ ! -d vendor ]; then composer install --no-interaction --prefer-dist; fi;
-              until getent hosts redis >/dev/null 2>&1; do sleep 0.5; done;
-              php artisan horizon'
+    <<: *app
+    container_name: ${CONTAINER_PREFIX:-apygg}_horizon
+    command: php artisan horizon
+    healthcheck:
+      test: ["CMD-SHELL", "php artisan horizon:status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     depends_on:
       redis:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "php artisan horizon:status || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  horizon-prod:
-    <<: *app_prod
-    container_name: ${COMPOSE_CONTAINER_PREFIX:-apygg}_horizon
-    profiles: ["prod"]
-    command: >
-      sh -lc 'if [ ! -d vendor ]; then composer install --no-interaction --prefer-dist; fi;
-              until getent hosts redis-prod >/dev/null 2>&1; do sleep 0.5; done;
-              php artisan horizon'
-    depends_on:
-      redis-prod:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "php artisan horizon:status || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   scheduler:
-    <<: *app_base
-    container_name: ${COMPOSE_CONTAINER_PREFIX:-apygg}_scheduler
-    profiles: ["dev", "prod"]
-    command: >
-      sh -lc 'if [ ! -d vendor ]; then composer install --no-interaction --prefer-dist; fi;
-              until getent hosts redis >/dev/null 2>&1; do sleep 0.5; done;
-              php artisan schedule:work'
+    <<: *app
+    container_name: ${CONTAINER_PREFIX:-apygg}_scheduler
+    command: php artisan schedule:work
     depends_on:
-      redis:
-        condition: service_healthy
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   postgres:
-    <<: *postgres_base
-    profiles: ["dev"]
+    build:
+      context: .
+      dockerfile: docker/postgres/Dockerfile
+    container_name: ${CONTAINER_PREFIX:-apygg}_postgres
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
     environment:
       POSTGRES_DB: ${DB_DATABASE:-apygg}
       POSTGRES_USER: ${DB_USERNAME:-apygg}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    networks:
+      - network
+    restart: unless-stopped
 
-  postgres-prod:
-    <<: *postgres_base
-    container_name: ${COMPOSE_CONTAINER_PREFIX:-apygg}_postgres
-    profiles: ["prod"]
-    environment:
-      POSTGRES_DB: ${DB_DATABASE:-apygg}
-      POSTGRES_USER: ${DB_USERNAME:-apygg}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+  redis:
+    build:
+      context: .
+      dockerfile: docker/redis/Dockerfile
+    container_name: ${CONTAINER_PREFIX:-apygg}_redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redisdata:/data
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - network
+    restart: unless-stopped
 
   pgbouncer:
-    image: pgbouncer/pgbouncer:latest
-    container_name: ${COMPOSE_CONTAINER_PREFIX:-apygg}_pgbouncer
     profiles: ["prod"]
+    build:
+      context: .
+      dockerfile: docker/pgbouncer/Dockerfile
+    container_name: ${CONTAINER_PREFIX:-apygg}_pgbouncer
     ports:
-      - "8017:6432"
-    volumes:
-      - ./docker/pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
-      - pgbouncer_logs:/var/log/pgbouncer
-      - pgbouncer_run:/var/run/pgbouncer
+      - "${PGBOUNCER_PORT:-6432}:6432"
     environment:
-      PGBOUNCER_DATABASES: "* = host=postgres-prod port=5432 dbname=${DB_DATABASE:-apygg} user=${DB_USERNAME:-apygg} password=${DB_PASSWORD:-secret}"
+      PGBOUNCER_DATABASES: "* = host=postgres port=5432 dbname=${DB_DATABASE:-apygg} user=${DB_USERNAME:-apygg} password=${DB_PASSWORD:-secret}"
       PGBOUNCER_POOL_MODE: transaction
       PGBOUNCER_MAX_CLIENT_CONN: 100
       PGBOUNCER_DEFAULT_POOL_SIZE: 25
@@ -243,38 +138,25 @@ services:
       interval: 10s
       timeout: 3s
       retries: 10
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - network
     restart: unless-stopped
-    depends_on:
-      postgres-prod:
-        condition: service_healthy
-
-  redis:
-    <<: *redis_base
-    profiles: ["dev"]
-    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
-
-  redis-prod:
-    <<: *redis_base
-    container_name: ${COMPOSE_CONTAINER_PREFIX:-apygg}_redis
-    profiles: ["prod"]
-    command: ["redis-server", "--appendonly", "yes"]
 
   meilisearch:
+    profiles: ["search"]
     build:
       context: .
       dockerfile: docker/meilisearch/Dockerfile
-    container_name: ${COMPOSE_CONTAINER_PREFIX:-apygg}_meili
-    profiles: ["dev", "staging", "prod"]
-    env_file:
-      - env/${APP_ENV:-dev}.env
+    container_name: ${CONTAINER_PREFIX:-apygg}_meili
     environment:
       MEILI_MASTER_KEY: ${MEILISEARCH_KEY:-masterKey}
       MEILI_ENV: ${MEILI_ENV:-development}
-      MEILI_NO_ANALYTICS: ${MEILISEARCH_NO_ANALYTICS:-true}
+      MEILI_NO_ANALYTICS: "true"
     ports:
-      - "8013:7700"
+      - "${MEILISEARCH_PORT:-7700}:7700"
     volumes:
       - meilidata:/meili_data
     healthcheck:
@@ -286,6 +168,16 @@ services:
       - network
     restart: unless-stopped
 
+  mailpit:
+    profiles: ["dev"]
+    image: axllent/mailpit:latest
+    container_name: ${CONTAINER_PREFIX:-apygg}_mailpit
+    ports:
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+    networks:
+      - network
+    restart: unless-stopped
 
 networks:
   network:
@@ -294,6 +186,4 @@ networks:
 volumes:
   pgdata:
   redisdata:
-  pgbouncer_logs:
-  pgbouncer_run:
   meilidata:

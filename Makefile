@@ -1,57 +1,55 @@
 ENV ?= dev
-PROJECT_NAME ?= apygg
-COMPOSE_CONTAINER_PREFIX ?= apygg
-DC := docker compose --project-name $(PROJECT_NAME) --profile $(ENV)
-
-# Detectar UID/GID del usuario actual del host para permisos correctos
 USER_ID ?= $(shell id -u)
 GROUP_ID ?= $(shell id -g)
+
+PROFILES  = $(if $(filter prod,$(ENV)),--profile prod)
+PROFILES += $(if $(filter dev,$(ENV)),--profile dev)
+PROFILES += $(if $(SEARCH),--profile search)
+
+DC := docker compose $(PROFILES) --env-file .env
 
 export USER_ID
 export GROUP_ID
 
-# Comando por defecto: mostrar help
 .DEFAULT_GOAL := help
 
-.PHONY: build up down restart logs ps sh composer art key migrate seed schema jwt meilisearch-key scout horizon reverb octane octane-reload fix-permissions ensure-env clear test test-filter test-watch test-parallel test-coverage pint pint-test phpstan help
+.PHONY: build up down stop restart redeploy logs ps sh exec composer art key migrate seed schema jwt meilisearch-key scout flint test test-filter test-watch test-parallel test-coverage pint pint-test phpstan horizon reverb octane-reload clear storage-link cors-check help
 
-# Asegurar que env/${ENV}.env existe antes de build/up
-ensure-env:
-	@if [ ! -f env/$(ENV).env ]; then \
-		if [ -f env/$(ENV).env.example ]; then \
-			echo "Copiando env/$(ENV).env.example → env/$(ENV).env..."; \
-			cp env/$(ENV).env.example env/$(ENV).env; \
-		else \
-			echo "Error: env/$(ENV).env.example no existe"; \
-			exit 1; \
-		fi; \
+check-env:
+	@if [ ! -f .env ]; then \
+		echo "Creando .env desde .env.example..."; \
+		cp .env.example .env; \
 	fi
 
-build: ensure-env
-	USER_ID=$(USER_ID) GROUP_ID=$(GROUP_ID) $(DC) build --build-arg USER_ID=$(USER_ID) --build-arg GROUP_ID=$(GROUP_ID)
+build: check-env
+	USER_ID=$(USER_ID) GROUP_ID=$(GROUP_ID) $(DC) build
 
-up: ensure-env
-	@export $$(grep -v '^#' env/$(ENV).env 2>/dev/null | grep -v '^$$' | xargs) && \
-	APP_ENV=$(ENV) $(DC) up -d
+up: check-env
+	$(DC) up -d
 
 down:
-	APP_ENV=$(ENV) $(DC) down
+	$(DC) down
+
+stop:
+	$(DC) stop
+
+start:
+	$(DC) start
 
 restart:
-	@export $$(grep -v '^#' env/$(ENV).env 2>/dev/null | grep -v '^$$' | xargs) && \
-	if [ -z "$(service)" ]; then \
-		echo "Reiniciando todos los servicios..."; \
-		APP_ENV=$(ENV) $(DC) restart; \
-	else \
-		echo "Reiniciando servicio $(service)..."; \
-		APP_ENV=$(ENV) $(DC) restart $(service); \
-	fi
+	$(DC) restart $(service)
+
+redeploy:
+	$(DC) up -d --force-recreate app
 
 logs:
 	$(DC) logs -f --tail=200
 
 ps:
 	$(DC) ps
+
+exec:
+	$(DC) exec app $(cmd)
 
 sh:
 	$(DC) exec app bash
@@ -61,6 +59,25 @@ composer:
 
 art:
 	$(DC) exec app php artisan $(cmd)
+
+key:
+	@$(DC) exec app php artisan key:generate --show
+
+migrate:
+	$(DC) exec app php artisan migrate --force
+
+seed:
+	$(DC) exec app php artisan db:seed --force
+
+schema:
+	$(DC) exec app php artisan db:schema-dump
+
+jwt:
+	@$(DC) exec app php artisan jwt:secret -f --show
+
+meilisearch-key:
+	@KEY=$$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-32); \
+	echo "MEILISEARCH_KEY=$$KEY"
 
 test:
 	$(DC) exec app composer test
@@ -75,71 +92,22 @@ test-parallel:
 	$(DC) exec app composer test:parallel
 
 test-coverage:
-	$(DC) exec app php vendor/bin/pest --coverage
+	$(DC) exec app ./vendor/bin/pest --coverage
 
-key:
-	@echo "Generando clave de aplicación..."
-	$(DC) exec app php artisan key:generate --show
-	@echo "Clave generada, guardala en env/$(ENV).env"
+pint:
+	$(DC) exec app ./vendor/bin/pint
 
-migrate:
-	$(DC) exec app php artisan migrate --force
+pint-test:
+	$(DC) exec app ./vendor/bin/pint --test
 
-seed:
-	$(DC) exec app php artisan db:seed --force
-
-schema:
-	$(DC) exec app php artisan db:schema-dump
-
-jwt:
-	@echo "Generando clave JWT..."
-	$(DC) exec app php artisan jwt:secret -f --show
-	@echo "Clave JWT generada, guardala en env/$(ENV).env"
-
-meilisearch-key:
-	@echo "Generando clave segura para Meilisearch..."
-	@KEY=$$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-32); \
-	echo "Clave generada: $$KEY"; \
-	echo ""; \
-	echo "Agrega esta línea en env/$(ENV).env:"; \
-	echo "MEILISEARCH_KEY=$$KEY"; \
-	echo ""; \
-	echo "Luego reinicia Meilisearch: make restart service=meilisearch"
-
-# Solo sync configuración
-scout-sync:
-	$(DC) exec app php artisan scout:manage sync --force
-
-# Importar todos los modelos
-scout-import:
-	$(DC) exec app php artisan scout:manage import --force
-
-# Limpiar todos los índices
-scout-flush:
-	$(DC) exec app php artisan scout:manage flush --force
-
-# Resetear todos los índices
-scout-reset:
-	$(DC) exec app php artisan scout:manage reset --force
-
-# Comando legacy para compatibilidad
-scout:
-	$(DC) exec app php artisan scout:sync-index-settings
-
-# Verificar configuración CORS
-cors-check:
-	$(DC) exec app php artisan cors:check --fix
+phpstan:
+	$(DC) exec app ./vendor/bin/phpstan analyse
 
 horizon:
 	$(DC) exec horizon php artisan horizon:terminate || true
 
-scheduler:
-	$(DC) exec scheduler php artisan schedule:work || true
-
 reverb:
 	$(DC) exec reverb php artisan reverb:restart || true
-
-octane: octane-reload
 
 octane-reload:
 	$(DC) exec app php artisan octane:reload || true
@@ -150,27 +118,9 @@ clear:
 storage-link:
 	$(DC) exec app php artisan storage:link
 
-# Formatear código con Laravel Pint
-pint:
-	$(DC) exec app ./vendor/bin/pint
+cors-check:
+	$(DC) exec app php artisan cors:check --fix
 
-# Ver qué se formatearía sin aplicar cambios
-pint-test:
-	$(DC) exec app ./vendor/bin/pint --test
-
-# Análisis estático con Larastan (PHPStan para Laravel)
-phpstan:
-	$(DC) exec app ./vendor/bin/phpstan analyse
-
-# Ver tamaño de la base de datos (o tabla específica con table=nombre_tabla)
-db-size:
-	@if [ -z "$(table)" ]; then \
-		$(DC) exec app php artisan db:size; \
-	else \
-		$(DC) exec app php artisan db:size --table=$(table); \
-	fi
-
-# Corregir permisos de archivos creados por Docker
 fix-permissions:
 	@echo "Corrigiendo permisos con UID: $(USER_ID), GID: $(GROUP_ID)"
 	sudo chown -R $(USER_ID):$(GROUP_ID) .
@@ -178,88 +128,35 @@ fix-permissions:
 	find . -type f -exec chmod 664 {} + 2>/dev/null || true
 	find . -name "*.sh" -exec chmod +x {} + 2>/dev/null || true
 	chmod +x artisan 2>/dev/null || true
-	@echo "Permisos corregidos correctamente"
 
-# Instalar Git Hooks (pre-commit, commit-msg)
-install-hooks:
-	@chmod +x scripts/install-git-hooks.sh
-	@./scripts/install-git-hooks.sh
-
-# Helper para hacer commit con formato Conventional Commits
-commit:
-	@if [ -z "$(msg)" ]; then \
-		echo "Uso: make commit msg=\"mensaje de commit\""; \
-		echo "Ejemplo: make commit msg=\"Add git hooks\""; \
-		exit 1; \
-	fi
-	@./scripts/commit-with-suggestion.sh "$(msg)"
-
-# Mostrar ayuda con todos los comandos disponibles
 help:
 	@echo "APYGG - Makefile Commands"
 	@echo "========================"
 	@echo ""
-	@echo "Uso: make [target] [ENV=dev|staging|prod] [PROJECT_NAME=nombre]"
-	@echo "Ejemplo: make up ENV=dev"
-	@echo "Multi-proyecto: make up PROJECT_NAME=mi-proyecto"
+	@echo "Uso: make [target] [ENV=dev|prod|staging] [SEARCH=true]"
+	@echo "  ENV=dev   → activa mailpit"
+	@echo "  ENV=prod  → activa pgbouncer"
+	@echo "  SEARCH=true → activa meilisearch"
 	@echo ""
-	@echo "DOCKER/INFRAESTRUCTURA:"
-	@printf "  %-20s %s\n" "build" "Construir imágenes Docker"
+	@echo "Ejemplos:"
+	@echo "  make up                      # Dev con mailpit"
+	@echo "  make up ENV=prod             # Prod con pgbouncer"
+	@echo "  make up SEARCH=true          # Dev con meilisearch"
+	@echo "  make up ENV=prod SEARCH=true # Prod con ambos"
+	@echo ""
+	@printf "  %-20s %s\n" "build" "Construir imágenes"
 	@printf "  %-20s %s\n" "up" "Iniciar contenedores"
 	@printf "  %-20s %s\n" "down" "Detener contenedores"
-	@printf "  %-20s %s\n" "restart [service]" "Reiniciar servicios (o servicio específico)"
-	@printf "  %-20s %s\n" "logs" "Ver logs de contenedores"
-	@printf "  %-20s %s\n" "ps" "Listar contenedores en ejecución"
-	@printf "  %-20s %s\n" "sh" "Abrir shell bash en contenedor app"
-	@echo ""
-	@echo "DESARROLLO:"
-	@printf "  %-20s %s\n" "composer cmd=..." "Ejecutar comando composer"
-	@printf "  %-20s %s\n" "art cmd=..." "Ejecutar comando artisan"
-	@printf "  %-20s %s\n" "clear" "Limpiar cache y optimizaciones"
-	@printf "  %-20s %s\n" "storage-link" "Crear enlace simbólico de storage"
-	@echo ""
-	@echo "TESTING:"
-	@printf "  %-20s %s\n" "test" "Ejecutar tests"
-	@printf "  %-20s %s\n" "test-filter filter=NOMBRE" "Ejecutar tests que coincidan con NOMBRE"
-	@printf "  %-20s %s\n" "test-watch" "Ejecutar tests en modo watch"
-	@printf "  %-20s %s\n" "test-parallel" "Ejecutar tests en paralelo"
-	@printf "  %-20s %s\n" "test-coverage" "Ejecutar tests con cobertura"
-	@echo ""
-	@echo "CODE QUALITY:"
-	@printf "  %-20s %s\n" "pint" "Formatear código con Laravel Pint"
-	@printf "  %-20s %s\n" "pint-test" "Ver qué se formatearía sin aplicar cambios"
-	@printf "  %-20s %s\n" "phpstan" "Análisis estático con PHPStan"
-	@echo ""
-	@echo "BASE DE DATOS:"
-	@printf "  %-20s %s\n" "migrate" "Ejecutar migraciones"
-	@printf "  %-20s %s\n" "seed" "Ejecutar seeders"
-	@printf "  %-20s %s\n" "schema" "Exportar esquema BD a database/schema.sql"
-	@printf "  %-20s %s\n" "db-size [table]" "Ver tamaño de BD o tabla específica"
-	@echo ""
-	@echo "CONFIGURACIÓN:"
-	@printf "  %-20s %s\n" "key" "Generar APP_KEY"
-	@printf "  %-20s %s\n" "jwt" "Generar clave JWT"
-	@printf "  %-20s %s\n" "meilisearch-key" "Generar clave para Meilisearch"
-	@printf "  %-20s %s\n" "ensure-env" "Crear archivo .env si no existe"
-	@echo ""
-	@echo "BÚSQL UEDA (SCOUT):"
-	@printf "  %-20s %s\n" "scout" "Sincronizar configuración de índices"
-	@printf "  %-20s %s\n" "scout-sync" "Sincronizar configuración"
-	@printf "  %-20s %s\n" "scout-import" "Importar todos los modelos"
-	@printf "  %-20s %s\n" "scout-flush" "Limpiar todos los índices"
-	@printf "  %-20s %s\n" "scout-reset" "Resetear todos los índices"
-	@echo ""
-	@echo "COLAS/BROADCASTING:"
-	@printf "  %-20s %s\n" "horizon" "Reiniciar Laravel Horizon"
-	@printf "  %-20s %s\n" "scheduler" "Ejecutar scheduler manualmente"
-	@printf "  %-20s %s\n" "reverb" "Reiniciar Laravel Reverb"
-	@printf "  %-20s %s\n" "octane" "Recargar Laravel Octane (sin downtime)"
-	@printf "  %-20s %s\n" "octane-reload" "Alias de 'octane'"
-	@echo ""
-	@echo "UTILIDADES:"
-	@printf "  %-20s %s\n" "cors-check" "Verificar configuración CORS"
-	@printf "  %-20s %s\n" "fix-permissions" "Corregir permisos de archivos"
-	@printf "  %-20s %s\n" "install-hooks" "Instalar Git hooks"
-	@printf "  %-20s %s\n" "commit msg=\"...\"" "Hacer commit con formato Conventional Commits"
-	@echo ""
-	@echo "Para más información sobre un comando específico, consulta el Makefile."
+	@printf "  %-20s %s\n" "restart" "Reiniciar servicios"
+	@printf "  %-20s %s\n" "redeploy" "Recrear contenedor app"
+	@printf "  %-20s %s\n" "logs" "Ver logs"
+	@printf "  %-20s %s\n" "ps" "Listar contenedores"
+	@printf "  %-20s %s\n" "sh" "Shell en app"
+	@printf "  %-20s %s\n" "exec cmd=..." "Ejecutar comando en app"
+	@printf "  %-20s %s\n" "composer cmd=..." "Composer"
+	@printf "  %-20s %s\n" "art cmd=..." "Artisan"
+	@printf "  %-20s %s\n" "test" "Tests"
+	@printf "  %-20s %s\n" "migrate" "Migrar BD"
+	@printf "  %-20s %s\n" "seed" "Seed BD"
+	@printf "  %-20s %s\n" "pint" "Formatear código"
+	@printf "  %-20s %s\n" "phpstan" "Análisis estático"
