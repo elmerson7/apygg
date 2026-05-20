@@ -21,7 +21,7 @@ class MessagePolicy
 
     public function view(User $user, Message $message): bool
     {
-        return $user->id === $message->sender_id || $user->id === $message->receiver_id;
+        return $user->id == $message->sender_id || $user->id == $message->receiver_id;
     }
 
     public function create(User $user): bool
@@ -31,12 +31,12 @@ class MessagePolicy
 
     public function update(User $user, Message $message): bool
     {
-        return $user->id === $message->sender_id;
+        return $user->id == $message->sender_id;
     }
 
     public function delete(User $user, Message $message): bool
     {
-        $allowed = $user->id === $message->sender_id || $user->hasPermission('messages.delete');
+        $allowed = $user->id == $message->sender_id || $user->hasPermission('messages.delete');
 
         if ($allowed) {
             LogService::info('Intento de eliminar mensaje autorizado', [

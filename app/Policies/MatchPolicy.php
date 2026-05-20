@@ -21,12 +21,12 @@ class MatchPolicy
 
     public function view(User $user, UserMatch $match): bool
     {
-        return $user->id === $match->user_id || $user->id === $match->target_id;
+        return $user->id == $match->user_id || $user->id == $match->target_id;
     }
 
     public function delete(User $user, UserMatch $match): bool
     {
-        $allowed = $user->id === $match->user_id || $user->id === $match->target_id;
+        $allowed = $user->id == $match->user_id || $user->id == $match->target_id;
 
         if ($allowed) {
             LogService::info('Intento de eliminar match autorizado', [

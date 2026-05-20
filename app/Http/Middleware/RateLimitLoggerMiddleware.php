@@ -95,7 +95,7 @@ class RateLimitLoggerMiddleware
     /**
      * Incrementar contador de bloqueos
      */
-    protected function incrementBlockCounter(string $ipAddress, ?string $userId, string $path): void
+    protected function incrementBlockCounter(string $ipAddress, int|string|null $userId, string $path): void
     {
         $timeWindow = self::TIME_WINDOW_MINUTES * 60; // Convertir a segundos
 
@@ -197,7 +197,7 @@ class RateLimitLoggerMiddleware
      * Detectar múltiples bloqueos por usuario
      */
     protected function detectMultipleBlocksByUser(
-        string $userId,
+        int|string $userId,
         string $ipAddress,
         Request $request,
         int $timeWindow
@@ -236,7 +236,7 @@ class RateLimitLoggerMiddleware
     /**
      * Detectar intentos repetidos después del bloqueo
      */
-    protected function detectRepeatedAttemptsAfterBlock(string $ipAddress, ?string $userId, Request $request): void
+    protected function detectRepeatedAttemptsAfterBlock(string $ipAddress, int|string|null $userId, Request $request): void
     {
         $cacheKey = "rate_limit:repeated_attempts:{$ipAddress}";
         $attempts = Cache::get($cacheKey, []);

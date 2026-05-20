@@ -17,12 +17,12 @@ class SendWebhookJob extends Job
     /**
      * ID del webhook a enviar
      */
-    protected string $webhookId;
+    protected int|string $webhookId;
 
     /**
      * ID de la entrega a procesar
      */
-    protected string $deliveryId;
+    protected int|string $deliveryId;
 
     /**
      * Número máximo de intentos (configurable por webhook)
@@ -39,7 +39,7 @@ class SendWebhookJob extends Job
     /**
      * Crear una nueva instancia del job
      */
-    public function __construct(string $webhookId, string $deliveryId)
+    public function __construct(int|string $webhookId, int|string $deliveryId)
     {
         parent::__construct();
         $this->webhookId = $webhookId;

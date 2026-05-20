@@ -15,12 +15,12 @@ class SendWelcomeEmailJob extends Job
     /**
      * ID del usuario al que se enviará el email
      */
-    protected string $userId;
+    protected int|string $userId;
 
     /**
      * Crear una nueva instancia del job
      */
-    public function __construct(string $userId)
+    public function __construct(int|string $userId)
     {
         parent::__construct();
         $this->userId = $userId;

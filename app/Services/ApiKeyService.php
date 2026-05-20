@@ -327,7 +327,7 @@ class ApiKeyService
     /**
      * Limpiar cache de un usuario
      */
-    protected function clearUserCache(string $userId): void
+    protected function clearUserCache(int|string $userId): void
     {
         CacheService::forgetTag("user:{$userId}:api_keys");
     }

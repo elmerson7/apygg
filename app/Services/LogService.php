@@ -181,7 +181,7 @@ class LogService
     /**
      * Log de actividad del usuario
      */
-    public static function logActivity(string $action, string $modelType, ?string $modelId = null, array $context = []): void
+    public static function logActivity(string $action, string $modelType, int|string|null $modelId = null, array $context = []): void
     {
         $context = array_merge([
             'action' => $action,

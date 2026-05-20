@@ -81,7 +81,7 @@ class PermissionService
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el permiso no existe
      * @throws \InvalidArgumentException Si los datos son inválidos
      */
-    public function update(string $permissionId, array $data): Permission
+    public function update(int|string $permissionId, array $data): Permission
     {
         $permission = $this->find($permissionId);
 
@@ -123,7 +123,7 @@ class PermissionService
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el permiso no existe
      * @throws \Exception Si el permiso está asignado a roles
      */
-    public function delete(string $permissionId): bool
+    public function delete(int|string $permissionId): bool
     {
         $permission = $this->find($permissionId);
 
@@ -156,7 +156,7 @@ class PermissionService
      *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el permiso no existe
      */
-    public function find(string $permissionId): Permission
+    public function find(int|string $permissionId): Permission
     {
         $cacheKey = self::CACHE_PREFIX.$permissionId;
 

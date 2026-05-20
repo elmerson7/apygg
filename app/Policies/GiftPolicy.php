@@ -20,7 +20,7 @@ class GiftPolicy
 
     public function view(User $user, Gift $gift): bool
     {
-        return $user->id === $gift->sender_id || $user->id === $gift->receiver_id;
+        return $user->id == $gift->sender_id || $user->id == $gift->receiver_id;
     }
 
     public function create(User $user): bool

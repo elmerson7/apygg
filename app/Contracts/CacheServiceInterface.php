@@ -72,11 +72,11 @@ interface CacheServiceInterface
     /**
      * Cache de usuario con tag automático
      *
-     * @param  string  $userId  ID del usuario
+     * @param  int|string  $userId  ID del usuario
      * @param  callable  $callback  Función para calcular el valor si no existe
      * @param  int|null  $ttl  Tiempo de vida en segundos (null = usar default)
      */
-    public static function rememberUser(string $userId, callable $callback, ?int $ttl = null): mixed;
+    public static function rememberUser(int|string $userId, callable $callback, ?int $ttl = null): mixed;
 
     /**
      * Cache de entidad (roles, permissions, etc.)

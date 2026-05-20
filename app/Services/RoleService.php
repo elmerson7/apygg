@@ -64,12 +64,12 @@ class RoleService
     /**
      * Actualizar un rol existente
      *
-     * @param  string  $roleId  ID del rol
+     * @param  int|string  $roleId  ID del rol
      * @param  array  $data  Datos a actualizar
      *
      * @throws ModelNotFoundException Si el rol no existe
      */
-    public function update(string $roleId, array $data): Role
+    public function update(int|string $roleId, array $data): Role
     {
         $role = $this->find($roleId);
 
@@ -98,12 +98,12 @@ class RoleService
     /**
      * Eliminar un rol
      *
-     * @param  string  $roleId  ID del rol
+     * @param  int|string  $roleId  ID del rol
      *
      * @throws ModelNotFoundException Si el rol no existe
      * @throws \Exception Si el rol tiene usuarios asignados
      */
-    public function delete(string $roleId): bool
+    public function delete(int|string $roleId): bool
     {
         $role = $this->find($roleId);
 
@@ -130,11 +130,11 @@ class RoleService
     /**
      * Buscar un rol por ID
      *
-     * @param  string  $roleId  ID del rol
+     * @param  int|string  $roleId  ID del rol
      *
      * @throws ModelNotFoundException Si el rol no existe
      */
-    public function find(string $roleId): Role
+    public function find(int|string $roleId): Role
     {
         $cacheKey = self::CACHE_PREFIX.$roleId;
 

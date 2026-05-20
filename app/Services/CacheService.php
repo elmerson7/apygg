@@ -157,7 +157,7 @@ class CacheService
     /**
      * Cache de usuario con tag automático
      */
-    public static function rememberUser(string $userId, callable $callback, ?int $ttl = null): mixed
+    public static function rememberUser(int|string $userId, callable $callback, ?int $ttl = null): mixed
     {
         $ttl = $ttl ?? self::$defaultTtls['user'];
         $key = "user:{$userId}";

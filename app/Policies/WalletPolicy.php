@@ -16,12 +16,12 @@ class WalletPolicy
 {
     public function view(User $user, Wallet $wallet): bool
     {
-        return $user->id === $wallet->user_id;
+        return $user->id == $wallet->user_id;
     }
 
     public function credit(User $user, Wallet $wallet): bool
     {
-        $allowed = $user->hasPermission('wallet.credit') || $user->id === $wallet->user_id;
+        $allowed = $user->hasPermission('wallet.credit') || $user->id == $wallet->user_id;
 
         if ($allowed) {
             LogService::info('Operación de crédito en wallet autorizada', [
@@ -35,6 +35,6 @@ class WalletPolicy
 
     public function debit(User $user, Wallet $wallet): bool
     {
-        return $user->id === $wallet->user_id;
+        return $user->id == $wallet->user_id;
     }
 }

@@ -99,7 +99,7 @@ class ApiKey extends Model
      * @param  Builder  $query
      * @return Builder
      */
-    public function scopeByUser($query, string $userId)
+    public function scopeByUser($query, int|string $userId)
     {
         return $query->where('user_id', $userId);
     }
