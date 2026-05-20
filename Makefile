@@ -77,6 +77,10 @@ validate:
 # Construir imágenes Docker
 # Args: USER_ID, GROUP_ID → se pasan al Dockerfile para permisos de archivos
 build: validate
+	@if [ ! -f .env ]; then \
+		echo "Creando .env desde .env.example..."; \
+		cp .env.example .env; \
+	fi
 	USER_ID=$(USER_ID) GROUP_ID=$(GROUP_ID) $(DC) build
 
 # Iniciar contenedores
