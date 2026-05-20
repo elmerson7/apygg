@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Contracts\UserRepositoryInterface;
 use App\Events\UserLoggedIn;
 use App\Events\UserLoggedOut;
+use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;

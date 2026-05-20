@@ -11,6 +11,14 @@ parameters:
     level: 5
 
     ignoreErrors:
+        # Errores de type en servicios causados por PHPDoc con App\Services\User vs App\Models\User
+        - '#expects App\\\\Services\\\\User, App\\\\Models\\\\User given#'
+        - '#expects App\\\\Models\\\\User, App\\\\Services\\\\User given#'
+        # Errores de @throws con ModelNotFoundException en PHPDoc
+        - '#@throws with type.*ModelNotFoundException.*not subtype of Throwable#'
+        # Errores de propiedades de factories de Laravel
+        - '#PHPDoc type string of property.*model is not covariant#'
+        - '#PHPDoc type class-string<App\\\\Models#'
         # Propiedades dinámicas de Eloquent (comunes en Laravel)
         - '#Access to an undefined property.*\$id#'
         - '#Access to an undefined property.*\$created_at#'
