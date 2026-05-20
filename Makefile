@@ -55,8 +55,12 @@ validate:
 	@echo "  MEILISEARCH_PORT: $$(grep '^MEILISEARCH_PORT=' compose.env | cut -d= -f2)"
 	@echo "  PGBOUNCER_PORT:   $$(grep '^PGBOUNCER_PORT=' compose.env | cut -d= -f2)"
 	@echo ""
-	@echo "⚠️  IMPORTANTE: Si clonas este proyecto, cambia CONTAINER_PREFIX"
-	@echo "   y los puertos en compose.env para evitar conflictos."
+	@if [ "$$(grep '^CONTAINER_PREFIX=' compose.env | cut -d= -f2)" = "$$(grep '^CONTAINER_PREFIX=' compose.env.example | cut -d= -f2)" ]; then \
+		echo ""; \
+		echo "⚠️  IMPORTANTE: Los valores son los del template (default)."; \
+		echo "   Si clonas este proyecto, cambia CONTAINER_PREFIX y puertos"; \
+		echo "   en compose.env para evitar conflictos con otros proyectos."; \
+	fi
 	@echo ""
 	@if [ ! -f .env ]; then \
 		echo "⚠️  .env no existe - se creará automáticamente"; \
