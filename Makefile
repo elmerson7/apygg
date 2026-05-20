@@ -51,7 +51,6 @@ validate:
 	@echo ""
 	@echo "Configuración actual:"
 	@echo "  PROJECT:          $$(grep '^PROJECT=' compose.env | cut -d= -f2)"
-	@echo "  CONTAINER_PREFIX: $$(grep '^CONTAINER_PREFIX=' compose.env | cut -d= -f2)"
 	@echo "  APP_PORT:         $$(grep '^APP_PORT=' compose.env | cut -d= -f2)"
 	@echo "  POSTGRES_PORT:    $$(grep '^POSTGRES_PORT=' compose.env | cut -d= -f2)"
 	@echo "  REDIS_PORT:       $$(grep '^REDIS_PORT=' compose.env | cut -d= -f2)"
@@ -59,10 +58,10 @@ validate:
 	@echo "  MEILISEARCH_PORT: $$(grep '^MEILISEARCH_PORT=' compose.env | cut -d= -f2)"
 	@echo "  PGBOUNCER_PORT:   $$(grep '^PGBOUNCER_PORT=' compose.env | cut -d= -f2)"
 	@echo ""
-	@if [ "$$(grep '^CONTAINER_PREFIX=' compose.env | cut -d= -f2)" = "$$(grep '^CONTAINER_PREFIX=' compose.env.example | cut -d= -f2)" ]; then \
+	@if [ "$$(grep '^PROJECT=' compose.env | cut -d= -f2)" = "$$(grep '^PROJECT=' compose.env.example | cut -d= -f2)" ]; then \
 		echo ""; \
 		echo "⚠️  IMPORTANTE: Los valores son los del template (default)."; \
-		echo "   Si clonas este proyecto, cambia CONTAINER_PREFIX y puertos"; \
+		echo "   Si clonas este proyecto, cambia PROJECT y puertos"; \
 		echo "   en compose.env para evitar conflictos con otros proyectos."; \
 	fi
 	@echo ""
@@ -280,7 +279,7 @@ help:
 	@echo "  SEARCH=true  → incluir meilisearch"
 	@echo ""
 	@echo "Archivos de configuración:"
-	@echo "  compose.env  → Docker (puertos, PROJECT, CONTAINER_PREFIX)"
+	@echo "  compose.env  → Docker (puertos, PROJECT)"
 	@echo "  .env         → Laravel (APP_ENV, DB_HOST, etc.)"
 	@echo ""
 	@echo "Validación (siempre ejecutar antes del primer build):"

@@ -18,7 +18,7 @@ x-app: &app
 services:
   app:
     <<: *app
-    container_name: ${CONTAINER_PREFIX:-apygg}_app
+    container_name: ${PROJECT:-apygg}_app
     ports:
       - "${APP_PORT:-8010}:8000"
     healthcheck:
@@ -34,7 +34,7 @@ services:
 
   reverb:
     <<: *app
-    container_name: ${CONTAINER_PREFIX:-apygg}_reverb
+    container_name: ${PROJECT:-apygg}_reverb
     command: php artisan reverb:start --host=0.0.0.0 --port=8080
     ports:
       - "${REVERB_PORT:-8012}:8080"
@@ -49,7 +49,7 @@ services:
 
   horizon:
     <<: *app
-    container_name: ${CONTAINER_PREFIX:-apygg}_horizon
+    container_name: ${PROJECT:-apygg}_horizon
     command: php artisan horizon
     healthcheck:
       test: ["CMD-SHELL", "php artisan horizon:status || exit 1"]
@@ -62,7 +62,7 @@ services:
 
   scheduler:
     <<: *app
-    container_name: ${CONTAINER_PREFIX:-apygg}_scheduler
+    container_name: ${PROJECT:-apygg}_scheduler
     command: php artisan schedule:work
     depends_on:
       postgres:
@@ -74,7 +74,7 @@ services:
     build:
       context: .
       dockerfile: docker/postgres/Dockerfile
-    container_name: ${CONTAINER_PREFIX:-apygg}_postgres
+    container_name: ${PROJECT:-apygg}_postgres
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
@@ -97,7 +97,7 @@ services:
     build:
       context: .
       dockerfile: docker/redis/Dockerfile
-    container_name: ${CONTAINER_PREFIX:-apygg}_redis
+    container_name: ${PROJECT:-apygg}_redis
     ports:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
@@ -117,7 +117,7 @@ services:
     build:
       context: .
       dockerfile: docker/pgbouncer/Dockerfile
-    container_name: ${CONTAINER_PREFIX:-apygg}_pgbouncer
+    container_name: ${PROJECT:-apygg}_pgbouncer
     ports:
       - "${PGBOUNCER_PORT:-6432}:6432"
     environment:
@@ -150,7 +150,7 @@ services:
     build:
       context: .
       dockerfile: docker/meilisearch/Dockerfile
-    container_name: ${CONTAINER_PREFIX:-apygg}_meili
+    container_name: ${PROJECT:-apygg}_meili
     environment:
       MEILI_MASTER_KEY: ${MEILISEARCH_KEY:-masterKey}
       MEILI_ENV: ${MEILI_ENV:-development}
