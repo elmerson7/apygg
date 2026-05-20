@@ -392,4 +392,58 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para
 
 ---
 
+## ⚠️ Solución de Problemas
+
+### Error: Conflictos de puertos
+
+Si al levantar el proyecto obtienes un error como `Bind for 0.0.0.0:8012 failed: port is already allocated`, verifica que los puertos en `compose.env` y `.env` estén sincronizados.
+
+**El problema:** Docker Compose usa `--env-file` con prioridad al último archivo. El archivo `.env` sobrescribe los valores de `compose.env`.
+
+**Puertos a verificar en `.env`:**
+
+Después de copiar `.env.example` a `.env`, verifica que estos valores coincidan con los de `compose.env`:
+
+| Variable | Ejemplo |
+|----------|---------|
+| APP_URL | http://localhost:8030 |
+| REVERB_PORT | 8032 |
+| REDIS_PORT | 8033 |
+
+Si `.env` tiene valores diferentes (ej: `REVERB_PORT=8012`), cámbialos para que coincidan con `compose.env`.
+
+**Solución:**
+
+```bash
+# 1. Edita compose.env con los puertos deseados
+vim compose.env
+
+# 2. Copia los puertos a .env
+cp .env.example .env
+
+# 3. Ajusta los puertos en .env para que coincidan con compose.env
+# REVERB_PORT=8032
+# REDIS_PORT=8033
+```
+# Luego ajusta los puertos en .env para que coincidan
+```
+
+O mejor aún, edita `.env` después de copiarlo para que tenga los mismos puertos que definiste en `compose.env`.
+
+### Error: composer.lock desincronizado
+
+Si los contenedores fallan al iniciar con errores como:
+
+```
+Required package "paquete" is in the lock file as "x.x.x" but that does not satisfy your constraint "^y.z"
+```
+
+Ejecuta:
+
+```bash
+make composer cmd="update"
+```
+
+---
+
 **Nota**: Este es un boilerplate en desarrollo activo. Algunas características pueden estar en construcción.
