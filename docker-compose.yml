@@ -286,29 +286,6 @@ services:
       - network
     restart: unless-stopped
 
-  minio:
-    build:
-      context: .
-      dockerfile: docker/minio/Dockerfile
-    container_name: ${COMPOSE_CONTAINER_PREFIX:-apygg}_minio
-    profiles: ["dev", "staging"]
-    command: server /data --console-address ":9001"
-    ports:
-      - "8015:9000"  # API S3
-      - "8016:9001"  # Consola web
-    volumes:
-      - miniodata:/data
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 10s
-      timeout: 3s
-      retries: 10
-    networks:
-      - network
-    restart: unless-stopped
 
 networks:
   network:
@@ -320,4 +297,3 @@ volumes:
   pgbouncer_logs:
   pgbouncer_run:
   meilidata:
-  miniodata:
