@@ -2,10 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Models\Webhook;
 use App\Models\User;
+use App\Models\Webhook;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
 
 /**
  * @extends Factory<Webhook>

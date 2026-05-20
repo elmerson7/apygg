@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use App\Models\User;
 use App\Services\UserService;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Hash;
 
 /**
  * UserCreateCommand
@@ -47,13 +46,14 @@ class UserCreateCommand extends Command
         // Validate inputs
         if (User::where('email', $email)->exists()) {
             $this->error("The email '{$email}' is already registered.");
+
             return self::FAILURE;
         }
 
         // Generate password if not provided
-        if (!$password) {
+        if (! $password) {
             $password = $this->generatePassword();
-            $this->info('Generated password: ' . $password);
+            $this->info('Generated password: '.$password);
         }
 
         try {
@@ -68,9 +68,9 @@ class UserCreateCommand extends Command
             $user = $userService->create($userData);
 
             $this->info('User created successfully!');
-            $this->line('User ID: ' . $user->id);
-            $this->line('Name: ' . $user->name);
-            $this->line('Email: ' . $user->email);
+            $this->line('User ID: '.$user->id);
+            $this->line('Name: '.$user->name);
+            $this->line('Email: '.$user->email);
 
             if ($sendEmail) {
                 $this->info('Welcome email would be sent here (not implemented in this demo).');
@@ -78,15 +78,14 @@ class UserCreateCommand extends Command
 
             return self::SUCCESS;
         } catch (\Exception $e) {
-            $this->error('Error creating user: ' . $e->getMessage());
+            $this->error('Error creating user: '.$e->getMessage());
+
             return self::FAILURE;
         }
     }
 
     /**
      * Generate a random password.
-     *
-     * @return string
      */
     protected function generatePassword(): string
     {

@@ -49,8 +49,6 @@ class JwtBlacklist extends Model
 
     /**
      * Verificar si el token ha expirado
-     *
-     * @return bool
      */
     public function isExpired(): bool
     {

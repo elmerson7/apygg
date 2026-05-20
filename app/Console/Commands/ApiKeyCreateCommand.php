@@ -45,8 +45,9 @@ class ApiKeyCreateCommand extends Command
 
         // Validate user exists
         $user = User::find($userId);
-        if (!$user) {
+        if (! $user) {
             $this->error("User with ID '{$userId}' not found.");
+
             return self::FAILURE;
         }
 
@@ -59,8 +60,9 @@ class ApiKeyCreateCommand extends Command
         }
 
         // Validate environment
-        if (!in_array($environment, ['live', 'test'])) {
+        if (! in_array($environment, ['live', 'test'])) {
             $this->error("Environment must be either 'live' or 'test'.");
+
             return self::FAILURE;
         }
 
@@ -68,7 +70,7 @@ class ApiKeyCreateCommand extends Command
             // Calculate expiration date
             $expiresAt = null;
             if ($expiresDays) {
-                $expiresAt = now()->addDays((int)$expiresDays);
+                $expiresAt = now()->addDays((int) $expiresDays);
             }
 
             // Create the API key
@@ -81,22 +83,24 @@ class ApiKeyCreateCommand extends Command
             );
 
             $this->info('API key created successfully!');
-            $this->line('Name: ' . $name);
-            $this->line('Key: ' . $result['key']); // The full key with prefix
-            $this->line('ID: ' . $result['apiKey']->id);
-            $this->line('User: ' . $user->name . ' (' . $user->email . ')');
-            $this->line('Scopes: ' . (empty($scopeArray) ? '[all]' : implode(', ', $scopeArray)));
-            $this->line('Environment: ' . $environment);
+            $this->line('Name: '.$name);
+            $this->line('Key: '.$result['key']); // The full key with prefix
+            $this->line('ID: '.$result['apiKey']->id);
+            $this->line('User: '.$user->name.' ('.$user->email.')');
+            $this->line('Scopes: '.(empty($scopeArray) ? '[all]' : implode(', ', $scopeArray)));
+            $this->line('Environment: '.$environment);
             if ($expiresAt) {
-                $this->line('Expires: ' . $expiresAt->toDateTimeString());
+                $this->line('Expires: '.$expiresAt->toDateTimeString());
             } else {
                 $this->line('Expires: Never');
             }
 
             $this->warn('Please save this key securely. It will not be shown again.');
+
             return self::SUCCESS;
         } catch (\Exception $e) {
-            $this->error('Error creating API key: ' . $e->getMessage());
+            $this->error('Error creating API key: '.$e->getMessage());
+
             return self::FAILURE;
         }
     }

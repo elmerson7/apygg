@@ -60,6 +60,7 @@ class ApiKeyRepository implements RepositoryInterface
     {
         $apiKey = ApiKey::findOrFail($id);
         $apiKey->update($data);
+
         return $apiKey->fresh();
     }
 
@@ -95,11 +96,11 @@ class ApiKeyRepository implements RepositoryInterface
     public function where(array $where, $columns = ['*'])
     {
         $query = ApiKey::query();
-        
+
         foreach ($where as $key => $value) {
             $query->where($key, $value);
         }
-        
+
         return $query->get($columns);
     }
 
@@ -113,11 +114,11 @@ class ApiKeyRepository implements RepositoryInterface
     public function whereFirst(array $where, $columns = ['*'])
     {
         $query = ApiKey::query();
-        
+
         foreach ($where as $key => $value) {
             $query->where($key, $value);
         }
-        
+
         return $query->first($columns);
     }
 
@@ -143,7 +144,7 @@ class ApiKeyRepository implements RepositoryInterface
     {
         // Hash de la key
         $hashedKey = hash('sha256', $key);
-        
+
         // Buscar en base de datos
         $apiKey = ApiKey::where('key', $hashedKey)
             ->whereNull('deleted_at')

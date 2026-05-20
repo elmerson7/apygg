@@ -25,7 +25,7 @@ class WebhookFailedMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '⚠️ Webhook falló - ' . config('app.name'),
+            subject: '⚠️ Webhook falló - '.config('app.name'),
         );
     }
 

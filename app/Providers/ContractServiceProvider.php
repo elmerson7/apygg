@@ -2,26 +2,26 @@
 
 namespace App\Providers;
 
+use App\Contracts\ApiKeyRepositoryInterface;
 use App\Contracts\ApiKeyServiceInterface;
 use App\Contracts\AuthServiceInterface;
 use App\Contracts\CacheServiceInterface;
 use App\Contracts\FileServiceInterface;
 use App\Contracts\LogServiceInterface;
 use App\Contracts\NotificationServiceInterface;
+use App\Contracts\PermissionRepositoryInterface;
 use App\Contracts\PermissionServiceInterface;
+use App\Contracts\RoleRepositoryInterface;
 use App\Contracts\RoleServiceInterface;
 use App\Contracts\SecurityServiceInterface;
 use App\Contracts\TokenServiceInterface;
+use App\Contracts\UserRepositoryInterface;
 use App\Contracts\UserServiceInterface;
 use App\Contracts\WebhookServiceInterface;
-use App\Contracts\UserRepositoryInterface;
-use App\Contracts\RoleRepositoryInterface;
-use App\Contracts\PermissionRepositoryInterface;
-use App\Contracts\ApiKeyRepositoryInterface;
-use App\Repositories\UserRepository;
-use App\Repositories\RoleRepository;
-use App\Repositories\PermissionRepository;
 use App\Repositories\ApiKeyRepository;
+use App\Repositories\PermissionRepository;
+use App\Repositories\RoleRepository;
+use App\Repositories\UserRepository;
 use App\Services\ApiKeyService;
 use App\Services\AuthService;
 use App\Services\CacheService;
@@ -45,8 +45,6 @@ class ContractServiceProvider extends ServiceProvider
 {
     /**
      * Register services.
-     *
-     * @return void
      */
     public function register(): void
     {
@@ -95,8 +93,6 @@ class ContractServiceProvider extends ServiceProvider
 
     /**
      * Bootstrap services.
-     *
-     * @return void
      */
     public function boot(): void
     {

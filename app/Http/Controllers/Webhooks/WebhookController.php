@@ -16,7 +16,9 @@ use Illuminate\Http\Request;
 class WebhookController extends Controller
 {
     protected WebhookService $webhookService;
+
     protected ?string $model = Webhook::class;
+
     protected ?string $resource = WebhookResource::class;
 
     public function __construct(WebhookService $webhookService)

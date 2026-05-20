@@ -39,7 +39,7 @@ interface SecurityServiceInterface
      *
      * @param  string  $password  Contraseña en texto plano
      * @param  string  $hash  Hash almacenado
-     * @return bool  True si la contraseña coincide con el hash
+     * @return bool True si la contraseña coincide con el hash
      */
     public static function verifyPassword(string $password, string $hash): bool;
 
@@ -48,7 +48,7 @@ interface SecurityServiceInterface
      *
      * @param  string  $ip  IP a verificar
      * @param  array|null  $whitelist  Lista de IPs permitidas (null = usar config)
-     * @return bool  True si la IP está en la whitelist
+     * @return bool True si la IP está en la whitelist
      */
     public static function isIpWhitelisted(string $ip, ?array $whitelist = null): bool;
 
@@ -58,7 +58,7 @@ interface SecurityServiceInterface
      * @param  string  $ip  IP del usuario
      * @param  string  $action  Acción realizada
      * @param  array  $context  Contexto adicional
-     * @return array  ['is_suspicious' => bool, 'reasons' => array, 'risk_score' => int]
+     * @return array ['is_suspicious' => bool, 'reasons' => array, 'risk_score' => int]
      */
     public static function detectSuspiciousBehavior(string $ip, string $action, array $context = []): array;
 
@@ -66,14 +66,14 @@ interface SecurityServiceInterface
      * Generar token seguro
      *
      * @param  int  $length  Longitud del token
-     * @return string  Token generado
+     * @return string Token generado
      */
     public static function generateSecureToken(int $length = 64): string;
 
     /**
      * Generar token para reset de contraseña
      *
-     * @return string  Token único
+     * @return string Token único
      */
     public static function generatePasswordResetToken(): string;
 
@@ -82,7 +82,7 @@ interface SecurityServiceInterface
      *
      * @param  string  $token  Token a validar
      * @param  string  $storedToken  Token almacenado
-     * @return bool  True si los tokens coinciden
+     * @return bool True si los tokens coinciden
      */
     public static function validatePasswordResetToken(string $token, string $storedToken): bool;
 
@@ -90,7 +90,7 @@ interface SecurityServiceInterface
      * Sanitizar entrada HTML
      *
      * @param  string  $input  Entrada a sanitizar
-     * @return string  Entrada sanitizada
+     * @return string Entrada sanitizada
      */
     public static function sanitizeHtml(string $input): string;
 
@@ -98,7 +98,7 @@ interface SecurityServiceInterface
      * Validar CSRF token
      *
      * @param  string  $token  Token a validar
-     * @return bool  True si el token es válido
+     * @return bool True si el token es válido
      */
     public static function validateCsrfToken(string $token): bool;
 
@@ -107,7 +107,6 @@ interface SecurityServiceInterface
      *
      * @param  string  $ip  IP del usuario
      * @param  string  $action  Acción realizada
-     * @return void
      */
     public static function recordFailedAction(string $ip, string $action): void;
 }

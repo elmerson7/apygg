@@ -4,8 +4,8 @@ namespace App\Contracts;
 
 use App\Models\ApiKey;
 use App\Models\User;
-use Illuminate\Pagination\LengthAwarePaginator;
 use DateTimeInterface;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
  * ApiKeyServiceInterface
@@ -31,7 +31,6 @@ interface ApiKeyServiceInterface
      *
      * @param  string  $keyId  ID de la key
      * @param  array  $data  Datos a actualizar
-     * @return ApiKey
      */
     public function update(string $keyId, array $data): ApiKey;
 
@@ -39,7 +38,6 @@ interface ApiKeyServiceInterface
      * Eliminar (revocar) una API Key
      *
      * @param  string  $keyId  ID de la key
-     * @return bool
      */
     public function revoke(string $keyId): bool;
 
@@ -66,7 +64,6 @@ interface ApiKeyServiceInterface
      * Buscar una API Key por ID
      *
      * @param  string  $keyId  ID de la key
-     * @return ApiKey
      */
     public function find(string $keyId): ApiKey;
 
@@ -75,7 +72,6 @@ interface ApiKeyServiceInterface
      *
      * @param  User  $user  Usuario propietario
      * @param  int  $perPage  Elementos por página
-     * @return LengthAwarePaginator
      */
     public function list(User $user, int $perPage = 20): LengthAwarePaginator;
 
@@ -84,7 +80,6 @@ interface ApiKeyServiceInterface
      *
      * @param  ApiKey  $apiKey  API Key
      * @param  string  $scope  Scope a verificar
-     * @return bool
      */
     public function hasScope(ApiKey $apiKey, string $scope): bool;
 }

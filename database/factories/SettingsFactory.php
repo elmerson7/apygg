@@ -3,9 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Settings;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
 
 /**
  * @extends Factory<Settings>

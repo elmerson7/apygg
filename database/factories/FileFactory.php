@@ -5,7 +5,6 @@ namespace Database\Factories;
 use App\Models\File;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
 
 /**
  * @extends Factory<File>
@@ -38,7 +37,7 @@ class FileFactory extends Factory
                 'image/png',
                 'application/pdf',
                 'text/plain',
-                'application/json'
+                'application/json',
             ]),
             'extension' => $this->faker->fileExtension,
             'size' => $this->faker->numberBetween(1024, 10485760), // 1KB to 10MB

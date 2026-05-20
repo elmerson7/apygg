@@ -60,6 +60,7 @@ class FileRepository implements RepositoryInterface
     {
         $file = File::findOrFail($id);
         $file->update($data);
+
         return $file->fresh();
     }
 
@@ -95,11 +96,11 @@ class FileRepository implements RepositoryInterface
     public function where(array $where, $columns = ['*'])
     {
         $query = File::query();
-        
+
         foreach ($where as $key => $value) {
             $query->where($key, $value);
         }
-        
+
         return $query->get($columns);
     }
 
@@ -113,11 +114,11 @@ class FileRepository implements RepositoryInterface
     public function whereFirst(array $where, $columns = ['*'])
     {
         $query = File::query();
-        
+
         foreach ($where as $key => $value) {
             $query->where($key, $value);
         }
-        
+
         return $query->first($columns);
     }
 

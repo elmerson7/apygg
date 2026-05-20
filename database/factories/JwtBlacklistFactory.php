@@ -4,9 +4,9 @@ namespace Database\Factories;
 
 use App\Models\JwtBlacklist;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
-use Carbon\Carbon;
 
 /**
  * @extends Factory<JwtBlacklist>

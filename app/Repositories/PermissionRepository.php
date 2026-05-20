@@ -60,6 +60,7 @@ class PermissionRepository implements RepositoryInterface
     {
         $permission = Permission::findOrFail($id);
         $permission->update($data);
+
         return $permission->fresh();
     }
 
@@ -95,11 +96,11 @@ class PermissionRepository implements RepositoryInterface
     public function where(array $where, $columns = ['*'])
     {
         $query = Permission::query();
-        
+
         foreach ($where as $key => $value) {
             $query->where($key, $value);
         }
-        
+
         return $query->get($columns);
     }
 
@@ -113,11 +114,11 @@ class PermissionRepository implements RepositoryInterface
     public function whereFirst(array $where, $columns = ['*'])
     {
         $query = Permission::query();
-        
+
         foreach ($where as $key => $value) {
             $query->where($key, $value);
         }
-        
+
         return $query->first($columns);
     }
 

@@ -11,50 +11,36 @@ class CreateWebhookDTO
 {
     /**
      * Nombre del webhook
-     *
-     * @var string
      */
     public string $name;
 
     /**
      * URL del webhook
-     *
-     * @var string
      */
     public string $url;
 
     /**
      * Eventos a los que se suscribe el webhook (opcional)
-     *
-     * @var array|null
      */
     public ?array $events;
 
     /**
      * Estado del webhook (opcional)
-     *
-     * @var string|null
      */
     public ?string $status;
 
     /**
      * Timeout en segundos (opcional)
-     *
-     * @var int|null
      */
     public ?int $timeout;
 
     /**
      * Máximo de reintentos (opcional)
-     *
-     * @var int|null
      */
     public ?int $max_retries;
 
     /**
      * Secret para firmar las peticiones (opcional)
-     *
-     * @var string|null
      */
     public ?string $secret;
 
@@ -62,11 +48,10 @@ class CreateWebhookDTO
      * Crear una instancia desde un array de datos
      *
      * @param  array  $data  Array con los datos
-     * @return self
      */
     public static function fromArray(array $data): self
     {
-        $dto = new self();
+        $dto = new self;
         $dto->name = $data['name'] ?? '';
         $dto->url = $data['url'] ?? '';
         $dto->events = $data['events'] ?? null;
@@ -80,8 +65,6 @@ class CreateWebhookDTO
 
     /**
      * Convertir a array
-     *
-     * @return array
      */
     public function toArray(): array
     {

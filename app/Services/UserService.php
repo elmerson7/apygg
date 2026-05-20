@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Contracts\UserRepositoryInterface;
 use App\Contracts\RoleRepositoryInterface;
+use App\Contracts\UserRepositoryInterface;
 use App\Events\PermissionGranted;
 use App\Events\PermissionRevoked;
 use App\Events\RoleAssigned;
@@ -28,6 +28,7 @@ use Illuminate\Support\Facades\Hash;
 class UserService
 {
     protected const CACHE_TTL = 3600;
+
     protected const CACHE_PREFIX = 'user:';
 
     /**
@@ -42,9 +43,6 @@ class UserService
 
     /**
      * Constructor
-     *
-     * @param  UserRepositoryInterface  $userRepository
-     * @param  RoleRepositoryInterface  $roleRepository
      */
     public function __construct(
         UserRepositoryInterface $userRepository,
@@ -192,6 +190,7 @@ class UserService
         return CacheService::remember(self::CACHE_PREFIX.$userId, self::CACHE_TTL, function () use ($userId) {
             $user = $this->userRepository->find($userId);
             $user->load(['roles', 'permissions']);
+
             return $user;
         });
     }

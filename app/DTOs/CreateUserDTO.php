@@ -11,57 +11,41 @@ class CreateUserDTO
 {
     /**
      * Nombre del usuario
-     *
-     * @var string
      */
     public string $name;
 
     /**
      * Email del usuario
-     *
-     * @var string
      */
     public string $email;
 
     /**
      * Contraseña del usuario
-     *
-     * @var string
      */
     public string $password;
 
     /**
      * Timezone del usuario (opcional)
-     *
-     * @var string|null
      */
     public ?string $timezone;
 
     /**
      * Documento de identidad (opcional)
-     *
-     * @var string|null
      */
     public ?string $identity_document;
 
     /**
      * Proveedor de autenticación (opcional)
-     *
-     * @var string|null
      */
     public ?string $provider;
 
     /**
      * ID del proveedor (opcional)
-     *
-     * @var string|null
      */
     public ?string $provider_id;
 
     /**
      * Preferencias del usuario (opcional)
-     *
-     * @var array|null
      */
     public ?array $preferences;
 
@@ -69,11 +53,10 @@ class CreateUserDTO
      * Crear una instancia desde un array de datos
      *
      * @param  array  $data  Array con los datos
-     * @return self
      */
     public static function fromArray(array $data): self
     {
-        $dto = new self();
+        $dto = new self;
         $dto->name = $data['name'] ?? '';
         $dto->email = $data['email'] ?? '';
         $dto->password = $data['password'] ?? '';
@@ -88,8 +71,6 @@ class CreateUserDTO
 
     /**
      * Convertir a array
-     *
-     * @return array
      */
     public function toArray(): array
     {

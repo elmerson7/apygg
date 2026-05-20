@@ -23,7 +23,7 @@ class ApiKeyCreatedMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Nueva API Key creada - ' . config('app.name'),
+            subject: 'Nueva API Key creada - '.config('app.name'),
         );
     }
 

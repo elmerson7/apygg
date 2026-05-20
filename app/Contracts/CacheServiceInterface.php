@@ -13,7 +13,6 @@ interface CacheServiceInterface
      * Crear instancia con tags
      *
      * @param  string  ...$tags  Tags para agrupar keys
-     * @return static
      */
     public static function tag(string ...$tags): static;
 
@@ -21,7 +20,7 @@ interface CacheServiceInterface
      * Obtener valor del caché
      *
      * @param  string  $key  Key a obtener
-     * @param  mixed   $default  Valor por defecto si no existe
+     * @param  mixed  $default  Valor por defecto si no existe
      * @return mixed
      */
     public static function get(string $key, $default = null);
@@ -30,9 +29,9 @@ interface CacheServiceInterface
      * Guardar valor en caché
      *
      * @param  string  $key  Key a guardar
-     * @param  mixed   $value  Valor a guardar
+     * @param  mixed  $value  Valor a guardar
      * @param  int|null  $ttl  Tiempo de vida en segundos (null = usar default)
-     * @return bool  True si se guardó exitosamente
+     * @return bool True si se guardó exitosamente
      */
     public static function set(string $key, $value, ?int $ttl = null): bool;
 
@@ -40,16 +39,16 @@ interface CacheServiceInterface
      * Eliminar valor del caché
      *
      * @param  string  $key  Key a eliminar
-     * @return bool  True si se eliminó exitosamente
+     * @return bool True si se eliminó exitosamente
      */
     public static function forget(string $key): bool;
 
     /**
      * Obtener valor o calcularlo y guardarlo
      *
-     * @param  string   $key  Key a obtener o calcular
-     * @param  int|null $ttl  Tiempo de vida en segundos (null = usar default)
-     * @param  callable $callback  Función para calcular el valor si no existe
+     * @param  string  $key  Key a obtener o calcular
+     * @param  int|null  $ttl  Tiempo de vida en segundos (null = usar default)
+     * @param  callable  $callback  Función para calcular el valor si no existe
      * @return mixed
      */
     public static function remember(string $key, ?int $ttl, callable $callback);
@@ -58,7 +57,7 @@ interface CacheServiceInterface
      * Invalidar todas las keys con un tag específico
      *
      * @param  string  $tag  Tag a invalidar
-     * @return bool  True si se invalidó exitosamente
+     * @return bool True si se invalidó exitosamente
      */
     public static function forgetTag(string $tag): bool;
 
@@ -66,52 +65,49 @@ interface CacheServiceInterface
      * Invalidar múltiples tags
      *
      * @param  array  $tags  Tags a invalidar
-     * @return bool  True si se invalidó exitosamente
+     * @return bool True si se invalidó exitosamente
      */
     public static function forgetTags(array $tags): bool;
 
     /**
      * Cache de usuario con tag automático
      *
-     * @param  string   $userId  ID del usuario
-     * @param  callable $callback  Función para calcular el valor si no existe
-     * @param  int|null $ttl     Tiempo de vida en segundos (null = usar default)
-     * @return mixed
+     * @param  string  $userId  ID del usuario
+     * @param  callable  $callback  Función para calcular el valor si no existe
+     * @param  int|null  $ttl  Tiempo de vida en segundos (null = usar default)
      */
     public static function rememberUser(string $userId, callable $callback, ?int $ttl = null): mixed;
 
     /**
      * Cache de entidad (roles, permissions, etc.)
      *
-     * @param  string   $entity  Nombre de la entidad (ej: 'roles', 'permissions')
-     * @param  callable $callback  Función para calcular el valor si no existe
-     * @param  int|null $ttl     Tiempo de vida en segundos (null = usar default)
-     * @return mixed
+     * @param  string  $entity  Nombre de la entidad (ej: 'roles', 'permissions')
+     * @param  callable  $callback  Función para calcular el valor si no existe
+     * @param  int|null  $ttl  Tiempo de vida en segundos (null = usar default)
      */
     public static function rememberEntity(string $entity, callable $callback, ?int $ttl = null): mixed;
 
     /**
      * Cache de búsqueda
      *
-     * @param  string   $query  Término de búsqueda
-     * @param  array    $filters  Filtros adicionales
-     * @param  callable $callback  Función para calcular el valor si no existe
-     * @param  int|null $ttl      Tiempo de vida en segundos (null = usar default)
-     * @return mixed
+     * @param  string  $query  Término de búsqueda
+     * @param  array  $filters  Filtros adicionales
+     * @param  callable  $callback  Función para calcular el valor si no existe
+     * @param  int|null  $ttl  Tiempo de vida en segundos (null = usar default)
      */
     public static function rememberSearch(string $query, array $filters, callable $callback, ?int $ttl = null): mixed;
 
     /**
      * Obtener todas las métricas del caché
      *
-     * @return array  Métricas del caché [driver, prefix, hit_rate, memory_used, keys_count, tags_count]
+     * @return array Métricas del caché [driver, prefix, hit_rate, memory_used, keys_count, tags_count]
      */
     public static function getAllMetrics(): array;
 
     /**
      * Limpiar todo el caché
      *
-     * @return bool  True si se limpió exitosamente
+     * @return bool True si se limpió exitosamente
      */
     public static function flush(): bool;
 
@@ -119,7 +115,7 @@ interface CacheServiceInterface
      * Verificar si una key existe en caché
      *
      * @param  string  $key  Key a verificar
-     * @return bool  True si existe
+     * @return bool True si existe
      */
     public static function has(string $key): bool;
 
@@ -127,7 +123,7 @@ interface CacheServiceInterface
      * Obtener múltiples keys a la vez
      *
      * @param  array  $keys  Keys a obtener
-     * @return array  Valores asociados a las keys
+     * @return array Valores asociados a las keys
      */
     public static function getMultiple(array $keys): array;
 
@@ -135,8 +131,8 @@ interface CacheServiceInterface
      * Guardar múltiples valores a la vez
      *
      * @param  array  $values  Array asociativo [key => value]
-     * @param  int|null $ttl   Tiempo de vida en segundos (null = usar default)
-     * @return bool  True si se guardó exitosamente
+     * @param  int|null  $ttl  Tiempo de vida en segundos (null = usar default)
+     * @return bool True si se guardó exitosamente
      */
     public static function setMultiple(array $values, ?int $ttl = null): bool;
 
@@ -144,7 +140,7 @@ interface CacheServiceInterface
      * Invalidar cache por patrón (invalidación masiva)
      *
      * @param  string  $pattern  Patrón con wildcards (*)
-     * @return int  Número de keys eliminadas
+     * @return int Número de keys eliminadas
      */
     public static function forgetPattern(string $pattern): int;
 
@@ -152,8 +148,8 @@ interface CacheServiceInterface
      * Invalidar cache por patrón usando SCAN (más eficiente para grandes volúmenes)
      *
      * @param  string  $pattern  Patrón con wildcards (*)
-     * @param  int     $count    Número de elementos a escanear por iteración
-     * @return int     Número de keys eliminadas
+     * @param  int  $count  Número de elementos a escanear por iteración
+     * @return int Número de keys eliminadas
      */
     public static function forgetPatternScan(string $pattern, int $count = 100): int;
 
@@ -172,7 +168,7 @@ interface CacheServiceInterface
     /**
      * Calcular hit rate del caché
      *
-     * @return float  Hit rate como porcentaje
+     * @return float Hit rate como porcentaje
      */
     public static function calculateHitRate(): float;
 
@@ -180,23 +176,23 @@ interface CacheServiceInterface
      * Formatear bytes a formato legible
      *
      * @param  int  $bytes  Bytes a formatear
-     * @return string  Bytes formateados (ej: "1.5MB")
+     * @return string Bytes formateados (ej: "1.5MB")
      */
     public static function formatBytes(int $bytes): string;
 
     /**
      * Configurar TTL por defecto para un tipo
      *
-     * @param  string $type  Tipo de caché ('user', 'entity', 'search', 'default')
-     * @param  int    $ttl   TTL en segundos
+     * @param  string  $type  Tipo de caché ('user', 'entity', 'search', 'default')
+     * @param  int  $ttl  TTL en segundos
      */
     public static function setDefaultTtl(string $type, int $ttl): void;
 
     /**
      * Obtener TTL por defecto para un tipo
      *
-     * @param  string $type  Tipo de caché ('user', 'entity', 'search', 'default')
-     * @return int    TTL en segundos
+     * @param  string  $type  Tipo de caché ('user', 'entity', 'search', 'default')
+     * @return int TTL en segundos
      */
     public static function getDefaultTtl(string $type): int;
 }

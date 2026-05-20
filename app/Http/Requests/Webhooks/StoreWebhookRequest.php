@@ -5,7 +5,6 @@ namespace App\Http\Requests\Webhooks;
 use App\Enums\WebhookStatusEnum;
 use App\Http\Requests\BaseFormRequest;
 use App\Models\Webhook;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 /**
@@ -38,7 +37,7 @@ class StoreWebhookRequest extends BaseFormRequest
             'status' => ['sometimes', 'string', Rule::in([
                 WebhookStatusEnum::active->value,
                 WebhookStatusEnum::inactive->value,
-                WebhookStatusEnum::paused->value
+                WebhookStatusEnum::paused->value,
             ])],
             'timeout' => ['sometimes', 'integer', 'min:5', 'max:300'],
             'max_retries' => ['sometimes', 'integer', 'min:1', 'max:10'],

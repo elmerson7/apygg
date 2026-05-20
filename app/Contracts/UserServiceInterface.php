@@ -17,7 +17,6 @@ interface UserServiceInterface
      *
      * @param  array  $data  Datos del usuario
      * @param  array|null  $roleIds  IDs de roles a asignar (opcional)
-     * @return User
      */
     public function create(array $data, ?array $roleIds = null): User;
 
@@ -26,7 +25,6 @@ interface UserServiceInterface
      *
      * @param  string  $userId  ID del usuario
      * @param  array  $data  Datos a actualizar
-     * @return User
      */
     public function update(string $userId, array $data): User;
 
@@ -35,7 +33,6 @@ interface UserServiceInterface
      *
      * @param  string  $userId  ID del usuario
      * @param  array  $preferences  Nuevas preferencias
-     * @return User
      */
     public function updatePreferences(string $userId, array $preferences): User;
 
@@ -43,7 +40,6 @@ interface UserServiceInterface
      * Eliminar un usuario (soft delete)
      *
      * @param  string  $userId  ID del usuario
-     * @return bool
      */
     public function delete(string $userId): bool;
 
@@ -51,7 +47,6 @@ interface UserServiceInterface
      * Restaurar un usuario eliminado
      *
      * @param  string  $userId  ID del usuario
-     * @return User
      */
     public function restore(string $userId): User;
 
@@ -59,7 +54,6 @@ interface UserServiceInterface
      * Buscar un usuario por ID
      *
      * @param  string  $userId  ID del usuario
-     * @return User
      */
     public function find(string $userId): User;
 
@@ -67,7 +61,6 @@ interface UserServiceInterface
      * Listar usuarios con paginación y filtros
      *
      * @param  array  $filters  Filtros ['search', 'per_page', 'page', 'include', 'role', 'exclude_roles']
-     * @return LengthAwarePaginator
      */
     public function list(array $filters = []): LengthAwarePaginator;
 
@@ -76,7 +69,6 @@ interface UserServiceInterface
      *
      * @param  string  $userId  ID del usuario
      * @param  array  $roleIds  IDs de roles a asignar
-     * @return User
      */
     public function assignRoles(string $userId, array $roleIds): User;
 
@@ -85,7 +77,6 @@ interface UserServiceInterface
      *
      * @param  string  $userId  ID del usuario
      * @param  string  $roleId  ID del rol a remover
-     * @return User
      */
     public function removeRole(string $userId, string $roleId): User;
 
@@ -94,7 +85,6 @@ interface UserServiceInterface
      *
      * @param  string  $userId  ID del usuario
      * @param  array  $permissionIds  IDs de permisos a asignar
-     * @return User
      */
     public function assignPermissions(string $userId, array $permissionIds): User;
 
@@ -103,7 +93,6 @@ interface UserServiceInterface
      *
      * @param  string  $userId  ID del usuario
      * @param  string  $permissionId  ID del permiso a remover
-     * @return User
      */
     public function removePermission(string $userId, string $permissionId): User;
 
@@ -111,8 +100,7 @@ interface UserServiceInterface
      * Obtener historial de actividad de un usuario
      *
      * @param  string  $userId  ID del usuario
-     * @param  int     $perPage  Elementos por página
-     * @return LengthAwarePaginator
+     * @param  int  $perPage  Elementos por página
      */
     public function getActivityLogs(string $userId, int $perPage = 20): LengthAwarePaginator;
 }

@@ -4,7 +4,6 @@ namespace App\Contracts;
 
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Notifications\Notification;
 
 /**
  * NotificationServiceInterface
@@ -21,7 +20,7 @@ interface NotificationServiceInterface
      * @param  string  $view  Vista del email
      * @param  array  $data  Datos para la vista
      * @param  bool  $queue  Si debe enviarse en cola
-     * @return bool  True si se envió exitosamente
+     * @return bool True si se envió exitosamente
      */
     public function sendEmail(string|array $to, string $subject, string $view, array $data = [], bool $queue = true): bool;
 
@@ -33,7 +32,7 @@ interface NotificationServiceInterface
      * @param  string  $message  Mensaje
      * @param  array  $data  Datos adicionales
      * @param  string|null  $type  Tipo de notificación
-     * @return bool  True si se envió exitosamente
+     * @return bool True si se envió exitosamente
      */
     public function sendDatabase(Authenticatable $notifiable, string $title, string $message, array $data = [], ?string $type = null): bool;
 
@@ -43,7 +42,7 @@ interface NotificationServiceInterface
      * @param  string  $phone  Número de teléfono
      * @param  string  $message  Mensaje
      * @param  bool  $queue  Si debe enviarse en cola
-     * @return bool  True si se envió exitosamente
+     * @return bool True si se envió exitosamente
      */
     public function sendSms(string $phone, string $message, bool $queue = true): bool;
 
@@ -55,7 +54,7 @@ interface NotificationServiceInterface
      * @param  string  $message  Mensaje
      * @param  array  $data  Datos adicionales
      * @param  bool  $queue  Si debe enviarse en cola
-     * @return bool  True si se envió exitosamente
+     * @return bool True si se envió exitosamente
      */
     public function sendPush(string|array $tokens, string $title, string $message, array $data = [], bool $queue = true): bool;
 
@@ -68,7 +67,7 @@ interface NotificationServiceInterface
      * @param  string  $message  Mensaje
      * @param  array  $data  Datos adicionales
      * @param  bool  $queue  Si debe enviarse en cola
-     * @return array  Resultados por canal
+     * @return array Resultados por canal
      */
     public function sendMultiChannel(array $channels, $notifiable, string $title, string $message, array $data = [], bool $queue = true): array;
 
@@ -77,7 +76,7 @@ interface NotificationServiceInterface
      *
      * @param  string|null  $channel  Filtrar por canal
      * @param  int  $limit  Límite de resultados
-     * @return Collection  Colección de notificaciones
+     * @return Collection Colección de notificaciones
      */
     public function getHistory(?string $channel = null, int $limit = 50): Collection;
 }

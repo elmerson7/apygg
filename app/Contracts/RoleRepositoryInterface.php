@@ -101,7 +101,6 @@ interface RoleRepositoryInterface
      *
      * @param  mixed  $roleId  ID del rol
      * @param  string  $permissionName  Nombre del permiso
-     * @return bool
      */
     public function hasPermission($roleId, string $permissionName): bool;
 }

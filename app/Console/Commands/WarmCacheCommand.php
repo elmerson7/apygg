@@ -213,7 +213,7 @@ class WarmCacheCommand extends Command
 
         try {
             if (class_exists(Webhook::class)) {
-                 $webhooks = Webhook::where('status', WebhookStatusEnum::active->value)->get();
+                $webhooks = Webhook::where('status', WebhookStatusEnum::active->value)->get();
 
                 foreach ($webhooks as $webhook) {
                     CacheService::set("webhook:{$webhook->id}", [

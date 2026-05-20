@@ -17,7 +17,6 @@ interface RoleServiceInterface
      * Crear un nuevo rol
      *
      * @param  array  $data  Datos del rol ['name', 'display_name', 'description']
-     * @return Role
      */
     public function create(array $data): Role;
 
@@ -26,7 +25,6 @@ interface RoleServiceInterface
      *
      * @param  string  $roleId  ID del rol
      * @param  array  $data  Datos a actualizar
-     * @return Role
      */
     public function update(string $roleId, array $data): Role;
 
@@ -34,7 +32,6 @@ interface RoleServiceInterface
      * Eliminar un rol
      *
      * @param  string  $roleId  ID del rol
-     * @return bool
      */
     public function delete(string $roleId): bool;
 
@@ -42,7 +39,6 @@ interface RoleServiceInterface
      * Buscar un rol por ID
      *
      * @param  string  $roleId  ID del rol
-     * @return Role
      */
     public function find(string $roleId): Role;
 
@@ -50,7 +46,6 @@ interface RoleServiceInterface
      * Buscar un rol por nombre
      *
      * @param  string  $name  Nombre del rol
-     * @return Role|null
      */
     public function findByName(string $name): ?Role;
 
@@ -58,14 +53,11 @@ interface RoleServiceInterface
      * Listar todos los roles con paginación
      *
      * @param  array  $filters  Filtros ['search', 'per_page']
-     * @return LengthAwarePaginator
      */
     public function list(array $filters = []): LengthAwarePaginator;
 
     /**
      * Obtener todos los roles sin paginación
-     *
-     * @return Collection
      */
     public function all(): Collection;
 
@@ -74,7 +66,6 @@ interface RoleServiceInterface
      *
      * @param  string  $roleId  ID del rol
      * @param  string  $permissionId  ID o nombre del permiso
-     * @return Role
      */
     public function assignPermission(string $roleId, string $permissionId): Role;
 
@@ -83,7 +74,6 @@ interface RoleServiceInterface
      *
      * @param  string  $roleId  ID del rol
      * @param  string  $permissionId  ID o nombre del permiso
-     * @return Role
      */
     public function removePermission(string $roleId, string $permissionId): Role;
 
@@ -92,7 +82,6 @@ interface RoleServiceInterface
      *
      * @param  string  $roleId  ID del rol
      * @param  array  $permissionIds  Array de IDs o nombres de permisos
-     * @return Role
      */
     public function syncPermissions(string $roleId, array $permissionIds): Role;
 
@@ -100,7 +89,6 @@ interface RoleServiceInterface
      * Obtener permisos de un rol
      *
      * @param  string  $roleId  ID del rol
-     * @return Collection
      */
     public function getPermissions(string $roleId): Collection;
 
@@ -109,7 +97,6 @@ interface RoleServiceInterface
      *
      * @param  string  $roleId  ID del rol
      * @param  string  $permissionName  Nombre del permiso
-     * @return bool
      */
     public function hasPermission(string $roleId, string $permissionName): bool;
 }

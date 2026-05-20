@@ -28,17 +28,17 @@ class WebhookDeliveryFailedNotification extends Notification implements ShouldQu
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('⚠️ Fallo en Webhook - ' . config('app.name'))
+            ->subject('⚠️ Fallo en Webhook - '.config('app.name'))
             ->greeting('Alerta de Webhook')
             ->line('Se ha producido un fallo en la entrega de un webhook.')
-            ->line('Webhook: ' . $this->webhookName)
-            ->line('Evento: ' . $this->event)
-            ->line('Endpoint: ' . $this->endpoint)
-            ->line('Intentos: ' . $this->attempts)
-            ->line('Error: ' . $this->error)
-            ->line('Fecha: ' . $this->failedAt)
+            ->line('Webhook: '.$this->webhookName)
+            ->line('Evento: '.$this->event)
+            ->line('Endpoint: '.$this->endpoint)
+            ->line('Intentos: '.$this->attempts)
+            ->line('Error: '.$this->error)
+            ->line('Fecha: '.$this->failedAt)
             ->action('Revisar en panel', url('/admin/webhooks'))
-            ->salutation('Saludos, el equipo de ' . config('app.name'));
+            ->salutation('Saludos, el equipo de '.config('app.name'));
     }
 
     public function toArray(object $notifiable): array

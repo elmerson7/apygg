@@ -60,6 +60,7 @@ class WebhookRepository implements RepositoryInterface
     {
         $webhook = Webhook::findOrFail($id);
         $webhook->update($data);
+
         return $webhook->fresh();
     }
 
@@ -95,11 +96,11 @@ class WebhookRepository implements RepositoryInterface
     public function where(array $where, $columns = ['*'])
     {
         $query = Webhook::query();
-        
+
         foreach ($where as $key => $value) {
             $query->where($key, $value);
         }
-        
+
         return $query->get($columns);
     }
 
@@ -113,11 +114,11 @@ class WebhookRepository implements RepositoryInterface
     public function whereFirst(array $where, $columns = ['*'])
     {
         $query = Webhook::query();
-        
+
         foreach ($where as $key => $value) {
             $query->where($key, $value);
         }
-        
+
         return $query->first($columns);
     }
 

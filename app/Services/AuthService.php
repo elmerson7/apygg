@@ -22,6 +22,7 @@ use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
 class AuthService
 {
     protected TokenService $tokenService;
+
     protected UserRepositoryInterface $userRepository;
 
     /**
@@ -193,6 +194,7 @@ class AuthService
     public function getUserFromRefreshToken(string $refreshToken): ?User
     {
         $userId = $this->tokenService->getUserFromToken($refreshToken)?->id;
+
         return $userId ? $this->userRepository->find($userId) : null;
     }
 

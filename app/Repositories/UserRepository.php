@@ -2,8 +2,8 @@
 
 namespace App\Repositories;
 
-use App\Models\User;
 use App\Contracts\UserRepositoryInterface;
+use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
 
@@ -61,6 +61,7 @@ class UserRepository implements UserRepositoryInterface
     {
         $user = User::findOrFail($id);
         $user->update($data);
+
         return $user->fresh();
     }
 
@@ -96,11 +97,11 @@ class UserRepository implements UserRepositoryInterface
     public function where(array $where, $columns = ['*'])
     {
         $query = User::query();
-        
+
         foreach ($where as $key => $value) {
             $query->where($key, $value);
         }
-        
+
         return $query->get($columns);
     }
 
@@ -114,11 +115,11 @@ class UserRepository implements UserRepositoryInterface
     public function whereFirst(array $where, $columns = ['*'])
     {
         $query = User::query();
-        
+
         foreach ($where as $key => $value) {
             $query->where($key, $value);
         }
-        
+
         return $query->first($columns);
     }
 

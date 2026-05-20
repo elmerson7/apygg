@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Models\User;
 use App\Models\Role;
+use App\Models\User;
 use Illuminate\Console\Command;
 
 /**
@@ -39,21 +39,24 @@ class UserRoleAssignCommand extends Command
 
         // Find user
         $user = User::find($userId);
-        if (!$user) {
+        if (! $user) {
             $this->error("User with ID '{$userId}' not found.");
+
             return self::FAILURE;
         }
 
         // Find role
         $role = Role::where('name', $roleName)->first();
-        if (!$role) {
+        if (! $role) {
             $this->error("Role with name '{$roleName}' not found.");
+
             return self::FAILURE;
         }
 
         // Check if user already has this role
         if ($user->roles()->where('id', $role->id)->exists()) {
             $this->info("User already has the role '{$roleName}'.");
+
             return self::SUCCESS;
         }
 
@@ -62,9 +65,11 @@ class UserRoleAssignCommand extends Command
             $user->roles()->attach($role->id);
 
             $this->info("Role '{$roleName}' assigned successfully to user '{$user->name}' (ID: {$user->id})");
+
             return self::SUCCESS;
         } catch (\Exception $e) {
-            $this->error('Error assigning role: ' . $e->getMessage());
+            $this->error('Error assigning role: '.$e->getMessage());
+
             return self::FAILURE;
         }
     }

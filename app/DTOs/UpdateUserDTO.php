@@ -11,29 +11,21 @@ class UpdateUserDTO
 {
     /**
      * Nombre del usuario (opcional)
-     *
-     * @var string|null
      */
     public ?string $name;
 
     /**
      * Email del usuario (opcional)
-     *
-     * @var string|null
      */
     public ?string $email;
 
     /**
      * Contraseña del usuario (opcional)
-     *
-     * @var string|null
      */
     public ?string $password;
 
     /**
      * Documento de identidad (opcional)
-     *
-     * @var string|null
      */
     public ?string $identity_document;
 
@@ -41,11 +33,10 @@ class UpdateUserDTO
      * Crear una instancia desde un array de datos
      *
      * @param  array  $data  Array con los datos
-     * @return self
      */
     public static function fromArray(array $data): self
     {
-        $dto = new self();
+        $dto = new self;
         $dto->name = $data['name'] ?? null;
         $dto->email = $data['email'] ?? null;
         $dto->password = $data['password'] ?? null;
@@ -56,8 +47,6 @@ class UpdateUserDTO
 
     /**
      * Convertir a array (excluyendo valores nulos para actualizaciones parciales)
-     *
-     * @return array
      */
     public function toArray(): array
     {

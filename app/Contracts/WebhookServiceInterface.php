@@ -19,7 +19,6 @@ interface WebhookServiceInterface
      * @param  Webhook  $webhook  Webhook a enviar
      * @param  string  $eventType  Tipo de evento (ej: 'user.created')
      * @param  array  $payload  Datos del evento
-     * @return WebhookDelivery
      */
     public function send(Webhook $webhook, string $eventType, array $payload): WebhookDelivery;
 

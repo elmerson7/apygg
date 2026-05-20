@@ -36,7 +36,7 @@ class UpdateWebhookRequest extends BaseFormRequest
             'status' => ['sometimes', 'string', Rule::in([
                 WebhookStatusEnum::active->value,
                 WebhookStatusEnum::inactive->value,
-                WebhookStatusEnum::paused->value
+                WebhookStatusEnum::paused->value,
             ])],
             'timeout' => ['sometimes', 'integer', 'min:5', 'max:300'],
             'max_retries' => ['sometimes', 'integer', 'min:1', 'max:10'],

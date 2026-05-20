@@ -25,19 +25,19 @@ class ApiKeyCreatedNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         $mail = (new MailMessage)
-            ->subject('Nueva API Key creada - ' . config('app.name'))
-            ->greeting('Hola ' . $notifiable->name . '!')
+            ->subject('Nueva API Key creada - '.config('app.name'))
+            ->greeting('Hola '.$notifiable->name.'!')
             ->line('Se ha creado una nueva API Key para tu cuenta.')
-            ->line('Nombre: ' . $this->keyName)
-            ->line('Creada: ' . $this->createdAt);
+            ->line('Nombre: '.$this->keyName)
+            ->line('Creada: '.$this->createdAt);
 
         if ($this->expiresAt) {
-            $mail->line('Expira: ' . $this->expiresAt);
+            $mail->line('Expira: '.$this->expiresAt);
         }
 
         return $mail
             ->line('Recuerda guardar esta clave en un lugar seguro.')
-            ->salutation('Saludos, el equipo de ' . config('app.name'));
+            ->salutation('Saludos, el equipo de '.config('app.name'));
     }
 
     public function toArray(object $notifiable): array

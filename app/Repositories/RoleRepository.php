@@ -60,6 +60,7 @@ class RoleRepository implements RepositoryInterface
     {
         $role = Role::findOrFail($id);
         $role->update($data);
+
         return $role->fresh();
     }
 
@@ -95,11 +96,11 @@ class RoleRepository implements RepositoryInterface
     public function where(array $where, $columns = ['*'])
     {
         $query = Role::query();
-        
+
         foreach ($where as $key => $value) {
             $query->where($key, $value);
         }
-        
+
         return $query->get($columns);
     }
 
@@ -113,11 +114,11 @@ class RoleRepository implements RepositoryInterface
     public function whereFirst(array $where, $columns = ['*'])
     {
         $query = Role::query();
-        
+
         foreach ($where as $key => $value) {
             $query->where($key, $value);
         }
-        
+
         return $query->first($columns);
     }
 
@@ -141,6 +142,7 @@ class RoleRepository implements RepositoryInterface
     public function getPermissions($roleId)
     {
         $role = $this->find($roleId);
+
         return $role->permissions;
     }
 
@@ -149,11 +151,11 @@ class RoleRepository implements RepositoryInterface
      *
      * @param  mixed  $roleId  ID del rol
      * @param  string  $permissionName  Nombre del permiso
-     * @return bool
      */
     public function hasPermission($roleId, string $permissionName): bool
     {
         $role = $this->find($roleId);
+
         return $role->hasPermission($permissionName);
     }
 }
