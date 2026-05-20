@@ -10,8 +10,6 @@ use Illuminate\Support\Facades\Mail;
  * MailService
  *
  * Servicio genérico de envío de emails vía Laravel Mailer.
- * En local/dev usa Mailpit (MAIL_MAILER=smtp, MAIL_HOST=mailpit, MAIL_PORT=1025).
- * Para producción cambiar MAIL_MAILER en .env (zoho, ses, etc.).
  */
 class MailService
 {

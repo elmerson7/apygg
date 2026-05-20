@@ -1,126 +1,215 @@
+# ═══════════════════════════════════════════════════════════════════════
+# APYGG - Makefile
+# ═══════════════════════════════════════════════════════════════════════
+
+# Entorno por defecto: dev
 ENV ?= dev
+
+# UID/GID del usuario host (para permisos de archivos en bind mount)
 USER_ID ?= $(shell id -u)
 GROUP_ID ?= $(shell id -g)
 
+# Perfiles de Docker Compose por entorno:
+# - prod: activa pgbouncer (connection pooling para alta carga)
+# - search: activa meilisearch (motor de búsqueda full-text)
 PROFILES  = $(if $(filter prod,$(ENV)),--profile prod)
-PROFILES += $(if $(filter dev,$(ENV)),--profile dev)
 PROFILES += $(if $(SEARCH),--profile search)
 
-DC := docker compose $(PROFILES) --env-file .env
+# Docker Compose usa DOS archivos de entorno:
+# 1. compose.env → variables de infraestructura Docker (puertos, PROJECT, CONTAINER_PREFIX, USER_ID)
+# 2. .env → variables de Laravel (APP_ENV, DB_HOST, REDIS_HOST, etc.)
+# El último env-file tiene prioridad, por eso .env va después (para APP_ENV)
+DC := docker compose $(PROFILES) --env-file compose.env --env-file .env
 
 export USER_ID
 export GROUP_ID
 
 .DEFAULT_GOAL := help
 
-.PHONY: build up down stop restart redeploy logs ps sh exec composer art key migrate seed schema jwt meilisearch-key scout flint test test-filter test-watch test-parallel test-coverage pint pint-test phpstan horizon reverb octane-reload clear storage-link cors-check help
+.PHONY: build up down stop restart redeploy logs ps sh exec composer art key migrate seed schema jwt meilisearch-key scout flint test test-filter test-watch test-parallel test-coverage pint pint-test phpstan horizon reverb octane-reload clear storage-link cors-check fix-permissions help
 
+# Verificar que existan los archivos de entorno
 check-env:
 	@if [ ! -f .env ]; then \
 		echo "Creando .env desde .env.example..."; \
 		cp .env.example .env; \
 	fi
+	@if [ ! -f compose.env ]; then \
+		echo "Creando compose.env..."; \
+		cp compose.env.example compose.env 2>/dev/null || cp compose.env compose.env 2>/dev/null || true; \
+	fi
 
+# ═══════════════════════════════════════════════════════════════════════
+# DOCKER
+# ═══════════════════════════════════════════════════════════════════════
+
+# Construir imágenes Docker
+# Args: USER_ID, GROUP_ID → se pasan al Dockerfile para permisos de archivos
 build: check-env
 	USER_ID=$(USER_ID) GROUP_ID=$(GROUP_ID) $(DC) build
 
+# Iniciar contenedores
+# Servicios siempre activos: app, postgres, redis, reverb, horizon, scheduler
+# ENV=dev/staging: sin servicios extra (emails via Resend API)
+# ENV=prod: + pgbouncer (connection pooling)
+# SEARCH=true: + meilisearch
 up: check-env
 	$(DC) up -d
 
+# Detener contenedores
 down:
 	$(DC) down
 
+# Detener sin eliminar volúmenes
 stop:
 	$(DC) stop
 
+# Iniciar contenedores detenidos
 start:
 	$(DC) start
 
+# Reiniciar servicios
 restart:
 	$(DC) restart $(service)
 
+# Recrear solo app (para rebuilds rápidos sin perder datos)
 redeploy:
 	$(DC) up -d --force-recreate app
 
+# Ver logs en tiempo real
 logs:
 	$(DC) logs -f --tail=200
 
+# Listar contenedores
 ps:
 	$(DC) ps
 
+# ═══════════════════════════════════════════════════════════════════════
+# SHELL / COMANDOS
+# ═══════════════════════════════════════════════════════════════════════
+
+# Ejecutar comando arbitrario en contenedor app
 exec:
 	$(DC) exec app $(cmd)
 
+# Abrir shell bash en app
 sh:
 	$(DC) exec app bash
 
+# Ejecutar comando composer
 composer:
 	$(DC) exec app composer $(cmd)
 
+# Ejecutar comando artisan
 art:
 	$(DC) exec app php artisan $(cmd)
 
+# ═══════════════════════════════════════════════════════════════════════
+# GENERACIÓN DE CLAVES
+# ═══════════════════════════════════════════════════════════════════════
+
+# Generar APP_KEY de Laravel
 key:
 	@$(DC) exec app php artisan key:generate --show
 
-migrate:
-	$(DC) exec app php artisan migrate --force
-
-seed:
-	$(DC) exec app php artisan db:seed --force
-
-schema:
-	$(DC) exec app php artisan db:schema-dump
-
+# Generar clave JWT
 jwt:
 	@$(DC) exec app php artisan jwt:secret -f --show
 
+# Generar clave Meilisearch
 meilisearch-key:
 	@KEY=$$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-32); \
 	echo "MEILISEARCH_KEY=$$KEY"
 
+# ═══════════════════════════════════════════════════════════════════════
+# BASE DE DATOS
+# ═══════════════════════════════════════════════════════════════════════
+
+# Ejecutar migraciones
+migrate:
+	$(DC) exec app php artisan migrate --force
+
+# Ejecutar seeders
+seed:
+	$(DC) exec app php artisan db:seed --force
+
+# Exportar esquema BD
+schema:
+	$(DC) exec app php artisan db:schema-dump
+
+# ═══════════════════════════════════════════════════════════════════════
+# TESTS
+# ═══════════════════════════════════════════════════════════════════════
+
+# Ejecutar tests
 test:
 	$(DC) exec app composer test
 
+# Tests con filtro
 test-filter:
 	$(DC) exec app ./vendor/bin/pest --filter='$(filter)'
 
+# Tests en modo watch
 test-watch:
 	$(DC) exec app composer test:watch
 
+# Tests en paralelo
 test-parallel:
 	$(DC) exec app composer test:parallel
 
+# Tests con coverage
 test-coverage:
 	$(DC) exec app ./vendor/bin/pest --coverage
 
+# ═══════════════════════════════════════════════════════════════════════
+# CODE QUALITY
+# ═══════════════════════════════════════════════════════════════════════
+
+# Formatear código con Laravel Pint
 pint:
 	$(DC) exec app ./vendor/bin/pint
 
+# Ver qué se formatearía sin aplicar
 pint-test:
 	$(DC) exec app ./vendor/bin/pint --test
 
+# Análisis estático PHPStan
 phpstan:
 	$(DC) exec app ./vendor/bin/phpstan analyse
 
+# ═══════════════════════════════════════════════════════════════════════
+# LARAVEL SERVICES
+# ═══════════════════════════════════════════════════════════════════════
+
+# Reiniciar Horizon (colas)
 horizon:
 	$(DC) exec horizon php artisan horizon:terminate || true
 
+# Reiniciar Reverb (WebSockets)
 reverb:
 	$(DC) exec reverb php artisan reverb:restart || true
 
+# Recargar Octane sin downtime
 octane-reload:
 	$(DC) exec app php artisan octane:reload || true
 
+# Limpiar caches
 clear:
 	$(DC) exec app php artisan optimize:clear
 
+# Crear symlink storage
 storage-link:
 	$(DC) exec app php artisan storage:link
 
+# Verificar CORS
 cors-check:
 	$(DC) exec app php artisan cors:check --fix
 
+# ═══════════════════════════════════════════════════════════════════════
+# UTILIDADES
+# ═══════════════════════════════════════════════════════════════════════
+
+# Corregir permisos de archivos creados por Docker
 fix-permissions:
 	@echo "Corrigiendo permisos con UID: $(USER_ID), GID: $(GROUP_ID)"
 	sudo chown -R $(USER_ID):$(GROUP_ID) .
@@ -129,34 +218,60 @@ fix-permissions:
 	find . -name "*.sh" -exec chmod +x {} + 2>/dev/null || true
 	chmod +x artisan 2>/dev/null || true
 
+# ═══════════════════════════════════════════════════════════════════════
+# AYUDA
+# ═══════════════════════════════════════════════════════════════════════
+
 help:
 	@echo "APYGG - Makefile Commands"
-	@echo "========================"
+	@echo "═══════════════════════════════════════════════════════════════"
 	@echo ""
-	@echo "Uso: make [target] [ENV=dev|prod|staging] [SEARCH=true]"
-	@echo "  ENV=dev   → activa mailpit"
-	@echo "  ENV=prod  → activa pgbouncer"
-	@echo "  SEARCH=true → activa meilisearch"
+	@echo "Uso: make [target] [ENV=dev|staging|prod] [SEARCH=true]"
+	@echo ""
+	@echo "Entornos:"
+	@echo "  ENV=dev      → desarrollo (sin servicios extra)"
+	@echo "  ENV=staging  → staging (sin servicios extra)"
+	@echo "  ENV=prod     → producción (incluye pgbouncer)"
+	@echo ""
+	@echo "Servicios opcionales:"
+	@echo "  SEARCH=true  → incluir meilisearch"
+	@echo ""
+	@echo "Archivos de configuración:"
+	@echo "  compose.env  → Docker (puertos, PROJECT, CONTAINER_PREFIX)"
+	@echo "  .env         → Laravel (APP_ENV, DB_HOST, etc.)"
 	@echo ""
 	@echo "Ejemplos:"
-	@echo "  make up                      # Dev con mailpit"
-	@echo "  make up ENV=prod             # Prod con pgbouncer"
-	@echo "  make up SEARCH=true          # Dev con meilisearch"
-	@echo "  make up ENV=prod SEARCH=true # Prod con ambos"
+	@echo "  make up              # Dev local"
+	@echo "  make up ENV=staging  # Staging"
+	@echo "  make up ENV=prod     # Prod (con pgbouncer)"
+	@echo "  make up SEARCH=true  # Dev con meilisearch"
+	@echo "  make up ENV=prod SEARCH=true  # Prod + meilisearch"
 	@echo ""
+	@echo "Docker:"
 	@printf "  %-20s %s\n" "build" "Construir imágenes"
 	@printf "  %-20s %s\n" "up" "Iniciar contenedores"
 	@printf "  %-20s %s\n" "down" "Detener contenedores"
 	@printf "  %-20s %s\n" "restart" "Reiniciar servicios"
-	@printf "  %-20s %s\n" "redeploy" "Recrear contenedor app"
+	@printf "  %-20s %s\n" "redeploy" "Recrear app"
 	@printf "  %-20s %s\n" "logs" "Ver logs"
 	@printf "  %-20s %s\n" "ps" "Listar contenedores"
+	@echo ""
+	@echo "Shell:"
 	@printf "  %-20s %s\n" "sh" "Shell en app"
-	@printf "  %-20s %s\n" "exec cmd=..." "Ejecutar comando en app"
-	@printf "  %-20s %s\n" "composer cmd=..." "Composer"
-	@printf "  %-20s %s\n" "art cmd=..." "Artisan"
-	@printf "  %-20s %s\n" "test" "Tests"
+	@printf "  %-20s %s\n" "exec" "Ejecutar comando"
+	@printf "  %-20s %s\n" "composer" "Composer"
+	@printf "  %-20s %s\n" "art" "Artisan"
+	@echo ""
+	@echo "Database:"
 	@printf "  %-20s %s\n" "migrate" "Migrar BD"
 	@printf "  %-20s %s\n" "seed" "Seed BD"
+	@printf "  %-20s %s\n" "schema" "Exportar esquema"
+	@echo ""
+	@echo "Tests:"
+	@printf "  %-20s %s\n" "test" "Ejecutar tests"
+	@printf "  %-20s %s\n" "test-watch" "Tests en watch"
+	@printf "  %-20s %s\n" "test-coverage" "Tests con coverage"
+	@echo ""
+	@echo "Code Quality:"
 	@printf "  %-20s %s\n" "pint" "Formatear código"
 	@printf "  %-20s %s\n" "phpstan" "Análisis estático"

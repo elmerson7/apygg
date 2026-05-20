@@ -168,17 +168,6 @@ services:
       - network
     restart: unless-stopped
 
-  mailpit:
-    profiles: ["dev"]
-    image: axllent/mailpit:latest
-    container_name: ${CONTAINER_PREFIX:-apygg}_mailpit
-    ports:
-      - "${MAILPIT_SMTP_PORT:-1025}:1025"
-      - "${MAILPIT_UI_PORT:-8025}:8025"
-    networks:
-      - network
-    restart: unless-stopped
-
 networks:
   network:
     driver: bridge
