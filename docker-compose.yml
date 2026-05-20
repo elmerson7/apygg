@@ -1,4 +1,4 @@
-name: apygg
+name: ${COMPOSE_PROJECT_NAME:-apygg}
 
 x-app-base: &app_base
   build:
@@ -44,11 +44,11 @@ x-postgres-base: &postgres_base
   build:
     context: .
     dockerfile: docker/postgres/Dockerfile
-  container_name: apygg_postgres
+  container_name: ${COMPOSE_CONTAINER_PREFIX:-apygg}_postgres
   ports:
     - "8011:5432"
   volumes:
-    - pgdata:/var/lib/postgresql/data
+    - pgdata:/var/lib/postgresql
   healthcheck:
     test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB || exit 1"]
     interval: 10s
@@ -62,7 +62,7 @@ x-redis-base: &redis_base
   build:
     context: .
     dockerfile: docker/redis/Dockerfile
-  container_name: apygg_redis
+  container_name: ${COMPOSE_CONTAINER_PREFIX:-apygg}_redis
   ports:
     - "8014:6379"
   volumes:
@@ -79,7 +79,7 @@ x-redis-base: &redis_base
 services:
   app:
     <<: *app_dev
-    container_name: apygg_app
+    container_name: ${COMPOSE_CONTAINER_PREFIX:-apygg}_app
     profiles: ["dev"]
     ports:
       - "8010:8000"
@@ -96,7 +96,7 @@ services:
 
   app-prod:
     <<: *app_prod
-    container_name: apygg_app
+    container_name: ${COMPOSE_CONTAINER_PREFIX:-apygg}_app
     profiles: ["prod"]
     ports:
       - "8010:8000"
@@ -113,7 +113,7 @@ services:
 
   reverb:
     <<: *app_base
-    container_name: apygg_reverb
+    container_name: ${COMPOSE_CONTAINER_PREFIX:-apygg}_reverb
     profiles: ["dev", "staging"]
     command: >
       sh -lc 'if [ ! -d vendor ]; then composer install --no-interaction --prefer-dist; fi;
@@ -132,7 +132,7 @@ services:
 
   reverb-prod:
     <<: *app_prod
-    container_name: apygg_reverb
+    container_name: ${COMPOSE_CONTAINER_PREFIX:-apygg}_reverb
     profiles: ["prod"]
     command: >
       sh -lc 'if [ ! -d vendor ]; then composer install --no-interaction --prefer-dist; fi;
@@ -151,7 +151,7 @@ services:
 
   horizon:
     <<: *app_base
-    container_name: apygg_horizon
+    container_name: ${COMPOSE_CONTAINER_PREFIX:-apygg}_horizon
     profiles: ["dev", "staging"]
     command: >
       sh -lc 'if [ ! -d vendor ]; then composer install --no-interaction --prefer-dist; fi;
@@ -168,7 +168,7 @@ services:
 
   horizon-prod:
     <<: *app_prod
-    container_name: apygg_horizon
+    container_name: ${COMPOSE_CONTAINER_PREFIX:-apygg}_horizon
     profiles: ["prod"]
     command: >
       sh -lc 'if [ ! -d vendor ]; then composer install --no-interaction --prefer-dist; fi;
@@ -183,6 +183,20 @@ services:
       timeout: 10s
       retries: 3
 
+  scheduler:
+    <<: *app_base
+    container_name: ${COMPOSE_CONTAINER_PREFIX:-apygg}_scheduler
+    profiles: ["dev", "prod"]
+    command: >
+      sh -lc 'if [ ! -d vendor ]; then composer install --no-interaction --prefer-dist; fi;
+              until getent hosts redis >/dev/null 2>&1; do sleep 0.5; done;
+              php artisan schedule:work'
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
   postgres:
     <<: *postgres_base
     profiles: ["dev"]
@@ -194,7 +208,7 @@ services:
 
   postgres-prod:
     <<: *postgres_base
-    container_name: apygg_postgres
+    container_name: ${COMPOSE_CONTAINER_PREFIX:-apygg}_postgres
     profiles: ["prod"]
     environment:
       POSTGRES_DB: ${DB_DATABASE:-apygg}
@@ -203,7 +217,7 @@ services:
 
   pgbouncer:
     image: pgbouncer/pgbouncer:latest
-    container_name: apygg_pgbouncer
+    container_name: ${COMPOSE_CONTAINER_PREFIX:-apygg}_pgbouncer
     profiles: ["prod"]
     ports:
       - "8017:6432"
@@ -243,7 +257,7 @@ services:
 
   redis-prod:
     <<: *redis_base
-    container_name: apygg_redis
+    container_name: ${COMPOSE_CONTAINER_PREFIX:-apygg}_redis
     profiles: ["prod"]
     command: ["redis-server", "--appendonly", "yes"]
 
@@ -251,7 +265,7 @@ services:
     build:
       context: .
       dockerfile: docker/meilisearch/Dockerfile
-    container_name: apygg_meili
+    container_name: ${COMPOSE_CONTAINER_PREFIX:-apygg}_meili
     profiles: ["dev", "staging", "prod"]
     env_file:
       - env/${APP_ENV:-dev}.env
@@ -276,7 +290,7 @@ services:
     build:
       context: .
       dockerfile: docker/minio/Dockerfile
-    container_name: apygg_minio
+    container_name: ${COMPOSE_CONTAINER_PREFIX:-apygg}_minio
     profiles: ["dev", "staging"]
     command: server /data --console-address ":9001"
     ports:

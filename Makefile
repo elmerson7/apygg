@@ -1,5 +1,7 @@
 ENV ?= dev
-DC := docker compose --project-name apygg --profile $(ENV)
+PROJECT_NAME ?= apygg
+COMPOSE_CONTAINER_PREFIX ?= apygg
+DC := docker compose --project-name $(PROJECT_NAME) --profile $(ENV)
 
 # Detectar UID/GID del usuario actual del host para permisos correctos
 USER_ID ?= $(shell id -u)
@@ -131,6 +133,9 @@ cors-check:
 horizon:
 	$(DC) exec horizon php artisan horizon:terminate || true
 
+scheduler:
+	$(DC) exec scheduler php artisan schedule:work || true
+
 reverb:
 	$(DC) exec reverb php artisan reverb:restart || true
 
@@ -194,8 +199,9 @@ help:
 	@echo "APYGG - Makefile Commands"
 	@echo "========================"
 	@echo ""
-	@echo "Uso: make [target] [ENV=dev|staging|prod]"
+	@echo "Uso: make [target] [ENV=dev|staging|prod] [PROJECT_NAME=nombre]"
 	@echo "Ejemplo: make up ENV=dev"
+	@echo "Multi-proyecto: make up PROJECT_NAME=mi-proyecto"
 	@echo ""
 	@echo "DOCKER/INFRAESTRUCTURA:"
 	@printf "  %-20s %s\n" "build" "Construir imágenes Docker"
@@ -245,6 +251,7 @@ help:
 	@echo ""
 	@echo "COLAS/BROADCASTING:"
 	@printf "  %-20s %s\n" "horizon" "Reiniciar Laravel Horizon"
+	@printf "  %-20s %s\n" "scheduler" "Ejecutar scheduler manualmente"
 	@printf "  %-20s %s\n" "reverb" "Reiniciar Laravel Reverb"
 	@printf "  %-20s %s\n" "octane" "Recargar Laravel Octane (sin downtime)"
 	@printf "  %-20s %s\n" "octane-reload" "Alias de 'octane'"
