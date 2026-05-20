@@ -9,7 +9,7 @@ PgBouncer es un connection pooler para PostgreSQL que reduce el número de conex
 - **Modo**: `transaction` (recomendado para Laravel)
 - **Pool Size**: 25 conexiones al backend PostgreSQL
 - **Max Client Connections**: 100 conexiones desde Laravel
-- **Puerto**: 6432 (interno), 8017 (host)
+- **Puerto**: 6432 (interno), mapeado por `PGBOUNCER_PORT` en `compose.env`
 
 ## Uso
 
@@ -47,14 +47,14 @@ docker compose exec pgbouncer pgbouncer -c "SHOW SERVERS"
 
 ## Migraciones
 
-**IMPORTANTE**: Para ejecutar migraciones, conectarse directamente a PostgreSQL:
+**IMPORTANTE**: Para ejecutar migraciones en producción, conectarse directamente a PostgreSQL (no a PgBouncer):
 
 ```bash
-# Opción 1: Usar conexión directa temporalmente
+# Opción 1: Cambiar DB_HOST temporalmente
 DB_HOST=postgres php artisan migrate
 
-# Opción 2: Ejecutar desde el contenedor de PostgreSQL
-docker compose exec postgres-prod psql -U apygg -d apygg
+# Opción 2: Ejecutar desde el contenedor PostgreSQL
+docker compose exec postgres psql -U apygg -d apygg
 ```
 
 ## Troubleshooting
@@ -70,6 +70,6 @@ docker compose exec postgres-prod psql -U apygg -d apygg
 - Revisar logs de Laravel y PgBouncer
 
 ### Pool agotado
-- Aumentar `default_pool_size` en `pgbouncer.ini`
+- Aumentar `default_pool_size` en `docker/pgbouncer/pgbouncer.ini`
 - Revisar si hay conexiones colgadas: `SHOW CLIENTS`
 - Verificar configuración de timeouts

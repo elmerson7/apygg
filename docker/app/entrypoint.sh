@@ -45,6 +45,15 @@ if [ -d "storage" ] && [ -d "bootstrap/cache" ]; then
     fi
 fi
 
+# Configurar OPcache según entorno
+if [ "$APP_ENV" = "dev" ] || [ "$APP_ENV" = "local" ] || [ "$APP_ENV" = "development" ]; then
+    # En dev: validar timestamps para ver cambios instantly (volumen bind mount)
+    echo "opcache.validate_timestamps=1" > /usr/local/etc/php/conf.d/zz-opcache-dev.ini
+else
+    # En prod: maximizar rendimiento (sin validación)
+    echo "opcache.validate_timestamps=0" > /usr/local/etc/php/conf.d/zz-opcache-prod.ini
+fi
+
 # Cache/optimize según entorno
 if [ "$APP_ENV" = "dev" ] || [ "$APP_ENV" = "local" ] || [ "$APP_ENV" = "development" ]; then
     # En desarrollo: limpiar caches para ver cambios al instante
