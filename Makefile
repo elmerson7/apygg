@@ -26,18 +26,45 @@ export GROUP_ID
 
 .DEFAULT_GOAL := help
 
-.PHONY: build up down stop restart redeploy logs ps sh exec composer art key migrate seed schema jwt meilisearch-key scout flint test test-filter test-watch test-parallel test-coverage pint pint-test phpstan horizon reverb octane-reload clear storage-link cors-check fix-permissions help
+.PHONY: validate build up down stop restart redeploy logs ps sh exec composer art key migrate seed schema jwt meilisearch-key scout flint test test-filter test-watch test-parallel test-coverage pint pint-test phpstan horizon reverb octane-reload clear storage-link cors-check fix-permissions help
 
-# Verificar que existan los archivos de entorno
-check-env:
-	@if [ ! -f .env ]; then \
-		echo "Creando .env desde .env.example..."; \
-		cp .env.example .env; \
-	fi
+# ═══════════════════════════════════════════════════════════════════════
+# VALIDACIÓN
+# ═══════════════════════════════════════════════════════════════════════
+
+# Validar configuración antes de hacer build/up
+# Verifica que compose.env tenga los valores necesarios
+validate:
+	@echo "═══════════════════════════════════════════════════════════════"
+	@echo "Validando configuración..."
+	@echo ""
 	@if [ ! -f compose.env ]; then \
-		echo "Creando compose.env..."; \
-		cp compose.env.example compose.env 2>/dev/null || cp compose.env compose.env 2>/dev/null || true; \
+		echo "❌ ERROR: compose.env no existe"; \
+		echo "   Ejecuta: cp compose.env.example compose.env"; \
+		exit 1; \
 	fi
+	@echo "✅ compose.env existe"
+	@echo ""
+	@echo "Configuración actual:"
+	@echo "  PROJECT:          $$(grep '^PROJECT=' compose.env | cut -d= -f2)"
+	@echo "  CONTAINER_PREFIX: $$(grep '^CONTAINER_PREFIX=' compose.env | cut -d= -f2)"
+	@echo "  APP_PORT:         $$(grep '^APP_PORT=' compose.env | cut -d= -f2)"
+	@echo "  POSTGRES_PORT:    $$(grep '^POSTGRES_PORT=' compose.env | cut -d= -f2)"
+	@echo "  REDIS_PORT:       $$(grep '^REDIS_PORT=' compose.env | cut -d= -f2)"
+	@echo "  REVERB_PORT:      $$(grep '^REVERB_PORT=' compose.env | cut -d= -f2)"
+	@echo "  MEILISEARCH_PORT: $$(grep '^MEILISEARCH_PORT=' compose.env | cut -d= -f2)"
+	@echo "  PGBOUNCER_PORT:   $$(grep '^PGBOUNCER_PORT=' compose.env | cut -d= -f2)"
+	@echo ""
+	@echo "⚠️  IMPORTANTE: Si clonas este proyecto, cambia CONTAINER_PREFIX"
+	@echo "   y los puertos en compose.env para evitar conflictos."
+	@echo ""
+	@if [ ! -f .env ]; then \
+		echo "⚠️  .env no existe - se creará automáticamente"; \
+	else \
+		echo "✅ .env existe"; \
+	fi
+	@echo ""
+	@echo "═══════════════════════════════════════════════════════════════"
 
 # ═══════════════════════════════════════════════════════════════════════
 # DOCKER
@@ -45,7 +72,7 @@ check-env:
 
 # Construir imágenes Docker
 # Args: USER_ID, GROUP_ID → se pasan al Dockerfile para permisos de archivos
-build: check-env
+build: validate
 	USER_ID=$(USER_ID) GROUP_ID=$(GROUP_ID) $(DC) build
 
 # Iniciar contenedores
@@ -53,7 +80,11 @@ build: check-env
 # ENV=dev/staging: sin servicios extra (emails via Resend API)
 # ENV=prod: + pgbouncer (connection pooling)
 # SEARCH=true: + meilisearch
-up: check-env
+up: validate
+	@if [ ! -f .env ]; then \
+		echo "Creando .env desde .env.example..."; \
+		cp .env.example .env; \
+	fi
 	$(DC) up -d
 
 # Detener contenedores
@@ -240,11 +271,16 @@ help:
 	@echo "  compose.env  → Docker (puertos, PROJECT, CONTAINER_PREFIX)"
 	@echo "  .env         → Laravel (APP_ENV, DB_HOST, etc.)"
 	@echo ""
+	@echo "Validación (siempre ejecutar antes del primer build):"
+	@printf "  %-20s %s\n" "validate" "Verificar configuración"
+	@echo ""
 	@echo "Ejemplos:"
-	@echo "  make up              # Dev local"
-	@echo "  make up ENV=staging  # Staging"
-	@echo "  make up ENV=prod     # Prod (con pgbouncer)"
-	@echo "  make up SEARCH=true  # Dev con meilisearch"
+	@echo "  make validate         # Verificar configuración"
+	@echo "  make build            # Build (valida primero)"
+	@echo "  make up               # Dev local"
+	@echo "  make up ENV=staging   # Staging"
+	@echo "  make up ENV=prod      # Prod (con pgbouncer)"
+	@echo "  make up SEARCH=true   # Dev con meilisearch"
 	@echo "  make up ENV=prod SEARCH=true  # Prod + meilisearch"
 	@echo ""
 	@echo "Docker:"

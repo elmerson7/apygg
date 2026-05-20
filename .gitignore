@@ -3,6 +3,7 @@
 .env
 .env.backup
 .env.production
+compose.env
 env/*.env
 !env/*.env.example
 .phpactor.json
