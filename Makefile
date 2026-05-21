@@ -102,6 +102,10 @@ up: validate
 down:
 	$(DC) down
 
+# Detener contenedores eliminando volúmenes
+down-v:
+	$(DC) down -v
+
 # Detener sin eliminar volúmenes
 stop:
 	$(DC) stop
@@ -117,6 +121,10 @@ restart:
 # Recrear solo app (para rebuilds rápidos sin perder datos)
 redeploy:
 	$(DC) up -d --force-recreate app
+
+# Recrear contenedores recargando .env (sin perder datos)
+reload:
+	$(DC) down && $(DC) up -d
 
 # Ver logs en tiempo real
 logs:
@@ -146,7 +154,11 @@ composer:
 art:
 	$(DC) exec app php artisan $(cmd)
 
-# ═══════════════════════════════════════════════════════════════════════
+# Probar conexión a la base de datos
+dbtest:
+	@$(DC) exec app php artisan tinker --execute="try { DB::connection()->getPdo(); echo 'CONEXION_OK'; } catch (\Exception \$$e) { echo 'CONEXION_FALLO: ' . \$$e->getMessage(); }"
+
+# ═══════════════════════════════════════
 # GENERACIÓN DE CLAVES
 # ═══════════════════════════════════════════════════════════════════════
 
