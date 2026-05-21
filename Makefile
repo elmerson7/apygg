@@ -21,9 +21,9 @@ PROFILES += $(if $(SEARCH),--profile search)
 
 # Docker Compose usa:
 # --project-name → nombre del proyecto para imágenes y volúmenes
-# --env-file compose.env → variables de infraestructura Docker
-# --env-file .env → variables de Laravel
-DC := docker compose $(PROFILES) --project-name $(PROJECT_NAME) --env-file compose.env --env-file .env
+# --env-file compose.env → variables de infraestructura (DB, Redis, etc.)
+# .env se mapea directamente al contenedor Laravel via volumen
+DC := docker compose $(PROFILES) --project-name $(PROJECT_NAME) --env-file compose.env
 
 export USER_ID
 export GROUP_ID
@@ -157,6 +157,10 @@ art:
 # Probar conexión a la base de datos
 dbtest:
 	@$(DC) exec app php artisan tinker --execute="try { DB::connection()->getPdo(); echo 'CONEXION_OK'; } catch (\Exception \$$e) { echo 'CONEXION_FALLO: ' . \$$e->getMessage(); }"
+
+# Probar conexión a Redis
+redistest:
+	@$(DC) exec app php artisan tinker --execute="try { Cache::store('redis')->get('test'); echo 'REDIS_OK'; } catch (\Exception \$$e) { echo 'REDIS_FALLO: ' . \$$e->getMessage(); }"
 
 # ═══════════════════════════════════════
 # GENERACIÓN DE CLAVES
