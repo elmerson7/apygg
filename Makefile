@@ -30,7 +30,7 @@ export GROUP_ID
 
 .DEFAULT_GOAL := help
 
-.PHONY: validate build up down stop restart redeploy logs ps sh exec composer art key migrate seed schema jwt meilisearch-key scout flint test test-filter test-watch test-parallel test-coverage pint pint-test phpstan horizon reverb octane clear storage-link cors-check fix-permissions help
+.PHONY: validate build up upsearch down stop restart redeploy logs ps sh exec composer art key migrate seed schema jwt meilisearch-key scout flint test test-filter test-watch test-parallel test-coverage pint pint-test phpstan horizon reverb octane clear storage-link cors-check fix-permissions help
 
 # ═══════════════════════════════════════════════════════════════════════
 # VALIDACIÓN
@@ -97,6 +97,22 @@ up: validate
 		cp .env.example .env; \
 	fi
 	$(DC) up -d
+
+# Up con Meilisearch (busqueda)
+upsearch: validate
+	@if [ ! -f .env ]; then \
+		echo "Creando .env desde .env.example..."; \
+		cp .env.example .env; \
+	fi
+	@echo "Activando Meilisearch..."
+	@if grep -q "^SCOUT_DRIVER=database" .env 2>/dev/null; then \
+		sed -i 's/^SCOUT_DRIVER=database/SCOUT_DRIVER=meilisearch/' .env; \
+		echo "  -> SCOUT_DRIVER=meilisearch"; \
+	elif ! grep -q "^SCOUT_DRIVER=meilisearch" .env 2>/dev/null; then \
+		sed -i 's/^SCOUT_DRIVER=.*/SCOUT_DRIVER=meilisearch/' .env; \
+	fi
+	@docker compose --project-name $(PROJECT_NAME) --env-file compose.env down
+	@docker compose --profile search --project-name $(PROJECT_NAME) --env-file compose.env up -d
 
 # Detener contenedores
 down:

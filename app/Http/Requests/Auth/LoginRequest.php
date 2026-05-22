@@ -12,8 +12,8 @@ class LoginRequest extends BaseFormRequest
     public function rules(): array
     {
         return [
-            'email' => $this->emailRule(required: true),
-            'password' => ['required', 'string', 'min:8'],
+            'login' => ['required', 'string', 'min:1'],
+            'password' => ['required'],
         ];
     }
 
@@ -23,10 +23,8 @@ class LoginRequest extends BaseFormRequest
     protected function getCustomMessages(): array
     {
         return [
-            'email.required' => 'El email es obligatorio.',
-            'email.email' => 'El email debe tener un formato válido.',
+            'login.required' => 'El email o username es obligatorio.',
             'password.required' => 'La contraseña es obligatoria.',
-            'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
         ];
     }
 
@@ -36,7 +34,7 @@ class LoginRequest extends BaseFormRequest
     protected function getCustomAttributes(): array
     {
         return [
-            'email' => 'email',
+            'login' => 'email o username',
             'password' => 'contraseña',
         ];
     }

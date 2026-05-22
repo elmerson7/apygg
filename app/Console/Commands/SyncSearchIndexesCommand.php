@@ -19,10 +19,32 @@ class SyncSearchIndexesCommand extends Command
 
         try {
             // Verificar si Scout está configurado
-            if (! config('scout.driver')) {
+            $driver = config('scout.driver');
+            if (! $driver) {
                 $this->warn('Scout no está configurado. Saltando sincronización.');
 
                 return Command::SUCCESS;
+            }
+
+            // Verificar si Meilisearch está disponible
+            if ($driver === 'meilisearch') {
+                try {
+                    $host = config('scout.meilisearch.host');
+                    $ch = curl_init($host.'/health');
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($ch, CURLOPT_TIMEOUT, 2);
+                    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
+                    curl_exec($ch);
+                    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    curl_close($ch);
+                    if ($httpCode !== 200) {
+                        throw new \Exception('Meilisearch not healthy');
+                    }
+                } catch (\Exception $e) {
+                    $this->warn('Meilisearch no está disponible. Saltando sincronización.');
+
+                    return Command::SUCCESS;
+                }
             }
 
             $synced = 0;

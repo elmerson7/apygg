@@ -27,19 +27,20 @@ class AuthController
     /**
      * Login de usuario
      */
-    #[BodyParameter('email', 'Email del usuario', required: true, example: 'admin@apygg.com')]
+    #[BodyParameter('login', 'Email o username del usuario', required: true, example: 'admin@apygg.com')]
     #[BodyParameter('password', 'Contraseña del usuario (mínimo 8 caracteres)', required: true, example: 'password')]
     public function login(LoginRequest $request): JsonResponse
     {
-        $credentials = $request->only(['email', 'password']);
+        $login = $request->input('login');
+        $password = $request->input('password');
 
         try {
             // Autenticar usando AuthService
-            $result = $this->authService->authenticate($credentials, $request->ip());
+            $result = $this->authService->authenticate(['login' => $login, 'password' => $password], $request->ip());
 
             if (! $result) {
                 $remainingAttempts = $this->authService->getRemainingAttempts(
-                    $credentials['email'],
+                    $login,
                     $request->ip()
                 );
 
@@ -69,7 +70,7 @@ class AuthController
             }
 
             LogService::error('Error en login', [
-                'email' => $credentials['email'] ?? null,
+                'login' => $login ?? null,
                 'error' => $e->getMessage(),
                 'class' => get_class($e),
             ]);
@@ -205,11 +206,28 @@ class AuthController
                 return ApiResponse::unauthorized('Usuario no autenticado');
             }
 
+            // Recargar con relaciones
+            $user = \App\Models\User::with(['roles.permissions', 'permissions'])->find($user->id);
+
+            $rolePermissions = $user->roles()
+                ->with('permissions')
+                ->get()
+                ->flatMap(fn ($role) => $role->permissions)
+                ->pluck('name')
+                ->unique()
+                ->values();
+
+            $directPermissions = $user->permissions->pluck('name');
+
+            $allPermissions = $directPermissions->merge($rolePermissions)->unique()->values();
+
             return ApiResponse::success([
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
                 'email_verified_at' => $user->email_verified_at ? $user->email_verified_at->toIso8601String() : null,
+                'roles' => $user->roles->pluck('name')->toArray(),
+                'permissions' => $allPermissions->toArray(),
                 'created_at' => $user->created_at->toIso8601String(),
                 'updated_at' => $user->updated_at->toIso8601String(),
             ], 'Usuario obtenido exitosamente');

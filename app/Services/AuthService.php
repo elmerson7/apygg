@@ -55,30 +55,32 @@ class AuthService
      */
     public function authenticate(array $credentials, ?string $ipAddress = null): ?array
     {
-        $identityDocument = $credentials['identity_document'] ?? null;
+        $login = $credentials['login'] ?? null;
         $password = $credentials['password'] ?? null;
 
-        if (! $identityDocument || ! $password) {
-            throw new \InvalidArgumentException('Número de identidad y contraseña son requeridos');
+        if (! $login || ! $password) {
+            throw new \InvalidArgumentException('Email/username y contraseña son requeridos');
         }
 
         // Verificar si el usuario está bloqueado por intentos fallidos
-        if ($this->isLocked($identityDocument, $ipAddress)) {
+        if ($this->isLocked($login, $ipAddress)) {
             LogService::warning('Intento de login bloqueado por intentos fallidos', [
-                'identifier' => $identityDocument,
+                'identifier' => $login,
                 'ip' => $ipAddress,
             ], 'security');
 
             throw new \Exception('Demasiados intentos fallidos. Intenta nuevamente en '.$this->lockoutTime.' minutos.');
         }
 
-        // Buscar usuario por identity_document
-        $user = $this->userRepository->findByIdentityDocument($identityDocument);
+        // Buscar usuario por email o username
+        $user = \App\Models\User::where('email', $login)
+            ->orWhere('username', $login)
+            ->first();
 
         if (! $user) {
-            $this->recordFailedAttempt($identityDocument, $ipAddress);
+            $this->recordFailedAttempt($login, $ipAddress);
             LogService::warning('Intento de login fallido - Usuario no encontrado', [
-                'identifier' => $identityDocument,
+                'identifier' => $login,
                 'ip' => $ipAddress,
             ], 'security');
 
@@ -87,10 +89,10 @@ class AuthService
 
         // Verificar contraseña
         if (! Hash::check($password, $user->password)) {
-            $this->recordFailedAttempt($identityDocument, $ipAddress);
+            $this->recordFailedAttempt($login, $ipAddress);
             LogService::warning('Intento de login fallido - Contraseña incorrecta', [
                 'user_id' => $user->id,
-                'identifier' => $identityDocument,
+                'identifier' => $login,
                 'ip' => $ipAddress,
             ], 'security');
 
@@ -105,12 +107,12 @@ class AuthService
 
             LogService::info('Contraseña rehasheada automáticamente durante login', [
                 'user_id' => $user->id,
-                'identifier' => $identityDocument,
+                'identifier' => $login,
             ], 'security');
         }
 
         // Limpiar intentos fallidos al autenticar exitosamente
-        $this->clearFailedAttempts($identityDocument, $ipAddress);
+        $this->clearFailedAttempts($login, $ipAddress);
 
         // Generar tokens
         try {
@@ -118,7 +120,7 @@ class AuthService
 
             LogService::info('Autenticación exitosa', [
                 'user_id' => $user->id,
-                'identifier' => $identityDocument,
+                'identifier' => $login,
                 'ip' => $ipAddress,
             ], 'security');
 
