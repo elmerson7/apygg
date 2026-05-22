@@ -56,6 +56,8 @@ parameters:
         - '#has invalid return type App\\\\Services#'
         - '#Method .* has invalid return type#'
         - '#Method .* should return#'
+        # Scout Builder - where() acepta 3 params (field, operator, value) en runtime
+        - '#invoked with 3 parameters, 2 required#'
 
     excludePaths:
         - ./*/*/FileToIgnore.php

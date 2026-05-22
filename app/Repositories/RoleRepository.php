@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Contracts\RoleRepositoryInterface;
 use App\Models\Role;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
@@ -11,7 +12,7 @@ use Illuminate\Support\Collection;
  *
  * Repositorio para gestionar roles.
  */
-class RoleRepository implements RepositoryInterface
+class RoleRepository implements RepositoryInterface, RoleRepositoryInterface
 {
     /**
      * Obtener todos los roles

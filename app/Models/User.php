@@ -64,6 +64,8 @@ class User extends Authenticatable implements JWTSubject
      * @var list<string>
      */
     protected $fillable = [
+        'first_name',
+        'last_name',
         'name',
         'email',
         'username',
@@ -335,6 +337,7 @@ class User extends Authenticatable implements JWTSubject
             'name' => $this->name,
             'email' => $this->email,
             'username' => $this->username,
+            'identity_document' => $this->identity_document,
             'email_verified_at' => $this->email_verified_at ? $this->email_verified_at->timestamp : null,
             'timezone' => $this->timezone,
             'created_at' => $this->created_at->timestamp,
@@ -356,6 +359,10 @@ class User extends Authenticatable implements JWTSubject
     public function getFilterableAttributes(): array
     {
         return [
+            'id',
+            'name',
+            'email',
+            'identity_document',
             'email_verified_at',
             'timezone',
             'is_admin',

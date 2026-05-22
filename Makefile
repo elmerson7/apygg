@@ -30,7 +30,7 @@ export GROUP_ID
 
 .DEFAULT_GOAL := help
 
-.PHONY: validate build up upsearch down stop restart redeploy logs ps sh exec composer art key migrate seed schema jwt meilisearch-key scout flint test test-filter test-watch test-parallel test-coverage pint pint-test phpstan horizon reverb octane clear storage-link cors-check fix-permissions help
+.PHONY: validate build up upsearch down stop restart redeploy logs ps sh exec composer art key migrate seed schema jwt meilisearch-key scout flint test test-filter test-watch test-parallel test-coverage pint pint-test phpstan horizon reverb octane clear storage-link cors-check fix-permissions dbtest redistest meilitest help
 
 # ═══════════════════════════════════════════════════════════════════════
 # VALIDACIÓN
@@ -177,6 +177,20 @@ dbtest:
 # Probar conexión a Redis
 redistest:
 	@$(DC) exec app php artisan tinker --execute="try { Cache::store('redis')->get('test'); echo 'REDIS_OK'; } catch (\Exception \$$e) { echo 'REDIS_FALLO: ' . \$$e->getMessage(); }"
+
+# Probar conexión a Meilisearch
+meilitest:
+	@if docker ps --format "{{.Names}}" | grep -q "meili"; then \
+		MEILI_URL="http://meilisearch:7700"; \
+		RESULT=$$($(DC) exec app curl -s "$${MEILI_URL}/health" 2>/dev/null); \
+		if echo "$$RESULT" | grep -q '"status":"available"'; then \
+			echo "MEILISEARCH_OK"; \
+		else \
+			echo "MEILISEARCH_FALLO: No disponible"; \
+		fi; \
+	else \
+		echo "MEILISEARCH_FALLO: Contenedor no encontrado"; \
+	fi
 
 # ═══════════════════════════════════════
 # GENERACIÓN DE CLAVES

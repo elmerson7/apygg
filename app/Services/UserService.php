@@ -14,6 +14,7 @@ use App\Events\UserRestored;
 use App\Events\UserUpdated;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Hash;
 
@@ -67,11 +68,26 @@ class UserService
             $data['password'] = Hash::make($data['password']);
         }
 
+        // Generar name desde first_name y last_name
+        if (isset($data['first_name']) && isset($data['last_name'])) {
+            $data['name'] = trim($data['first_name'].' '.$data['last_name']);
+        } elseif (isset($data['first_name'])) {
+            $data['name'] = $data['first_name'];
+        }
+
         if (! isset($data['state_id'])) {
             $data['state_id'] = 1;
         }
 
         $user = $this->userRepository->create($data);
+
+        // Crear profile con first_name y last_name
+        if (isset($data['first_name']) || isset($data['last_name'])) {
+            $user->profile()->create([
+                'first_name' => $data['first_name'] ?? null,
+                'last_name' => $data['last_name'] ?? null,
+            ]);
+        }
 
         if (! empty($roleIds)) {
             $user->roles()->sync($roleIds);
@@ -80,7 +96,7 @@ class UserService
         $this->clearCache();
         event(new UserCreated($user));
 
-        return $user->fresh(['roles', 'permissions']);
+        return $user->fresh(['roles', 'permissions', 'profile']);
     }
 
     /**
@@ -105,11 +121,38 @@ class UserService
             $data['password'] = Hash::make($data['password']);
         }
 
+        // Generar name desde first_name y last_name si se enviaron
+        $profileData = [];
+        if (isset($data['first_name'])) {
+            $profileData['first_name'] = $data['first_name'];
+            unset($data['first_name']);
+        }
+        if (isset($data['last_name'])) {
+            $profileData['last_name'] = $data['last_name'];
+            unset($data['last_name']);
+        }
+
+        if (isset($profileData['first_name']) && isset($profileData['last_name'])) {
+            $data['name'] = trim($profileData['first_name'].' '.$profileData['last_name']);
+        } elseif (isset($profileData['first_name'])) {
+            $data['name'] = $profileData['first_name'];
+        }
+
         $user->update($data);
+
+        // Actualizar profile si se enviaron first_name o last_name
+        if (! empty($profileData)) {
+            if ($user->profile) {
+                $user->profile->update($profileData);
+            } else {
+                $user->profile()->create($profileData);
+            }
+        }
+
         $this->clearCache($userId);
         event(new UserUpdated($user, $oldAttributes));
 
-        return $user->fresh(['roles', 'permissions']);
+        return $user->fresh(['roles', 'permissions', 'profile']);
     }
 
     /**
@@ -209,8 +252,33 @@ class UserService
         $include = $filters['include'] ?? '';
         $role = $filters['role'] ?? null;
         $excludeRoles = $filters['exclude_roles'] ?? null;
+        $sort = $filters['sort'] ?? 'created_at';
+        $order = strtolower($filters['order'] ?? 'desc');
+        $order = in_array($order, ['asc', 'desc']) ? $order : 'desc';
+        $sortableColumns = ['name', 'email', 'username', 'identity_document', 'created_at', 'updated_at', 'email_verified_at'];
+        if (! in_array($sort, $sortableColumns)) {
+            $sort = 'created_at';
+        }
 
-        $relations = ['roles', 'state'];
+        // Usar Scout/Meilisearch si está configurado
+        if ($search && config('scout.driver') === 'meilisearch') {
+            $builder = User::search($search)->orderBy($sort, $order);
+
+            if ($role && trim((string) $role) !== '') {
+                $builder->where('roles', $role);
+            }
+
+            if ($excludeRoles && trim((string) $excludeRoles) !== '') {
+                $rolesToExclude = array_map('trim', explode(',', $excludeRoles));
+                foreach ($rolesToExclude as $excludedRole) {
+                    $builder->where('roles', '!=', $excludedRole);
+                }
+            }
+
+            return $builder->paginate($perPage, 'page', $page);
+        }
+
+        $relations = ['roles', 'profile'];
         if ($include !== '') {
             $requested = array_map('trim', explode(',', $include));
             if (in_array('permissions', $requested, true)) {
@@ -232,14 +300,15 @@ class UserService
         if ($search && trim($search) !== '') {
             $searchPattern = '%'.trim($search).'%';
             $query->where(fn ($q) => $q
-                ->where('first_name', 'ILIKE', $searchPattern)
-                ->orWhere('last_name', 'ILIKE', $searchPattern)
+                ->where('name', 'ILIKE', $searchPattern)
+                ->orWhere('username', 'ILIKE', $searchPattern)
                 ->orWhere('email', 'ILIKE', $searchPattern)
                 ->orWhere('identity_document', 'ILIKE', $searchPattern)
+                ->orWhereHas('roles', fn ($r) => $r->where('name', 'ILIKE', $searchPattern))
             );
         }
 
-        return $query->orderBy('created_at', 'desc')->paginate($perPage, ['*'], 'page', $page);
+        return $query->orderBy($sort, $order)->paginate($perPage, ['*'], 'page', $page);
     }
 
     /**

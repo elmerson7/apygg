@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Roles\ActivityLogController;
 use App\Http\Controllers\Roles\PermissionController;
 use App\Http\Controllers\Roles\RoleController;
 use Illuminate\Support\Facades\Route;
@@ -11,18 +10,10 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 |
 | Rutas relacionadas con gestión de roles y permisos.
-| Prefijo /admin según convención del proyecto.
 |
 */
 
-Route::middleware(['auth:api'])->prefix('admin')->group(function () {
-
-    // ========== HISTORIAL DE CAMBIOS ==========
-    Route::prefix('activity-logs')->group(function () {
-        Route::get('/', [ActivityLogController::class, 'index'])
-            ->middleware('permission:roles.read')
-            ->name('activity-logs.index');
-    });
+Route::middleware(['auth:api'])->group(function () {
 
     // ========== ROLES ==========
     Route::prefix('roles')->group(function () {

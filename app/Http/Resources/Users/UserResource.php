@@ -25,6 +25,9 @@ class UserResource extends BaseResource
 
         return array_merge($this->getBaseFields(), [
             'name' => $user->name,
+            'first_name' => $user->profile?->first_name,
+            'last_name' => $user->profile?->last_name,
+            'username' => $user->username,
             'email' => $user->email,
             'email_verified_at' => $this->formatDate($user->email_verified_at),
             'identity_document' => $user->identity_document,

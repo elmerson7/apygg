@@ -53,15 +53,36 @@ INSERT INTO permissions (name, display_name, resource, action, description, crea
 -- ============================================
 -- Password por defecto: "1234" (hash argon2id)
 
-INSERT INTO users (name, email, username, email_verified_at, password, created_at, updated_at) VALUES
-('Elmer Merino', 'elmer@apygg.com', 'elmerson', NOW(), '$argon2id$v=19$m=65536,t=4,p=1$U0NJa1FRVWYwcGQ5NTVISA$8xIYTl6fb0ZEOk0uNcf4fJRmgAXxNQBEXDhaCC3+QTs', NOW(), NOW()),
-('Angel Silva', 'angel@apygg.com', 'angelillo', NOW(), '$argon2id$v=19$m=65536,t=4,p=1$U0NJa1FRVWYwcGQ5NTVISA$8xIYTl6fb0ZEOk0uNcf4fJRmgAXxNQBEXDhaCC3+QTs', NOW(), NOW()),
-('Carlos Mendoza', 'carlos@apygg.com', 'cmendoza', NOW(), '$argon2id$v=19$m=65536,t=4,p=1$U0NJa1FRVWYwcGQ5NTVISA$8xIYTl6fb0ZEOk0uNcf4fJRmgAXxNQBEXDhaCC3+QTs', NOW(), NOW()),
-('Lucia Fernandez', 'lucia@apygg.com', 'lfernandez', NOW(), '$argon2id$v=19$m=65536,t=4,p=1$U0NJa1FRVWYwcGQ5NTVISA$8xIYTl6fb0ZEOk0uNcf4fJRmgAXxNQBEXDhaCC3+QTs', NOW(), NOW()),
-('Pedro Ramirez', 'pedro@apygg.com', 'pramirez', NOW(), '$argon2id$v=19$m=65536,t=4,p=1$U0NJa1FRVWYwcGQ5NTVISA$8xIYTl6fb0ZEOk0uNcf4fJRmgAXxNQBEXDhaCC3+QTs', NOW(), NOW()),
-('Maria Torres', 'maria@apygg.com', 'mtorres', NOW(), '$argon2id$v=19$m=65536,t=4,p=1$U0NJa1FRVWYwcGQ5NTVISA$8xIYTl6fb0ZEOk0uNcf4fJRmgAXxNQBEXDhaCC3+QTs', NOW(), NOW()),
-('Jose Garcia', 'jose@apygg.com', 'jgarcia', NOW(), '$argon2id$v=19$m=65536,t=4,p=1$U0NJa1FRVWYwcGQ5NTVISA$8xIYTl6fb0ZEOk0uNcf4fJRmgAXxNQBEXDhaCC3+QTs', NOW(), NOW()),
-('Ana Martinez', 'ana@apygg.com', 'amartinez', NOW(), '$argon2id$v=19$m=65536,t=4,p=1$U0NJa1FRVWYwcGQ5NTVISA$8xIYTl6fb0ZEOk0uNcf4fJRmgAXxNQBEXDhaCC3+QTs', NOW(), NOW());
+INSERT INTO users (name, email, username, identity_document, email_verified_at, password, created_at, updated_at) VALUES
+('Elmer Merino', 'elmer@apygg.com', 'elmerson', '123456789', NOW(), '$argon2id$v=19$m=65536,t=4,p=1$U0NJa1FRVWYwcGQ5NTVISA$8xIYTl6fb0ZEOk0uNcf4fJRmgAXxNQBEXDhaCC3+QTs', NOW(), NOW()),
+('Angel Silva', 'angel@apygg.com', 'angelillo', '234567890', NOW(), '$argon2id$v=19$m=65536,t=4,p=1$U0NJa1FRVWYwcGQ5NTVISA$8xIYTl6fb0ZEOk0uNcf4fJRmgAXxNQBEXDhaCC3+QTs', NOW(), NOW()),
+('Carlos Mendoza', 'carlos@apygg.com', 'cmendoza', '345678901', NOW(), '$argon2id$v=19$m=65536,t=4,p=1$U0NJa1FRVWYwcGQ5NTVISA$8xIYTl6fb0ZEOk0uNcf4fJRmgAXxNQBEXDhaCC3+QTs', NOW(), NOW()),
+('Lucia Fernandez', 'lucia@apygg.com', 'lfernandez', '456789012', NOW(), '$argon2id$v=19$m=65536,t=4,p=1$U0NJa1FRVWYwcGQ5NTVISA$8xIYTl6fb0ZEOk0uNcf4fJRmgAXxNQBEXDhaCC3+QTs', NOW(), NOW()),
+('Pedro Ramirez', 'pedro@apygg.com', 'pramirez', '567890123', NOW(), '$argon2id$v=19$m=65536,t=4,p=1$U0NJa1FRVWYwcGQ5NTVISA$8xIYTl6fb0ZEOk0uNcf4fJRmgAXxNQBEXDhaCC3+QTs', NOW(), NOW()),
+('Maria Torres', 'maria@apygg.com', 'mtorres', '678901234', NOW(), '$argon2id$v=19$m=65536,t=4,p=1$U0NJa1FRVWYwcGQ5NTVISA$8xIYTl6fb0ZEOk0uNcf4fJRmgAXxNQBEXDhaCC3+QTs', NOW(), NOW()),
+('Jose Garcia', 'jose@apygg.com', 'jgarcia', '789012345', NOW(), '$argon2id$v=19$m=65536,t=4,p=1$U0NJa1FRVWYwcGQ5NTVISA$8xIYTl6fb0ZEOk0uNcf4fJRmgAXxNQBEXDhaCC3+QTs', NOW(), NOW()),
+('Ana Martinez', 'ana@apygg.com', 'amartinez', '890123456', NOW(), '$argon2id$v=19$m=65536,t=4,p=1$U0NJa1FRVWYwcGQ5NTVISA$8xIYTl6fb0ZEOk0uNcf4fJRmgAXxNQBEXDhaCC3+QTs', NOW(), NOW());
+
+-- ============================================
+-- PERFILES DE USUARIO
+-- ============================================
+
+INSERT INTO user_profiles (user_id, first_name, last_name, created_at, updated_at)
+SELECT u.id, 'Elmer', 'Merino', NOW(), NOW() FROM users u WHERE u.username = 'elmerson'
+UNION ALL
+SELECT u.id, 'Angel', 'Silva', NOW(), NOW() FROM users u WHERE u.username = 'angelillo'
+UNION ALL
+SELECT u.id, 'Carlos', 'Mendoza', NOW(), NOW() FROM users u WHERE u.username = 'cmendoza'
+UNION ALL
+SELECT u.id, 'Lucia', 'Fernandez', NOW(), NOW() FROM users u WHERE u.username = 'lfernandez'
+UNION ALL
+SELECT u.id, 'Pedro', 'Ramirez', NOW(), NOW() FROM users u WHERE u.username = 'pramirez'
+UNION ALL
+SELECT u.id, 'Maria', 'Torres', NOW(), NOW() FROM users u WHERE u.username = 'mtorres'
+UNION ALL
+SELECT u.id, 'Jose', 'Garcia', NOW(), NOW() FROM users u WHERE u.username = 'jgarcia'
+UNION ALL
+SELECT u.id, 'Ana', 'Martinez', NOW(), NOW() FROM users u WHERE u.username = 'amartinez';
 
 -- ============================================
 -- RELACIONES USUARIO-ROL

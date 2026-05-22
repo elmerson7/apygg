@@ -67,6 +67,8 @@ class UserController extends Controller
             'role' => $request->get('role'),
             'email' => $request->get('email'),
             'per_page' => $request->get('per_page', 15),
+            'sort' => $request->get('sort', 'created_at'),
+            'order' => $request->get('order', 'desc'),
         ];
 
         $users = $this->userService->list($filters);
@@ -133,6 +135,9 @@ class UserController extends Controller
         // Validar usando las reglas de UpdateUserRequest
         // Construir reglas manualmente con el $id correcto
         $rules = [
+            'first_name' => ['sometimes', 'string', 'max:100'],
+            'last_name' => ['sometimes', 'string', 'max:100'],
+            'username' => ['sometimes', 'string', 'max:50', Rule::unique('users', 'username')->ignore($id)],
             'name' => ['sometimes', 'string', 'max:255'],
             'email' => [
                 'sometimes',
@@ -142,14 +147,26 @@ class UserController extends Controller
                 Rule::unique('users', 'email')->ignore($id),
             ],
             'password' => ['sometimes', 'string', 'min:8', new StrongPassword],
+            'identity_document' => [
+                'sometimes',
+                'nullable',
+                'regex:/^[0-9]*$/',
+                Rule::unique('users', 'identity_document')->ignore($id),
+            ],
         ];
 
         $messages = [
+            'first_name.string' => 'El nombre debe ser texto',
+            'first_name.max' => 'El nombre no puede exceder 100 caracteres',
+            'last_name.string' => 'El apellido debe ser texto',
+            'last_name.max' => 'El apellido no puede exceder 100 caracteres',
+            'username.unique' => 'El username ya está en uso',
             'name.string' => 'El nombre debe ser texto',
             'name.max' => 'El nombre no puede exceder 255 caracteres',
             'email.email' => 'El email debe ser válido',
             'email.unique' => 'El email ya está en uso',
             'password.min' => 'La contraseña debe tener al menos 8 caracteres',
+            'identity_document.unique' => 'El documento de identidad ya está registrado',
         ];
 
         $validated = $request->validate($rules, $messages);

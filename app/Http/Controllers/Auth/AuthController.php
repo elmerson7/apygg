@@ -207,7 +207,7 @@ class AuthController
             }
 
             // Recargar con relaciones
-            $user = \App\Models\User::with(['roles.permissions', 'permissions'])->find($user->id);
+            $user = \App\Models\User::with(['roles.permissions', 'permissions', 'profile'])->find($user->id);
 
             $rolePermissions = $user->roles()
                 ->with('permissions')
@@ -224,6 +224,8 @@ class AuthController
             return ApiResponse::success([
                 'id' => $user->id,
                 'name' => $user->name,
+                'first_name' => $user->profile?->first_name,
+                'last_name' => $user->profile?->last_name,
                 'email' => $user->email,
                 'email_verified_at' => $user->email_verified_at ? $user->email_verified_at->toIso8601String() : null,
                 'roles' => $user->roles->pluck('name')->toArray(),

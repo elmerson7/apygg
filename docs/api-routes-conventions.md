@@ -1,105 +1,88 @@
 # Convenciones de Rutas API
 
-## Cómo identificar rutas públicas vs autenticadas
+## Estructura Simple
 
-### Por URL
+No hay prefijos fijos para admin/web/aula. La autenticación y permisos controlan el acceso.
 
-| Patrón | Ejemplo | Uso | Auth |
-|--------|---------|-----|------|
-| **Recurso en plural, sin prefijo `user/`** | `/events`, `/events/{id}` | Catálogo o recurso público (web, SEO, landing) | No |
-| **Prefijo `user/`** | `/user/events`, `/user/profile`, `/user/payments` | Recurso del **usuario autenticado** (sus datos) | Sí (JWT) |
-| **Recurso en plural con CRUD** | `/users`, `/users/{id}` | Colección/administración (ej. listar/editar usuarios) | Sí (y normalmente permisos/roles) |
-| **Prefijo `/admin`** | `/admin/users`, `/admin/settings`, `/admin/events` | Gestión administrativa (requiere rol admin) | Sí |
-
-### Por nombre de ruta
-
-- `events.index`, `events.show` → públicos (catálogo).
-- `user.events.index`, `user.profile.show` → requieren autenticación; son "mis" datos.
-- `admin.users.index`, `admin.settings.update` → requieren rol de administrador.
+| Prefijo | Uso | Auth |
+|---------|-----|------|
+| `/auth` | Autenticación | No |
+| `/user` | Datos del usuario actual | Sí |
+| `/recursos` | CRUD recursos | Sí (por permisos) |
 
 ---
 
-## Ejemplo: eventos
+## Estructura de Rutas
 
-- **Público (catálogo web)**: `GET /events`, `GET /events/{type}/{id}`, `GET /events/{id}/reviews`  
-  → Cualquiera puede ver el listado y el detalle para mostrarlo en la web.
+### `/auth` - Autenticación
 
-- **Autenticado (mis datos)**: `GET /user/events`, `GET /user/payments`, `GET /user/classes`  
-  → El usuario logueado ve solo sus inscripciones, pagos, clases.
+```php
+Route::prefix('auth')->group(function () {
+    Route::post('/login', ...);      // Público
+    Route::post('/register', ...);   // Público
+    Route::get('/me', ...);          // Auth
+    Route::post('/refresh', ...);    // Auth
+    Route::post('/logout', ...);     // Auth
+});
+```
 
-- **Admin (gestión)**: `GET /admin/events`, `POST /admin/events`, `PUT /admin/events/{id}`  
-  → Administradores pueden crear, editar y gestionar eventos.
+### `/user` - Datos del usuario actual
 
-Mismo recurso (eventos), tres contextos:
-1. Público bajo `/` - catálogo
-2. Privado bajo `/user` - datos del usuario autenticado
-3. Administrador bajo `/admin` - gestión
+```php
+Route::middleware(['auth:api'])->prefix('user')->group(function () {
+    Route::get('/profile', ...);     // Mi perfil
+    Route::put('/preferences', ...); // Mis preferencias
+});
+```
+
+### CRUD Recursos
+
+```php
+Route::middleware(['auth:api'])->group(function () {
+    Route::apiResource('users', UserController::class);
+    Route::apiResource('roles', RoleController::class);
+});
+```
 
 ---
 
-## Estructura de Rutas por Sistema
+## Permisos
 
-### Web (sin prefijo)
-- Rutas públicas sin autenticación
-- Uso: Catálogo público, landing pages, SEO
-- Ejemplos: `/events`, `/about`, `/contact`
+Los permisos controlan el acceso, no el prefijo de URL.
 
-### Aula Virtual (`/user`)
-- Rutas protegidas que requieren autenticación JWT
-- Uso: Datos privados del usuario autenticado (estudiante/docente)
-- Ejemplos: `/user/courses`, `/user/classes`, `/user/profile`
-
-### Admin (`/admin`)
-- Rutas protegidas que requieren rol de administrador
-- Uso: Gestión y administración del sistema
-- Ejemplos: `/admin/users`, `/admin/settings`, `/admin/reports`
+```php
+// Ejemplo: Users CRUD
+Route::middleware(['auth:api'])->group(function () {
+    Route::get('/users', [UserController::class, 'index'])
+        ->middleware('permission:users.read');
+    
+    Route::post('/users', [UserController::class, 'store'])
+        ->middleware('permission:users.create');
+});
+```
 
 ---
 
 ## Convenciones de Naming
 
-### Nombres de rutas
-
-```php
-// Público (web)
-Route::get('/events', [EventController::class, 'index'])->name('events.index');
-Route::get('/events/{id}', [EventController::class, 'show'])->name('events.show');
-
-// Usuario autenticado
-Route::get('/user/events', [EventController::class, 'indexByUser'])->name('user.events.index');
-Route::get('/user/profile', [ProfileController::class, 'show'])->name('user.profile.show');
-
-// Administración
-Route::get('/admin/users', [UserController::class, 'index'])->name('admin.users.index');
-Route::post('/admin/users', [UserController::class, 'store'])->name('admin.users.store');
-```
-
 ### Controladores
 
 ```php
-// ✅ Correcto - agrupar por módulo/sistema
-Route::prefix('events')->group(function () {
-    Route::get('/', [EventController::class, 'indexPublic']);        // Público
-});
+// ✅ Correcto - nombre del recurso en plural
+Route::get('/users', [UserController::class, 'index']);
+Route::get('/roles', [RoleController::class, 'index']);
 
-Route::prefix('user')->group(function () {
-    Route::get('/events', [EventController::class, 'indexByUser']);  // Datos del usuario
-});
-
-Route::prefix('admin')->group(function () {
-    Route::get('/events', [EventController::class, 'indexAdmin']);  // Gestión admin
-});
+// ❌ Incorrecto
+Route::get('/admin-users', [UserController::class, 'index']);
 ```
 
----
+### Nombres de rutas
 
-## Autenticación por Prefijo
-
-| Prefijo | Middleware | Uso típico |
-|---------|------------|------------|
-| (ninguno) | `optional:auth` o sin auth | Público |
-| `/user` | `auth:api` | Datos privados del usuario |
-| `/admin` | `auth:api` + rol admin | Administración |
+```php
+Route::get('/users', ...)->name('users.index');
+Route::get('/users/{id}', ...)->name('users.show');
+Route::post('/users', ...)->name('users.store');
+```
 
 ---
 
@@ -107,48 +90,110 @@ Route::prefix('admin')->group(function () {
 
 ```php
 // ============================================================================
-// WEB - Público (sin prefijo)
+// AUTH - Público
 // ============================================================================
-Route::prefix('events')->name('events.')->group(function () {
-    Route::get('/', [EventController::class, 'indexPublic'])->name('index');
-    Route::get('/{id}', [EventController::class, 'showPublic'])->name('show');
-    Route::get('/{id}/reviews', [EventReviewController::class, 'listByEvent'])->name('reviews');
+Route::prefix('auth')->group(function () {
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/forgot-password', ...);
+    Route::post('/reset-password', ...);
 });
 
 // ============================================================================
-// AULA VIRTUAL - /user (usuario autenticado)
+// AUTH - Protegido
+// ============================================================================
+Route::middleware(['auth:api'])->prefix('auth')->group(function () {
+    Route::get('/me', [AuthController::class, 'me']);
+    Route::post('/refresh', [AuthController::class, 'refresh']);
+    Route::post('/logout', [AuthController::class, 'logout']);
+});
+
+// ============================================================================
+// USER - Datos del usuario actual
 // ============================================================================
 Route::middleware(['auth:api'])->prefix('user')->group(function () {
-    Route::get('events', [EventController::class, 'indexByUser'])->name('user.events.index');
-    Route::get('events/{id}', [EventController::class, 'showForUser'])->name('user.events.show');
-    Route::get('payments', [PaymentController::class, 'indexByUser'])->name('user.payments.index');
-    Route::get('profile', [ProfileController::class, 'show'])->name('user.profile.show');
+    Route::get('/profile', [ProfileController::class, 'show']);
+    Route::put('/profile', [ProfileController::class, 'update']);
+    Route::get('/preferences', [PreferencesController::class, 'show']);
+    Route::put('/preferences', [PreferencesController::class, 'update']);
 });
 
 // ============================================================================
-// ADMIN - /admin (administración)
+// CRUD RECURSOS
 // ============================================================================
-Route::middleware(['auth:api'])->prefix('admin')->group(function () {
-    Route::get('events', [EventController::class, 'indexAdmin'])->name('admin.events.index');
-    Route::post('events', [EventController::class, 'store'])->name('admin.events.store');
-    Route::put('events/{id}', [EventController::class, 'update'])->name('admin.events.update');
-    Route::delete('events/{id}', [EventController::class, 'destroy'])->name('admin.events.destroy');
+Route::middleware(['auth:api'])->group(function () {
+    // Users
+    Route::get('/users', [UserController::class, 'index'])->middleware('permission:users.read');
+    Route::post('/users', [UserController::class, 'store'])->middleware('permission:users.create');
+    Route::get('/users/{id}', [UserController::class, 'show']);
+    Route::put('/users/{id}', [UserController::class, 'update']);
+    Route::delete('/users/{id}', [UserController::class, 'destroy'])->middleware('permission:users.delete');
     
-    Route::get('users', [UserController::class, 'index'])->name('admin.users.index');
-    Route::post('users', [UserController::class, 'store'])->name('admin.users.store');
+    // Roles
+    Route::get('/roles', [RoleController::class, 'index'])->middleware('permission:roles.read');
+    Route::post('/roles', [RoleController::class, 'store'])->middleware('permission:roles.create');
+    Route::get('/roles/{id}', [RoleController::class, 'show']);
+    Route::put('/roles/{id}', [RoleController::class, 'update']);
+    Route::delete('/roles/{id}', [RoleController::class, 'destroy'])->middleware('permission:roles.delete');
 });
+```
+
+---
+
+## Paginación
+
+Todos los endpoints que retornan listas usan paginación por defecto.
+
+### Parámetros
+
+| Parámetro | Default | Máximo | Descripción |
+|-----------|---------|--------|-------------|
+| `page` | 1 | - | Página actual |
+| `per_page` | 20 | 100 | Items por página |
+| `sort` | created_at | - | Campo a ordenar |
+| `order` | desc | asc/desc | Dirección del ordenamiento |
+
+### Ejemplo
+
+```
+GET /users?page=2&per_page=50&sort=name&order=asc
+```
+
+### Respuesta
+
+```json
+{
+  "success": true,
+  "data": [...],
+  "pagination": {
+    "current_page": 2,
+    "per_page": 50,
+    "total": 150,
+    "last_page": 3,
+    "from": 51,
+    "to": 100
+  },
+  "links": {
+    "first": "/users?page=1",
+    "last": "/users?page=3",
+    "prev": "/users?page=1",
+    "next": "/users?page=3"
+  },
+  "meta": {...}
+}
 ```
 
 ---
 
 ## Reglas de Oro
 
-1. **Nunca duplicar rutas** - Un recurso = una ruta, pero puede tener múltiples contextos (público, usuario, admin)
-2. **Usar prefijos correctos** - `/user` para datos del auth, `/admin` para gestión
-3. **Nombrar coherentemente** - `user.events.index`, `admin.events.index`
-4. **Middleware apropiado** - Público, `auth:api`, o `auth:api` + verificación de rol
+1. **Prefijo `/auth`** → autenticación (login, register, me, etc.)
+2. **Prefijo `/user`** → datos del usuario autenticado (no admin)
+3. **Recursos en plural** → CRUD sin prefijo admin/web
+4. **Permisos** → controlan acceso, no prefijos de URL
+5. **Paginación** → siempre activos, 20 por defecto
 
 ---
 
-**Última actualización:** 2026-03-16  
-**Versión:** 1.0.0
+**Última actualización:** 2026-05-22  
+**Versión:** 2.0.0
