@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 /**
  * DatabaseSeeder
@@ -23,14 +24,16 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+
+        DB::unprepared(file_get_contents(database_path('seeders/initial_data.sql')));
         // Seeders de RBAC (deben ejecutarse primero)
-        $this->call([
-            RoleSeeder::class,      // 1. Crear roles
-            PermissionSeeder::class, // 2. Crear permisos y asignarlos a roles
-            UserSeeder::class,       // 3. Crear usuarios de prueba con roles
-        ]);
+        // $this->call([
+        //     RoleSeeder::class,      // 1. Crear roles
+        //     PermissionSeeder::class, // 2. Crear permisos y asignarlos a roles
+        //     UserSeeder::class,       // 3. Crear usuarios de prueba con roles
+        // ]);
 
         $this->command->info('✅ Seeders ejecutados correctamente');
-        $this->command->info('📝 Password por defecto para todos los usuarios: "password"');
+        $this->command->info('📝 Password por defecto para todos los usuarios: "1234"');
     }
 }
