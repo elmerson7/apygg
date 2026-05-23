@@ -260,8 +260,8 @@ class UserService
             $sort = 'created_at';
         }
 
-        // Usar Scout/Meilisearch si está configurado
-        if ($search && config('scout.driver') === 'meilisearch') {
+        // Usar Scout/Meilisearch si está configurado y disponible
+        if ($search && config('scout.driver') === 'meilisearch' && $this->meilisearchIsAvailable()) {
             $builder = User::search($search)->orderBy($sort, $order);
 
             if ($role && trim((string) $role) !== '') {
@@ -432,5 +432,23 @@ class UserService
             CacheService::forget(self::CACHE_PREFIX.$userId);
         }
         CacheService::forget(self::CACHE_PREFIX.'list');
+    }
+
+    private function meilisearchIsAvailable(): bool
+    {
+        try {
+            $host = config('scout.meilisearch.host');
+            $ch = curl_init($host.'/health');
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 2);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
+            curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            return $httpCode === 200;
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 }

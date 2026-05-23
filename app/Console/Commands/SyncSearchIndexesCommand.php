@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\User;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Laravel\Scout\Searchable;
 
@@ -18,7 +19,6 @@ class SyncSearchIndexesCommand extends Command
         $this->info('Sincronizando índices de búsqueda...');
 
         try {
-            // Verificar si Scout está configurado
             $driver = config('scout.driver');
             if (! $driver) {
                 $this->warn('Scout no está configurado. Saltando sincronización.');
@@ -26,51 +26,34 @@ class SyncSearchIndexesCommand extends Command
                 return Command::SUCCESS;
             }
 
-            // Verificar si Meilisearch está disponible
             if ($driver === 'meilisearch') {
-                try {
-                    $host = config('scout.meilisearch.host');
-                    $ch = curl_init($host.'/health');
-                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                    curl_setopt($ch, CURLOPT_TIMEOUT, 2);
-                    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
-                    curl_exec($ch);
-                    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                    curl_close($ch);
-                    if ($httpCode !== 200) {
-                        throw new \Exception('Meilisearch not healthy');
-                    }
-                } catch (\Exception $e) {
+                if (! $this->meilisearchIsAvailable()) {
                     $this->warn('Meilisearch no está disponible. Saltando sincronización.');
 
                     return Command::SUCCESS;
                 }
+
+                $this->configureMeilisearchSettings();
+
+                $this->info('Sincronizando settings de Scout...');
+                Artisan::call('scout:sync-index-settings');
+                $this->line(Artisan::output());
             }
 
             $synced = 0;
 
-            // Sincronizar usuarios si tienen el trait Searchable
             $traits = class_uses_recursive(User::class);
             $hasSearchable = isset($traits[Searchable::class]) || isset($traits[\App\Traits\Searchable::class]);
 
             if ($hasSearchable) {
                 $this->info('Sincronizando usuarios...');
-                // Iterar sobre los modelos y sincronizarlos individualmente
-                // Usar chunk para evitar problemas de memoria con muchos registros
                 User::chunk(100, function ($users) use (&$synced) {
                     foreach ($users as $user) {
-                        // El método searchable() viene del trait Searchable de Laravel Scout
                         $user->searchable();
                         $synced++;
                     }
                 });
             }
-
-            // Aquí puedes agregar más modelos que necesiten sincronización
-            // Ejemplo:
-            // if (method_exists(Post::class, 'searchable')) {
-            //     Post::all()->searchable();
-            // }
 
             $this->info("Se sincronizaron {$synced} registros.");
 
@@ -87,5 +70,53 @@ class SyncSearchIndexesCommand extends Command
 
             return Command::FAILURE;
         }
+    }
+
+    private function meilisearchIsAvailable(): bool
+    {
+        try {
+            $host = config('scout.meilisearch.host');
+            $ch = curl_init($host.'/health');
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 2);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
+            curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            return $httpCode === 200;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    private function configureMeilisearchSettings(): void
+    {
+        $this->info('Configurando Meilisearch settings...');
+
+        $client = new \Meilisearch\Client(config('scout.meilisearch.host'), config('scout.meilisearch.key'));
+        $index = $client->index('users');
+
+        $index->updateSearchableAttributes([
+            'name',
+            'username',
+            'email',
+            'identity_document',
+            'roles',
+        ]);
+
+        $index->updateDisplayedAttributes([
+            'id',
+            'name',
+            'username',
+            'email',
+            'identity_document',
+            'email_verified_at',
+            'created_at',
+            'updated_at',
+            'roles',
+        ]);
+
+        $this->info('Meilisearch settings configurados.');
     }
 }

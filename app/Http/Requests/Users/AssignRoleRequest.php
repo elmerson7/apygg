@@ -30,7 +30,7 @@ class AssignRoleRequest extends BaseFormRequest
     {
         return [
             'role_ids' => ['required', 'array', 'min:1', 'max:10'], // Máximo 10 roles por usuario
-            'role_ids.*' => ['required', 'string', 'uuid', 'exists:roles,id', 'distinct'],
+            'role_ids.*' => ['required', 'string', 'exists:roles,id', 'distinct'],
         ];
     }
 
