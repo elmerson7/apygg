@@ -34,8 +34,7 @@ class StoreUserRequest extends BaseFormRequest
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8', new StrongPassword],
             'identity_document' => [
-                'sometimes',
-                'nullable',
+                'required',
                 'string',
                 'regex:/^[0-9]{9,50}$/',
                 'unique:users,identity_document',
@@ -71,6 +70,7 @@ class StoreUserRequest extends BaseFormRequest
             'password.required' => 'La contraseña es requerida',
             'password.string' => 'La contraseña debe ser texto',
             'password.min' => 'La contraseña debe tener al menos 8 caracteres',
+            'identity_document.required' => 'El documento de identidad es requerido',
             'identity_document.string' => 'El documento de identidad debe ser texto',
             'identity_document.regex' => 'El documento de identidad debe tener al menos 9 dígitos y contener solo números',
             'identity_document.unique' => 'Este documento de identidad ya está registrado',
