@@ -146,7 +146,7 @@ class UserController extends Controller
                 'max:255',
                 Rule::unique('users', 'email')->ignore($id),
             ],
-            'password' => ['sometimes', 'string', 'min:8', StrongPassword::strong()],
+            'password' => ['sometimes', 'string', 'min:8', StrongPassword::basic()],
             'identity_document' => [
                 'sometimes',
                 'nullable',

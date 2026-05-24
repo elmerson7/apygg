@@ -43,7 +43,7 @@ class UpdateUserRequest extends BaseFormRequest
                 'max:255',
                 Rule::unique('users', 'email')->ignore($userId),
             ],
-            'password' => ['sometimes', 'nullable', 'string', 'min:8', StrongPassword::strong()],
+            'password' => ['sometimes', 'nullable', 'string', 'min:8', StrongPassword::basic()],
             'identity_document' => [
                 'required',
                 'string',

@@ -140,6 +140,16 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'sentry_logs' => [
+            'driver' => 'sentry',
+            'level' => env('SENTRY_LOG_LEVEL', match (env('APP_ENV', 'dev')) {
+                'dev' => 'critical',
+                'staging', 'prod' => 'error',
+                default => 'error',
+            }),
+            'replace_placeholders' => true,
+        ],
+
         'activity' => [
             'driver' => 'activity',
             'level' => env('LOG_LEVEL', 'debug'),

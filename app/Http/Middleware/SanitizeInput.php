@@ -118,6 +118,9 @@ class SanitizeInput
                     $requestData = $target->all();
                     $this->setNestedValue($requestData, $key, $sanitized);
                     $target->merge($requestData);
+                    if ($target->isJson()) {
+                        $target->json()->add($requestData);
+                    }
                 } else {
                     $target->set($key, $sanitized);
                 }

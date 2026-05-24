@@ -84,7 +84,7 @@ return Application::configure(basePath: dirname(__DIR__))
                         // Registrar en logs_api
                         \App\Services\Logging\ApiLogger::logRequest($req, $response);
                     }
-                } catch (\Exception $logError) {
+                } catch (\Throwable $logError) {
                     // Silenciar errores de logging para no interrumpir el flujo principal
                 }
             };
@@ -119,7 +119,7 @@ return Application::configure(basePath: dirname(__DIR__))
                     } else {
                         LogService::warning("Exception: {$exception->getMessage()}", $context);
                     }
-                } catch (\Exception $logError) {
+                } catch (\Throwable $logError) {
                     // Silenciar errores de logging para no interrumpir el flujo principal
                 }
             };

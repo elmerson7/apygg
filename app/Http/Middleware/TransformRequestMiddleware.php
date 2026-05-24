@@ -79,6 +79,9 @@ class TransformRequestMiddleware
                     $requestData = $target->all();
                     $this->setNestedValue($requestData, $key, $transformed);
                     $target->merge($requestData);
+                    if ($target->isJson()) {
+                        $target->json()->add($requestData);
+                    }
                 } else {
                     $target->set($key, $transformed);
                 }
