@@ -44,10 +44,7 @@ class LogsController extends Controller
 
         $perPage = min(max(1, (int) $request->input('per_page', 20)), 100);
 
-        return response()->json([
-            'success' => true,
-            'data' => $query->paginate($perPage),
-        ]);
+        return $this->sendPaginated($query->paginate($perPage));
     }
 
     /**
@@ -79,10 +76,7 @@ class LogsController extends Controller
 
         $perPage = min(max(1, (int) $request->input('per_page', 20)), 100);
 
-        return response()->json([
-            'success' => true,
-            'data' => $query->paginate($perPage),
-        ]);
+        return $this->sendPaginated($query->paginate($perPage));
     }
 
     /**
@@ -111,10 +105,7 @@ class LogsController extends Controller
 
         $perPage = min(max(1, (int) $request->input('per_page', 20)), 100);
 
-        return response()->json([
-            'success' => true,
-            'data' => $query->paginate($perPage),
-        ]);
+        return $this->sendPaginated($query->paginate($perPage));
     }
 
     /**

@@ -32,15 +32,12 @@ class UserResource extends BaseResource
             'email_verified_at' => $this->formatDate($user->email_verified_at),
             'identity_document' => $user->identity_document,
 
-            // Relaciones opcionales (solo si se cargan con eager loading)
-            'roles' => $this->whenLoaded('roles', function () use ($user) {
-                return $user->roles->map(function ($role) {
-                    return [
-                        'id' => $role->id,
-                        'name' => $role->name,
-                        'display_name' => $role->display_name,
-                    ];
-                });
+            'roles' => $user->roles->map(function ($role) {
+                return [
+                    'id' => $role->id,
+                    'name' => $role->name,
+                    'display_name' => $role->display_name,
+                ];
             }),
 
             'permissions' => $this->whenLoaded('permissions', function () use ($user) {

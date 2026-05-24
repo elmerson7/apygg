@@ -16,7 +16,7 @@ class RoleController extends Controller
             ->orderBy($request->sort ?? 'created_at', $request->order ?? 'desc')
             ->paginate($request->per_page ?? 20);
 
-        return $this->sendSuccess($roles);
+        return $this->sendPaginated($roles);
     }
 
     public function show(Request $request, string $id): JsonResponse

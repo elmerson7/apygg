@@ -159,7 +159,9 @@ return [
                 'searchableAttributes' => [
                     'name',
                     'email',
+                    'username',
                     'roles',
+                    'identity_document',
                 ],
                 'rankingRules' => [
                     'words',

@@ -225,6 +225,11 @@ seed:
 schema:
 	$(DC) exec app php artisan db:schema-dump
 
+# Sincronizar settings e importar datos a Meilisearch
+scout:
+	$(DC) exec app php artisan scout:sync-index-settings
+	$(DC) exec app php artisan scout:import "App\Models\User"
+
 # ═══════════════════════════════════════════════════════════════════════
 # TESTS
 # ═══════════════════════════════════════════════════════════════════════
@@ -357,6 +362,7 @@ help:
 	@echo ""
 	@echo "Database:"
 	@printf "  %-20s %s\n" "migrate" "Migrar BD"
+	@printf "  %-20s %s\n" "scout" "Sincronizar settings e importar datos a Meilisearch"
 	@printf "  %-20s %s\n" "seed" "Seed BD"
 	@printf "  %-20s %s\n" "schema" "Exportar esquema"
 	@echo ""

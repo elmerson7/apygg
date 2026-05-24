@@ -15,7 +15,7 @@ class PermissionController extends Controller
             ->orderBy($request->sort ?? 'created_at', $request->order ?? 'desc')
             ->paginate($request->per_page ?? 20);
 
-        return $this->sendSuccess($permissions);
+        return $this->sendPaginated($permissions);
     }
 
     public function show(Request $request, string $id): JsonResponse
