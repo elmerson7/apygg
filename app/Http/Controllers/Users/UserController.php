@@ -150,7 +150,7 @@ class UserController extends Controller
             'identity_document' => [
                 'sometimes',
                 'nullable',
-                'regex:/^[0-9]*$/',
+                'regex:/^[0-9]{8,12}$/',
                 Rule::unique('users', 'identity_document')->ignore($id),
             ],
             'role_ids' => ['sometimes', 'array'],
@@ -169,6 +169,7 @@ class UserController extends Controller
             'email.unique' => 'El email ya está en uso',
             'password.min' => 'La contraseña debe tener al menos 8 caracteres',
             'identity_document.unique' => 'El documento de identidad ya está registrado',
+            'identity_document.regex' => 'El documento de identidad debe tener entre 8 y 12 dígitos numéricos',
         ];
 
         $validated = $request->validate($rules, $messages);

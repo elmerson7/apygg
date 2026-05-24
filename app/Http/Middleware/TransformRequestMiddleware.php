@@ -177,6 +177,16 @@ class TransformRequestMiddleware
             return false;
         }
 
+        // No convertir username aunque sea numérico (ej. "73988785")
+        if ($key === 'username') {
+            return false;
+        }
+
+        // No convertir identity_document (DNI/CE numérico como string)
+        if ($key === 'identity_document') {
+            return false;
+        }
+
         foreach ($this->numericFields as $field) {
             if (str_ends_with($key, '_'.$field) || $key === $field) {
                 return true;

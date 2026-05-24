@@ -68,11 +68,21 @@ class UserService
             $data['password'] = Hash::make($data['password']);
         }
 
-        // Generar name desde first_name y last_name
-        if (isset($data['first_name']) && isset($data['last_name'])) {
-            $data['name'] = trim($data['first_name'].' '.$data['last_name']);
-        } elseif (isset($data['first_name'])) {
-            $data['name'] = $data['first_name'];
+        // Generar name desde first_name y last_name, y separarlos para profile
+        $profileData = [];
+        if (isset($data['first_name'])) {
+            $profileData['first_name'] = $data['first_name'];
+            unset($data['first_name']);
+        }
+        if (isset($data['last_name'])) {
+            $profileData['last_name'] = $data['last_name'];
+            unset($data['last_name']);
+        }
+
+        if (isset($profileData['first_name']) && isset($profileData['last_name'])) {
+            $data['name'] = trim($profileData['first_name'].' '.$profileData['last_name']);
+        } elseif (isset($profileData['first_name'])) {
+            $data['name'] = $profileData['first_name'];
         }
 
         if (! isset($data['state_id'])) {
@@ -82,11 +92,8 @@ class UserService
         $user = $this->userRepository->create($data);
 
         // Crear profile con first_name y last_name
-        if (isset($data['first_name']) || isset($data['last_name'])) {
-            $user->profile()->create([
-                'first_name' => $data['first_name'] ?? null,
-                'last_name' => $data['last_name'] ?? null,
-            ]);
+        if (! empty($profileData)) {
+            $user->profile()->create($profileData);
         }
 
         if (! empty($roleIds)) {
