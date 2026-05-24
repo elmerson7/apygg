@@ -153,6 +153,8 @@ class UserController extends Controller
                 'regex:/^[0-9]*$/',
                 Rule::unique('users', 'identity_document')->ignore($id),
             ],
+            'role_ids' => ['sometimes', 'array'],
+            'role_ids.*' => ['integer', 'exists:roles,id'],
         ];
 
         $messages = [
@@ -170,7 +172,8 @@ class UserController extends Controller
         ];
 
         $validated = $request->validate($rules, $messages);
-        $user = $this->userService->update($id, $validated);
+        $roleIds = $validated['role_ids'] ?? null;
+        $user = $this->userService->update($id, $validated, $roleIds);
 
         return $this->sendSuccess($user, 'Usuario actualizado exitosamente');
     }

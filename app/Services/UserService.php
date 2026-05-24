@@ -105,7 +105,7 @@ class UserService
      * @throws ModelNotFoundException
      * @throws \InvalidArgumentException Si el email ya existe
      */
-    public function update(string $userId, array $data): User
+    public function update(string $userId, array $data, ?array $roleIds = null): User
     {
         $user = $this->find($userId);
 
@@ -120,6 +120,8 @@ class UserService
         if (isset($data['password'])) {
             $data['password'] = Hash::make($data['password']);
         }
+
+        unset($data['role_ids']);
 
         // Generar name desde first_name y last_name si se enviaron
         $profileData = [];
@@ -149,10 +151,40 @@ class UserService
             }
         }
 
+        if ($roleIds !== null) {
+            $this->syncUserRoles($user, $roleIds);
+        }
+
         $this->clearCache($userId);
         event(new UserUpdated($user, $oldAttributes));
 
         return $user->fresh(['roles', 'permissions', 'profile']);
+    }
+
+    /**
+     * Sync roles for a user, firing appropriate events for added/removed roles.
+     */
+    protected function syncUserRoles(User $user, array $roleIds): void
+    {
+        $existingRoles = Role::whereIn('id', $roleIds)->pluck('id')->toArray();
+        $invalidRoles = array_diff($roleIds, $existingRoles);
+        if (! empty($invalidRoles)) {
+            throw new \InvalidArgumentException('Los siguientes roles no existen: '.implode(', ', $invalidRoles));
+        }
+
+        $previousRoleIds = $user->roles()->select('roles.id')->pluck('id')->toArray();
+        $user->roles()->sync($roleIds);
+
+        foreach (array_diff($roleIds, $previousRoleIds) as $roleId) {
+            if ($role = Role::find($roleId)) {
+                event(new RoleAssigned($user, $role));
+            }
+        }
+        foreach (array_diff($previousRoleIds, $roleIds) as $roleId) {
+            if ($role = Role::find($roleId)) {
+                event(new RoleRemoved($user, $role));
+            }
+        }
     }
 
     /**

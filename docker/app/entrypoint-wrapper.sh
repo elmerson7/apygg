@@ -15,13 +15,13 @@ if [ -d "storage" ] && [ -d "bootstrap/cache" ]; then
     find storage bootstrap/cache -type d -exec chmod 775 {} + 2>/dev/null || true
     find storage bootstrap/cache -type f -exec chmod 664 {} + 2>/dev/null || true
     # Asegurar permisos específicos en storage/logs para compatibilidad con WSL
-    # Crear directorio de logs si no existe
+    # Usar 777 porque el DateOrganizedStreamHandler crea subdirectorios
+    # en caliente (año/mes/día) y el chown no funciona desde appuser (no-root).
+    # Sin 777, el mkdir runtime falla al cambiar de día.
     mkdir -p storage/logs 2>/dev/null || true
     chown -R appuser:appuser storage/logs 2>/dev/null || true
-    find storage/logs -type d -exec chmod 775 {} + 2>/dev/null || true
-    find storage/logs -type f -exec chmod 664 {} + 2>/dev/null || true
-    # Asegurar que el directorio base tenga permisos correctos para crear subdirectorios
-    chmod 775 storage/logs 2>/dev/null || true
+    find storage/logs -type d -exec chmod 777 {} + 2>/dev/null || true
+    find storage/logs -type f -exec chmod 666 {} + 2>/dev/null || true
 fi
 
 # Cambiar al usuario appuser y ejecutar entrypoint

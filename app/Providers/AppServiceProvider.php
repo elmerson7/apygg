@@ -111,6 +111,10 @@ class AppServiceProvider extends ServiceProvider
             return true;
         });
 
+        // Fallback automático de Meilisearch: si el driver es meilisearch pero
+        // el contenedor no está corriendo (make up sin SEARCH=true), baja a database
+        $this->fallbackScoutDriverIfMeiliUnavailable();
+
         // Configurar canales de logging organizados por fecha
         $this->configureDateOrganizedLogChannels();
     }
@@ -177,5 +181,37 @@ class AppServiceProvider extends ServiceProvider
 
             return new Logger('daily', [$handler]);
         });
+    }
+
+    /**
+     * Si SCOUT_DRIVER=meilisearch pero el contenedor no responde,
+     * hace fallback a database para evitar errores de conexión.
+     */
+    protected function fallbackScoutDriverIfMeiliUnavailable(): void
+    {
+        if (config('scout.driver') !== 'meilisearch') {
+            return;
+        }
+
+        $host = config('scout.meilisearch.host', 'http://localhost:7700');
+
+        try {
+            $ch = curl_init($host.'/health');
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT => 2,
+                CURLOPT_CONNECTTIMEOUT => 1,
+                CURLOPT_NOBODY => true,
+            ]);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+        } catch (\Throwable) {
+            $httpCode = 0;
+        }
+
+        if ($httpCode !== 200) {
+            config(['scout.driver' => 'database']);
+            Log::debug('Scout driver fallback: meilisearch unavailable, using database');
+        }
     }
 }
