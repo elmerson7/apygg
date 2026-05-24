@@ -32,7 +32,7 @@ class StoreUserRequest extends BaseFormRequest
             'last_name' => ['required', 'string', 'max:100', 'min:2'],
             'username' => ['required', 'string', 'max:50', 'min:3', 'unique:users,username'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8', new StrongPassword],
+            'password' => ['required', 'string', 'min:8', StrongPassword::strong()],
             'identity_document' => [
                 'required',
                 'string',

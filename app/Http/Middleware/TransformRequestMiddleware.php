@@ -164,6 +164,11 @@ class TransformRequestMiddleware
      */
     private function shouldBeNumeric(string $key, $value): bool
     {
+        // No convertir campos relacionados a password
+        if (str_contains($key, 'password')) {
+            return false;
+        }
+
         // No convertir UUIDs a números
         if (is_string($value) && $this->isUuid($value)) {
             return false;

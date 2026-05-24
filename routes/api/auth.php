@@ -18,10 +18,12 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Rutas públicas de autenticación (sin autenticación requerida)
-// Rate limiting adaptativo: 5 intentos por minuto por IP (configurado en AdaptiveRateLimitingMiddleware)
+// Incluye /refresh porque el access token ya expiró y no puede autenticar
+// La validación del refresh token se hace internamente en TokenService
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/refresh', [AuthController::class, 'refresh']);
     Route::post('/forgot-password', [PasswordController::class, 'forgotPassword']);
     Route::post('/reset-password', [PasswordController::class, 'resetPassword']);
 });
@@ -35,10 +37,8 @@ Route::post('/broadcasting/auth', [BroadcastAuthController::class, 'authenticate
     ->name('broadcasting.auth');
 
 // Rutas protegidas de autenticación (requieren autenticación JWT)
-// Rate limiting adaptativo aplicado automáticamente según tipo de endpoint
 Route::middleware(['auth:api'])->prefix('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::post('/refresh', [AuthController::class, 'refresh']);
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/change-password', [PasswordController::class, 'changePassword']);
 });

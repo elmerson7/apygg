@@ -6,36 +6,70 @@ use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 
 /**
- * Regla de validación para contraseña fuerte
+ * Regla de validación para contraseña con niveles configurables
  *
- * Valida que la contraseña cumpla con requisitos de seguridad.
+ * Niveles disponibles:
+ * - basic()   → mínimo 6 caracteres, sin requisitos adicionales
+ * - medium()  → mínimo 8 caracteres, mayúscula + minúscula + número
+ * - strong()  → mínimo 8 caracteres, mayúscula + minúscula + número + especial
+ * - make()    → configuración completamente personalizada
  */
 class StrongPassword implements ValidationRule
 {
-    /**
-     * Longitud mínima
-     */
     protected int $minLength = 8;
 
-    /**
-     * Requerir mayúsculas
-     */
     protected bool $requireUppercase = true;
 
-    /**
-     * Requerir minúsculas
-     */
     protected bool $requireLowercase = true;
 
-    /**
-     * Requerir números
-     */
     protected bool $requireNumbers = true;
 
-    /**
-     * Requerir caracteres especiales
-     */
     protected bool $requireSpecial = true;
+
+    /**
+     * Contraseña básica: solo longitud mínima de 6
+     */
+    public static function basic(): self
+    {
+        $rule = new self;
+        $rule->minLength = 6;
+        $rule->requireUppercase = false;
+        $rule->requireLowercase = false;
+        $rule->requireNumbers = false;
+        $rule->requireSpecial = false;
+
+        return $rule;
+    }
+
+    /**
+     * Contraseña media: 8+ caracteres, mayúscula, minúscula, número
+     */
+    public static function medium(): self
+    {
+        $rule = new self;
+        $rule->minLength = 8;
+        $rule->requireUppercase = true;
+        $rule->requireLowercase = true;
+        $rule->requireNumbers = true;
+        $rule->requireSpecial = false;
+
+        return $rule;
+    }
+
+    /**
+     * Contraseña fuerte: 8+ caracteres, mayúscula, minúscula, número, especial
+     */
+    public static function strong(): self
+    {
+        $rule = new self;
+        $rule->minLength = 8;
+        $rule->requireUppercase = true;
+        $rule->requireLowercase = true;
+        $rule->requireNumbers = true;
+        $rule->requireSpecial = true;
+
+        return $rule;
+    }
 
     /**
      * Crear instancia con configuración personalizada

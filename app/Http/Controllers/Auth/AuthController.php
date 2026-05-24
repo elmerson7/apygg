@@ -11,6 +11,7 @@ use App\Services\AuthService;
 use App\Services\LogService;
 use Dedoc\Scramble\Attributes\BodyParameter;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
@@ -159,21 +160,26 @@ class AuthController
 
     /**
      * Renovar access token usando refresh token
+     * Ruta pública (sin auth:api) porque el access token ya expiró.
+     * La validación del refresh token se hace internamente en TokenService.
      */
-    public function refresh(): JsonResponse
+    public function refresh(Request $request): JsonResponse
     {
+        $refreshToken = $request->input('refresh_token');
+
+        if (! $refreshToken) {
+            return ApiResponse::unauthorized('Refresh token no proporcionado');
+        }
+
         try {
             // Renovar tokens usando AuthService (con rotación)
-            $tokens = $this->authService->refreshToken();
-
-            // Obtener usuario autenticado
-            $user = Auth::guard('api')->user();
+            $result = $this->authService->refreshToken($refreshToken);
 
             return ApiResponse::success(
                 new AuthResource([
-                    'user' => $user,
-                    'access_token' => $tokens['access_token'],
-                    'refresh_token' => $tokens['refresh_token'],
+                    'user' => $result['user'],
+                    'access_token' => $result['access_token'],
+                    'refresh_token' => $result['refresh_token'],
                     'token_type' => 'bearer',
                     'expires_in' => $this->authService->getTokenExpiration(),
                 ]),
