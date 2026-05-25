@@ -30,7 +30,7 @@ export GROUP_ID
 
 .DEFAULT_GOAL := help
 
-.PHONY: validate build up upsearch down stop restart redeploy logs ps sh exec composer art key migrate seed schema jwt meilisearch-key scout flint test test-filter test-watch test-parallel test-coverage pint pint-test phpstan horizon reverb octane clear storage-link cors-check fix-permissions dbtest redistest meilitest help
+.PHONY: validate build up upsearch down stop restart redeploy logs ps sh exec composer art key migrate seed schema jwt meilisearch-key scout flint test test-filter test-watch test-parallel test-coverage pint pint-test phpstan horizon reverb octane clear storage-link cors-check fix-permissions dbtest redistest meilitest check-project help
 
 # ═══════════════════════════════════════════════════════════════════════
 # VALIDACIÓN
@@ -79,7 +79,7 @@ validate:
 
 # Construir imágenes Docker
 # Args: USER_ID, GROUP_ID → se pasan al Dockerfile para permisos de archivos
-build: validate
+build: validate check-project
 	@if [ ! -f .env ]; then \
 		echo "Creando .env desde .env.example..."; \
 		cp .env.example .env; \
@@ -91,7 +91,7 @@ build: validate
 # ENV=dev/staging: sin servicios extra (emails via Resend API)
 # ENV=prod: + pgbouncer (connection pooling)
 # SEARCH=true: + meilisearch
-up: validate
+up: validate check-project
 	@if [ ! -f .env ]; then \
 		echo "Creando .env desde .env.example..."; \
 		cp .env.example .env; \
@@ -99,7 +99,7 @@ up: validate
 	$(DC) up -d
 
 # Up con Meilisearch (busqueda)
-upsearch: validate
+upsearch: validate check-project
 	@if [ ! -f .env ]; then \
 		echo "Creando .env desde .env.example..."; \
 		cp .env.example .env; \
@@ -113,6 +113,21 @@ upsearch: validate
 	fi
 	@docker compose --project-name $(PROJECT_NAME) --env-file compose.env down
 	@docker compose --profile search --project-name $(PROJECT_NAME) --env-file compose.env up -d
+
+# Verificar si PROJECT es el boilerplate (apygg)
+# Si es así, pregunta confirmación antes de build/up
+check-project:
+	@project=$$(grep '^PROJECT=' compose.env | cut -d= -f2); \
+	if [ "$$project" = "apygg" ]; then \
+		echo ""; \
+		echo "⚠️  PROJECT=apygg (nombre del boilerplate)"; \
+		echo ""; \
+		read -p "¿Estás seguro de continuar? (s/N): " confirm; \
+		if [ "$$confirm" != "s" ] && [ "$$confirm" != "S" ]; then \
+			echo "❌ Cancelado."; \
+			exit 1; \
+		fi; \
+	fi
 
 # Detener contenedores
 down:

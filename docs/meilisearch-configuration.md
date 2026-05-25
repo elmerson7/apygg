@@ -419,6 +419,65 @@ curl -H "Authorization: Bearer masterKey" http://localhost:8013/indexes/users/se
    php artisan config:clear
    ```
 
+## Limitaciones: Substring vs Prefix Matching
+
+### El problema
+
+Meilisearch (y Scout) hacen **búsqueda por prefijo de palabra** (`prefix`). Cuando buscas "7890", Meilisearch busca documentos donde un atributo searchable **empiece** con "7890":
+
+```
+"789012345" → ✅ MATCH (empieza con 7890)
+"234567890" → ❌ NO MATCH (termina con 7890, no empieza)
+"345678901" → ❌ NO MATCH (7890 está en medio)
+```
+
+SQL `ILIKE '%7890%'` hace **búsqueda por substring** — encuentra el término en cualquier posición:
+
+```
+"789012345" → ✅ MATCH
+"234567890" → ✅ MATCH
+"345678901" → ✅ MATCH
+```
+
+### Aplicado al proyecto
+
+Los métodos `list()` en los Services (`UserService`, `RoleService`, etc.) **NO usan Scout/Meilisearch** para la búsqueda. Siempre usan SQL `ILIKE %term%` vía `scopeSearch()` para garantizar substring matching correcto.
+
+```php
+// UserService::list() — usa SQL ILIKE, NO Scout
+$query->where(fn ($q) => $q
+    ->where('name', 'ILIKE', '%'.$search.'%')
+    ->orWhere('username', 'ILIKE', '%'.$search.'%')
+    ->orWhere('email', 'ILIKE', '%'.$search.'%')
+    ->orWhere('identity_document', 'ILIKE', '%'.$search.'%')
+);
+```
+
+### ¿Cuándo usar cada uno?
+
+| Búsqueda | Método | Comportamiento | Recomendado para |
+|---|---|---|---|
+| Listado con filtro (`/users?search=...`) | `$query->search()` → SQL `ILIKE` | Substring matching | CRUD, listados admin |
+| Búsqueda global (`/search?q=...`) | `Model::search()` → Scout/Meilisearch | Full-text con relevancia | Búsqueda global en frontend |
+| Búsqueda por roles (scope) | `$query->search()` → SQL `ILIKE` | Substring matching | Filtros internos |
+
+### Para nuevos modelos
+
+Si creas un nuevo Service con método `list()`, **NO agregues** un path de Scout/Meilisearch. Usa el `scopeSearch()` del modelo base que ya hace SQL `ILIKE`:
+
+```php
+// ✅ Correcto — usa scopeSearch() del modelo base
+$query->where(fn ($q) => $q
+    ->where('name', 'ILIKE', '%'.$search.'%')
+    ->orWhere('email', 'ILIKE', '%'.$search.'%')
+);
+
+// ❌ Incorrecto — Scout no hace substring matching
+if ($search && $this->meilisearchIsAvailable()) {
+    return Model::search($search)->paginate(...);
+}
+```
+
 ## Mejores Prácticas
 
 1. **Usar colas en producción**: `SCOUT_QUEUE=true` en `.env`

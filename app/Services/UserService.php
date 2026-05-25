@@ -299,23 +299,9 @@ class UserService
             $sort = 'created_at';
         }
 
-        // Usar Scout/Meilisearch si está configurado y disponible
-        if ($search && config('scout.driver') === 'meilisearch' && $this->meilisearchIsAvailable()) {
-            $builder = User::search($search)->orderBy($sort, $order);
-
-            if ($role && trim((string) $role) !== '') {
-                $builder->where('roles', $role);
-            }
-
-            if ($excludeRoles && trim((string) $excludeRoles) !== '') {
-                $rolesToExclude = array_map('trim', explode(',', $excludeRoles));
-                foreach ($rolesToExclude as $excludedRole) {
-                    $builder->where('roles', '!=', $excludedRole);
-                }
-            }
-
-            return $builder->paginate($perPage, 'page', $page);
-        }
+        // NOTA: No usamos Scout/Meilisearch para búsqueda porque hace matching
+        // por prefijo de palabra, no substring. Para ident_document como "234567890"
+        // se necesita SQL ILIKE %term% que sí encuentra coincidencias parciales.
 
         $relations = ['roles', 'profile'];
         if ($include !== '') {
@@ -471,23 +457,5 @@ class UserService
             CacheService::forget(self::CACHE_PREFIX.$userId);
         }
         CacheService::forget(self::CACHE_PREFIX.'list');
-    }
-
-    private function meilisearchIsAvailable(): bool
-    {
-        try {
-            $host = config('scout.meilisearch.host');
-            $ch = curl_init($host.'/health');
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 2);
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
-            curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
-
-            return $httpCode === 200;
-        } catch (\Exception $e) {
-            return false;
-        }
     }
 }
