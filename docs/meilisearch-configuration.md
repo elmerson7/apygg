@@ -419,9 +419,9 @@ curl -H "Authorization: Bearer masterKey" http://localhost:8013/indexes/users/se
    php artisan config:clear
    ```
 
-## Limitaciones: Substring vs Prefix Matching
+## Búsqueda Híbrida: Meilisearch + SQL ILIKE
 
-### El problema
+### El problema de base
 
 Meilisearch (y Scout) hacen **búsqueda por prefijo de palabra** (`prefix`). Cuando buscas "7890", Meilisearch busca documentos donde un atributo searchable **empiece** con "7890":
 
@@ -439,42 +439,107 @@ SQL `ILIKE '%7890%'` hace **búsqueda por substring** — encuentra el término 
 "345678901" → ✅ MATCH
 ```
 
-### Aplicado al proyecto
+Ventaja de Meilisearch vs SQL ILIKE: **Typo tolerance**. "elmersonx" con 1 typo encuentra "elmerson". En SQL ILIKE, `%elmersonx%` NO contiene `%elmerson%`, así que no lo encuentra.
 
-Los métodos `list()` en los Services (`UserService`, `RoleService`, etc.) **NO usan Scout/Meilisearch** para la búsqueda. Siempre usan SQL `ILIKE %term%` vía `scopeSearch()` para garantizar substring matching correcto.
+### Solución Híbrida en UserService::list()
+
+`UserService::list()` usa **ambos motores** combinados:
+
+| Motor | Campos | Ventaja |
+|---|---|---|
+| Meilisearch (Scout) | `name`, `email`, `username` | Typo tolerance, ranking por relevancia |
+| SQL ILIKE | `identity_document` | Substring `%term%` para números de documento |
 
 ```php
-// UserService::list() — usa SQL ILIKE, NO Scout
+if ($meilisearchAvailable) {
+    // 1. Meilisearch: typo tolerance para name, email, username
+    $matchedIds = User::search($searchTerm)->get()->pluck('id');
+
+    // 2. SQL ILIKE: substring para identity_document
+    $docIds = User::where('identity_document', 'ILIKE', '%'.$searchTerm.'%')->pluck('id');
+
+    // 3. Unir ambos resultados (IDs únicos)
+    $allIds = $matchedIds->merge($docIds)->unique()->values();
+
+    $query->whereIn('id', $allIds);
+}
+```
+
+### Ejemplos de comportamiento
+
+| Búsqueda | Encuentra | Motor |
+|---|---|---|
+| `elmer` | "Elmer Merino" por email `elmer@apygg.com` | Meilisearch (typo tolerance) |
+| `elmersonx` | "Elmer Merino" por username `elmerson` (1 typo) | Meilisearch (typo tolerance) |
+| `7890` | Usuario con `identity_document = 234567890` | SQL ILIKE (substring) |
+| `xyz` | Ninguno | Ambos devuelven vacío |
+
+### Fallback sin Meilisearch
+
+Si Meilisearch no está disponible (driver no configurado o servicio caído), cae a SQL ILIKE puro en todos los campos:
+
+```php
 $query->where(fn ($q) => $q
     ->where('name', 'ILIKE', '%'.$search.'%')
     ->orWhere('username', 'ILIKE', '%'.$search.'%')
     ->orWhere('email', 'ILIKE', '%'.$search.'%')
     ->orWhere('identity_document', 'ILIKE', '%'.$search.'%')
+    ->orWhereHas('roles', fn ($r) => $r->where('name', 'ILIKE', '%'.$search.'%'))
 );
 ```
 
-### ¿Cuándo usar cada uno?
+**Sin typo tolerance**: "elmersonx" NO encontrará "elmerson" en este modo.
 
-| Búsqueda | Método | Comportamiento | Recomendado para |
-|---|---|---|---|
-| Listado con filtro (`/users?search=...`) | `$query->search()` → SQL `ILIKE` | Substring matching | CRUD, listados admin |
-| Búsqueda global (`/search?q=...`) | `Model::search()` → Scout/Meilisearch | Full-text con relevancia | Búsqueda global en frontend |
-| Búsqueda por roles (scope) | `$query->search()` → SQL `ILIKE` | Substring matching | Filtros internos |
+### Para nuevos Services con list()
 
-### Para nuevos modelos
-
-Si creas un nuevo Service con método `list()`, **NO agregues** un path de Scout/Meilisearch. Usa el `scopeSearch()` del modelo base que ya hace SQL `ILIKE`:
+Usar el mismo patrón híbrido si Meilisearch está disponible, o SQL ILIKE puro si no:
 
 ```php
-// ✅ Correcto — usa scopeSearch() del modelo base
-$query->where(fn ($q) => $q
-    ->where('name', 'ILIKE', '%'.$search.'%')
-    ->orWhere('email', 'ILIKE', '%'.$search.'%')
-);
+public function list(array $filters = []): LengthAwarePaginator
+{
+    $search = $filters['search'] ?? null;
+    // ... resto de filtros ...
 
-// ❌ Incorrecto — Scout no hace substring matching
-if ($search && $this->meilisearchIsAvailable()) {
-    return Model::search($search)->paginate(...);
+    $query = Model::with($relations);
+
+    if ($search) {
+        $meilisearchAvailable = config('scout.driver') === 'meilisearch'
+            && $this->meilisearchIsAvailable();
+
+        if ($meilisearchAvailable) {
+            $searchIds = Model::search($search)->get()->pluck('id');
+            $docIds = Model::where('identity_document', 'ILIKE', '%'.$search.'%')
+                ->pluck('id');
+            $allIds = $searchIds->merge($docIds)->unique()->values();
+            $query->whereIn('id', $allIds);
+        } else {
+            $query->where(fn ($q) => $q
+                ->where('name', 'ILIKE', '%'.$search.'%')
+                // ...
+            );
+        }
+    }
+
+    return $query->orderBy($sort, $order)->paginate($perPage, ['*'], 'page', $page);
+}
+```
+
+Incluir el método helper en el Service:
+
+```php
+private function meilisearchIsAvailable(): bool
+{
+    try {
+        $host = config('scout.meilisearch.host');
+        $ch = curl_init($host.'/health');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 2);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
+        curl_exec($ch);
+        return curl_getinfo($ch, CURLINFO_HTTP_CODE) === 200;
+    } catch (\Exception $e) {
+        return false;
+    }
 }
 ```
 

@@ -299,10 +299,6 @@ class UserService
             $sort = 'created_at';
         }
 
-        // NOTA: No usamos Scout/Meilisearch para búsqueda porque hace matching
-        // por prefijo de palabra, no substring. Para ident_document como "234567890"
-        // se necesita SQL ILIKE %term% que sí encuentra coincidencias parciales.
-
         $relations = ['roles', 'profile'];
         if ($include !== '') {
             $requested = array_map('trim', explode(',', $include));
@@ -322,15 +318,39 @@ class UserService
             $query->whereDoesntHave('roles', fn ($q) => $q->whereIn('roles.name', $rolesToExclude)->where('roles.guard_name', 'api'));
         }
 
+        // Híbrido: Meilisearch (typo tolerance para nombre/email) + SQL ILIKE (substring para identity_document)
         if ($search && trim($search) !== '') {
-            $searchPattern = '%'.trim($search).'%';
-            $query->where(fn ($q) => $q
-                ->where('name', 'ILIKE', $searchPattern)
-                ->orWhere('username', 'ILIKE', $searchPattern)
-                ->orWhere('email', 'ILIKE', $searchPattern)
-                ->orWhere('identity_document', 'ILIKE', $searchPattern)
-                ->orWhereHas('roles', fn ($r) => $r->where('name', 'ILIKE', $searchPattern))
-            );
+            $searchTerm = trim($search);
+            $searchPattern = '%'.$searchTerm.'%';
+
+            $matchedIds = collect();
+            $meilisearchAvailable = config('scout.driver') === 'meilisearch' && $this->meilisearchIsAvailable();
+
+            if ($meilisearchAvailable) {
+                // 1. Meilisearch: typo tolerance para name, email, username
+                $matchedIds = User::search($searchTerm)->get()->pluck('id');
+
+                // 2. SQL ILIKE: substring matching para identity_document
+                //    (Meilisearch no soporta %substring%)
+                $docIds = User::where('identity_document', 'ILIKE', $searchPattern)->pluck('id');
+
+                $allIds = $matchedIds->merge($docIds)->unique()->values();
+
+                if ($allIds->isNotEmpty()) {
+                    $query->whereIn('id', $allIds);
+                } else {
+                    $query->whereRaw('1 = 0');
+                }
+            } else {
+                // Fallback: SQL ILIKE en todos los campos si Meilisearch no está disponible
+                $query->where(fn ($q) => $q
+                    ->where('name', 'ILIKE', $searchPattern)
+                    ->orWhere('username', 'ILIKE', $searchPattern)
+                    ->orWhere('email', 'ILIKE', $searchPattern)
+                    ->orWhere('identity_document', 'ILIKE', $searchPattern)
+                    ->orWhereHas('roles', fn ($r) => $r->where('name', 'ILIKE', $searchPattern))
+                );
+            }
         }
 
         return $query->orderBy($sort, $order)->paginate($perPage, ['*'], 'page', $page);
@@ -449,6 +469,22 @@ class UserService
         $user = $this->find($userId);
 
         return $user->activityLogs()->orderBy('created_at', 'desc')->paginate($perPage);
+    }
+
+    private function meilisearchIsAvailable(): bool
+    {
+        try {
+            $host = config('scout.meilisearch.host');
+            $ch = curl_init($host.'/health');
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 2);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
+            curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            return $httpCode === 200;
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     protected function clearCache(?string $userId = null): void
