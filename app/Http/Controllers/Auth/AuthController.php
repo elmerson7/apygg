@@ -236,6 +236,7 @@ class AuthController
                 'email_verified_at' => $user->email_verified_at ? $user->email_verified_at->toIso8601String() : null,
                 'roles' => $user->roles->pluck('name')->toArray(),
                 'permissions' => $allPermissions->toArray(),
+                'preferences' => $user->preferences,
                 'created_at' => $user->created_at->toIso8601String(),
                 'updated_at' => $user->updated_at->toIso8601String(),
             ], 'Usuario obtenido exitosamente');

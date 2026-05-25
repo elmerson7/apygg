@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('username')->unique()->nullable();
             $table->string('password');
             $table->string('timezone')->nullable()->default('UTC');
+            $table->json('preferences')->nullable();
             $table->string('identity_document')->nullable();
             $table->rememberToken();
             $table->timestamps();

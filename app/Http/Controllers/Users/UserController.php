@@ -243,6 +243,43 @@ class UserController extends Controller
     }
 
     /**
+     * Get current user's preferences.
+     */
+    public function showPreferences(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        return response()->json([
+            'success' => true,
+            'data' => $user->preferences ?? new \stdClass,
+        ]);
+    }
+
+    /**
+     * Update current user's preferences.
+     */
+    public function updatePreferences(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'theme' => ['sometimes', 'string', 'in:light,dark'],
+            'lang' => ['sometimes', 'string', 'in:es,en'],
+            'timezone' => ['sometimes', 'string', 'timezone'],
+            'notifications.email' => ['sometimes', 'boolean'],
+            'notifications.push' => ['sometimes', 'boolean'],
+        ]);
+
+        $user = $this->userService->updatePreferences((string) $user->id, $validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Preferencias actualizadas exitosamente',
+            'data' => $user->preferences,
+        ]);
+    }
+
+    /**
      * Get activity logs for a user.
      */
     public function getActivity(Request $request, string $id): JsonResponse
