@@ -3,66 +3,81 @@
 namespace App\Http\Controllers\Roles;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Permissions\StorePermissionRequest;
+use App\Http\Requests\Permissions\UpdatePermissionRequest;
 use App\Models\Permission;
+use App\Services\PermissionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class PermissionController extends Controller
 {
+    public function __construct(
+        protected PermissionService $permissionService
+    ) {}
+
     public function index(Request $request): JsonResponse
     {
-        $permissions = Permission::when($request->search, fn ($q) => $q->search($request->search))
-            ->orderBy($request->sort ?? 'created_at', $request->order ?? 'desc')
-            ->paginate($request->per_page ?? 20);
+        $this->authorize('viewAny', Permission::class);
+
+        $permissions = $this->permissionService->list($request->only(['search', 'resource', 'action', 'per_page']));
 
         return $this->sendPaginated($permissions);
     }
 
     public function show(Request $request, string $id): JsonResponse
     {
-        $permission = Permission::findOrFail($id);
+        $permission = $this->permissionService->find($id);
+
+        $this->authorize('view', $permission);
 
         return $this->sendSuccess($permission);
     }
 
     public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:100|unique:permissions,name',
-            'display_name' => 'required|string|max:150',
-            'description' => 'nullable|string|max:255',
-        ]);
+        $this->authorize('create', Permission::class);
 
-        $permission = Permission::create($validated);
+        $formRequest = new StorePermissionRequest;
+        $validated = $request->validate($formRequest->rules(), $formRequest->messages());
 
-        return $this->sendSuccess($permission, 'Permiso creado', 201);
+        $permission = $this->permissionService->create($validated);
+
+        return $this->sendSuccess($permission->fresh(), 'Permiso creado exitosamente', 201);
     }
 
     public function update(Request $request, string $id): JsonResponse
     {
-        $permission = Permission::findOrFail($id);
+        $permission = $this->permissionService->find($id);
 
-        $validated = $request->validate([
-            'name' => 'sometimes|string|max:100|unique:permissions,name,'.$id,
-            'display_name' => 'sometimes|string|max:150',
-            'description' => 'nullable|string|max:255',
-        ]);
+        $this->authorize('update', $permission);
 
-        $permission->update($validated);
+        $formRequest = new UpdatePermissionRequest;
+        $validated = $request->validate($formRequest->rules(), $formRequest->messages());
 
-        return $this->sendSuccess($permission, 'Permiso actualizado');
+        $this->permissionService->update($id, array_intersect_key($validated, array_flip(['name', 'display_name', 'description'])));
+
+        return $this->sendSuccess($this->permissionService->find($id), 'Permiso actualizado exitosamente');
     }
 
     public function destroy(string $id): JsonResponse
     {
-        $permission = Permission::findOrFail($id);
+        $permission = $this->permissionService->find($id);
 
-        if ($permission->roles()->count() > 0) {
-            return $this->sendError('No se puede eliminar el permiso porque está asignado a roles', 422);
-        }
+        $this->authorize('delete', $permission);
 
-        $permission->delete();
+        $this->permissionService->delete($id);
 
-        return $this->sendSuccess(null, 'Permiso eliminado');
+        return $this->sendSuccess(null, 'Permiso eliminado exitosamente');
+    }
+
+    public function grouped(Request $request): JsonResponse
+    {
+        $this->authorize('viewAny', Permission::class);
+
+        $all = $this->permissionService->all();
+        $grouped = $all->groupBy('resource')->map(fn ($perms) => $perms->values());
+
+        return $this->sendSuccess($grouped);
     }
 }

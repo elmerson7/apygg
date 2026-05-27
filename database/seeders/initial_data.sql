@@ -31,6 +31,7 @@ INSERT INTO permissions (name, display_name, resource, action, description, crea
 ('roles.read', 'Ver Roles', 'roles', 'read', 'Permite ver listado y detalles de roles', NOW(), NOW()),
 ('roles.update', 'Actualizar Roles', 'roles', 'update', 'Permite actualizar información de roles', NOW(), NOW()),
 ('roles.delete', 'Eliminar Roles', 'roles', 'delete', 'Permite eliminar roles', NOW(), NOW()),
+('roles.manage-permissions', 'Gestionar Permisos de Roles', 'roles', 'manage-permissions', 'Permite asignar y remover permisos de roles', NOW(), NOW()),
 ('permissions.create', 'Crear Permisos', 'permissions', 'create', 'Permite crear nuevos permisos', NOW(), NOW()),
 ('permissions.read', 'Ver Permisos', 'permissions', 'read', 'Permite ver listado y detalles de permisos', NOW(), NOW()),
 ('permissions.update', 'Actualizar Permisos', 'permissions', 'update', 'Permite actualizar información de permisos', NOW(), NOW()),

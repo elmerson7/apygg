@@ -113,12 +113,11 @@ class RolePolicy
      */
     public function assignPermission(User $user, Role $role): bool
     {
-        // No se puede modificar permisos del rol 'admin' a menos que sea admin
         if ($role->name === 'admin' && ! $user->isAdmin()) {
             return false;
         }
 
-        $allowed = $user->hasPermission('roles.assignPermission');
+        $allowed = $user->hasPermission('roles.manage-permissions');
 
         if ($allowed) {
             LogService::info('Intento de asignar permiso a rol autorizado', [
@@ -131,29 +130,8 @@ class RolePolicy
         return $allowed;
     }
 
-    /**
-     * Determinar si el usuario puede remover permisos de un rol.
-     *
-     * @param  User  $user  Usuario autenticado
-     * @param  Role  $role  Rol del que se removerá el permiso
-     */
     public function removePermission(User $user, Role $role): bool
     {
-        // No se puede modificar permisos del rol 'admin' a menos que sea admin
-        if ($role->name === 'admin' && ! $user->isAdmin()) {
-            return false;
-        }
-
-        $allowed = $user->hasPermission('roles.removePermission');
-
-        if ($allowed) {
-            LogService::info('Intento de remover permiso de rol autorizado', [
-                'user_id' => $user->id,
-                'role_id' => $role->id,
-                'role_name' => $role->name,
-            ], 'security');
-        }
-
-        return $allowed;
+        return $this->assignPermission($user, $role);
     }
 }

@@ -16,9 +16,21 @@ use Symfony\Component\HttpFoundation\Response;
  * Uso en rutas:
  * Route::get('/users', [UserController::class, 'index'])->middleware('permission:users.read');
  * Route::post('/users', [UserController::class, 'store'])->middleware('permission:users.create');
+ *
+ * Auto-mapeo: si el permiso no contiene punto (ej. "users"), se completa automáticamente
+ * según el método HTTP: GET → users.read, POST → users.create, PUT/PATCH → users.update, DELETE → users.delete
  */
 class CheckPermission
 {
+    private const METHOD_MAP = [
+        'GET' => 'read',
+        'HEAD' => 'read',
+        'POST' => 'create',
+        'PUT' => 'update',
+        'PATCH' => 'update',
+        'DELETE' => 'delete',
+    ];
+
     /**
      * Handle an incoming request.
      *
@@ -26,7 +38,6 @@ class CheckPermission
      */
     public function handle(Request $request, Closure $next, string ...$permissions): Response
     {
-        // Verificar que el usuario esté autenticado
         if (! auth()->check()) {
             return response()->json([
                 'success' => false,
@@ -40,17 +51,24 @@ class CheckPermission
 
         $user = auth()->user();
 
-        // Si no se especifican permisos, permitir acceso (útil para solo verificar autenticación)
         if (empty($permissions)) {
             return $next($request);
         }
 
-        // Verificar si el usuario tiene alguno de los permisos requeridos
-        // Si se pasan múltiples permisos, el usuario necesita tener al menos uno
+        $resolvedPermissions = [];
+        foreach ($permissions as $permission) {
+            if (str_contains($permission, '.')) {
+                $resolvedPermissions[] = $permission;
+            } else {
+                $action = self::METHOD_MAP[$request->method()] ?? 'read';
+                $resolvedPermissions[] = $permission.'.'.$action;
+            }
+        }
+
         $hasPermission = false;
         $checkedPermissions = [];
 
-        foreach ($permissions as $permission) {
+        foreach ($resolvedPermissions as $permission) {
             $checkedPermissions[] = $permission;
             if ($user->hasPermission($permission)) {
                 $hasPermission = true;

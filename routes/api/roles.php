@@ -18,27 +18,27 @@ Route::middleware(['auth:api'])->group(function () {
     // ========== ROLES ==========
     Route::prefix('roles')->group(function () {
         Route::get('/', [RoleController::class, 'index'])
-            ->middleware('permission:roles.read')
+            ->middleware('permission:roles')
             ->name('roles.index');
 
         Route::get('/{id}', [RoleController::class, 'show'])
-            ->middleware('permission:roles.read')
+            ->middleware('permission:roles')
             ->name('roles.show');
 
         Route::post('/', [RoleController::class, 'store'])
-            ->middleware('permission:roles.create')
+            ->middleware('permission:roles')
             ->name('roles.store');
 
         Route::put('/{id}', [RoleController::class, 'update'])
-            ->middleware('permission:roles.update')
+            ->middleware('permission:roles')
             ->name('roles.update');
 
         Route::delete('/{id}', [RoleController::class, 'destroy'])
-            ->middleware('permission:roles.delete')
+            ->middleware('permission:roles')
             ->name('roles.destroy');
 
         Route::get('/{id}/permissions', [RoleController::class, 'permissions'])
-            ->middleware('permission:roles.read')
+            ->middleware('permission:roles')
             ->name('roles.permissions');
 
         Route::put('/{id}/permissions', [RoleController::class, 'syncPermissions'])
@@ -49,23 +49,27 @@ Route::middleware(['auth:api'])->group(function () {
     // ========== PERMISOS ==========
     Route::prefix('permissions')->group(function () {
         Route::get('/', [PermissionController::class, 'index'])
-            ->middleware('permission:permissions.read')
+            ->middleware('permission:permissions')
             ->name('permissions.index');
 
+        Route::get('/grouped', [PermissionController::class, 'grouped'])
+            ->middleware('permission:permissions')
+            ->name('permissions.grouped');
+
         Route::get('/{id}', [PermissionController::class, 'show'])
-            ->middleware('permission:permissions.read')
+            ->middleware('permission:permissions')
             ->name('permissions.show');
 
         Route::post('/', [PermissionController::class, 'store'])
-            ->middleware('permission:permissions.create')
+            ->middleware('permission:permissions')
             ->name('permissions.store');
 
         Route::put('/{id}', [PermissionController::class, 'update'])
-            ->middleware('permission:permissions.update')
+            ->middleware('permission:permissions')
             ->name('permissions.update');
 
         Route::delete('/{id}', [PermissionController::class, 'destroy'])
-            ->middleware('permission:permissions.delete')
+            ->middleware('permission:permissions')
             ->name('permissions.destroy');
     });
 });
