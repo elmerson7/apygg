@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "project_prompt": "",
+  "default_branch": "main",
+  "connectors": {
+    "github": {
+      "enabled": true,
+      "repo": ""
+    },
+    "linear": {
+      "enabled": false,
+      "team_key": ""
+    },
+    "figma": {
+      "enabled": false,
+      "file_key": "",
+      "node_id": ""
+    },
+    "slack": {
+      "enabled": false,
+      "channel": ""
+    }
+  },
+  "versions": {}
+}
