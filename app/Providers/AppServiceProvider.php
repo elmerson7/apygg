@@ -59,21 +59,21 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(Logout::class, [LogAuthenticationEvents::class, 'handleLogout']);
         Event::listen(PasswordReset::class, [LogAuthenticationEvents::class, 'handlePasswordReset']);
 
-        // Configurar Gate para acceso a documentación de Scramble
-        // Permite acceso en entornos de desarrollo (local, dev) sin autenticación
-        // En producción, requiere autenticación y permisos específicos
+        // Acceso a la documentación de la API (Scramble).
+        //
+        // El acceso abierto es una decisión EXPLÍCITA (SCRAMBLE_PUBLIC_DOCS),
+        // no un efecto secundario del nombre del entorno: 'dev' es una etiqueta
+        // arbitraria que puede acabar en un servidor accesible desde internet, y
+        // entonces la documentación quedaría expuesta sin que nadie lo decidiera.
+        //
+        // La segunda condición es un seguro: aunque alguien active la variable
+        // en producción, no surte efecto.
         Gate::define('viewApiDocs', function ($user = null) {
-            // En entornos de desarrollo, permitir acceso sin autenticación
-            if (app()->environment(['local', 'dev'])) {
+            if (config('scramble.public_docs') && ! app()->isProduction()) {
                 return true;
             }
 
-            // En producción, requerir autenticación y permisos de administrador
-            if ($user && $user->isAdmin()) {
-                return true;
-            }
-
-            return false;
+            return $user && $user->isAdmin();
         });
 
         // Configurar Scramble para detectar todas las rutas de la API

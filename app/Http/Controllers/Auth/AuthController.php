@@ -213,7 +213,7 @@ class AuthController
             }
 
             // Recargar con relaciones
-            $user = \App\Models\User::with(['roles.permissions', 'permissions', 'profile'])->find($user->id);
+            $user = User::with(['roles.permissions', 'permissions', 'profile'])->find($user->id);
 
             $rolePermissions = $user->roles()
                 ->with('permissions')

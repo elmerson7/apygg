@@ -172,13 +172,16 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist --no-dev
 
-      - name: Run Composer audit (quick scan)
-        run: |
-          composer audit --format=json > audit.json || true
-          if [ -f audit.json ]; then
-            echo "Vulnerability scan completed"
-            cat audit.json | jq '.' || true
-          fi
+      # El job DEBE fallar si hay vulnerabilidades. Antes tenía `|| true` y
+      # `continue-on-error`, así que solo imprimía: por eso pasaron
+      # inadvertidos 57 avisos, 4 de ellos críticos.
+      - name: Run Composer audit
+        run: composer audit --locked
+
+      # Las dependencias de desarrollo también importan: se ejecutan en CI y en
+      # las máquinas del equipo. Se avisa, pero no se bloquea el despliegue.
+      - name: Run Composer audit (incluyendo dev)
+        run: composer audit
         continue-on-error: true
 
   build:

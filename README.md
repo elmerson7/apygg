@@ -7,14 +7,14 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
-# APYGG - API Boilerplate Laravel 12
+# APYGG - API Boilerplate Laravel 13
 
-API Boilerplate production-ready construido con Laravel 12, diseñado para aplicaciones modernas y escalables.
+API Boilerplate production-ready construido con Laravel 13, diseñado para aplicaciones modernas y escalables.
 
 ## 🚀 Stack Tecnológico
 
 ### Backend Core
-- **Laravel 12.40.0** - Framework PHP moderno
+- **Laravel 13** - Framework PHP moderno
 - **PHP 8.5** - Lenguaje de programación
 - **FrankenPHP (Octane)** - Servidor HTTP de alto rendimiento basado en Caddy
 

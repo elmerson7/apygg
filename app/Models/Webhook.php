@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\WebhookStatusEnum;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Webhook Model
@@ -113,6 +114,18 @@ class Webhook extends Model
      * @param  Builder  $query
      * @return Builder
      */
+    /**
+     * Entregas realizadas a este webhook.
+     *
+     * La relación faltaba aunque WebhookController ya hacía
+     * `withCount('deliveries')`: GET /webhooks y GET /webhooks/{id} lanzaban
+     * RelationNotFoundException en tiempo de ejecución.
+     */
+    public function deliveries(): HasMany
+    {
+        return $this->hasMany(WebhookDelivery::class, 'webhook_id');
+    }
+
     public function scopeActive($query)
     {
         return $query->where('status', WebhookStatusEnum::active->value);

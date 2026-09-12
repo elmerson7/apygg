@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
+use Laravel\Horizon\Horizon;
+use Meilisearch\Client;
 
 class HealthController extends Controller
 {
@@ -118,8 +120,8 @@ class HealthController extends Controller
         if (config('scout.driver') === 'meilisearch' && config('scout.meilisearch.host')) {
             try {
                 $startTime = microtime(true);
-                if (class_exists(\Meilisearch\Client::class)) {
-                    $client = app(\Meilisearch\Client::class);
+                if (class_exists(Client::class)) {
+                    $client = app(Client::class);
                     $health = $client->health();
                     $services['meilisearch'] = [
                         'status' => 'ok',
@@ -137,11 +139,11 @@ class HealthController extends Controller
         }
 
         // Horizon (opcional — FQCN inline)
-        if (class_exists(\Laravel\Horizon\Horizon::class)) {
+        if (class_exists(Horizon::class)) {
             try {
                 $startTime = microtime(true);
-                if (method_exists(\Laravel\Horizon\Horizon::class, 'status')) {
-                    $horizonStatus = \Laravel\Horizon\Horizon::status();
+                if (method_exists(Horizon::class, 'status')) {
+                    $horizonStatus = Horizon::status();
                     $services['horizon'] = [
                         'status' => 'ok',
                         'latency_ms' => round((microtime(true) - $startTime) * 1000, 2),

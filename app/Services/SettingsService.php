@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Settings;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
@@ -71,7 +72,7 @@ class SettingsService
      * @param  array  $data  Datos a actualizar
      * @return Settings Setting actualizado
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el setting no existe
+     * @throws ModelNotFoundException Si el setting no existe
      * @throws \InvalidArgumentException Si el tipo o valor no son válidos
      */
     public function update(string $id, array $data): Settings
@@ -136,7 +137,7 @@ class SettingsService
      * @param  string  $id  ID del setting
      * @return bool True si se eliminó correctamente
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el setting no existe
+     * @throws ModelNotFoundException Si el setting no existe
      */
     public function delete(string $id): bool
     {
@@ -165,7 +166,7 @@ class SettingsService
      * @param  string  $id  ID del setting
      * @return Settings Setting encontrado
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Si el setting no existe
+     * @throws ModelNotFoundException Si el setting no existe
      */
     public function find(string $id): Settings
     {

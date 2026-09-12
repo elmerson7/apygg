@@ -7,6 +7,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Laravel\Scout\Searchable;
+use Meilisearch\Client;
 
 class SyncSearchIndexesCommand extends Command
 {
@@ -94,7 +95,7 @@ class SyncSearchIndexesCommand extends Command
     {
         $this->info('Configurando Meilisearch settings...');
 
-        $client = new \Meilisearch\Client(config('scout.meilisearch.host'), config('scout.meilisearch.key'));
+        $client = new Client(config('scout.meilisearch.host'), config('scout.meilisearch.key'));
         $index = $client->index('users');
 
         $index->updateSearchableAttributes([

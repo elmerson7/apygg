@@ -35,7 +35,7 @@ no va aquí.
 
 ## Stack
 
-- Laravel 12 · PHP 8.5 · FrankenPHP/Octane (**no** nginx, **no** apache)
+- Laravel 13 · PHP 8.5 · FrankenPHP/Octane (**no** nginx, **no** apache)
 - PostgreSQL 18 · Redis 7 · Docker Compose
 - JWT + Sanctum · Spatie Permission · Horizon · Reverb · Scout/Meilisearch
 - Pest · Pint · PHPStan (Larastan)

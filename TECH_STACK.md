@@ -1,9 +1,9 @@
-# Stack Tecnológico - APYGG Laravel 12
+# Stack Tecnológico - APYGG Laravel 13
 
 ## Backend
 
 ### Framework y Servidor HTTP
-- **Laravel 12** - Framework web PHP moderno para aplicaciones robustas
+- **Laravel 13** - Framework web PHP moderno para aplicaciones robustas
 - **PHP 8.5** - Lenguaje de programación de última generación
 - **FrankenPHP (Octane)** - Servidor HTTP moderno production-ready basado en Caddy para desarrollo y PaaS
 
@@ -70,7 +70,7 @@
 
 ### Herramientas de Test
 - **Pest 4.x** - Framework de testing moderno para PHP (construido sobre PHPUnit 12)
-- **pestphp/pest-plugin-laravel** - Plugin de Pest para Laravel 12 con helpers específicos
+- **pestphp/pest-plugin-laravel** - Plugin de Pest para Laravel con helpers específicos
 
 ### Características
 - Sintaxis expresiva y legible (inspirada en Jest/RSpec)

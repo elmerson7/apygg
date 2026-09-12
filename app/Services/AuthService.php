@@ -73,7 +73,7 @@ class AuthService
         }
 
         // Buscar usuario por email o username
-        $user = \App\Models\User::where('email', $login)
+        $user = User::where('email', $login)
             ->orWhere('username', $login)
             ->first();
 

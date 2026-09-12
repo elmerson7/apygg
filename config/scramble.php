@@ -135,4 +135,19 @@ return [
     ],
 
     'extensions' => [],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Documentación Pública
+    |--------------------------------------------------------------------------
+    |
+    | Permite consultar la documentación sin autenticarse. Pensado para
+    | desarrollo local; el Gate 'viewApiDocs' lo ignora en producción.
+    |
+    | Sin esto, el acceso exige un usuario administrador.
+    |
+    */
+
+    'public_docs' => env('SCRAMBLE_PUBLIC_DOCS', false),
+
 ];
