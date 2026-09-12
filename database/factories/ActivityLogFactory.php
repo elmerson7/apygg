@@ -5,7 +5,6 @@ namespace Database\Factories;
 use App\Models\Logs\ActivityLog;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
 
 /**
  * @extends Factory<ActivityLog>
@@ -29,7 +28,9 @@ class ActivityLogFactory extends Factory
         return [
             'user_id' => User::factory(),
             'model_type' => User::class,
-            'model_id' => Str::uuid()->toString(),
+            // La columna model_id es unsignedBigInteger: los modelos del
+            // proyecto usan ID auto-incremental (ver docs/id-strategy.md).
+            'model_id' => fake()->numberBetween(1, 100000),
             'action' => fake()->randomElement([
                 ActivityLog::ACTION_CREATED,
                 ActivityLog::ACTION_UPDATED,
@@ -99,7 +100,7 @@ class ActivityLogFactory extends Factory
     /**
      * Set the model type and ID.
      */
-    public function forModel(string $modelType, string $modelId): static
+    public function forModel(string $modelType, int|string $modelId): static
     {
         return $this->state(fn (array $attributes) => [
             'model_type' => $modelType,
@@ -110,7 +111,7 @@ class ActivityLogFactory extends Factory
     /**
      * Set the user ID.
      */
-    public function forUser(string $userId): static
+    public function forUser(int|string $userId): static
     {
         return $this->state(fn (array $attributes) => [
             'user_id' => $userId,

@@ -9,6 +9,8 @@ use Database\Seeders\RoleSeeder;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\ParallelTesting;
 use Illuminate\Testing\TestResponse;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
@@ -35,6 +37,15 @@ abstract class TestCase extends BaseTestCase
         if (env('DB_TEST_ISOLATION', true)) {
             $connection = config('database.default');
             $testDatabase = config("database.connections.{$connection}.database").'_test';
+
+            // En modo paralelo, cada proceso necesita su propia base: si todos
+            // comparten una, se pisan los datos entre sí y los tests fallan de
+            // forma intermitente. Créalas con:
+            //   ./create_testdb.sh --migrate --parallel=4
+            if ($token = ParallelTesting::token()) {
+                $testDatabase .= '_'.$token;
+            }
+
             $app['config']->set("database.connections.{$connection}.database", $testDatabase);
         }
 
@@ -47,6 +58,11 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // La caché no la revierte RefreshDatabase: sin limpiarla, un test puede
+        // leer lo que cacheó otro (y con IDs auto-incrementales reiniciados,
+        // devolver el registro equivocado).
+        Cache::flush();
 
         // Seed roles y permisos base antes de cada test
         $this->seedRolesAndPermissions();

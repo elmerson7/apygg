@@ -30,7 +30,7 @@ export GROUP_ID
 
 .DEFAULT_GOAL := help
 
-.PHONY: validate build up upsearch down stop restart redeploy logs ps sh exec composer art key migrate seed schema jwt meilisearch-key scout flint test test-filter test-watch test-parallel test-coverage test-unit test-feature testdb testdb-migrate pint pint-test phpstan check install-hooks horizon reverb octane clear storage-link cors-check fix-permissions dbtest redistest meilitest check-project backup backup-list schema-dump restore-backup restore-remote prune-images prune-images-dry-run prune-builder help
+.PHONY: validate build up upsearch down stop restart redeploy logs ps sh exec composer art key migrate seed schema jwt meilisearch-key scout flint test test-filter test-watch test-parallel test-coverage test-coverage-min test-arch test-mutate test-unit test-feature testdb testdb-migrate testdb-parallel pint pint-test phpstan check install-hooks horizon reverb octane clear storage-link cors-check fix-permissions dbtest redistest meilitest check-project backup backup-list schema-dump restore-backup restore-remote prune-images prune-images-dry-run prune-builder help
 
 # ═══════════════════════════════════════════════════════════════════════
 # VALIDACIÓN
@@ -261,13 +261,25 @@ test-filter:
 test-watch:
 	$(DC) exec app composer test:watch
 
-# Tests en paralelo
+# Tests en paralelo. Requiere una BD por proceso: make testdb-parallel
 test-parallel:
-	$(DC) exec app composer test:parallel
+	$(DC) exec app ./vendor/bin/pest --parallel --processes=$(or $(PROCESSES),4)
 
-# Tests con coverage
+# Tests con coverage (pcov se enciende solo para esta ejecución)
 test-coverage:
-	$(DC) exec app ./vendor/bin/pest --coverage
+	$(DC) exec app php -d pcov.enabled=1 ./vendor/bin/pest --coverage
+
+# Tests con coverage y umbral mínimo. Uso: make test-coverage-min MIN=70
+test-coverage-min:
+	$(DC) exec app php -d pcov.enabled=1 ./vendor/bin/pest --coverage --min=$(or $(MIN),70)
+
+# Tests de arquitectura (reglas estructurales del código)
+test-arch:
+	$(DC) exec app ./vendor/bin/pest --group=arch
+
+# Mutation testing: cambia el código a propósito y comprueba que algún test falle
+test-mutate:
+	$(DC) exec app php -d pcov.enabled=1 ./vendor/bin/pest --mutate --covered-only
 
 # Solo tests unitarios
 test-unit:
@@ -284,6 +296,10 @@ testdb:
 # Crear la BD de testing + migrar desde cero y sembrar datos base
 testdb-migrate:
 	@bash ./create_testdb.sh --migrate
+
+# Preparar las BD para tests en paralelo. Uso: make testdb-parallel PROCESSES=4
+testdb-parallel:
+	@bash ./create_testdb.sh --migrate --parallel=$(or $(PROCESSES),4)
 
 # ═══════════════════════════════════════════════════════════════════════
 # CODE QUALITY
@@ -477,11 +493,16 @@ help:
 	@echo "Tests:"
 	@printf "  %-20s %s\n" "testdb" "Crear BD de testing aislada (<db>_test)"
 	@printf "  %-20s %s\n" "testdb-migrate" "Crear BD de testing + migrar y sembrar"
-	@printf "  %-20s %s\n" "test" "Ejecutar tests"
+	@printf "  %-20s %s\n" "testdb-parallel" "Una BD por proceso (PROCESSES=4)"
+	@printf "  %-20s %s\n" "test" "Ejecutar toda la suite"
 	@printf "  %-20s %s\n" "test-unit" "Solo tests unitarios"
 	@printf "  %-20s %s\n" "test-feature" "Solo tests de integración"
+	@printf "  %-20s %s\n" "test-arch" "Solo reglas de arquitectura"
+	@printf "  %-20s %s\n" "test-parallel" "Tests en paralelo (PROCESSES=4)"
 	@printf "  %-20s %s\n" "test-watch" "Tests en watch"
-	@printf "  %-20s %s\n" "test-coverage" "Tests con coverage"
+	@printf "  %-20s %s\n" "test-coverage" "Informe de cobertura"
+	@printf "  %-20s %s\n" "test-coverage-min" "Cobertura con umbral (MIN=70)"
+	@printf "  %-20s %s\n" "test-mutate" "Mutation testing (lento)"
 	@echo ""
 	@echo "Code Quality:"
 	@printf "  %-20s %s\n" "check" "pint + phpstan (obligatorio tras cambios PHP)"

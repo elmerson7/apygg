@@ -7,12 +7,13 @@ use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->userService = new UserService;
+    // Se resuelve por el contenedor: UserService recibe sus repositorios por
+    // constructor y el binding está en ContractServiceProvider.
+    $this->userService = app(UserService::class);
 
     // Seed roles y permisos base
     $this->seed([
@@ -189,9 +190,7 @@ test('puede obtener un usuario por ID', function () {
 });
 
 test('lanza excepción si el usuario no existe al buscar', function () {
-    // Usar un UUID válido que no existe en la BD
-    $nonExistentUuid = Str::uuid()->toString();
-
-    expect(fn () => $this->userService->find($nonExistentUuid))
+    // Los IDs son enteros auto-incrementales (ver docs/id-strategy.md)
+    expect(fn () => $this->userService->find(999999))
         ->toThrow(ModelNotFoundException::class);
 });

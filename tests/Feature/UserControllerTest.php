@@ -60,10 +60,16 @@ test('puede crear un usuario con permiso users.create', function () {
     $admin = User::factory()->admin()->create();
     $token = JWTAuth::fromUser($admin);
 
+    $userRole = Role::where('name', 'user')->first();
+
     $userData = [
-        'name' => 'New User',
+        'first_name' => 'New',
+        'last_name' => 'User',
+        'username' => 'newuser',
         'email' => 'newuser@example.com',
         'password' => 'Password123!',
+        'identity_document' => '12345678',
+        'role_ids' => [$userRole->id],
     ];
 
     $response = $this->withHeader('Authorization', "Bearer {$token}")
@@ -75,6 +81,7 @@ test('puede crear un usuario con permiso users.create', function () {
             'data' => ['id', 'name', 'email'],
         ]);
 
+    // El servicio compone `name` a partir de first_name y last_name
     $this->assertDatabaseHas('users', [
         'email' => 'newuser@example.com',
         'name' => 'New User',
@@ -105,7 +112,10 @@ test('valida datos requeridos al crear usuario', function () {
         ->postJson('/users', []);
 
     $response->assertStatus(422)
-        ->assertJsonValidationErrors(['name', 'email', 'password']);
+        ->assertJsonValidationErrors([
+            'first_name', 'last_name', 'username', 'email', 'password',
+            'identity_document', 'role_ids',
+        ]);
 });
 
 test('puede ver detalles de un usuario', function () {

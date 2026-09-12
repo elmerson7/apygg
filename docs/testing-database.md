@@ -25,6 +25,17 @@ make testdb-migrate
 
 Esto crea la BD, corre `migrate:fresh` y ejecuta los seeders base sobre ella.
 
+Para tests en paralelo, cada proceso necesita su propia base:
+
+```bash
+make testdb-parallel PROCESSES=4   # crea apygg_test_1 … apygg_test_4
+make test-parallel PROCESSES=4
+```
+
+`TestCase` resuelve el nombre con el token de proceso
+(`ParallelTesting::token()`). Si todos compartieran una base, se pisarían los
+datos y los tests fallarían de forma intermitente.
+
 ## Uso diario
 
 ```bash
@@ -40,6 +51,8 @@ Si solo necesitas crear la BD sin migrar:
 ```bash
 make testdb
 ```
+
+Guía de testing completa: [testing.md](testing.md).
 
 ## Estrategia de datos
 

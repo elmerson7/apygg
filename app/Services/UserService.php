@@ -98,12 +98,36 @@ class UserService
 
         if (! empty($roleIds)) {
             $user->roles()->sync($roleIds);
+        } else {
+            $this->assignDefaultRole($user);
         }
 
         $this->clearCache();
         event(new UserCreated($user));
 
         return $user->fresh(['roles', 'permissions', 'profile']);
+    }
+
+    /**
+     * Asignar el rol por defecto (`config('auth.default_role')`).
+     *
+     * Un usuario sin rol no tiene ningún permiso, lo que se manifiesta como
+     * 403 inexplicables en cuanto intenta hacer algo.
+     */
+    protected function assignDefaultRole(User $user): void
+    {
+        $roleName = config('auth.default_role');
+
+        if (! $roleName) {
+            return;
+        }
+
+        $role = Role::where('name', $roleName)->first();
+
+        if ($role) {
+            $user->roles()->syncWithoutDetaching([$role->id]);
+            $user->unsetRelation('roles');
+        }
     }
 
     /**
@@ -310,12 +334,12 @@ class UserService
         $query = User::with($relations);
 
         if ($role && trim((string) $role) !== '') {
-            $query->whereHas('roles', fn ($q) => $q->where('roles.name', trim($role))->where('roles.guard_name', 'api'));
+            $query->whereHas('roles', fn ($q) => $q->where('roles.name', trim($role)));
         }
 
         if ($excludeRoles && trim((string) $excludeRoles) !== '') {
             $rolesToExclude = array_map('trim', explode(',', $excludeRoles));
-            $query->whereDoesntHave('roles', fn ($q) => $q->whereIn('roles.name', $rolesToExclude)->where('roles.guard_name', 'api'));
+            $query->whereDoesntHave('roles', fn ($q) => $q->whereIn('roles.name', $rolesToExclude));
         }
 
         // Híbrido: Meilisearch (typo tolerance para nombre/email) + SQL ILIKE (substring para identity_document)

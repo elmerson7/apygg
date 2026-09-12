@@ -66,6 +66,10 @@ class ActivityLog extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        // PostgreSQL devuelve los bigint como string por PDO: sin el cast, un
+        // $log->user_id === $user->id falla por tipo.
+        'user_id' => 'integer',
+        'model_id' => 'integer',
         'old_values' => 'array',
         'new_values' => 'array',
         'created_at' => 'datetime',

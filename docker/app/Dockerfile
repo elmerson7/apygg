@@ -41,6 +41,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         pdo_pgsql \
         bcmath \
         redis \
+        pcov \
     && rm -rf /var/lib/apt/lists/* /etc/apt/sources.list.d/pgdg.list
 
 WORKDIR /app

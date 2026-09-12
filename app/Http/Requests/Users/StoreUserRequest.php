@@ -39,7 +39,7 @@ class StoreUserRequest extends BaseFormRequest
                 'unique:users,identity_document',
             ],
             'role_ids' => ['required', 'array', 'min:1'],
-            'role_ids.*' => ['required', 'string', 'exists:roles,id'],
+            'role_ids.*' => ['required', 'integer', 'exists:roles,id'],
         ];
     }
 

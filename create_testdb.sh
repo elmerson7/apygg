@@ -10,9 +10,10 @@
 # base de desarrollo.
 #
 # Uso:
-#   ./create_testdb.sh            # solo crea la BD si no existe
-#   ./create_testdb.sh --migrate  # además migra desde cero y siembra datos base
-#   make testdb / make testdb-migrate
+#   ./create_testdb.sh                          # solo crea la BD si no existe
+#   ./create_testdb.sh --migrate                # además migra y siembra datos base
+#   ./create_testdb.sh --migrate --parallel=4   # una BD por proceso paralelo
+#   make testdb / make testdb-migrate / make testdb-parallel
 #
 # Nota sobre el seeding: con DatabaseTransactions los tests NO re-siembran por
 # cada test. Los datos base se aplican UNA vez aquí y quedan persistentes;
@@ -21,6 +22,19 @@
 set -e
 
 cd "$(dirname "$0")"
+
+# ── Argumentos ──────────────────────────────────────────────────────────
+MIGRATE=0
+PARALLEL=0
+
+for arg in "$@"; do
+    case "$arg" in
+        --migrate)     MIGRATE=1 ;;
+        --parallel=*)  PARALLEL="${arg#--parallel=}" ;;
+        --parallel)    PARALLEL=4 ;;
+        *) echo "Argumento desconocido: $arg"; exit 1 ;;
+    esac
+done
 
 # ── Leer configuración real desde .env / compose.env ────────────────────
 read_env() {
@@ -57,28 +71,44 @@ if ! docker ps --format '{{.Names}}' | grep -q "^${PG_CONTAINER}$"; then
     exit 1
 fi
 
-# ── 1. Crear la BD de testing (si no existe) ────────────────────────────
-if docker exec -e PGPASSWORD="${DB_PASSWORD}" "${PG_CONTAINER}" \
-    psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USERNAME}" -d postgres \
-    -c "CREATE DATABASE ${TEST_DB} OWNER ${DB_USERNAME};" >/dev/null 2>&1; then
-    echo "✅ BD ${TEST_DB} creada"
-else
-    echo "ℹ️  BD ${TEST_DB} ya existe (o no se pudo crear)"
+# ── Bases a preparar ────────────────────────────────────────────────────
+# En modo paralelo, cada proceso necesita la suya: si comparten una, se pisan
+# los datos entre sí y los tests fallan de forma intermitente.
+DATABASES=("${TEST_DB}")
+
+if [[ "${PARALLEL}" -gt 0 ]]; then
+    for i in $(seq 1 "${PARALLEL}"); do
+        DATABASES+=("${TEST_DB}_${i}")
+    done
+    echo "Modo paralelo: ${PARALLEL} procesos"
 fi
 
+# ── 1. Crear las BD de testing (si no existen) ──────────────────────────
+for db in "${DATABASES[@]}"; do
+    if docker exec -e PGPASSWORD="${DB_PASSWORD}" "${PG_CONTAINER}" \
+        psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USERNAME}" -d postgres \
+        -c "CREATE DATABASE ${db} OWNER ${DB_USERNAME};" >/dev/null 2>&1; then
+        echo "✅ BD ${db} creada"
+    else
+        echo "ℹ️  BD ${db} ya existe (o no se pudo crear)"
+    fi
+done
+
 # ── 2. (Opcional) Migrar y sembrar la BD de testing ─────────────────────
-if [[ "${1:-}" == "--migrate" ]]; then
+if [[ "${MIGRATE}" == "1" ]]; then
     if ! docker ps --format '{{.Names}}' | grep -q "^${APP_CONTAINER}$"; then
         echo "❌ No existe el contenedor ${APP_CONTAINER}; no se puede migrar."
         exit 1
     fi
 
-    echo ""
-    echo "Migrando ${TEST_DB} desde cero..."
-    docker exec -e DB_DATABASE="${TEST_DB}" "${APP_CONTAINER}" php artisan migrate:fresh --force
+    for db in "${DATABASES[@]}"; do
+        echo ""
+        echo "Migrando ${db} desde cero..."
+        docker exec -e DB_DATABASE="${db}" "${APP_CONTAINER}" php artisan migrate:fresh --force
 
-    echo "Sembrando datos base..."
-    docker exec -e DB_DATABASE="${TEST_DB}" "${APP_CONTAINER}" php artisan db:seed --force
+        echo "Sembrando datos base en ${db}..."
+        docker exec -e DB_DATABASE="${db}" "${APP_CONTAINER}" php artisan db:seed --force
+    done
 fi
 
 echo ""

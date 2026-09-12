@@ -119,4 +119,19 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Rol por Defecto
+    |--------------------------------------------------------------------------
+    |
+    | Rol que se asigna a un usuario nuevo cuando no se indica ninguno. Sin
+    | esto, los usuarios se crean sin rol y por tanto sin ningún permiso, lo
+    | que se manifiesta como 403 inexplicables en el primer uso.
+    |
+    | Déjalo vacío para no asignar ninguno.
+    |
+    */
+
+    'default_role' => env('AUTH_DEFAULT_ROLE', 'user'),
+
 ];

@@ -109,14 +109,20 @@ Middleware con alias disponibles: `auth:api`, `permission:`, `role:`,
 
 ## Testing
 
-- Pest sobre PHPUnit. Tests en `tests/Unit/` y `tests/Feature/`.
+Guía completa: `docs/testing.md`.
+
+- Pest 4 sobre PHPUnit. Tests en `tests/Unit/` y `tests/Feature/`.
 - **Antes de correr tests la primera vez**: `make testdb-migrate`. Los tests usan
   una BD aislada `<DB_DATABASE>_test` que nunca toca la de desarrollo
   (ver `docs/testing-database.md`).
-- `make test` · `make test-unit` · `make test-feature` ·
+- `make test` · `make test-unit` · `make test-feature` · `make test-arch` ·
   `make test-filter filter=NombreTest`
+- Cobertura: `make test-coverage` (pcov, apagado por defecto).
+- Mutación: `make test-mutate`. Paralelo: `make testdb-parallel` + `make test-parallel`.
 - Nunca `php artisan test` en el host.
 - Si la BD de tests queda con drift tras añadir migraciones: `make testdb-migrate`.
+- Nombres de test en español y en tercera persona, describiendo la conducta.
+  Cubre siempre el camino denegado, no solo el feliz.
 
 ## Respuestas API — usar los métodos del Controller base
 

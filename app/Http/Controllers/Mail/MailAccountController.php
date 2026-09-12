@@ -8,10 +8,10 @@ use App\Http\Requests\Mail\StoreMailAccountRequest;
 use App\Http\Requests\Mail\UpdateMailAccountRequest;
 use App\Http\Resources\Mail\MailAccountResource;
 use App\Models\Mail\MailAccount;
+use App\Services\Mail\MailAccountService;
 use App\Services\MailService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 /**
  * MailAccountController
@@ -20,6 +20,8 @@ use Illuminate\Support\Facades\DB;
  */
 class MailAccountController extends ApiController
 {
+    public function __construct(private readonly MailAccountService $accounts) {}
+
     public function index(Request $request): JsonResponse
     {
         $accounts = MailAccount::query()
@@ -33,17 +35,7 @@ class MailAccountController extends ApiController
 
     public function store(StoreMailAccountRequest $request): JsonResponse
     {
-        $account = DB::transaction(function () use ($request) {
-            $data = $request->validated();
-
-            $account = MailAccount::create($data);
-
-            if ($account->is_default) {
-                $this->clearOtherDefaults($account);
-            }
-
-            return $account;
-        });
+        $account = $this->accounts->create($request->validated());
 
         return $this->sendSuccess(
             new MailAccountResource($account->load('mailProvider')),
@@ -62,13 +54,7 @@ class MailAccountController extends ApiController
 
     public function update(UpdateMailAccountRequest $request, MailAccount $mailAccount): JsonResponse
     {
-        DB::transaction(function () use ($request, $mailAccount) {
-            $mailAccount->update($request->validated());
-
-            if ($mailAccount->is_default) {
-                $this->clearOtherDefaults($mailAccount);
-            }
-        });
+        $this->accounts->update($mailAccount, $request->validated());
 
         return $this->sendSuccess(
             new MailAccountResource($mailAccount->load('mailProvider')),
@@ -112,16 +98,5 @@ class MailAccountController extends ApiController
         return $sent
             ? $this->sendSuccess(null, 'Correo de prueba enviado exitosamente')
             : $this->sendError('No se pudo enviar el correo de prueba. Revisa los logs de correo.', 422);
-    }
-
-    /**
-     * Solo puede haber una cuenta por defecto.
-     */
-    private function clearOtherDefaults(MailAccount $account): void
-    {
-        MailAccount::query()
-            ->where('id', '!=', $account->id)
-            ->where('is_default', true)
-            ->update(['is_default' => false]);
     }
 }

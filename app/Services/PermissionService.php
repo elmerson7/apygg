@@ -53,7 +53,6 @@ class PermissionService
         /** @var Permission $permission */
         $permission = Permission::create([
             'name' => $data['name'],
-            'guard_name' => $data['guard_name'] ?? 'api',
             'display_name' => $data['display_name'] ?? $data['name'],
             'resource' => $data['resource'] ?? $this->extractResource($data['name']),
             'action' => $data['action'] ?? $this->extractAction($data['name']),
