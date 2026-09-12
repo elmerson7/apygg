@@ -170,4 +170,27 @@ return [
 
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Filtro de Warnings de Deprecación
+    |--------------------------------------------------------------------------
+    |
+    | Descarta los warnings de deprecación provenientes de dependencias externas
+    | (vendor), que son ruido conocido de compatibilidad con PHP 8.5 y no
+    | representan un problema de la aplicación.
+    |
+    | Lo aplican FilterDeprecationWarningsHandler (canales single/daily, se
+    | cablean en AppServiceProvider) y FilterDeprecationWarningsProcessor
+    | (canales monolog que declaran 'processors').
+    |
+    | Deja 'patterns' vacío para usar la lista por defecto del trait
+    | FiltersDeprecationWarnings.
+    |
+    */
+
+    'deprecation_filter' => [
+        'enabled' => env('LOG_FILTER_DEPRECATIONS', true),
+        'patterns' => [],
+    ],
+
 ];

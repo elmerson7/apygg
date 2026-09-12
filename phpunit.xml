@@ -26,5 +26,12 @@
     </source>
     <php>
         <env name="BCRYPT_ROUNDS" value="4"/>
+        <!-- La BD de tests es <DB_DATABASE>_test; la resuelve Tests\TestCase.
+             Ponlo en false para correr contra la BD de la conexión por defecto. -->
+        <env name="DB_TEST_ISOLATION" value="true"/>
+        <env name="SCOUT_DRIVER" value="null"/>
+        <env name="MAIL_MAILER" value="array"/>
+        <env name="QUEUE_CONNECTION" value="sync"/>
+        <ini name="memory_limit" value="1G"/>
     </php>
 </phpunit>

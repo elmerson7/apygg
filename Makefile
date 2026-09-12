@@ -30,7 +30,7 @@ export GROUP_ID
 
 .DEFAULT_GOAL := help
 
-.PHONY: validate build up upsearch down stop restart redeploy logs ps sh exec composer art key migrate seed schema jwt meilisearch-key scout flint test test-filter test-watch test-parallel test-coverage pint pint-test phpstan horizon reverb octane clear storage-link cors-check fix-permissions dbtest redistest meilitest check-project help
+.PHONY: validate build up upsearch down stop restart redeploy logs ps sh exec composer art key migrate seed schema jwt meilisearch-key scout flint test test-filter test-watch test-parallel test-coverage test-unit test-feature testdb testdb-migrate pint pint-test phpstan check install-hooks horizon reverb octane clear storage-link cors-check fix-permissions dbtest redistest meilitest check-project backup backup-list schema-dump restore-backup restore-remote prune-images prune-images-dry-run prune-builder help
 
 # ═══════════════════════════════════════════════════════════════════════
 # VALIDACIÓN
@@ -269,6 +269,22 @@ test-parallel:
 test-coverage:
 	$(DC) exec app ./vendor/bin/pest --coverage
 
+# Solo tests unitarios
+test-unit:
+	$(DC) exec app ./vendor/bin/pest tests/Unit
+
+# Solo tests de integración
+test-feature:
+	$(DC) exec app ./vendor/bin/pest tests/Feature
+
+# Crear la BD de testing aislada (<DB_DATABASE>_test). No toca la BD de desarrollo.
+testdb:
+	@bash ./create_testdb.sh
+
+# Crear la BD de testing + migrar desde cero y sembrar datos base
+testdb-migrate:
+	@bash ./create_testdb.sh --migrate
+
 # ═══════════════════════════════════════════════════════════════════════
 # CODE QUALITY
 # ═══════════════════════════════════════════════════════════════════════
@@ -284,6 +300,13 @@ pint-test:
 # Análisis estático PHPStan
 phpstan:
 	$(DC) exec app ./vendor/bin/phpstan analyse
+
+# Quality gate completo: formatea y analiza. Ejecútalo tras cualquier cambio PHP.
+check: pint phpstan
+
+# Instalar los git hooks del repo (pre-commit + commit-msg)
+install-hooks:
+	@bash scripts/install-git-hooks.sh
 
 # ═══════════════════════════════════════════════════════════════════════
 # LARAVEL SERVICES
@@ -312,6 +335,76 @@ storage-link:
 # Verificar CORS
 cors-check:
 	$(DC) exec app php artisan cors:check --fix
+
+# ═══════════════════════════════════════════════════════════════════════
+# BACKUPS
+# ═══════════════════════════════════════════════════════════════════════
+
+# Crear un backup de la base de datos (y subirlo al disco remoto si está activo)
+backup:
+	$(DC) exec app php artisan backup:create
+
+# Listar backups disponibles (local y remoto)
+backup-list:
+	$(DC) exec app php artisan backup:list --remote
+
+# Exportar solo la estructura (DDL) de la BD a database/schema.sql
+schema-dump:
+	$(DC) exec app php artisan db:schema-dump
+
+# Restaurar un backup LOCAL. Uso: make restore-backup file=storage/app/backups/backup_x.sql.gz
+restore-backup:
+	@if [ -z "$(file)" ]; then \
+		echo "Especifica el archivo: make restore-backup file=storage/app/backups/backup.sql.gz"; \
+		exit 1; \
+	fi
+	@if [ ! -f "$(file)" ]; then \
+		echo "Archivo no encontrado: $(file)"; \
+		exit 1; \
+	fi
+	@echo "⚠️  Esto SOBRESCRIBE la base de datos actual."
+	@read -p "¿Continuar? (s/N): " confirm; \
+	if [ "$$confirm" != "s" ] && [ "$$confirm" != "S" ]; then echo "Cancelado."; exit 1; fi
+	$(DC) exec app php artisan backup:restore "$(file)" --force
+
+# Descargar el último backup remoto (S3/R2) y restaurarlo. Uso opcional: file=backup_x.sql.gz
+restore-remote:
+	$(DC) exec app php artisan backup:restore-remote $(if $(file),--file=$(file)) --force
+
+# ═══════════════════════════════════════════════════════════════════════
+# MANTENIMIENTO DOCKER
+# ═══════════════════════════════════════════════════════════════════════
+
+# Ventana de retención por defecto para el pruning de imágenes
+UNTIL ?= 72h
+
+# Borrar imágenes antiguas del proyecto (protege las en uso y las 2 más recientes)
+prune-images:
+	@if [ "$(DRY_RUN)" = "1" ]; then \
+		bash scripts/prune-images.sh --dry-run --until $(UNTIL); \
+	else \
+		echo "═══════════════════════════════════════════════════════════════"; \
+		echo " prune-images — LIMPIEZA REAL (UNTIL=$(UNTIL))"; \
+		echo " Protege imágenes en uso + conserva las 2 más recientes"; \
+		echo "═══════════════════════════════════════════════════════════════"; \
+		docker system df 2>/dev/null || true; \
+		echo ""; \
+		bash scripts/prune-images.sh --dry-run --until $(UNTIL) 2>&1 | grep -E "CANDIDATA|protegida|Total candidatas" || true; \
+		echo ""; \
+		read -p "¿Continuar con el borrado? (s/N): " confirm; \
+		if [ "$$confirm" != "s" ] && [ "$$confirm" != "S" ]; then echo "❌ Cancelado."; exit 1; fi; \
+		bash scripts/prune-images.sh --until $(UNTIL); \
+	fi
+
+# Simular el pruning sin borrar nada
+prune-images-dry-run:
+	@bash scripts/prune-images.sh --dry-run --until $(UNTIL)
+
+# Limpiar la caché del builder de Docker (nunca toca volúmenes)
+prune-builder:
+	@echo "Limpiando builder cache anterior a $(UNTIL)..."
+	@docker builder prune -f --filter "until=$(UNTIL)" 2>&1 || true
+	@docker builder du 2>&1 | head -n 20 || true
 
 # ═══════════════════════════════════════════════════════════════════════
 # UTILIDADES
@@ -382,10 +475,28 @@ help:
 	@printf "  %-20s %s\n" "schema" "Exportar esquema"
 	@echo ""
 	@echo "Tests:"
+	@printf "  %-20s %s\n" "testdb" "Crear BD de testing aislada (<db>_test)"
+	@printf "  %-20s %s\n" "testdb-migrate" "Crear BD de testing + migrar y sembrar"
 	@printf "  %-20s %s\n" "test" "Ejecutar tests"
+	@printf "  %-20s %s\n" "test-unit" "Solo tests unitarios"
+	@printf "  %-20s %s\n" "test-feature" "Solo tests de integración"
 	@printf "  %-20s %s\n" "test-watch" "Tests en watch"
 	@printf "  %-20s %s\n" "test-coverage" "Tests con coverage"
 	@echo ""
 	@echo "Code Quality:"
+	@printf "  %-20s %s\n" "check" "pint + phpstan (obligatorio tras cambios PHP)"
 	@printf "  %-20s %s\n" "pint" "Formatear código"
 	@printf "  %-20s %s\n" "phpstan" "Análisis estático"
+	@printf "  %-20s %s\n" "install-hooks" "Instalar git hooks del repo"
+	@echo ""
+	@echo "Backups:"
+	@printf "  %-20s %s\n" "backup" "Crear backup de la BD"
+	@printf "  %-20s %s\n" "backup-list" "Listar backups (local + remoto)"
+	@printf "  %-20s %s\n" "schema-dump" "Exportar solo el DDL a database/schema.sql"
+	@printf "  %-20s %s\n" "restore-backup" "Restaurar backup local (file=...)"
+	@printf "  %-20s %s\n" "restore-remote" "Descargar y restaurar backup remoto"
+	@echo ""
+	@echo "Mantenimiento Docker:"
+	@printf "  %-20s %s\n" "prune-images" "Borrar imágenes antiguas (UNTIL=72h)"
+	@printf "  %-20s %s\n" "prune-images-dry-run" "Simular el borrado de imágenes"
+	@printf "  %-20s %s\n" "prune-builder" "Limpiar caché del builder"

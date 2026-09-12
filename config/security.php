@@ -104,4 +104,26 @@ return [
     */
 
     'blocked_message' => 'Acceso denegado desde esta dirección IP.',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cloudflare — Resolución de IP Real
+    |--------------------------------------------------------------------------
+    |
+    | Cuando la app corre detrás de Cloudflare, la IP del peer es la del proxy.
+    | ResolveClientIpMiddleware reemplaza REMOTE_ADDR por la cabecera
+    | CF-Connecting-IP, pero SOLO si el peer pertenece a un rango oficial de
+    | Cloudflare (si no, cualquiera podría falsificar su IP).
+    |
+    | Deja 'ipv4'/'ipv6' vacíos para usar los rangos por defecto del middleware.
+    | Rangos oficiales actualizados: https://www.cloudflare.com/ips/
+    |
+    */
+
+    'cloudflare' => [
+        'enabled' => env('SECURITY_CLOUDFLARE_ENABLED', true),
+        'ipv4' => [],
+        'ipv6' => [],
+    ],
+
 ];

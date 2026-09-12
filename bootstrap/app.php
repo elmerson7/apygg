@@ -31,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Middleware para API: todas las respuestas en JSON
         $middleware->api(prepend: [
+            \App\Http\Middleware\ResolveClientIpMiddleware::class, // IP real del cliente detrás de Cloudflare (antes que todo lo que use la IP)
             \App\Http\Middleware\CorsMiddleware::class, // CORS personalizado con ALLOWED_ORIGINS
             \App\Http\Middleware\TraceIdMiddleware::class, // Generar e inyectar Trace ID
             \App\Http\Middleware\SecurityHeadersMiddleware::class, // Headers de seguridad HTTP
@@ -52,6 +53,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth:api-key' => \App\Http\Middleware\AuthenticateApiKey::class,
             'api-key-scope' => \App\Http\Middleware\CheckApiKeyScope::class,
             'ip.whitelist' => \App\Http\Middleware\IpWhitelistMiddleware::class,
+            'feature' => \App\Http\Middleware\CheckFeatureFlag::class,
+            'auth.optional' => \App\Http\Middleware\OptionalAuthMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

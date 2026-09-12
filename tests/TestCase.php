@@ -29,6 +29,15 @@ abstract class TestCase extends BaseTestCase
         // Forzar entorno de testing para evitar envío a Sentry
         $app['config']->set('app.env', 'testing');
 
+        // Usar la BD de testing aislada: <BD de desarrollo>_test (ej: apygg_test).
+        // La crea ./create_testdb.sh (make testdb / make testdb-migrate).
+        // Así los tests nunca tocan la base de desarrollo.
+        if (env('DB_TEST_ISOLATION', true)) {
+            $connection = config('database.default');
+            $testDatabase = config("database.connections.{$connection}.database").'_test';
+            $app['config']->set("database.connections.{$connection}.database", $testDatabase);
+        }
+
         return $app;
     }
 

@@ -85,43 +85,35 @@ Route::middleware('auth')->group(function () {
 
 ### 3. En Middleware
 
-```php
-namespace App\Http\Middleware;
+El middleware ya existe (`app/Http/Middleware/CheckFeatureFlag.php`) y está
+registrado con el alias `feature` en `bootstrap/app.php`. Responde 403 con el
+envelope estándar cuando la flag está apagada:
 
-use App\Helpers\Feature;
-use Closure;
-use Illuminate\Http\Request;
-
-class CheckFeatureFlag
+```json
 {
-    public function handle(Request $request, Closure $next, string $feature)
-    {
-        if (Feature::disabled($feature)) {
-            return response()->json([
-                'error' => 'Esta funcionalidad no está disponible actualmente'
-            ], 403);
-        }
-        
-        return $next($request);
-    }
+  "success": false,
+  "message": "Esta funcionalidad no está disponible actualmente",
+  "type": "feature_disabled",
+  "errors": { "feature": "beta_api_features" }
 }
 ```
 
-**Registro en `app/Http/Kernel.php`:**
-
-```php
-protected $middlewareAliases = [
-    // ...
-    'feature' => \App\Http\Middleware\CheckFeatureFlag::class,
-];
-```
-
-**Uso en routes:**
+**Uso en rutas:**
 
 ```php
 Route::get('/beta/endpoint', [BetaController::class, 'index'])
     ->middleware('feature:beta_api_features');
+
+// Todo un grupo detrás de una flag
+Route::middleware('feature:beta_api_features')->group(function () {
+    Route::get('/beta/reports', [BetaController::class, 'reports']);
+    Route::get('/beta/stats', [BetaController::class, 'stats']);
+});
 ```
+
+Declarar la flag a nivel de ruta es preferible a comprobarla dentro del
+controller: el endpoint deja de existir funcionalmente en lugar de ejecutarse a
+medias.
 
 ### 4. En Service Classes
 

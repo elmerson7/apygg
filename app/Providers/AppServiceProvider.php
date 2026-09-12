@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Listeners\LogAuthenticationEvents;
 use App\Logging\DateOrganizedStreamHandler;
+use App\Logging\FilterDeprecationWarningsHandler;
 use App\Models\ApiKey;
 use App\Models\Webhook;
 use App\Observers\ApiKeyObserver;
@@ -160,10 +161,13 @@ class AppServiceProvider extends ServiceProvider
         // Canal single (laravel.log) también organizado por fecha
         Log::extend('single', function ($app, $config) {
             $level = Logger::toMonologLevel($config['level'] ?? 'debug');
-            $handler = DateOrganizedStreamHandler::create([
+            $baseHandler = DateOrganizedStreamHandler::create([
                 'filename' => 'laravel.log',
                 'level' => $level,
             ]);
+
+            // Envolver con el filtro de deprecaciones de vendor (ruido de PHP 8.5)
+            $handler = new FilterDeprecationWarningsHandler($baseHandler);
 
             return new Logger('single', [$handler]);
         });
@@ -174,10 +178,13 @@ class AppServiceProvider extends ServiceProvider
             $days = $config['days'] ?? 14;
 
             // Usar el handler organizado por fecha
-            $handler = DateOrganizedStreamHandler::create([
+            $baseHandler = DateOrganizedStreamHandler::create([
                 'filename' => 'laravel.log',
                 'level' => $level,
             ]);
+
+            // Envolver con el filtro de deprecaciones de vendor (ruido de PHP 8.5)
+            $handler = new FilterDeprecationWarningsHandler($baseHandler);
 
             return new Logger('daily', [$handler]);
         });
