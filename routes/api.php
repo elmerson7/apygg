@@ -61,6 +61,7 @@ require __DIR__.'/api/mail.php';
 require __DIR__.'/api/llm.php';
 require __DIR__.'/api/menu.php';
 require __DIR__.'/api/security.php';
+require __DIR__.'/api/docs.php';
 require __DIR__.'/api/chat.php';
 require __DIR__.'/api/settings.php';
 
