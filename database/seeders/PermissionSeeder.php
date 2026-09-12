@@ -62,6 +62,10 @@ class PermissionSeeder extends Seeder
             ['name' => 'mail.manage', 'resource' => 'mail', 'action' => 'manage', 'display_name' => 'Gestionar Correo', 'description' => 'Permite administrar proveedores, cuentas, plantillas y ajustes de correo'],
             ['name' => 'mail.logs', 'resource' => 'mail', 'action' => 'logs', 'display_name' => 'Ver Historial de Correo', 'description' => 'Permite consultar el historial y las estadísticas de correos enviados'],
 
+            // Permisos de IA
+            ['name' => 'llm.manage', 'resource' => 'llm', 'action' => 'manage', 'display_name' => 'Gestionar IA', 'description' => 'Permite configurar las áreas y modelos de IA'],
+            ['name' => 'llm.logs', 'resource' => 'llm', 'action' => 'logs', 'display_name' => 'Ver Auditoría de IA', 'description' => 'Permite consultar el consumo y la auditoría de las llamadas a IA'],
+
             // Permisos de Sistema
             ['name' => 'system.settings', 'resource' => 'system', 'action' => 'settings', 'display_name' => 'Gestionar Configuración', 'description' => 'Permite modificar configuración del sistema'],
             ['name' => 'system.logs', 'resource' => 'system', 'action' => 'logs', 'display_name' => 'Ver Logs', 'description' => 'Permite ver logs del sistema'],

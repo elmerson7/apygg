@@ -45,6 +45,14 @@ Schedule::command('mail:logs-clean')
         Log::error('Falló la limpieza del historial de correo');
     });
 
+// Limpieza de la auditoría de IA: cada día a las 2:45 AM
+Schedule::command('llm:prune-logs')
+    ->dailyAt('02:45')
+    ->withoutOverlapping()
+    ->onFailure(function () {
+        Log::error('Falló la limpieza de la auditoría de IA');
+    });
+
 // Generación de reportes: cada semana (lunes) a las 8 AM
 Schedule::command('reports:generate')
     ->weeklyOn(1, '8:00') // Lunes a las 8 AM

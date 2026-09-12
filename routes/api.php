@@ -58,6 +58,7 @@ require __DIR__.'/api/files.php';
 require __DIR__.'/api/search.php';
 require __DIR__.'/api/webhooks.php';
 require __DIR__.'/api/mail.php';
+require __DIR__.'/api/llm.php';
 require __DIR__.'/api/chat.php';
 require __DIR__.'/api/settings.php';
 
