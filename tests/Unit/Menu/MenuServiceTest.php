@@ -54,7 +54,7 @@ test('un ítem sin permiso y sin roles no lo ve nadie', function () {
 });
 
 test('un ítem sin permiso se ve si el rol lo tiene asignado', function () {
-    $role = Role::create(['name' => 'editor', 'display_name' => 'Editor']);
+    $role = Role::firstOrCreate(['name' => 'editor'], ['display_name' => 'Editor']);
     $this->user->roles()->attach($role->id);
 
     $item = menuItem(['key' => 'suelto']);
@@ -107,7 +107,7 @@ test('un hijo cuyo padre no es visible se descarta del árbol', function () {
 });
 
 test('syncRoleAssignments reemplaza las asignaciones', function () {
-    $role = Role::create(['name' => 'editor', 'display_name' => 'Editor']);
+    $role = Role::firstOrCreate(['name' => 'editor'], ['display_name' => 'Editor']);
     $item = menuItem(['key' => 'suelto']);
 
     $this->service->syncRoleAssignments([['key' => 'suelto', 'role_ids' => [$role->id]]]);

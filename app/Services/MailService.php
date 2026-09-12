@@ -31,7 +31,7 @@ class MailService
     /**
      * Enviar un correo (encolado por defecto).
      *
-     * @param  string|array<int, string|array{email: string, name?: string}>  $to
+     * @param  string|array{email: string, name?: string}|array<int, string|array{email: string, name?: string}>  $to
      * @param  array<string, mixed>  $data  Datos para la vista
      * @param  string|null  $templateKey  Clave de `mail_template_configs`
      * @param  array<int, array{content: string, filename: string}>  $attachments
@@ -105,6 +105,9 @@ class MailService
     /**
      * ¿Se puede enviar ahora mismo? Pausa global, plantilla pausada y límite diario.
      */
+    /**
+     * @param  string|array<mixed>  $to
+     */
     protected static function canSend(?string $templateKey, string|array $to): bool
     {
         if (MailSetting::isGloballyPaused()) {
@@ -158,8 +161,10 @@ class MailService
             $mailable = new SimpleMail($view, $data, $subject);
             $mailable->from($account->from_email, $account->from_name);
 
+            // Mailer::to() recibe un único destinatario; el nombre se
+            // pasa como array, no como segundo argumento.
             Mail::mailer($account->getDriver())
-                ->to($recipient['email'], $recipient['name'])
+                ->to([['email' => $recipient['email'], 'name' => $recipient['name']]])
                 ->send($mailable);
 
             $log?->update([
@@ -187,12 +192,13 @@ class MailService
     /**
      * Normalizar los destinatarios a `[['email' => ..., 'name' => ...], ...]`.
      *
-     * @param  string|array<int, string|array{email: string, name?: string}>  $to
+     * @param  string|array<mixed>  $to
      * @return array<int, array{email: string, name: string|null}>
      */
     protected static function normalizeRecipients(string|array $to): array
     {
-        $list = is_array($to) && ! isset($to['email']) ? $to : [$to];
+        // Un array con clave 'email' es UN destinatario, no una lista.
+        $list = is_array($to) && ! array_key_exists('email', $to) ? $to : [$to];
         $recipients = [];
 
         foreach ($list as $item) {

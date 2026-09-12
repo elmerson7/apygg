@@ -43,7 +43,7 @@ class MenuSeeder extends Seeder
             );
         }
 
-        $this->command?->info('Ítems de menú registrados: '.MenuItem::count());
-        $this->command?->warn("El ítem 'dashboard' no tiene permiso: asígnale roles desde /admin/menu o no lo verá nadie.");
+        $this->command->info('Ítems de menú registrados: '.MenuItem::count());
+        $this->command->warn("El ítem 'dashboard' no tiene permiso: asígnale roles desde /admin/menu o no lo verá nadie.");
     }
 }

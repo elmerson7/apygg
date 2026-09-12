@@ -24,7 +24,7 @@ use App\Models\Model;
  * @property string|null $description
  * @property string $primary_provider
  * @property string|null $primary_model
- * @property array<int, array{provider: string, model: string}>|null $fallbacks
+ * @property array<int, mixed>|null $fallbacks
  * @property bool $is_active
  * @property int $sort_order
  */

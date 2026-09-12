@@ -71,6 +71,12 @@ app/
 Los servicios se inyectan **por interfaz** (`app/Contracts/`); el binding está en
 `ContractServiceProvider`.
 
+**Dos bases de controlador**: `ApiController` para controladores con acciones
+propias (route-model binding, Form Requests tipados) y `Controller` para el CRUD
+genérico. Sobrescribir los métodos CRUD de `Controller` con otra firma es un
+error fatal de PHP; lo mismo vale para los scopes del `Model` base, que están sin
+tipar. Detalle en `docs/CODING_STANDARDS.md`.
+
 ## Rutas — NO existe el prefijo /api/
 
 Las rutas cuelgan de la raíz. Cada módulo vive en `routes/api/<modulo>.php` y se

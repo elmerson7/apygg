@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\RespondsWithApi;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
  * Base Controller
@@ -16,17 +16,12 @@ use Illuminate\Pagination\LengthAwarePaginator;
  */
 abstract class Controller
 {
-    use AuthorizesRequests, ValidatesRequests;
+    use AuthorizesRequests, RespondsWithApi, ValidatesRequests;
 
     /**
      * Modelo asociado al controlador
      */
     protected ?string $model = null;
-
-    /**
-     * Resource para transformar respuestas
-     */
-    protected ?string $resource = null;
 
     /**
      * Relaciones permitidas para eager loading
@@ -184,75 +179,6 @@ abstract class Controller
         }
 
         return $query;
-    }
-
-    /**
-     * Enviar respuesta exitosa
-     */
-    protected function sendSuccess($data = null, string $message = 'Operación exitosa', int $statusCode = 200): JsonResponse
-    {
-        $response = [
-            'success' => true,
-            'message' => $message,
-        ];
-
-        if ($data !== null) {
-            if ($this->resource && class_exists($this->resource)) {
-                $response['data'] = new $this->resource($data);
-            } else {
-                $response['data'] = $data;
-            }
-        }
-
-        return response()->json($response, $statusCode);
-    }
-
-    /**
-     * Enviar respuesta de error
-     */
-    protected function sendError(string $message = 'Error en la operación', int $statusCode = 400, array $errors = []): JsonResponse
-    {
-        $response = [
-            'success' => false,
-            'message' => $message,
-        ];
-
-        if (! empty($errors)) {
-            $response['errors'] = $errors;
-        }
-
-        return response()->json($response, $statusCode);
-    }
-
-    /**
-     * Enviar respuesta paginada
-     */
-    protected function sendPaginated(LengthAwarePaginator $paginator): JsonResponse
-    {
-        $data = $paginator->items();
-
-        if ($this->resource && class_exists($this->resource)) {
-            $data = $this->resource::collection($data);
-        }
-
-        return response()->json([
-            'success' => true,
-            'data' => $data,
-            'meta' => [
-                'current_page' => $paginator->currentPage(),
-                'per_page' => $paginator->perPage(),
-                'total' => $paginator->total(),
-                'last_page' => $paginator->lastPage(),
-                'from' => $paginator->firstItem(),
-                'to' => $paginator->lastItem(),
-            ],
-            'links' => [
-                'first' => $paginator->url(1),
-                'last' => $paginator->url($paginator->lastPage()),
-                'prev' => $paginator->previousPageUrl(),
-                'next' => $paginator->nextPageUrl(),
-            ],
-        ]);
     }
 
     /**

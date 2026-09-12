@@ -100,7 +100,11 @@ class LlmGateway
             return null;
         }
 
-        $mapped = config("llm.area_map.{$this->useCase}");
+        // Se lee el array completo y se indexa a mano: las claves del mapa
+        // llevan punto ('informes.resumen') y config() las interpretaría como
+        // rutas anidadas, con lo que nunca encontraría la entrada.
+        $map = (array) config('llm.area_map', []);
+        $mapped = $map[$this->useCase] ?? null;
 
         if (is_string($mapped) && $mapped !== '') {
             return $mapped;

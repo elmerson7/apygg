@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
@@ -60,7 +59,11 @@ class MenuItem extends Model
         return $this->belongsToMany(Role::class, 'menu_item_role', 'menu_item_id', 'role_id');
     }
 
-    public function scopeActive(Builder $query): Builder
+    /**
+     * Nota: la firma debe coincidir con la del Model base (sin tipar), o PHP
+     * lanza un error fatal por estrechar la firma del padre.
+     */
+    public function scopeActive($query)
     {
         return $query->where('is_active', true);
     }

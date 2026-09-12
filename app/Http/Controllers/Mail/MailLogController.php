@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Mail;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\ApiController;
 use App\Http\Resources\Mail\MailLogResource;
 use App\Models\Mail\MailLog;
 use Illuminate\Http\JsonResponse;
@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
  * Consulta del historial de correos: a quién se envió, con qué plantilla y en
  * qué estado terminó. Es la respuesta a "¿le llegó el correo al usuario?".
  */
-class MailLogController extends Controller
+class MailLogController extends ApiController
 {
     public function index(Request $request): JsonResponse
     {

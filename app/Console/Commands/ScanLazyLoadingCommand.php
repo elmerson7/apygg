@@ -132,15 +132,30 @@ class ScanLazyLoadingCommand extends Command
                 default => $this->ok++,
             };
         } catch (LazyLoadingViolationException $e) {
+            // La excepción no expone el modelo ni la relación como métodos:
+            // solo vienen en el mensaje ("Attempted to lazy load [x] on model [Y]").
             $this->violations[] = [
                 'uri' => $uri,
                 'name' => $route->getName() ?? '',
-                'model' => class_basename($e->getModel()),
-                'relation' => $e->getRelation(),
+                'model' => $this->extractFromViolation($e->getMessage(), 'model'),
+                'relation' => $this->extractFromViolation($e->getMessage(), 'relation'),
             ];
         } catch (\Throwable $e) {
             $this->errors[] = ['uri' => $uri, 'error' => Str::limit($e->getMessage(), 120)];
         }
+    }
+
+    /**
+     * Extraer el modelo o la relación del mensaje de la violación.
+     */
+    private function extractFromViolation(string $message, string $part): string
+    {
+        // "Attempted to lazy load [relacion] on model [App\Models\Foo] ..."
+        if (preg_match('/lazy load \[(.+?)\] on model \[(.+?)\]/', $message, $m) === 1) {
+            return $part === 'relation' ? $m[1] : class_basename($m[2]);
+        }
+
+        return '?';
     }
 
     /**
@@ -202,7 +217,7 @@ class ScanLazyLoadingCommand extends Command
     private function candidateTables(string $parameter): array
     {
         // Quitar sufijos habituales: {userId} → user
-        $base = Str::of($parameter)->replaceEnd('Id', '')->replaceEnd('_id', '')->toString();
+        $base = preg_replace('/(_id|Id)$/', '', $parameter) ?? $parameter;
 
         if ($base === '' || strtolower($base) === 'id') {
             return [];

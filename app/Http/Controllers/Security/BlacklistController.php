@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Security;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\ApiController;
 use App\Http\Requests\Security\StoreBlacklistRequest;
 use App\Models\Blacklist;
 use Illuminate\Http\JsonResponse;
@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
  *
  * Gestión de la lista de identidades bloqueadas.
  */
-class BlacklistController extends Controller
+class BlacklistController extends ApiController
 {
     public function index(Request $request): JsonResponse
     {

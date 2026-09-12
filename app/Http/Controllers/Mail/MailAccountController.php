@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Mail;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\ApiController;
 use App\Http\Requests\Mail\SendTestMailRequest;
 use App\Http\Requests\Mail\StoreMailAccountRequest;
 use App\Http\Requests\Mail\UpdateMailAccountRequest;
@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\DB;
  *
  * CRUD de cuentas de envío y prueba de entrega.
  */
-class MailAccountController extends Controller
+class MailAccountController extends ApiController
 {
     public function index(Request $request): JsonResponse
     {

@@ -83,19 +83,25 @@ class DocsService
      */
     public function listDocs(string $scope = 'general'): array
     {
-        return DocChunk::query()
+        $rows = DocChunk::query()
             ->forScope($scope)
             ->select('doc_id', 'title', DB::raw('COUNT(*) as chunks'), DB::raw('MAX(updated_at) as indexed_at'))
             ->groupBy('doc_id', 'title')
             ->orderBy('doc_id')
-            ->get()
-            ->map(fn ($row) => [
+            ->get();
+
+        $docs = [];
+
+        foreach ($rows as $row) {
+            $docs[] = [
                 'doc_id' => $row->doc_id,
                 'title' => $row->title,
                 'chunks' => (int) $row->chunks,
                 'indexed_at' => $row->indexed_at,
-            ])
-            ->all();
+            ];
+        }
+
+        return $docs;
     }
 
     /**

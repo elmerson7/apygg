@@ -64,7 +64,7 @@ class SecurityScan extends Model
      * La sal nunca se expone: publicarla permitiría deshacer la anonimización
      * por fuerza bruta sobre un espacio pequeño (una IP son 2^32 candidatos).
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $hidden = ['salt'];
 

@@ -109,7 +109,9 @@ class MailAccount extends Model
      */
     public function getDriver(): string
     {
-        return $this->mailProvider?->driver ?? config('mail.default');
+        $provider = $this->mailProvider;
+
+        return $provider ? $provider->driver : (string) config('mail.default');
     }
 
     public function isResend(): bool
@@ -129,7 +131,7 @@ class MailAccount extends Model
     public function getCredentials(): array
     {
         $driver = $this->getDriver();
-        $config = $this->mailProvider?->config ?? [];
+        $config = $this->mailProvider->config ?? [];
 
         return match ($driver) {
             'resend' => [

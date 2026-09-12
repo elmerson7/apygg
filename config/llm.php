@@ -26,6 +26,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Valores por Defecto al Sembrar
+    |--------------------------------------------------------------------------
+    |
+    | Proveedor y modelo con los que LlmAreaSeeder crea las áreas. Con
+    | OpenRouter, el identificador del modelo lleva el prefijo del proveedor
+    | (por ejemplo 'anthropic/claude-sonnet-5' u 'openai/gpt-4o-mini').
+    |
+    | Déjalo vacío y configura el modelo de cada área desde /admin/llm/areas.
+    |
+    */
+
+    'default_provider' => env('LLM_DEFAULT_PROVIDER', 'openrouter'),
+
+    'default_model' => env('LLM_DEFAULT_MODEL'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Controles Operativos
     |--------------------------------------------------------------------------
     |

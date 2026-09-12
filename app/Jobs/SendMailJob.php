@@ -188,8 +188,10 @@ class SendMailJob implements ShouldQueue
             $mailable = new SimpleMail($this->view, $this->viewData, $this->subject);
             $mailable->from($account->from_email, $account->from_name);
 
+            // Mailer::to() recibe un único destinatario; el nombre se
+            // pasa como array, no como segundo argumento.
             Mail::mailer($account->getDriver())
-                ->to($this->toEmail, $this->toName)
+                ->to([['email' => $this->toEmail, 'name' => $this->toName]])
                 ->send($mailable);
 
             $this->updateLogStatus(MailLog::STATUS_SENT, null);

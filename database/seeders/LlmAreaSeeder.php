@@ -20,8 +20,9 @@ class LlmAreaSeeder extends Seeder
 {
     public function run(): void
     {
-        $defaultModel = env('LLM_DEFAULT_MODEL');
-        $defaultProvider = env('LLM_DEFAULT_PROVIDER', 'openrouter');
+        // Vía config y no env(): con la configuración cacheada, env() devuelve null.
+        $defaultModel = config('llm.default_model');
+        $defaultProvider = (string) config('llm.default_provider', 'openrouter');
 
         $areas = [
             [
@@ -43,10 +44,10 @@ class LlmAreaSeeder extends Seeder
             );
         }
 
-        $this->command?->info('Áreas de IA registradas: '.LlmArea::count());
+        $this->command->info('Áreas de IA registradas: '.LlmArea::count());
 
         if (! $defaultModel) {
-            $this->command?->warn('Sin LLM_DEFAULT_MODEL: configura el modelo de cada área desde /admin/llm/areas.');
+            $this->command->warn('Sin LLM_DEFAULT_MODEL: configura el modelo de cada área desde /admin/llm/areas.');
         }
     }
 }
