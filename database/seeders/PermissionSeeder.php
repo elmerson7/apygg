@@ -62,6 +62,13 @@ class PermissionSeeder extends Seeder
             ['name' => 'mail.manage', 'resource' => 'mail', 'action' => 'manage', 'display_name' => 'Gestionar Correo', 'description' => 'Permite administrar proveedores, cuentas, plantillas y ajustes de correo'],
             ['name' => 'mail.logs', 'resource' => 'mail', 'action' => 'logs', 'display_name' => 'Ver Historial de Correo', 'description' => 'Permite consultar el historial y las estadísticas de correos enviados'],
 
+            // Permisos de Seguridad
+            ['name' => 'security.audit', 'resource' => 'security', 'action' => 'audit', 'display_name' => 'Auditoría de Seguridad', 'description' => 'Permite lanzar y consultar escaneos de seguridad'],
+            ['name' => 'security.blacklist', 'resource' => 'security', 'action' => 'blacklist', 'display_name' => 'Gestionar Lista de Bloqueo', 'description' => 'Permite bloquear y desbloquear identidades (correo, documento, usuario)'],
+
+            // Permisos de Menú
+            ['name' => 'menu.manage', 'resource' => 'menu', 'action' => 'manage', 'display_name' => 'Gestionar Menú', 'description' => 'Permite configurar los ítems del menú y su visibilidad'],
+
             // Permisos de IA
             ['name' => 'llm.manage', 'resource' => 'llm', 'action' => 'manage', 'display_name' => 'Gestionar IA', 'description' => 'Permite configurar las áreas y modelos de IA'],
             ['name' => 'llm.logs', 'resource' => 'llm', 'action' => 'logs', 'display_name' => 'Ver Auditoría de IA', 'description' => 'Permite consultar el consumo y la auditoría de las llamadas a IA'],

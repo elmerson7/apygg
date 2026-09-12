@@ -258,17 +258,19 @@ class NotificationService
     protected static function logNotification(string $channel, $recipient, string $subject): void
     {
         try {
-            // Guardar en tabla de historial si existe
-            if (class_exists(NotificationHistory::class)) {
-                NotificationHistory::create([
-                    'channel' => $channel,
-                    'recipient' => is_array($recipient) ? json_encode($recipient) : $recipient,
-                    'subject' => $subject,
-                    'sent_at' => now(),
-                ]);
-            }
-        } catch (\Exception $e) {
-            // Silenciar errores
+            NotificationHistory::create([
+                'channel' => $channel,
+                'recipient' => is_array($recipient) ? json_encode($recipient) : $recipient,
+                'subject' => $subject,
+                'status' => NotificationHistory::STATUS_SENT,
+                'sent_at' => now(),
+            ]);
+        } catch (\Throwable $e) {
+            // El historial nunca debe tumbar el envío que lo originó.
+            Log::warning('NotificationService: no se pudo registrar el historial', [
+                'channel' => $channel,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 
@@ -280,11 +282,6 @@ class NotificationService
      */
     public static function getHistory(?string $channel = null, int $limit = 50): Collection
     {
-        if (! class_exists(NotificationHistory::class)) {
-            // Retornar colección vacía si la clase no existe
-            return new Collection([]);
-        }
-
         $query = NotificationHistory::query()
             ->orderBy('sent_at', 'desc')
             ->limit($limit);
