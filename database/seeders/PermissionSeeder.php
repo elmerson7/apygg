@@ -58,6 +58,10 @@ class PermissionSeeder extends Seeder
             ['name' => 'comments.delete', 'resource' => 'comments', 'action' => 'delete', 'display_name' => 'Eliminar Comentarios', 'description' => 'Permite eliminar comentarios propios'],
             ['name' => 'comments.moderate', 'resource' => 'comments', 'action' => 'moderate', 'display_name' => 'Moderar Comentarios', 'description' => 'Permite moderar comentarios'],
 
+            // Permisos de Correo
+            ['name' => 'mail.manage', 'resource' => 'mail', 'action' => 'manage', 'display_name' => 'Gestionar Correo', 'description' => 'Permite administrar proveedores, cuentas, plantillas y ajustes de correo'],
+            ['name' => 'mail.logs', 'resource' => 'mail', 'action' => 'logs', 'display_name' => 'Ver Historial de Correo', 'description' => 'Permite consultar el historial y las estadísticas de correos enviados'],
+
             // Permisos de Sistema
             ['name' => 'system.settings', 'resource' => 'system', 'action' => 'settings', 'display_name' => 'Gestionar Configuración', 'description' => 'Permite modificar configuración del sistema'],
             ['name' => 'system.logs', 'resource' => 'system', 'action' => 'logs', 'display_name' => 'Ver Logs', 'description' => 'Permite ver logs del sistema'],

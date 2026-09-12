@@ -37,6 +37,14 @@ Schedule::command('logs:clean')
         Log::error('Falló la limpieza de logs antiguos');
     });
 
+// Limpieza del historial de correo: cada día a las 2:30 AM
+Schedule::command('mail:logs-clean')
+    ->dailyAt('02:30')
+    ->withoutOverlapping()
+    ->onFailure(function () {
+        Log::error('Falló la limpieza del historial de correo');
+    });
+
 // Generación de reportes: cada semana (lunes) a las 8 AM
 Schedule::command('reports:generate')
     ->weeklyOn(1, '8:00') // Lunes a las 8 AM

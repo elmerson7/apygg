@@ -2,13 +2,11 @@
 
 namespace App\Services;
 
-use App\Mail\SimpleMail;
 use App\Models\NotificationHistory;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 
 /**
  * NotificationService
@@ -36,47 +34,39 @@ class NotificationService
      * @param  array  $data  Datos para la vista
      * @param  bool  $queue  Si debe enviarse en cola
      */
+    /**
+     * Enviar notificación por email.
+     *
+     * Delega en MailService para que el envío pase por el sistema de correo:
+     * selección de cuenta, pausa global, plantillas y registro en mail_logs.
+     * No envíes correo con Mail::send() directamente.
+     *
+     * @param  string|array<int, string|array{email: string, name?: string}>  $to
+     * @param  array<string, mixed>  $data
+     * @param  string|null  $templateKey  Clave de plantilla (permite pausarla desde el panel)
+     */
     public static function sendEmail(
         string|array $to,
         string $subject,
         string $view,
         array $data = [],
-        bool $queue = true
+        bool $queue = true,
+        ?string $templateKey = null
     ): bool {
-        try {
-            $emails = is_array($to) ? $to : [$to];
+        $sent = MailService::send(
+            to: $to,
+            subject: $subject,
+            view: $view,
+            data: $data,
+            templateKey: $templateKey,
+            queue: $queue,
+        );
 
-            $callback = function ($message) use ($emails, $subject) {
-                $message->to($emails)->subject($subject);
-            };
-
-            if ($queue) {
-                // Usar SimpleMail con ShouldQueue para procesamiento asíncrono
-                $mailable = new SimpleMail($view, $data, $subject);
-                $mailer = Mail::to($emails[0]);
-                if (count($emails) > 1) {
-                    foreach (array_slice($emails, 1) as $email) {
-                        $mailer->cc($email);
-                    }
-                }
-                $mailer->send($mailable);
-            } else {
-                // Envío síncrono (solo para casos especiales)
-                Mail::send($view, $data, $callback);
-            }
-
+        if ($sent) {
             self::logNotification('mail', $to, $subject);
-
-            return true;
-        } catch (\Exception $e) {
-            Log::error('Failed to send email notification', [
-                'to' => $to,
-                'subject' => $subject,
-                'error' => $e->getMessage(),
-            ]);
-
-            return false;
         }
+
+        return $sent;
     }
 
     /**

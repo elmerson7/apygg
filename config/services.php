@@ -20,6 +20,9 @@ return [
 
     'resend' => [
         'key' => env('RESEND_API_KEY'),
+        // Secreto de los webhooks de entrega (formato whsec_...). Sin él,
+        // POST /webhooks/mail rechaza todas las peticiones.
+        'webhook_secret' => env('RESEND_WEBHOOK_SECRET'),
     ],
 
     'ses' => [

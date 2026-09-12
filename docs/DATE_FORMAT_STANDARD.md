@@ -3,19 +3,25 @@
 ## Objetivo
 
 Un único formato para todas las fechas que entran y salen de la API. Sin esto,
-cada módulo termina devolviendo un formato distinto y el frontend acaba con
-media docena de parsers.
+cada módulo termina devolviendo un formato distinto y el cliente acaba con media
+docena de parsers.
 
 ## Formato estándar
 
 | Tipo | Formato | Ejemplo | Uso |
 |------|---------|---------|-----|
-| **Fecha** | `Y-m-d` | `2026-01-15` | Fechas sin hora (`start_date`, `birth_date`) |
-| **Fecha y hora** | `Y-m-d H:i:s` | `2026-01-15 14:30:00` | Timestamps (`created_at`, `updated_at`) |
+| **Fecha y hora** | ISO 8601 | `2026-01-15T14:30:00+00:00` | Timestamps (`created_at`, `sent_at`) |
+| **Fecha sin hora** | `Y-m-d` | `2026-01-15` | Fechas puras (`start_date`, `birth_date`) |
 
-Siempre en **formato 24 horas**, nunca AM/PM. La aplicación trabaja en **UTC**
-(`config/app.php` → `'timezone' => 'UTC'`); la conversión a la zona del usuario
-es responsabilidad del cliente.
+La API trabaja en **UTC** (`config/app.php` → `'timezone' => 'UTC'`). La
+conversión a la zona del usuario es responsabilidad del cliente: ISO 8601 lleva
+el offset incluido, por lo que el cliente no tiene que adivinarlo.
+
+`BaseResource` ya serializa `created_at` y `updated_at` en ISO 8601 mediante
+`toIso8601String()`; si tu Resource hereda de él, no tienes que hacer nada.
+
+Formato de entrada aceptado: cualquier cosa que Laravel entienda como `date`
+(ISO 8601 incluido). Para entradas estrictas, usa `date_format`.
 
 ---
 
@@ -30,8 +36,8 @@ es responsabilidad del cliente.
     "id": 42,
     "name": "Informe mensual",
     "start_date": "2026-01-15",
-    "created_at": "2026-01-10 08:30:00",
-    "updated_at": "2026-01-12 16:45:00"
+    "created_at": "2026-01-10T08:30:00+00:00",
+    "updated_at": "2026-01-12T16:45:00+00:00"
   }
 }
 ```
@@ -41,14 +47,13 @@ es responsabilidad del cliente.
 ```json
 {
   "start_date": "15/01/2026",            // formato local
-  "created_at": "2026-01-10T08:30:00Z",  // ISO 8601 mezclado con el resto
-  "updated_at": "10/01/2026 08:30:00"    // otro formato más
+  "created_at": "2026-01-10 08:30:00",   // sin zona horaria: ambiguo
+  "updated_at": 1767000000                // epoch suelto
 }
 ```
 
-> Si un endpoint concreto necesita ISO 8601 (por ejemplo, para un consumidor
-> externo), usa `DateHelper::toIso8601()` explícitamente y documéntalo. Lo que no
-> se admite es mezclar formatos sin criterio.
+Si un consumidor externo exige otro formato (RFC 3339 estricto, epoch), se
+convierte en la capa de integración. Nunca se cambia el formato de la API.
 
 ---
 
@@ -58,19 +63,19 @@ es responsabilidad del cliente.
 $validated = $request->validate([
     'start_date' => 'nullable|date',
     'end_date' => 'nullable|date|after:start_date',
-    'scheduled_at' => 'nullable|date_format:Y-m-d H:i:s',
+    'scheduled_at' => 'nullable|date_format:Y-m-d\TH:i:sP',
 ]);
 ```
 
-`date` acepta cualquier cosa que `strtotime` entienda; `date_format` es estricto.
-Usa `date_format` cuando el formato exacto importe.
+`date` acepta cualquier formato que `strtotime` entienda; `date_format` es
+estricto. Usa `date_format` cuando el formato exacto importe.
 
 ---
 
 ## 3. Modelos Eloquent
 
-Declara siempre los casts: sin ellos el atributo llega al Resource como string
-y cualquier `->format()` revienta.
+Declara siempre los casts: sin ellos el atributo llega al Resource como string y
+cualquier `->toIso8601String()` revienta.
 
 ```php
 class Report extends Model
@@ -78,49 +83,47 @@ class Report extends Model
     protected $casts = [
         'start_date' => 'date',
         'scheduled_at' => 'datetime',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
     ];
 }
 ```
 
-El `Model` base del proyecto (`app/Models/Model.php`) ya castea
-`created_at`, `updated_at` y `deleted_at`.
+El `Model` base (`app/Models/Model.php`) ya castea `created_at`, `updated_at` y
+`deleted_at`.
 
 ---
 
 ## 4. Resources
 
 ```php
-class ReportResource extends JsonResource
+class ReportResource extends BaseResource
 {
-    public function toArray($request): array
+    public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
+            ...$this->getBaseFields(),          // id, created_at, updated_at en ISO 8601
             'name' => $this->name,
             'start_date' => $this->start_date?->format('Y-m-d'),
-            'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
+            'scheduled_at' => $this->scheduled_at?->toIso8601String(),
         ];
     }
 }
 ```
 
 Nota el `?->`: una fecha nullable sin el operador seguro es la causa número uno
-de 500 en endpoints de listado.
+de errores 500 en endpoints de listado.
 
 ---
 
 ## 5. DateHelper
 
-`App\Helpers\DateHelper` centraliza el formateo. Úsalo en lugar de repetir
-`format()` con literales por todo el código:
+`App\Helpers\DateHelper` centraliza el formateo para todo lo que no sea la
+serialización estándar de Resources:
 
 ```php
-DateHelper::format($date);                  // 2026-01-15 14:30:00
+DateHelper::toIso8601($date);               // 2026-01-15T14:30:00+00:00
 DateHelper::toShort($date);                 // 2026-01-15
 DateHelper::toShortWithTime($date);         // 2026-01-15 14:30
-DateHelper::toIso8601($date);               // 2026-01-15T14:30:00+00:00
+DateHelper::format($date);                  // 2026-01-15 14:30:00
 DateHelper::toSpanish($date, true);         // 15 de enero de 2026, 14:30
 DateHelper::convertTimezone($date, 'America/Lima');
 DateHelper::diffForHumans($date);           // hace 3 horas
@@ -128,29 +131,34 @@ DateHelper::parse('15/01/2026');            // Carbon, tolerante a formatos
 DateHelper::validateFormat($str, 'Y-m-d');  // bool
 ```
 
-Todos los métodos aceptan `null` y devuelven `null`, de modo que son seguros en
-Resources.
+Todos los métodos aceptan `null` y devuelven `null`, por lo que son seguros en
+Resources. Usa `format()` / `toShortWithTime()` para exportaciones, informes o
+correos legibles por personas — no para el JSON de la API.
 
 ---
 
 ## 6. Excepciones legítimas
 
-- **Timestamps de Laravel en tablas del framework** (`jobs`, `sessions`,
-  `failed_jobs`): no se tocan.
-- **Campos con zona horaria propia**: si un registro necesita conservar la zona
-  del evento, guarda la zona en una columna aparte (`timezone`) y el instante en
-  UTC. No guardes horas locales sin contexto.
-- **Integraciones externas**: si un proveedor exige RFC 3339 o epoch, se
-  convierte en la capa de integración, nunca cambiando el formato de la API.
+- **Tablas del framework** (`jobs`, `sessions`, `failed_jobs`): no se tocan.
+- **Campos con zona horaria propia**: guarda el instante en UTC y la zona en una
+  columna aparte (`timezone`). Nunca guardes horas locales sin contexto.
+- **Correos y PDFs**: ahí sí se usa formato legible (`Y-m-d H:i`), porque el
+  destinatario es una persona, no un parser.
 
 ---
 
 ## 7. Verificación
 
 ```bash
-# Buscar formateos ad-hoc que se saltan el estándar
-grep -rn "format('d/m/Y" app/
-grep -rn "->toDateTimeString()" app/Http/Resources/
+# Formateos ad-hoc que se saltan el estándar en respuestas de API
+grep -rn "format('d/m/Y" app/Http/Resources/
+grep -rn "toDateTimeString()" app/Http/Resources/
 
 make check
 ```
+
+## Referencias
+
+- [api-response-structure.md](api-response-structure.md) → contrato completo de respuestas
+- `app/Http/Resources/BaseResource.php`
+- `app/Helpers/DateHelper.php`
