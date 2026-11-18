@@ -25,6 +25,7 @@ no va aquí.
 - ✅ `make sh` → abre una shell en el contenedor para trabajar interactivamente
 - Migraciones, tinker, colas, tests: **siempre** por `make`.
 - `make help` lista todos los targets disponibles.
+- Los targets viven en `make/*.mk` (uno por tema); el `Makefile` raíz solo define variables e incluye esos archivos.
 
 ## Quality checks — OBLIGATORIO tras cualquier cambio PHP
 

@@ -106,7 +106,7 @@ docker compose exec app php artisan migrate
 
 ### Usando Make (Recomendado)
 
-El proyecto incluye un `Makefile` que simplifica los comandos más comunes:
+El proyecto incluye un `Makefile` que simplifica los comandos más comunes. Sus targets viven en `make/*.mk` (uno por tema); el `Makefile` raíz solo define variables e incluye esos archivos:
 
 ```bash
 # Construir contenedores
