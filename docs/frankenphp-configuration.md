@@ -221,6 +221,18 @@ SERVER_NAME=api.tudominio.com
 - Configuración de Laravel Octane
 - `OCTANE_SERVER=frankenphp`
 - `OCTANE_HTTPS` (se lee del entorno)
+- `OCTANE_DISCONNECT_DATABASES` (por defecto `false`): activa el listener
+  `DisconnectFromDatabases`, que cierra las conexiones de BD al terminar cada
+  request. Con conexión directa a Postgres es más rápido reutilizarlas, por eso
+  está apagado; actívalo (`true`) si hay PgBouncer u otro pooler, o si la BD
+  corta conexiones inactivas.
+- `FlushUploadedFiles` está siempre activo: libera los archivos subidos entre
+  requests para que no se filtren al siguiente en el mismo worker.
+
+### Proxies de confianza (`TRUSTED_PROXIES`)
+Se lee en `bootstrap/app.php`. Vacío (por defecto) = no se confía en ninguna
+cabecera `X-Forwarded-*`. Acepta IPs/CIDR separados por comas o `*`. Con proxy
+externo (Caddy, Cloudflare, balanceador) configúralo con la IP/red del proxy.
 
 ---
 

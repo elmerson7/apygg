@@ -16,6 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withProviders([
         \App\Providers\AuthServiceProvider::class,
     ])
+    // Los listeners se registran explícitamente (EventServiceProvider::$listen y
+    // AppServiceProvider). El autodescubrimiento de app/Listeners los registraría
+    // una segunda vez (cada listener se ejecutaría dos veces).
+    ->withEvents(discover: false)
     ->withRouting(
         // Cargar rutas web solo para Telescope y Horizon (necesitan sesiones)
         web: __DIR__.'/../routes/web.php',
@@ -45,6 +49,19 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\SecurityLoggerMiddleware::class, // Registrar eventos de seguridad y detectar patrones anómalos
             \App\Http\Middleware\RateLimitLoggerMiddleware::class, // Registrar bloqueos por rate limiting y detectar abuso
         ]);
+
+        // Proxies de confianza (X-Forwarded-*). TRUSTED_PROXIES: lista separada por
+        // comas de IPs/CIDR, o '*' para confiar en cualquiera. Por defecto vacío:
+        // no se confía en ningún proxy (una cabecera X-Forwarded-* falsificada
+        // no puede alterar esquema, host ni IP). Ver .env.example.
+        $trustedProxies = trim((string) env('TRUSTED_PROXIES', ''));
+        if ($trustedProxies !== '') {
+            $middleware->trustProxies(
+                at: $trustedProxies === '*'
+                    ? '*'
+                    : array_values(array_filter(array_map('trim', explode(',', $trustedProxies)))),
+            );
+        }
 
         // Registrar middleware con alias para uso en rutas
         $middleware->alias([

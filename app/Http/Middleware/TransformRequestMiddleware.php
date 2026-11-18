@@ -193,7 +193,14 @@ class TransformRequestMiddleware
             }
         }
 
-        return is_numeric($value) && ! is_string($value) || (is_string($value) && is_numeric(trim($value)));
+        if (is_string($value)) {
+            // Solo cadenas numéricas canónicas: "007" o "0987654321" (teléfonos,
+            // códigos postales), "+51...", "1e5" o números de más de 15 dígitos
+            // perderían información al convertirse a int/float.
+            return preg_match('/^-?(0|[1-9]\d{0,14})(\.\d+)?$/', trim($value)) === 1;
+        }
+
+        return is_numeric($value);
     }
 
     /**

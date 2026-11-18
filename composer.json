@@ -2,7 +2,7 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "apygg/apygg",
     "type": "project",
-    "description": "API Boilerplate APYGG - Laravel 12 production-ready with FrankenPHP, PostgreSQL, Redis, and modular architecture.",
+    "description": "API Boilerplate APYGG - Laravel 13 production-ready with FrankenPHP, PostgreSQL, Redis, and modular architecture.",
     "keywords": ["laravel", "api", "boilerplate", "frankenphp", "postgresql", "redis"],
     "license": "MIT",
     "require": {
@@ -44,7 +44,6 @@
     "autoload": {
         "psr-4": {
             "App\\": "app/",
-            "App\\Modules\\": "app/Modules/",
             "App\\Helpers\\": "app/Helpers/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"

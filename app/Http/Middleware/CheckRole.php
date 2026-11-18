@@ -21,6 +21,12 @@ use Symfony\Component\HttpFoundation\Response;
 class CheckRole
 {
     /**
+     * Guard de la API. Se fija explícitamente: el guard por defecto (AUTH_GUARD,
+     * 'web') no autentica JWT y bajo Octane puede variar entre workers.
+     */
+    private const GUARD = 'api';
+
+    /**
      * Handle an incoming request.
      *
      * @param  string  ...$roles  Roles requeridos (puede ser múltiples)
@@ -28,7 +34,7 @@ class CheckRole
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         // Verificar que el usuario esté autenticado
-        if (! auth()->check()) {
+        if (! auth(self::GUARD)->check()) {
             return response()->json([
                 'success' => false,
                 'message' => 'No autenticado',
@@ -39,7 +45,7 @@ class CheckRole
             ], 401);
         }
 
-        $user = auth()->user();
+        $user = auth(self::GUARD)->user();
 
         // Si no se especifican roles, permitir acceso (útil para solo verificar autenticación)
         if (empty($roles)) {

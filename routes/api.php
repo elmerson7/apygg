@@ -76,8 +76,11 @@ require __DIR__.'/api/roles.php';
 require __DIR__.'/api/logs.php';
 // ─────────────────────────────────────────────────────────────────────────────────
 
-Route::prefix('test/sentry')->group(function () {
-    Route::get('/info', [TestSentryController::class, 'info']);
-    Route::post('/logs', [TestSentryController::class, 'testLogs']);
-    Route::post('/exception', [TestSentryController::class, 'testException']);
-});
+// Solo local/testing: son endpoints de diagnóstico que fuerzan excepciones y logs.
+if (app()->environment(['local', 'testing'])) {
+    Route::prefix('test/sentry')->group(function () {
+        Route::get('/info', [TestSentryController::class, 'info']);
+        Route::post('/logs', [TestSentryController::class, 'testLogs']);
+        Route::post('/exception', [TestSentryController::class, 'testException']);
+    });
+}

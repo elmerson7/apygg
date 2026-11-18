@@ -22,6 +22,12 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class CheckPermission
 {
+    /**
+     * Guard de la API. Se fija explícitamente: el guard por defecto (AUTH_GUARD,
+     * 'web') no autentica JWT y bajo Octane puede variar entre workers.
+     */
+    private const GUARD = 'api';
+
     private const METHOD_MAP = [
         'GET' => 'read',
         'HEAD' => 'read',
@@ -38,7 +44,7 @@ class CheckPermission
      */
     public function handle(Request $request, Closure $next, string ...$permissions): Response
     {
-        if (! auth()->check()) {
+        if (! auth(self::GUARD)->check()) {
             return response()->json([
                 'success' => false,
                 'message' => 'No autenticado',
@@ -49,7 +55,7 @@ class CheckPermission
             ], 401);
         }
 
-        $user = auth()->user();
+        $user = auth(self::GUARD)->user();
 
         if (empty($permissions)) {
             return $next($request);
