@@ -362,7 +362,6 @@ DELETE /admin/roles/{id}  → Eliminar rol (admin)
 | `files.php` | *(ninguno)* | Subida y descarga de archivos |
 | `search.php` | *(ninguno)* | Búsqueda global |
 | `webhooks.php` | *(ninguno)* | Webhooks entrantes |
-| `chat.php` | *(ninguno)* | Chat en tiempo real |
 | `settings.php` | *(ninguno)* | Configuraciones globales |
 
 ## 📚 Documentación Adicional

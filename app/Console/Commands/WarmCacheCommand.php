@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\WebhookStatusEnum;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;

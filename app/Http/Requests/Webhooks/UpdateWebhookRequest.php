@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Webhooks;
 
+use App\Enums\WebhookStatusEnum;
 use App\Http\Requests\BaseFormRequest;
 use App\Models\Webhook;
 use Illuminate\Validation\Rule;

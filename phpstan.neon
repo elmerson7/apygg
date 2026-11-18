@@ -12,14 +12,7 @@ parameters:
     level: 5
 
     ignoreErrors:
-        # Errores relacionados con App\Services\User (debería ser App\Models\User)
-        - '#Access to property \$id on an unknown class App\\Services\\User#'
-        - '#Access to property \$name on an unknown class App\\Services\\User#'
-        - '#Access to property \$email on an unknown class App\\Services\\User#'
-        - '#Access to property \$preferences on an unknown class#'
-        - '#Call to method .* on an unknown class App\\Services\\User#'
-        - '#Call to static method .* on an unknown class App\\Services\\User#'
-        - '#Class App\\Services\\User not found#'
+        # PENDIENTE: ContractServiceProvider:91 enlaza ApiKeyRepositoryInterface, que no existe
         - '#Class App\\Contracts\\ApiKeyRepositoryInterface not found#'
         # Errores de QRCode (librería externa)
         - '#Access to undefined constant chillerlan\\QRCode\\QRCode::ECC_H#'
@@ -28,8 +21,6 @@ parameters:
         - '#Call to function is_string.*always evaluate to#'
         - '#Left side of && is always true#'
         # Errores de type en servicios
-        - '#expects App\\Services\\User, App\\Models\\User given#'
-        - '#expects App\\Models\\User, App\\Services\\User given#'
         # Errores de @throws con ModelNotFoundException en PHPDoc
         - '#@throws with type.*ModelNotFoundException.*not subtype of Throwable#'
         # Errores de propiedades de factories de Laravel
@@ -37,7 +28,6 @@ parameters:
         # Errores de Faker en factories (propiedades dinámicas)
         - '#Access to an undefined property Faker\\Generator\\.*#'
         # Errores de constantes de clase no encontradas (falso positivo de Laravel)
-        - '#Access to constant .* on an unknown class#'
         # Errores de PHPDoc en factories
         - '#PHPDoc type class-string<App\\\\Models#'
         # Propiedades dinámicas de Eloquent (comunes en Laravel)
