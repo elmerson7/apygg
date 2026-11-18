@@ -2,13 +2,17 @@
 
 ¡Gracias por tu interés en contribuir a APYGG! Esta guía te ayudará a empezar.
 
+Antes de tocar código, lee [AGENTS.md](./AGENTS.md): es la fuente de verdad y sus reglas prevalecen sobre este documento.
+
 ## Requisitos Previos
 
-- Docker Engine 4.0+
-- Docker Compose 2.0+
+- Docker Engine y Docker Compose v2 (`docker compose`)
 - Git
-- Node.js 18+ (para hooks de pre-commit)
-- Make (opcional)
+- Make (recomendado: todos los comandos del proyecto pasan por `make`)
+
+## Comandos
+
+Todo corre dentro de Docker a través de `make`. No ejecutes `php artisan`, `composer` ni `pest` en el host. `make help` lista los targets.
 
 ## Setup Local
 
@@ -22,9 +26,10 @@ cd apygg
 ### 2. Configurar entorno
 
 ```bash
-cp .env.example .env
-cp env/dev.env.example env/dev.env
+cp compose.env.example compose.env
 ```
+
+`make build` crea `.env` desde `.env.example` si no existe.
 
 ### 3. Construir y levantar servicios
 
@@ -43,12 +48,16 @@ docker compose exec app npm install
 ### 5. Configurar claves y migraciones
 
 ```bash
-make setup
+make key          # muestra una APP_KEY; cópiala a .env
+make jwt          # muestra un secreto JWT; cópialo a .env
+make migrate
+make seed
 ```
 
 ### 6. Ejecutar tests
 
 ```bash
+make testdb-migrate   # solo la primera vez
 make test
 ```
 
@@ -132,18 +141,14 @@ git checkout -b refactor/tu-refactor
 ### 3. Antes de crear PR
 
 ```bash
-# Formatear código
-./vendor/bin/pint
+# Formatear y analizar (Pint + PHPStan, nivel 5)
+make check
 
 # Ejecutar tests
 make test
-
-# Ejecutar análisis estático
-./vendor/bin/phpstan analyse
-
-# Ejecutar lint
-make lint
 ```
+
+`make install-hooks` instala los git hooks del repositorio (pre-commit y commit-msg).
 
 ### 4. Crear Pull Request
 
@@ -235,16 +240,12 @@ BREAKING CHANGE: response structure changed"
 
 ```
 tests/
-├── Feature/          # Tests de integración
-│   ├── Auth/
-│   ├── Users/
-│   ├── ApiKeys/
-│   └── ...
-└── Unit/            # Tests unitarios
-    ├── Services/
-    ├── Helpers/
-    └── ...
+├── Feature/          # Tests de integración (HTTP, comandos, seguridad)
+└── Unit/             # Tests unitarios por dominio: Docs, Llm, Logging, Mail,
+                      # Menu, Middleware, Models, Requests, Security, y ArchTest.php
 ```
+
+Los tests usan **Pest 4** (no PHPUnit). Los nombres van en español y en tercera persona, describiendo la conducta. Cubre también el caso denegado.
 
 ### Ejecutar Tests
 
@@ -252,33 +253,35 @@ tests/
 # Todos los tests
 make test
 
-# Tests específicos
-docker compose exec app php artisan test --filter=AuthTest
+# Un test concreto
+make test-filter filter=NombreDelTest
+
+# Solo unitarios, de integración o de arquitectura
+make test-unit
+make test-feature
+make test-arch
 
 # Con cobertura
-docker compose exec app php artisan test --coverage
-
-# Tests en paralelo
-docker compose exec app php artisan test --parallel
+make test-coverage
 ```
 
 ### Escribir Tests
 
 ```php
-use Tests\TestCase;
+<?php
 
-class UserTest extends TestCase
-{
-    public function test_user_can_be_created(): void
-    {
-        $user = User::factory()->create();
-        
-        $this->assertDatabaseHas('users', [
-            'id' => $user->id,
-        ]);
-    }
-}
+use App\Models\User;
+
+it('no permite a un usuario sin permiso listar los roles', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user, 'api')
+        ->getJson('/roles')
+        ->assertForbidden();
+});
 ```
+
+Los comandos `pest` concretos y la BD de tests están en [docs/testing.md](./docs/testing.md).
 
 ## Reporting Issues
 

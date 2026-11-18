@@ -1,452 +1,157 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# APYGG — Boilerplate de API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Boilerplate de API con Laravel 13 y PHP 8.5, servido con FrankenPHP (Octane) y pensado como base para proyectos nuevos. El código es infraestructura reutilizable: la lógica de un negocio concreto no va aquí.
 
-# APYGG - API Boilerplate Laravel 13
+Para agentes y LLM, la fuente de verdad es [AGENTS.md](./AGENTS.md). Para el detalle técnico, ver [ARCHITECTURE.md](./ARCHITECTURE.md) y [TECH_STACK.md](./TECH_STACK.md).
 
-API Boilerplate production-ready construido con Laravel 13, diseñado para aplicaciones modernas y escalables.
+## Stack
 
-## 🚀 Stack Tecnológico
+Versiones tomadas de `composer.lock` y de los Dockerfile de `docker/`:
 
-### Backend Core
-- **Laravel 13** - Framework PHP moderno
-- **PHP 8.5** - Lenguaje de programación
-- **FrankenPHP (Octane)** - Servidor HTTP de alto rendimiento basado en Caddy
+| Componente | Versión |
+|---|---|
+| PHP | 8.5 (imagen `dunglas/frankenphp:1.11-php8.5-bookworm`) |
+| Laravel | 13.31.0 |
+| Octane | 2.19.1 |
+| PostgreSQL | 18 (`postgres:18-alpine`) |
+| Redis | 7.4 (`redis:7.4-alpine`) |
+| Laravel Horizon | 5.49.0 |
+| Laravel Reverb | 1.11.1 |
+| Laravel Scout + Meilisearch | Scout 10.25.0, cliente 1.17.0, servidor 1.16 |
+| JWT (php-open-source-saver) | 2.9.3 |
+| Scramble (OpenAPI) | 0.13.43 |
+| Sentry | 4.27.0 |
+| Pest | 4.7.8 |
 
-### Base de Datos y Cache
-- **PostgreSQL 18** - Base de datos relacional con soporte JSON, UUID y particionamiento
-- **PgBouncer** (Opcional) - Connection pooler para PostgreSQL en producción
-- **Redis 7** - Cache en memoria, sesiones y colas
+## Módulos
 
-### Autenticación y Seguridad
-- **php-open-source-saver/jwt-auth v2.8.3** - Autenticación JWT
-- **Laravel Sanctum** - Autenticación de API tokens
-- **bcrypt** - Hashing seguro de contraseñas
+Cada módulo está implementado en el código. Lo que aún no está completo figura en [TASKS.md](./TASKS.md).
 
-### Colas y Procesamiento Asíncrono
-- **Laravel Queue** - Sistema de colas
-- **Laravel Horizon v5.33** - Dashboard para monitoreo de colas
-- **Laravel Reverb v1.7.0** - WebSockets nativo para tiempo real (OPCIONAL)
+- **Autenticación**: JWT (login, registro, refresh, recuperación y cambio de contraseña, logout) y API Keys con scopes (`auth:api-key`, `api-key-scope:`).
+- **Autorización**: RBAC propio (modelos `Role` y `Permission`, middleware `permission:` y `role:`).
+- **Usuarios y perfil**: CRUD de usuarios, restauración, roles por usuario, perfil y preferencias en `/user`.
+- **Logging**: `LogService` y canales `activity`, `security`, `auth` y `sentry`; registro de API en BD.
+- **Seguridad**: `SecurityAuditService` (escaneos en `/admin/security/scans`), lista de bloqueo (`/admin/blacklist`), headers de seguridad, rate limiting adaptativo y registro de eventos.
+- **Webhooks salientes**: suscripciones, entregas, reintentos y rotación de secreto (`/webhooks`).
+- **Correo**: multi-cuenta y multi-proveedor (`MailService`, modelos en `app/Models/Mail`), registro de envíos y webhook de entrega verificado con firma Svix (`/admin/mail`).
+- **Gateway LLM**: capa agnóstica del proveedor (`app/Services/LLM`) con áreas, modelos de respaldo y auditoría (`/admin/llm`).
+- **Asistente de documentación (RAG)**: indexa los Markdown del proyecto y responde preguntas (`/docs/search`, `/docs/ask`).
+- **Menú dinámico**: ítems y visibilidad desde BD (`/admin/menu`).
+- **Archivos**: `FileService` con discos `local`, `public` y `s3` (`/files`).
+- **Búsqueda**: Scout con Meilisearch (`/search`).
+- **Colas y procesos**: Redis, Horizon y scheduler (servicios de Docker Compose).
+- **WebSockets**: Reverb y autorización de canales (`/broadcasting/auth`).
+- **Caché**: `CacheService` y comandos `cache:*`.
+- **Backups**: volcado de BD con subida opcional a remoto (comandos `backup:*`). El respaldo de archivos no está implementado.
+- **Feature flags**: `config/features.php` y helper `Feature`.
+- **Health**: `/health`, `/health/live`, `/health/ready` y `/health/detailed` (autenticado).
+- **Documentación de API**: Scramble en `/docs/api`.
 
-### Búsqueda y Observabilidad
-- **Meilisearch 1.x** (Opcional) - Motor de búsqueda full-text
-- **Laravel Scout v10.17** - Abstracción de búsqueda
-- **Laravel Telescope v5.11** - Herramienta de debugging (desarrollo)
-- **Sentry v4.15** (Opcional) - Monitoreo de errores
+Autenticación social (Socialite) tiene controlador y servicio, pero no tiene rutas. Ver TASKS.md.
 
-### Utilidades
-- **spatie/laravel-permission v6.21** - Sistema de permisos y roles
-- **dedoc/scramble** - Documentación automática de API
-- **Laravel Pint** - Formateador de código PSR-12
+## Requisitos
 
-### Containerización
-- **Docker** - Containerización de la aplicación
-- **Docker Compose v2.x** - Orquestación de contenedores
-- **dunglas/frankenphp:1.11-php8.5-bookworm** - Imagen base PHP con FrankenPHP
+- Docker y Docker Compose v2 (`docker compose`).
+- Make (opcional, recomendado).
 
-## 📋 Requisitos
-
-- Docker Engine 4.0+
-- Docker Compose 2.0+
-- Make (opcional, pero recomendado)
-- 8 GB RAM mínimo (16 GB recomendado)
-- 50 GB espacio en disco
-
-## 🛠️ Instalación
-
-### 1. Clonar el repositorio
+## Instalación
 
 ```bash
-git clone <repository-url>
-cd apygg
-```
-
-### 2. Construir y levantar servicios
-
-```bash
-# Opción 1: Usando Make (recomendado)
-make build
-make up
-
-# Opción 2: Docker Compose directo
-docker compose --profile dev build
-docker compose --profile dev up -d
-```
-
-**Nota**: Los archivos de entorno (`.env` y `env/dev.env`) se crean automáticamente desde los archivos `.example` durante el build si no existen.
-
-### 3. Generar claves de aplicación
-
-```bash
-# Generar APP_KEY
-make key
-# O directamente:
-docker compose exec app php artisan key:generate
-
-# Generar JWT_SECRET
-make jwt
-# O directamente:
-docker compose exec app php artisan jwt:secret -f
-```
-
-### 4. Ejecutar migraciones
-
-```bash
+cp compose.env.example compose.env   # variables de Docker (puertos, PROJECT)
+make build                           # valida compose.env, crea .env si falta y construye las imágenes
+make up                              # levanta los servicios base (app, postgres, redis, reverb, horizon, scheduler)
+make key                             # muestra una APP_KEY nueva (ver nota)
+make jwt                             # muestra un secreto JWT nuevo (ver nota)
 make migrate
-# O directamente:
-docker compose exec app php artisan migrate
-```
-
-## 🚀 Comandos de Despliegue
-
-### Usando Make (Recomendado)
-
-El proyecto incluye un `Makefile` que simplifica los comandos más comunes. Sus targets viven en `make/*.mk` (uno por tema); el `Makefile` raíz solo define variables e incluye esos archivos:
-
-```bash
-# Construir contenedores
-make build
-
-# Levantar servicios
-make up
-
-# Detener servicios
-make down
-
-# Reiniciar servicios
-make restart
-
-# Ver logs
-make logs
-
-# Ver estado de servicios
-make ps
-
-# Acceder al shell del contenedor
-make sh
-
-# Generar APP_KEY
-make key
-
-# Generar JWT_SECRET
-make jwt
-
-# Ejecutar migraciones
-make migrate
-
-# Ejecutar seeders
 make seed
-
-# Ejecutar comandos artisan
-make art cmd="comando"
-
-# Ejecutar comandos composer
-make composer cmd="comando"
 ```
 
-### Usando Docker Compose directamente
+`make key` y `make jwt` solo muestran el valor (`--show`); copia el resultado a `APP_KEY` y al secreto JWT de `.env`.
 
-```bash
-# Construir contenedores
-docker compose --profile dev build
+Antes de correr los tests por primera vez: `make testdb-migrate`.
 
-# Levantar servicios
-docker compose --profile dev up -d
+## Comandos Make
 
-# Detener servicios
-docker compose --profile dev down
+Los targets viven en `make/*.mk` (uno por tema). El `Makefile` raíz define variables e incluye esos archivos. `make help` lista todos.
 
-# Ver logs
-docker compose --profile dev logs -f
+| Tema | Comandos |
+|---|---|
+| Servicios | `make build`, `make up`, `make down`, `make restart service=app`, `make logs`, `make ps`, `make sh` |
+| Entornos | `make up ENV=prod` (añade pgbouncer), `make up SEARCH=true` (añade meilisearch) |
+| App | `make art cmd="<artisan>"`, `make composer cmd="<composer>"`, `make key`, `make jwt`, `make clear`, `make storage-link`, `make horizon`, `make reverb`, `make octane` |
+| Base de datos | `make migrate`, `make seed`, `make schema`, `make schema-dump`, `make dbtest`, `make redistest`, `make meilitest`, `make upsearch`, `make scout` |
+| Backups | `make backup`, `make backup-list`, `make restore-backup`, `make restore-remote` |
+| Tests | `make test`, `make test-unit`, `make test-feature`, `make test-arch`, `make test-filter filter=<nombre>`, `make test-coverage`, `make test-mutate`, `make testdb-migrate` |
+| Calidad | `make pint`, `make phpstan`, `make check` (pint + phpstan), `make install-hooks` |
 
-# Ver estado
-docker compose --profile dev ps
+Los comandos `artisan` y `composer` siempre se ejecutan dentro del contenedor, nunca en el host.
 
-# Acceder al shell del contenedor
-docker compose exec app bash
+## Puertos del host
 
-# Generar APP_KEY
-docker compose exec app php artisan key:generate
+Valores por defecto de `compose.env.example`:
 
-# Generar JWT_SECRET
-docker compose exec app php artisan jwt:secret -f
+| Servicio | Variable | Puerto |
+|---|---|---|
+| App (Octane) | `APP_PORT` | 8010 |
+| PostgreSQL | `POSTGRES_PORT` | 8011 |
+| Reverb (WebSockets) | `REVERB_PORT` | 8012 |
+| Redis | `REDIS_PORT` | 8013 |
+| Meilisearch | `MEILISEARCH_PORT` | 8014 |
+| PgBouncer (perfil `prod`) | `PGBOUNCER_PORT` | 8015 |
 
-# Ejecutar migraciones
-docker compose exec app php artisan migrate
-```
+`compose.env` controla los puertos del host. Los valores de `compose.env` se pasan a Compose con `--env-file`.
 
-### Desde dentro del contenedor (make sh)
+## Rutas
 
-```bash
-# Acceder al contenedor
-make sh
+La API no usa el prefijo `/api`. Cada módulo vive en `routes/api/<modulo>.php` y se incluye desde `routes/api.php`.
 
-# Una vez dentro del contenedor, puedes ejecutar:
-php artisan key:generate
-php artisan jwt:secret -f
-php artisan migrate
-composer install
-composer update
-```
+| Ámbito | Prefijo | Ejemplos |
+|---|---|---|
+| Público | ninguno | `POST /auth/login`, `GET /health`, `GET /docs/api` |
+| Recurso autenticado | el del módulo | `GET /users`, `POST /files`, `GET /search`, `GET /webhooks` |
+| Perfil del usuario | `/user` | `GET /user/profile`, `PUT /user/preferences` |
+| Administración | `/admin/...` | `GET /admin/logs/activity`, `GET /admin/mail/providers`, `GET /admin/llm/status` |
 
-### Desde la terminal del host
+Middleware con alias registrados en `bootstrap/app.php`: `auth:api-key`, `api-key-scope:`, `permission:`, `role:`, `ip.whitelist`, `feature:`, `auth.optional`. `auth:api` es el guard JWT de Laravel.
 
-Todos los comandos artisan y composer deben ejecutarse dentro del contenedor:
-
-```bash
-# Comandos artisan
-docker compose exec app php artisan <comando>
-
-# Comandos composer
-docker compose exec app composer <comando>
-```
-
-## 📝 Comandos Útiles
-
-### Gestión de Servicios
-
-```bash
-# Construir y levantar
-make build && make up
-
-# Reiniciar un servicio específico
-make restart service=app
-
-# Ver logs de un servicio específico
-docker compose logs -f app
-```
-
-### Base de Datos
-
-```bash
-# Ejecutar migraciones
-make migrate
-
-# Ejecutar seeders
-make seed
-
-# Rollback migraciones
-docker compose exec app php artisan migrate:rollback
-
-# Refrescar base de datos
-docker compose exec app php artisan migrate:fresh --seed
-```
-
-### Cache y Optimización
-
-```bash
-# Limpiar cache
-docker compose exec app php artisan cache:clear
-docker compose exec app php artisan config:clear
-docker compose exec app php artisan route:clear
-docker compose exec app php artisan view:clear
-
-# Optimizar para producción
-docker compose exec app php artisan config:cache
-docker compose exec app php artisan route:cache
-docker compose exec app php artisan view:cache
-```
-
-### Desarrollo
-
-```bash
-# Ejecutar tests
-docker compose exec app php artisan test
-
-# Formatear código
-docker compose exec app ./vendor/bin/pint
-
-# Tinker (REPL interactivo)
-docker compose exec app php artisan tinker
-```
-
-## 🌐 Puertos y Servicios
-
-| Servicio | Puerto | Descripción |
-|----------|--------|-------------|
-| App (Laravel) | 8010 | Aplicación principal |
-| PostgreSQL | 8011 | Base de datos |
-| Reverb (WebSockets) | 8012 | Servidor WebSocket |
-| Meilisearch | 8013 | Motor de búsqueda |
-| Redis | 8014 | Cache y colas |
-| PgBouncer (Prod) | 8017 | Connection pooler |
-
-## 📁 Estructura del Proyecto
+## Estructura
 
 ```
-apygg/
-├── app/
-│   ├── Console/           # Comandos de consola
-│   ├── Events/            # Eventos de la aplicación
-│   ├── Exceptions/        # Manejo de excepciones
-│   ├── Helpers/           # Helpers y utilidades
-│   ├── Http/
-│   │   ├── Controllers/   # Controladores
-│   │   ├── Middleware/    # Middleware
-│   │   ├── Requests/      # Form Requests
-│   │   └── Resources/     # API Resources
-│   ├── Jobs/              # Jobs para colas
-│   ├── Listeners/         # Listeners de eventos
-│   ├── Logging/           # Configuración de logs
-│   ├── Mail/              # Plantillas de email
-│   ├── Models/            # Modelos Eloquent
-│   ├── Notifications/     # Notificaciones
-│   ├── Observers/         # Observers de modelos
-│   ├── Policies/          # Políticas de autorización
-│   ├── Providers/         # Service Providers
-│   ├── Rules/             # Rules de validación
-│   ├── Services/          # Servicios de negocio
-│   └── Traits/            # Traits reutilizables
-├── config/                # Archivos de configuración
-├── database/              # Migraciones y seeders
-├── docker/                # Configuración Docker
-├── env/                   # Variables de entorno por ambiente
-├── routes/
-│   ├── api.php            # Punto de entrada de rutas
-│   └── api/               # Módulos de rutas (uno por dominio)
-└── tests/                 # Tests
+app/
+├── Console/Commands/   # comandos artisan
+├── Contracts/          # interfaces de servicios y repositorios
+├── DTOs/               # objetos de transferencia
+├── Enums/              # enumeraciones
+├── Events/ Listeners/  # eventos y listeners
+├── Exceptions/
+├── Helpers/            # ApiResponse, Feature, DateHelper, etc.
+├── Http/               # Controllers, Middleware, Requests, Resources
+├── Jobs/
+├── Logging/            # handlers y processors de Monolog
+├── Mail/               # Mailables
+├── Models/             # Eloquent (Logs/, Mail/, Docs/, Llm/)
+├── Repositories/
+├── Services/           # lógica de aplicación (Docs/, LLM/, Logging/, Mail/, Menu/, Tools/)
+└── Traits/
+config/                 # configuración por archivo
+database/               # migraciones, factories, seeders
+docker/                 # Dockerfile y configuración de cada servicio
+make/                   # targets de Make por tema
+routes/                 # api.php + api/*.php
+tests/                  # Unit/ (incluye Arch) y Feature/
 ```
 
-## 🔧 Configuración de Entornos
+## Documentación
 
-El proyecto soporta múltiples entornos mediante perfiles de Docker Compose:
+- [AGENTS.md](./AGENTS.md): reglas para agentes y LLM (fuente de verdad).
+- [ARCHITECTURE.md](./ARCHITECTURE.md): capas, módulos y flujos.
+- [TECH_STACK.md](./TECH_STACK.md): stack completo y versiones.
+- [TASKS.md](./TASKS.md): estado actual y pendientes.
+- [CONTRIBUTING.md](./CONTRIBUTING.md): cómo contribuir.
+- [CHANGELOG.md](./CHANGELOG.md): cambios por versión.
+- [docs/](./docs/): documentación por tema (caché, backups, correo, LLM, WebSockets, etc.).
+- [docs/archive/PLAN_ACCION_2025.md](./docs/archive/PLAN_ACCION_2025.md): plan inicial, histórico.
 
-- **dev** - Desarrollo (por defecto)
-- **staging** - Staging
-- **prod** - Producción
+## Licencia
 
-```bash
-# Usar entorno específico
-ENV=staging make up
-ENV=prod make build
-```
-
-## 🌐 Convenciones de Rutas
-
-Este proyecto **NO utiliza el prefijo `/api/`** en las rutas.
-
-### Estructura por Sistema
-
-Las rutas se organizan según el sistema que las consume:
-
-| Sistema | Prefijo | Descripción | Ejemplo |
-|---------|---------|-------------|---------|
-| **Público** | *(ninguno)* | Rutas públicas sin prefijo | `/auth/login`, `/search` |
-| **Usuario autenticado** | `/user` | Endpoints del usuario en sesión | `/user/profile`, `/user/preferences` |
-| **Admin** | `/admin` | Gestión y administración | `/admin/users`, `/admin/roles` |
-
-### Ejemplos
-
-```
-POST /auth/login          → Login público
-GET  /user/profile        → Perfil del usuario autenticado
-PUT  /user/preferences    → Actualizar preferencias
-GET  /admin/roles         → Listar roles (admin)
-DELETE /admin/roles/{id}  → Eliminar rol (admin)
-```
-
-### Módulos disponibles en `routes/api/`
-
-| Archivo | Prefijo | Descripción |
-|---------|---------|-------------|
-| `auth.php` | *(ninguno)* | Login, registro, refresh token |
-| `user.php` | `/user` | Perfil y preferencias del usuario |
-| `users.php` | `/users` | CRUD de usuarios |
-| `roles.php` | `/admin` | Roles, permisos y activity logs |
-| `api-keys.php` | `/admin` | Gestión de API Keys |
-| `files.php` | *(ninguno)* | Subida y descarga de archivos |
-| `search.php` | *(ninguno)* | Búsqueda global |
-| `webhooks.php` | *(ninguno)* | Webhooks entrantes |
-| `settings.php` | *(ninguno)* | Configuraciones globales |
-
-## 📚 Documentación Adicional
-
-- [TECH_STACK.md](./TECH_STACK.md) - Stack tecnológico detallado
-- [TASKS.md](./TASKS.md) - Lista de tareas y fases del proyecto
-- [PLAN_ACCION.md](./PLAN_ACCION.md) - Plan de acción y arquitectura
-- [docs/](./docs/) - Documentación adicional
-
-## 🤝 Contribuir
-
-Las contribuciones son bienvenidas. Por favor:
-
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para más detalles.
-
-## 👥 Autores
-
-- **APYGG Team**
-
----
-
-## ⚠️ Solución de Problemas
-
-### Error: Conflictos de puertos
-
-Si al levantar el proyecto obtienes un error como `Bind for 0.0.0.0:8012 failed: port is already allocated`, verifica que los puertos en `compose.env` y `.env` estén sincronizados.
-
-**El problema:** Docker Compose usa `--env-file` con prioridad al último archivo. El archivo `.env` sobrescribe los valores de `compose.env`.
-
-**Puertos a verificar en `.env`:**
-
-Después de copiar `.env.example` a `.env`, verifica que estos valores coincidan con los de `compose.env`:
-
-| Variable | Valor compose.env | Valor en .env |
-|----------|-------------------|---------------|
-| APP_URL | http://localhost:8030 | http://localhost:8030 |
-| REVERB_PORT | 8032 | 8032 |
-| REDIS_PORT | 8033 | **6379** ⚠️ |
-
-**⚠️ IMPORTANTE:** `REDIS_PORT` en `.env` debe ser `6379` (puerto interno del contenedor), NO el puerto del host. Los demás puertos sí deben coincidir.
-
-Si `.env` tiene valores diferentes (ej: `REVERB_PORT=8012`), cámbialos para que coincidan con `compose.env`.
-
-**Solución:**
-
-```bash
-# 1. Edita compose.env con los puertos deseados
-vim compose.env
-
-# 2. Copia los puertos a .env
-cp .env.example .env
-
-# 3. Ajusta los puertos en .env para que coincidan con compose.env
-# REVERB_PORT=8032
-# REDIS_PORT=6379
-```
-
-**Nota:** `REDIS_PORT` debe ser siempre `6379` (puerto interno del contenedor Redis).
-# Luego ajusta los puertos en .env para que coincidan
-```
-
-O mejor aún, edita `.env` después de copiarlo para que tenga los mismos puertos que definiste en `compose.env`.
-
-### Error: composer.lock desincronizado
-
-Si los contenedores fallan al iniciar con errores como:
-
-```
-Required package "paquete" is in the lock file as "x.x.x" but that does not satisfy your constraint "^y.z"
-```
-
-Ejecuta:
-
-```bash
-make composer cmd="update"
-```
-
----
-
-**Nota**: Este es un boilerplate en desarrollo activo. Algunas características pueden estar en construcción.
+MIT, según el campo `license` de `composer.json`. No hay archivo LICENSE en el repositorio.

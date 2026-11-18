@@ -1,192 +1,52 @@
-# TASKS.md — Gaps del Boilerplate APYGG
+# TASKS — Estado real del boilerplate APYGG
 
-Análisis de lo que falta para que este sea un **boilerplate robusto**.
+Revisado contra el código el 2026-11-19. Lo marcado como hecho está comprobado en el código o en las rutas.
 
----
+## Hecho
 
-## ✅ Lo que YA existe
+- **Auth JWT**: login, registro, refresh, recuperación y reset de contraseña, logout, `me` y cambio de contraseña (`routes/api/auth.php`).
+- **API Keys**: alta, listado, revocación y rotación; scopes con `api-key-scope:` (`routes/api/api-keys.php`).
+- **RBAC propio**: modelos `Role` y `Permission`, tablas pivote, middleware `permission:` y `role:`. Spatie está en `composer.json` pero no se usa.
+- **Usuarios y perfil**: CRUD, restauración, roles por usuario, actividad; perfil y preferencias en `/user`.
+- **Roles y permisos**: CRUD de roles, permisos agrupados y asignación de permisos a roles.
+- **Webhooks salientes**: CRUD, entregas, reintentos y rotación de secreto (`SendWebhookJob`).
+- **Webhook de correo entrante**: `/webhooks/mail` con verificación de firma Svix.
+- **Archivos**: subida, listado, descarga, actualización y borrado (`FileService`, discos `local`, `public` y `s3`).
+- **Settings**: CRUD y consulta por clave (`routes/api/settings.php`).
+- **Notificaciones push**: `FcmService` y `DeviceToken`.
+- **Correo**: multi-cuenta y multi-proveedor, plantillas, registro de envíos y pausa global (`/admin/mail`).
+- **Gateway LLM**: áreas configurables en BD, respaldos y auditoría (`/admin/llm`).
+- **Asistente RAG**: indexado de Markdown (`docs:index`) y búsqueda y preguntas (`/docs/*`).
+- **Menú dinámico**: CRUD y visibilidad (`/admin/menu`).
+- **Seguridad**: auditoría con escaneos (`/admin/security/scans`), lista de bloqueo (`/admin/blacklist`), headers, rate limiting adaptativo y registro de eventos.
+- **Logging**: `LogService`, canales `activity`, `security`, `auth`, `sentry`, y registro de peticiones API.
+- **Health**: `/health`, `/health/live`, `/health/ready` y `/health/detailed`.
+- **Documentación de API**: Scramble en `/docs/api`.
+- **Caché**: `CacheService` y comandos `cache:list`, `cache:invalidate`, `cache:metrics`, `cache:warm`.
+- **Backups de BD**: crear, listar, limpiar, restaurar y restaurar desde remoto (comandos `backup:*`, `db:backup`).
+- **Búsqueda**: Scout con Meilisearch (`/search`) y sincronización de índices.
+- **Infraestructura**: Docker Compose con `app`, `reverb`, `horizon`, `scheduler`, `postgres` y `redis`; `pgbouncer` (perfil `prod`) y `meilisearch` (perfil `search`) como opcionales.
+- **CI**: job de lint (Pint y PHPStan) y job de tests (Pest con cobertura), `composer audit`, `cd.yml`, SonarCloud y Dependabot.
+- **Tests**: 286 pruebas Pest en verde (Unit, Feature y Arch), `pint` y `phpstan` (nivel 5) limpios.
+- **Makefile**: partido en `make/*.mk` por tema.
 
-- Auth, Roles, Permissions, ApiKeys, Webhooks, Files, Notifications (FCM), Settings
-- Middlewares: RateLimit adaptativo, CORS, Security Headers, IP Whitelist, ETag, TraceId, Compression
-- Services bien segregados por responsabilidad
-- CI/CD: `ci.yml`, `cd.yml`, SonarCloud, Dependabot
-- Docker + Makefile
-- Telescope, Sentry, Backup, Cache, LogService
+## Pendiente
 
----
+### Crítico
 
-## 🔴 Crítico (sin esto no es robusto)
+- [ ] **Multi-tenancy a medias.** Existen el modelo `Tenant`, la migración `create_tenants_table`, el trait `BelongsToTenant`, `TenantScope` y el middleware `ResolveTenant`. El middleware no está registrado en `bootstrap/app.php`, ninguna tabla tiene columna `tenant_id` y `config/multi-tenancy.php` viene con `enabled = false`. Decidir si se completa o se retira.
+- [ ] **Login social sin rutas.** `SocialAuthController` y `SocialAuthService` existen, pero no hay rutas, `config/services.php` no tiene Google ni GitHub, y no hay migración para `social_accounts`.
+- [ ] **Backup de archivos.** `BackupCreateCommand` lo marca como TODO y solo avisa de que no está implementado.
+- [ ] **Sin suscripciones ni cobros.** No hay pasarela de pagos, ni `Cashier` ni modelos de suscripción.
 
-### 1. Testing — casi vacío
+### Importante
 
-Solo existen `ExampleTest.php`, `UserControllerTest.php` y `UserPermissionsTest.php`.
+- [ ] **Repositorios sin usar.** Existen siete repositorios con sus interfaces, pero solo `AuthService` y `UserService` los usan. El resto de servicios accede a Eloquent directamente.
+- [ ] **DTOs parciales.** Hay seis DTOs. Los servicios que no los reciben siguen con arrays.
+- [ ] **Feature flags sin uso.** `config/features.php` define `advanced_search`, `export_users` y `two_factor_auth`, pero ningún código los consulta. El middleware `feature:` no se usa en ninguna ruta.
+- [ ] **Dependencias sin uso.** `setasign/fpdf`, `setasign/fpdi`, `barryvdh/laravel-snappy` y `spatie/laravel-query-builder` no aparecen en el código. Decidir si se quitan.
+- [ ] **Cobertura.** El objetivo del 80% en código crítico no está medido.
 
-- [ ] Tests de Auth (login, register, logout, refresh, forgot-password)
-- [ ] Tests de ApiKeys (crear, listar, revocar, rotar)
-- [ ] Tests de Webhooks (crear, entregar, reintentar)
-- [ ] Tests de Files (subir, eliminar, descargar)
-- [ ] Tests de Roles y Permissions (CRUD, asignación)
-- [ ] Tests de Settings
-- [ ] Tests de cada Middleware (RateLimit, CORS, IpWhitelist, CheckRole, CheckPermission, etc.)
-- [ ] Tests unitarios de cada Service (AuthService, UserService, TokenService, ApiKeyService, WebhookService, FileService, CacheService, LogService, SecurityService, NotificationService, PasswordService, RoleService, PermissionService)
-- [ ] Tests unitarios de Helpers (ApiResponse, DateHelper, SecurityHelper, StringHelper)
-- [ ] Tests de Rules de validación
-- [ ] Tests de Health endpoints
-- [ ] Objetivo: cobertura mínima del 80% en código crítico
+### Menor
 
-### 2. Contratos / Interfaces
-
-No existe `app/Contracts` ni `app/Interfaces`.
-
-- [x] Crear `AuthServiceInterface`
-- [x] Crear `UserServiceInterface`
-- [x] Crear `TokenServiceInterface`
-- [x] Crear `ApiKeyServiceInterface`
-- [x] Crear `WebhookServiceInterface`
-- [x] Crear `FileServiceInterface`
-- [x] Crear `CacheServiceInterface`
-- [x] Crear `LogServiceInterface`
-- [x] Crear `NotificationServiceInterface`
-- [x] Crear `SecurityServiceInterface`
-- [x] Crear `PermissionServiceInterface`
-- [x] Crear `RoleServiceInterface`
-- [x] Bindear interfaces en un `ServiceProvider` dedicado
-
-### 3. Repository Pattern
-
-No existe `app/Repositories`.
-
-- [x] Crear `UserRepository`
-- [x] Crear `RoleRepository`
-- [x] Crear `PermissionRepository`
-- [x] Crear `ApiKeyRepository`
-- [x] Crear `WebhookRepository`
-- [x] Crear `FileRepository`
-- [x] Crear `RepositoryInterface` base
-- [x] Actualizar Services para usar Repositories en vez de Eloquent directo
-
----
-
-## 🟡 Importante (mejora calidad del boilerplate)
-
-### 4. DTOs (Data Transfer Objects)
-
-No existe `app/DTOs`.
-
-- [x] Crear `LoginDTO`
-- [x] Crear `RegisterDTO`
-- [x] Crear `CreateUserDTO`
-- [x] Crear `UpdateUserDTO`
-- [x] Crear `CreateApiKeyDTO`
-- [x] Crear `CreateWebhookDTO`
-- [ ] Reemplazar arrays sueltos en Services por DTOs tipados
-
-### 5. Documentación de API (OpenAPI/Swagger)
-
-No hay `openapi.yaml` ni integración con Scramble/L5-Swagger.
-
-- [x] Instalar `dedoc/scramble` o `darkaonline/l5-swagger`
-- [x] Configurar auto-generación desde Form Requests y Resources
-- [x] Publicar documentación en `/docs/api`
-- [x] Documentar autenticación JWT y API Keys
-- [x] Documentar todos los endpoints existentes
-
-### 6. Enums centralizados
-
-No existe `app/Enums`.
-
-- [x] Crear `UserStatusEnum` (active, inactive, banned)
-- [x] Crear `RoleEnum` (admin, user, guest)
-- [x] Crear `ApiKeyScopeEnum`
-- [x] Crear `WebhookEventEnum`
-- [x] Crear `LogActionEnum` (created, updated, deleted, restored)
-- [x] Crear `FileTypeEnum`
-- [x] Reemplazar strings hardcodeados por Enums en Models y Services
-
-### 7. Socialite completo
-
-`SocialAuthService.php` solo tiene 1.4KB — parece incompleto.
-
-- [ ] Implementar login con Google
-- [ ] Implementar login con GitHub
-- [ ] Endpoint `GET /auth/social/{provider}/redirect`
-- [ ] Endpoint `GET /auth/social/{provider}/callback`
-- [ ] Configurar providers en `config/services.php`
-- [ ] Crear `SocialAccount` model y migración (user_id, provider, provider_id, token)
-
-### 8. Factories faltantes
-
-Faltan factories para varios modelos.
-
-- [x] Crear `WebhookFactory`
-- [x] Crear `WebhookDeliveryFactory`
-- [x] Crear `FileFactory`
-- [x] Crear `DeviceTokenFactory`
-- [x] Crear `SettingsFactory`
-- [x] Crear `JwtBlacklistFactory`
-
-### 9. Console Commands documentados
-
-El directorio `app/Console` existe pero faltan commands robustos.
-
-- [x] Verificar que todos los Commands tengan `--help` descriptivo
-- [x] Crear `UserCreateCommand` (crear usuarios desde CLI)
-- [x] Crear `UserRoleAssignCommand` (asignar roles desde CLI)
-- [x] Crear `ApiKeyCreateCommand` (generar API keys desde CLI)
-- [x] Documentar todos los commands disponibles en README
-
----
-
-## 🟢 Nice-to-have (boilerplate de referencia)
-
-### 10. CHANGELOG.md
-
-- [x] Crear `CHANGELOG.md` con formato [Keep a Changelog](https://keepachangelog.com)
-- [x] Documentar versión actual y cambios principales
-- [ ] Configurar en CI para actualización automática en releases
-
-### 11. CONTRIBUTING.md
-
-- [x] Crear `CONTRIBUTING.md`
-- [x] Guía de setup local
-- [x] Convenciones de código
-- [x] Proceso de PR y code review
-- [x] Estándares de commits (Conventional Commits)
-
-### 12. ARCHITECTURE.md
-
-- [x] Descripción de la arquitectura del boilerplate
-- [x] Diagramas de componentes
-- [x] Flujos principales (auth, request lifecycle)
-- [x] Decisiones arquitectónicas (ADRs)
-- [x] Cómo agregar un nuevo módulo
-
-### 13. Multi-tenancy (base)
-
-- [x] Evaluar si el boilerplate debe soportar multi-tenancy (opt-in via config)
-- [x] Crear `Tenant` model con `tenant_id` migration
-- [x] Crear middleware `ResolveTenant`
-- [x] Crear `BelongsToTenant` trait y `TenantScope` global
-
-### 14. Stubs personalizados
-
-- [x] Crear stubs en `stubs/` directory
-- [x] Personalizar stub de Controller para usar BaseController
-- [x] Personalizar stub de Model para usar BaseModel con UUID
-- [x] Personalizar stub de Request para usar BaseFormRequest
-- [x] Personalizar stub de Resource para usar BaseResource
-- [x] Crear stub de Repository adicional
-
----
-
-## 📋 Orden de Prioridad Recomendado
-
-1. **Interfaces** → primero para no romper nada al agregar Repositories
-2. **Repositories** → desacoplar DB de Services
-3. **Tests** → cubrir código existente antes de agregar más
-4. **DTOs** → mejorar tipado en Services existentes
-5. **Enums** → limpiar strings hardcodeados
-6. **Factories faltantes** → habilitar más tests
-7. **Documentación API** → Scramble sobre código ya existente
-8. **Socialite** → feature nueva
-9. **CHANGELOG + CONTRIBUTING + ARCHITECTURE** → documentación final
+- [ ] `AGENTS.md` describe Sanctum como método alternativo, pero Sanctum no está en `composer.json`. Corregir `AGENTS.md` o instalar el paquete (`AGENTS.md` no se tocó en esta revisión).

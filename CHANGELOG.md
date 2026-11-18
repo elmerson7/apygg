@@ -13,6 +13,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ARCHITECTURE.md con documentación de arquitectura
 - Soporte base para multi-tenancy
 - Stubs personalizados para Laravel
+- Sistema de correo multi-cuenta con registro de envíos y webhook de entrega (`MailService`, `/admin/mail`)
+- Gateway LLM agnóstico del proveedor, con áreas, modelos de respaldo y auditoría (`app/Services/LLM`, `/admin/llm`)
+- Asistente de documentación con RAG sobre los Markdown del proyecto (`/docs/search`, `/docs/ask`)
+- Menú dinámico administrable (`/admin/menu`)
+- Auditoría de seguridad, lista de bloqueo y escáner de seguridad (`/admin/security/scans`, `/admin/blacklist`)
+
+### Changed
+- `TRUSTED_PROXIES` configurable (vacío = no se confía en `X-Forwarded-*`)
+- Octane: `FlushUploadedFiles` activo y `DisconnectFromDatabases` configurable con `OCTANE_DISCONNECT_DATABASES`
+- Rutas `test/sentry/*` solo en `local` y `testing`
+- `composer.json`: descripción Laravel 13 y sin el autoload `App\Modules` inexistente
+- Makefile partido en `make/*.mk` por tema; el `Makefile` raíz solo define variables e incluye esos archivos
+
+### Removed
+- Código de otra app que no pertenece al boilerplate: modelos y políticas de Wallet, Gift, UserMatch y Message, controladores de chat y tienda, sus Form Requests y `routes/api/chat.php`
+- `SendPasswordResetEmailJob`, que no se usaba
+
+### Fixed
+- `CheckPermission` y `CheckRole` usan el guard `api`: con el guard por defecto (`web`) podían dar 401/403 intermitentes bajo Octane
+- Listeners registrados dos veces por el autodescubrimiento (`withEvents(discover: false)`)
+- `TransformRequestMiddleware` alteraba cadenas como `"007"`, teléfonos con cero inicial, `"1e5"` o números de más de 15 dígitos
+- Import de `WebhookStatusEnum` en `UpdateWebhookRequest`
+- Import roto en `WarmCacheCommand`: `cache:warm` fallaba
 
 ## [1.0.0] - 2026-01-27
 

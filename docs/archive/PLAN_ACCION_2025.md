@@ -1,3 +1,5 @@
+> Documento histórico; no refleja el estado actual.
+
 # Plan de Acción - API Boilerplate APYGG Laravel 12 (2026)
 
 ## Objetivo del Proyecto

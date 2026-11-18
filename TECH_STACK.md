@@ -1,227 +1,81 @@
-# Stack Tecnológico - APYGG Laravel 13
+# Stack tecnológico — APYGG
 
-## Backend
+Versiones de `composer.lock`, `package.json` y los Dockerfile de `docker/`. Si cambian las dependencias, actualiza este archivo a partir de esas fuentes.
 
-### Framework y Servidor HTTP
-- **Laravel 13** - Framework web PHP moderno para aplicaciones robustas
-- **PHP 8.5** - Lenguaje de programación de última generación
-- **FrankenPHP (Octane)** - Servidor HTTP moderno production-ready basado en Caddy para desarrollo y PaaS
+## Runtime y framework
 
-### Autenticación y Seguridad
-- **php-open-source-saver/jwt-auth v2.8.x** - Autenticación mediante JSON Web Tokens (JWT)
-- **Laravel Sanctum** - Autenticación de API tokens (alternativa incorporada)
-- **bcrypt** - Hashing seguro de contraseñas
-
-### Base de Datos
-- **PostgreSQL 18** - Base de datos relacional con soporte a JSON, UUID, particionamiento
-- **PgBouncer** (Opcional) - Connection pooler para PostgreSQL, recomendado para producción con alta carga
-- **Laravel Migrations** - Versionado de schema de BD
-- **Laravel Eloquent ORM** - Abstracción de base de datos orientada a objetos
-
-### Caché y Sesiones
-- **Redis 7** - Cache en memoria, sesiones, colas
-- **Laravel Cache** - Abstracción de cache con drivers múltiples
-
-### Colas y Procesamiento Asíncrono
-- **Laravel Queue** - Sistema de colas incorporado
-- **Laravel Horizon** v3.x - Dashboard para monitoreo de colas
-- **Laravel Reverb** - WebSockets nativo para comunicación en tiempo real
-- **Redis Queue Driver** - Driver de colas basado en Redis
-
-### Búsqueda y Indexación
-- **Meilisearch 1.x** (Opcional) - Motor de búsqueda full-text
-- **Laravel Scout** - Abstracción de búsqueda
-
-### Documentación de API
-- **dedoc/scramble** - Documentación automática de API sin configuración manual
-
-### Observabilidad y Logging
-- **Laravel Telescope** v5.x - Herramienta de debugging para desarrollo
-- **Sentry** (Opcional) - Monitoreo de errores en producción
-- **Laravel Logging** - Sistema centralizado de logs
-- **Prometheus** (Opcional) - Recolección de métricas
-- **Grafana** (Opcional) - Visualización de métricas y alertas
-- **OpenTelemetry** (Opcional) - Distributed tracing
-
-### Utilidades
-- **spatie/laravel-query-builder** - Query filters estandarizado para filtrado dinámico
-- **laravel/scout** - Búsqueda full-text
-- **laravel/tinker** - REPL interactivo para Laravel
-
----
-
-## Containerización e Infraestructura
-
-### Docker
-- **Docker** - Containerización de la aplicación
-- **Docker Compose** v2.x - Orquestación local de contenedores
-- **docker:latest** - CLI de Docker
-
-### Imágenes Base
-- **dunglas/frankenphp:php8.4-bookworm** - Runtime PHP con FrankenPHP
-- **postgres:18-alpine** - Base de datos
-- **pgbouncer/pgbouncer:latest** (Opcional) - Connection pooler para PostgreSQL
-- **redis:7-alpine** - Cache
-- **getmeili/meilisearch:latest** (Opcional) - Búsqueda
-
----
-
-## Testing
-
-### Herramientas de Test
-- **Pest 4.x** - Framework de testing moderno para PHP (construido sobre PHPUnit 12)
-- **pestphp/pest-plugin-laravel** - Plugin de Pest para Laravel con helpers específicos
-
-### Características
-- Sintaxis expresiva y legible (inspirada en Jest/RSpec)
-- API de expectativas fluida (`expect()->toBe()`, `->toBeTrue()`, etc.)
-- Testing paralelo integrado
-- Watch mode para desarrollo (`--watch`)
-- Snapshot testing
-- Browser testing con Playwright (opcional)
-- Architecture testing
-- Compatible con tests de PHPUnit existentes
-
-### Cobertura de Código
-- Pest incluye herramientas de cobertura integradas
-- Target: 80% en código crítico (auth, usuarios, permisos)
-- Enfoque pragmático: calidad sobre cantidad
-
----
-
-## Desarrollo
-
-### Linting y Formateo
-- **Laravel Pint** - Formateador de código basado en PHP CS Fixer
-- **PHP CS Fixer** - Fixer automático de estándares PSR-12
-- **PHPStan** v1.x - Análisis estático de código (nivel 9)
-- **SonarQube** (Opcional) - Análisis de calidad de código
-
-### Package Manager
-- **Composer 2.x** - Gestor de dependencias de PHP
-- **npm** (Opcional) - Gestor de dependencias de Node.js
-
-### IDE y Herramientas
-- **VS Code** - Editor de código
-- **PHP Intelephense** - Extensión de PHP para VS Code
-- **Laravel Extension Pack** - Extensiones para Laravel
-- **Docker Extension** - Extensión para gestionar Docker
-- **PostgreSQL Extension** - Extensión para gestionar bases de datos
-
----
-
-## CI/CD y DevOps
-
-### Integración Continua
-- **GitHub Actions** / **GitLab CI** / **Jenkins** - Pipeline de CI/CD
-- **Dependabot** - Escaneo de vulnerabilidades de dependencias
-- **Snyk** (Opcional) - Análisis de seguridad
-
-### Automatización
-- **Git Hooks** (pre-commit, pre-push) - Validaciones automáticas antes de commits
-- **Semantic Release** (Opcional) - Versionado automático
-
----
-
-## Seguridad
-
-### Headers y Protección
-- **HTTPS/TLS 1.3** - Encriptación de comunicaciones
-- **Helmet.js** equivalente - Headers de seguridad HTTP
-- **CORS Middleware** - Control de acceso entre orígenes
-- **Rate Limiting** - Limitación de requests
-- **IP Whitelisting** - Restricción por IP
-
-### Validación y Sanitización
-- **Laravel Form Request Validation** - Validación centralizada
-- **Laravel Sanitization** - Sanitización de inputs
-- **OWASP** - Cumplimiento de estándares de seguridad
-
----
-
-## Herramientas de Gestión de Base de Datos
-
-### Desarrollo Local
-- **TablePlus** (Recomendado) - Cliente gráfico para gestión de BD
-- **DBeaver** - Alternativa gratuita
-- **pgAdmin** (Desktop) - Gestor de PostgreSQL
-- **VS Code PostgreSQL Extension** - Extensión integrada
-
----
-
-## Monitoreo y Observabilidad (Producción)
-
-### Logs
-- **Laravel Logging** - Sistema centralizado de logs
-
-### Errors
-- **Sentry** (Opcional) - Tracking de errores y performance
-
-### Métricas (Futuro)
-- **Prometheus** (Opcional) - Recolección de métricas
-- **Grafana** (Opcional) - Visualización de métricas
-
-### Trazas Distribuidas (Futuro)
-- **OpenTelemetry** (Opcional) - Tracing distribuido para microservicios
-
----
-
-## Hosting y Despliegue
-
-### Opciones de Hosting
-- **AWS EC2** / **DigitalOcean** / **Linode** - Servidores en la nube
-- **Heroku** / **Railway** - Platform as a Service (PaaS)
-- **Kubernetes** (On-premise o cloud) - Orquestación de contenedores
-
-### CDN (Opcional)
-- **Cloudflare** - CDN y cache edge
-
-### Backup
-- **AWS S3** / **Backblaze** - Almacenamiento en la nube
-
----
-
-## Versiones Resumidas
-
-| Tecnología | Versión | Tipo |
+| Tecnología | Versión | Fuente |
 |---|---|---|
-| PHP | 8.5 | Core |
-| Laravel | 12.x | Framework |
-| PostgreSQL | 18 | BD |
-| PgBouncer | Latest | Connection Pooler (Opcional) |
-| Redis | 7 | Cache |
-| Docker | Latest | Container |
-| Compose | 2.x | Orquestación |
-| Node.js | 20 LTS (Opcional) | Runtime |
-| Composer | 2.x | Package Manager |
-| PHPUnit | 11.x | Testing |
-| Meilisearch | 1.x | Search (Opcional) |
+| PHP | 8.5 | `composer.json` (`^8.5`), `docker/app/Dockerfile` |
+| Laravel | 13.31.0 | `composer.lock` |
+| Laravel Octane | 2.19.1 | `composer.lock` |
+| FrankenPHP | 1.11 (`dunglas/frankenphp:1.11-php8.5-bookworm`) | `docker/app/Dockerfile` |
 
----
+Extensiones PHP instaladas en la imagen: `pcntl`, `intl`, `zip`, `opcache`, `gd`, `pdo_pgsql`, `bcmath`, entre otras (`docker/app/Dockerfile`).
 
-## Requisitos Mínimos del Sistema
+## Paquetes principales
 
-### Desarrollo Local
-- CPU: 4 cores
-- RAM: 8 GB mínimo (16 GB recomendado)
-- Disco: 50 GB SSD libre
-- Docker Engine 4.0+
-- Docker Compose 2.0+
+| Paquete | Versión | Uso en el código |
+|---|---|---|
+| `php-open-source-saver/jwt-auth` | 2.9.3 | JWT (`AuthService`, `TokenService`) |
+| `laravel/horizon` | 5.49.0 | Panel y gestión de colas |
+| `laravel/reverb` | 1.11.1 | WebSockets (`BroadcastAuthController`, `routes/channels.php`) |
+| `laravel/scout` | 10.25.0 | Búsqueda (driver `meilisearch` por defecto) |
+| `meilisearch/meilisearch-php` | 1.17.0 | Cliente de Meilisearch |
+| `league/flysystem-aws-s3-v3` | 3.35.3 | Disco `s3` de `config/filesystems.php` |
+| `resend/resend-laravel` | 1.4.0 | Proveedor de correo (`config/mail.php`) |
+| `laravel/socialite` | 5.31.0 | Login social: código presente, sin rutas |
+| `dedoc/scramble` | 0.13.43 | Documentación OpenAPI en `/docs/api` |
+| `sentry/sentry-laravel` | 4.27.0 | Captura de excepciones (`bootstrap/app.php`) |
+| `laravel/telescope` | 5.24.0 | Depuración (provider registrado en `bootstrap/providers.php`) |
+| `chillerlan/php-qrcode` | 6.0.1 | `QrCodeService` |
 
-### Producción
-- CPU: 2-4 cores
-- RAM: 4-8 GB (escalable)
-- Disco: 100+ GB SSD
-- PostgreSQL 16+
-- Redis 6+
+Dependencias del `composer.json` sin uso en `app/`, `config/`, `routes/` ni `bootstrap/` (comprobado con grep):
 
----
+- `spatie/laravel-permission` (7.4.2): el RBAC es propio (modelos `Role` y `Permission`).
+- `spatie/laravel-query-builder` (6.4.4).
+- `setasign/fpdf` (1.9.0) y `setasign/fpdi` (2.6.8).
+- `barryvdh/laravel-snappy` (1.0.5).
 
-## Alternativas Consideradas pero No Usadas
+## Desarrollo y calidad
 
-- **Symfony** (en lugar de Laravel) - Laravel es más rápido de desarrollar
-- **MySQL** (en lugar de PostgreSQL) - PostgreSQL es más robusto para production
-- **MongoDB** (NoSQL) - Se requiere relacional para este proyecto
-- **Memcached** (en lugar de Redis) - Redis es más versátil
-- **Elasticsearch** (en lugar de Meilisearch) - Meilisearch es más simple y moderno
+| Herramienta | Versión | Uso |
+|---|---|---|
+| Pest | 4.7.8 | Tests (`tests/Unit`, `tests/Feature`, arquitectura con `arch()`) |
+| Laravel Pint | 1.32.1 | Formato PSR-12 (`make pint`) |
+| PHPStan | 2.2.13 | Análisis estático, nivel 5 (`phpstan.neon`) |
+| Larastan | 3.12.0 | Extensión de PHPStan para Laravel |
+| Laravel Pail | 1.2.7 | Logs en vivo (script `composer dev`) |
+| Mockery | 1.6.15 | Mocks en tests |
 
+## Frontend (solo tooling)
+
+`package.json` declara Vite (`^7.0.7`), Tailwind CSS (`^4.0.0`), `@tailwindcss/vite`, `laravel-vite-plugin` (`^2.0.0`) y axios. El repositorio no tiene lockfile de npm. La API no sirve vistas.
+
+## Base de datos, caché y colas
+
+| Servicio | Imagen | Notas |
+|---|---|---|
+| PostgreSQL | `postgres:18-alpine` (build propio) | Instala PostGIS y pgvector en `docker/postgres/Dockerfile`. El asistente RAG no usa pgvector (ver ARCHITECTURE.md). |
+| Redis | `redis:7.4-alpine` (build propio) | Caché, sesiones y cola (`QUEUE_CONNECTION=redis` por defecto en `config/queue.php`) |
+| PgBouncer | `pgbouncer/pgbouncer:latest` | Solo en el perfil `prod` (`docker-compose.yml`) |
+| Meilisearch | `getmeili/meilisearch:v1.16` | Solo con `SEARCH=true` (perfil `search`) |
+
+## Contenedores y orquestación
+
+- Docker Compose v2 (`docker compose`). El `Makefile` lo llama con `--project-name` y `--env-file compose.env`.
+- Servicios de `docker-compose.yml`: `app`, `reverb`, `horizon`, `scheduler`, `postgres`, `redis`, y los opcionales `pgbouncer` y `meilisearch`.
+
+## Integración continua
+
+Workflows en `.github/workflows/`:
+
+- `ci.yml`: job `lint` (Pint en modo test y PHPStan), job `test` (migraciones y Pest con cobertura) y `composer audit`.
+- `cd.yml`: despliegue.
+- `sonarcloud.yml`: análisis de calidad.
+- `.github/dependabot.yml`: actualización de dependencias.
+
+## Requisitos
+
+- Desarrollo: Docker Engine y Docker Compose v2. Make es opcional.
+- Ningún requisito de CPU, RAM o disco está fijado en el repositorio.

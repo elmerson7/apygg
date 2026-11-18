@@ -1,493 +1,107 @@
-# Architecture — APYGG
+# Arquitectura — APYGG
 
-Documentación de la arquitectura del boilerplate API con Laravel 12.
+Arquitectura del boilerplate API con Laravel 13. Este documento describe lo que hay en el código. Lo pendiente está en [TASKS.md](./TASKS.md).
 
-## Visión General
+## Pipeline de una petición
 
-APYGG sigue una arquitectura **Layered Architecture** con separación clara de responsabilidades.
+Los middleware del grupo `api` se registran en `bootstrap/app.php`, en este orden:
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    CLIENT REQUEST                        │
-└────────────────────────┬────────────────────────────────┘
-                         │
-┌────────────────────────▼────────────────────────────────┐
-│                    MIDDLEWARES                            │
-│  RateLimit → CORS → SecurityHeaders → Auth → Tenant     │
-└────────────────────────┬────────────────────────────────┘
-                         │
-┌────────────────────────▼────────────────────────────────┐
-│                   CONTROLLERS                            │
-│         (HTTP Layer - Validación y Routing)              │
-└────────────────────────┬────────────────────────────────┘
-                         │
-┌────────────────────────▼────────────────────────────────┐
-│                    SERVICES                              │
-│        (Business Logic - Lógica de negocio)             │
-└────────────────────────┬────────────────────────────────┘
-                         │
-┌────────────────────────▼────────────────────────────────┐
-│                  REPOSITORIES                            │
-│           (Data Access - Acceso a datos)                │
-└────────────────────────┬────────────────────────────────┘
-                         │
-┌────────────────────────▼────────────────────────────────┐
-│                 ELOQUENT MODELS                          │
-│          (Persistence - Persistencia)                   │
-└─────────────────────────────────────────────────────────┘
-```
+1. `ResolveClientIpMiddleware`: IP real del cliente (detrás de Cloudflare).
+2. `CorsMiddleware`: CORS con `ALLOWED_ORIGINS`.
+3. `TraceIdMiddleware`: trace ID de la petición.
+4. `SecurityHeadersMiddleware`: headers de seguridad HTTP.
+5. `AdaptiveRateLimitingMiddleware`: rate limiting según el tipo de endpoint.
+6. `SanitizeInput` y `TransformRequestMiddleware`: limpieza y normalización de la entrada.
+7. `ForceJsonResponse` y `TransformResponseMiddleware`: respuestas JSON.
+8. `CompressionMiddleware`: compresión (cuando no la hace Caddy).
+9. `LogApiRequests`, `SecurityLoggerMiddleware`, `RateLimitLoggerMiddleware`: registro de peticiones, eventos de seguridad y bloqueos.
 
-## Componentes Principales
+Después, cada ruta aplica sus propios middleware (`auth:api`, `auth:api-key`, `permission:`, `role:`, etc.). Las excepciones se renderizan siempre como JSON desde `bootstrap/app.php`, y Sentry las captura.
 
-### 1. HTTP Layer
-
-#### Controllers
-
-Todos los controllers extienden `BaseController` que proporciona:
+## Capas
 
 ```
-app/Http/Controllers/Controller.php
-├── index()      → Listar con paginación
-├── show()       → Mostrar un registro
-├── store()      → Crear registro
-├── update()     → Actualizar registro
-├── destroy()    → Eliminar registro
-├── sendSuccess() → Respuesta exitosa
-├── sendError()  → Respuesta de error
-└── sendPaginated() → Respuesta paginada
+Petición → Middleware → Controller → Form Request → Service → (Repository) → Model
+                                         ↓
+                                     Resource → Respuesta
 ```
 
-#### Form Requests
-
-Validación de entrada a través de `BaseFormRequest`:
-
-```
-app/Http/Requests/BaseFormRequest.php
-├── Auto-sanitización (trim, empty→null)
-├── Mensajes en español por defecto
-├── Métodos auxiliares: uuidRule(), emailRule(), etc.
-└── Soporte para getCustomMessages() y getCustomAttributes()
-```
-
-#### Resources
-
-Transformación de datos de salida con `BaseResource`:
-
-```
-app/Http/Resources/BaseResource.php
-├── getBaseFields()     → Campos base del modelo
-├── includeWhenLoaded() → Incluir relaciones cargadas
-├── whenExists()        → Incluir si existe
-├── formatDate()        → Formateo de fechas
-└── includeTimestamps() → Incluir timestamps
-```
-
-### 2. Service Layer
-
-Los servicios contienen la lógica de negocio. Cada servicio:
-
-- Recibe DTOs como entrada (no arrays)
-- Retorna DTOs o modelos tipados
-- No accede directamente a la base de datos
-- Usa Repositories para acceso a datos
-
-```
-app/Services/
-├── AuthService.php           → Autenticación JWT
-├── UserService.php           → CRUD de usuarios
-├── TokenService.php          → Gestión de tokens
-├── ApiKeyService.php         → Gestión de API keys
-├── WebhookService.php        → Gestión de webhooks
-├── FileService.php           → Gestión de archivos
-├── CacheService.php          → Gestión de cache
-├── LogService.php            → Gestión de logs
-├── SecurityService.php       → Seguridad y rate limiting
-├── NotificationService.php   → Notificaciones FCM
-├── PasswordService.php       → Gestión de contraseñas
-├── RoleService.php           → Gestión de roles
-├── PermissionService.php     → Gestión de permisos
-└── SocialAuthService.php     → OAuth social login
-```
-
-### 3. Repository Pattern
-
-Los repositories desacoplan el acceso a datos de la lógica de negocio.
-
-```
-app/Repositories/
-├── RepositoryInterface.php   → Contrato base
-├── UserRepository.php
-├── RoleRepository.php
-├── PermissionRepository.php
-├── ApiKeyRepository.php
-├── WebhookRepository.php
-└── FileRepository.php
-```
-
-Ejemplo de uso en Service:
-
-```php
-public function __construct(
-    protected UserRepository $userRepository,
-    protected FileRepository $fileRepository
-) {}
-
-public function findById(string $id): ?User
-{
-    return $this->userRepository->findById($id);
-}
-```
-
-### 4. Contracts / Interfaces
-
-Interfaces que definen contratos de servicios para inyección de dependencias:
-
-```
-app/Contracts/
-├── AuthServiceInterface.php
-├── UserServiceInterface.php
-├── TokenServiceInterface.php
-├── ApiKeyServiceInterface.php
-├── WebhookServiceInterface.php
-├── FileServiceInterface.php
-├── CacheServiceInterface.php
-├── LogServiceInterface.php
-├── NotificationServiceInterface.php
-├── SecurityServiceInterface.php
-├── PermissionServiceInterface.php
-└── RoleServiceInterface.php
-```
-
-### 5. DTOs (Data Transfer Objects)
-
-Objetos tipados para transferencia de datos entre capas:
-
-```
-app/DTOs/
-├── LoginDTO.php
-├── RegisterDTO.php
-├── CreateUserDTO.php
-├── UpdateUserDTO.php
-├── CreateApiKeyDTO.php
-└── CreateWebhookDTO.php
-```
-
-### 6. Enums
-
-Enumeraciones para valores fijos:
-
-```
-app/Enums/
-├── UserStatusEnum.php    (active, inactive, banned)
-├── RoleEnum.php          (admin, user, guest)
-├── ApiKeyScopeEnum.php
-├── WebhookEventEnum.php
-├── LogActionEnum.php     (created, updated, deleted, restored)
-└── FileTypeEnum.php
-```
-
-### 7. Models
-
-Modelos Eloquent con base class compartida:
-
-```
-app/Models/
-├── Model.php              → BaseModel abstract (UUID, SoftDeletes)
-├── User.php               → Extends Authenticatable + JWTSubject
-├── ApiKey.php
-├── File.php
-├── Webhook.php
-├── WebhookDelivery.php
-├── Role.php
-├── Permission.php
-├── Settings.php
-├── DeviceToken.php
-├── JwtBlacklist.php
-└── Logs/
-    ├── ApiLog.php
-    ├── ActivityLog.php
-    └── SecurityLog.php
-```
-
-## Flujos Principales
-
-### Flujo de Autenticación
-
-```
-┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
-│  Client  │───▶│  Login   │───▶│  Auth    │───▶│  Token   │
-│  Request │    │  Request │    │  Service │    │  Service │
-└──────────┘    └──────────┘    └──────────┘    └──────────┘
-                     │               │               │
-                     ▼               ▼               ▼
-                 Validación    Verificar      Generar JWT
-                 de datos      credenciales   + Refresh Token
-                                              
-┌──────────┐    ┌──────────┐    ┌──────────┐
-│  Client  │◀───│  JWT     │◀───│  User    │
-│  Response│    │  Token   │    │  Model   │
-└──────────┘    └──────────┘    └──────────┘
-```
-
-### Flujo de Request Lifecycle
-
-```
-Request → Middleware Stack:
-  ├── RateLimitMiddleware (límite de requests)
-  ├── CorsMiddleware (origins permitidos)
-  ├── SecurityHeadersMiddleware (headers de seguridad)
-  ├── IpWhitelistMiddleware (whitelist de IPs)
-  ├── AuthMiddleware (autenticación JWT)
-  └── TenantMiddleware (resolución de tenant)
-         │
-         ▼
-    Controller
-    ├── Validación (FormRequest)
-    ├── Llamada a Service
-    └── Transformación (Resource)
-         │
-         ▼
-    Service
-    ├── Lógica de negocio
-    ├── Validación de reglas
-    └── Llamada a Repository
-         │
-         ▼
-    Repository
-    ├── Query Builder / Eloquent
-    └── Retorno de datos
-```
-
-### Flujo de Webhooks
-
-```
-┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
-│  Event   │───▶│ Webhook  │───▶│  Queue   │───▶│  HTTP    │
-│ Trigger  │    │ Service  │    │  Job     │    │  Post    │
-└──────────┘    └──────────┘    └──────────┘    └──────────┘
-                                      │               │
-                                      ▼               ▼
-                                 Reintentos      Delivery Log
-                                 automáticos     (éxito/error)
-```
-
-## Decisiones Arquitectónicas (ADRs)
-
-### ADR-001: Repository Pattern
-
-**Decisión**: Usar Repository Pattern para acceso a datos.
-
-**Contexto**: Los services accedían directamente a Eloquent, lo que dificultaba testing y cambio de fuente de datos.
-
-**Consecuencias**:
-- ✅ Desacoplamiento de la lógica de negocio del ORM
-- ✅ Fácil mocking para tests unitarios
-- ✅ Posibilidad de cambiar de Eloquent a otra fuente
-- ⚠️ Capa adicional de abstracción
-- ⚠️ Más código a mantener
-
-### ADR-002: DTOs en vez de Arrays
-
-**Decisión**: Usar DTOs tipados en vez de arrays asociativos en Services.
-
-**Contexto**: Arrays sueltos no proporcionan autocompletado, type safety ni validación.
-
-**Consecuencias**:
-- ✅ Type safety y autocompletado
-- ✅ Validación centralizada
-- ✅ Documentación implícita del código
-- ⚠️ Más clases a crear
-
-### ADR-003: Enums en vez de Strings
-
-**Decisión**: Usar PHP 8.1+ Enums para valores fijos.
-
-**Contexto**: Strings hardcodeados son propensos a errores de tipeo y difíciles de mantener.
-
-**Consecuencias**:
-- ✅ Type safety
-- ✅ Autocompletado
-- ✅ Refactoring seguro
-- ✅ Validez garantizada
-
-### ADR-004: Base Classes
-
-**Decisión**: Crear base classes (Model, Controller, FormRequest, Resource) con funcionalidad común.
-
-**Contexto**: Código duplicado entre modelos, controllers, requests y resources.
-
-**Consecuencias**:
-- ✅ DRY (Don't Repeat Yourself)
-- ✅ Comportamiento consistente
-- ✅ Fácil extensión
-- ⚠️ Dependencia fuerte a la base class
-
-## Cómo Agregar un Nuevo Módulo
-
-### Ejemplo: Agregar módulo "Products"
-
-#### 1. Crear Migration
-
-```bash
-docker compose exec app php artisan make:migration create_products_table
-```
-
-```php
-Schema::create('products', function (Blueprint $table) {
-    $table->uuid('id')->primary();
-    $table->string('name');
-    $table->text('description')->nullable();
-    $table->decimal('price', 10, 2);
-    $table->timestamps();
-    $table->softDeletes();
-});
-```
-
-#### 2. Crear Model
-
-```php
-namespace App\Models;
-
-class Product extends Model
-{
-    protected $fillable = ['name', 'description', 'price'];
-    
-    protected $casts = [
-        'price' => 'decimal:2',
-    ];
-}
-```
-
-#### 3. Crear DTOs
-
-```php
-namespace App\DTOs;
-
-class CreateProductDTO
-{
-    public function __construct(
-        public readonly string $name,
-        public readonly ?string $description,
-        public readonly float $price,
-    ) {}
-    
-    public static function fromRequest(StoreProductRequest $request): self
-    {
-        return new self(
-            name: $request->validated('name'),
-            description: $request->validated('description'),
-            price: $request->validated('price'),
-        );
-    }
-}
-```
-
-#### 4. Crear Repository
-
-```php
-namespace App\Repositories;
-
-use App\Models\Product;
-
-class ProductRepository extends BaseRepository
-{
-    protected function model(): string
-    {
-        return Product::class;
-    }
-}
-```
-
-#### 5. Crear Service
-
-```php
-namespace App\Services;
-
-class ProductService
-{
-    public function __construct(
-        protected ProductRepository $productRepository,
-    ) {}
-    
-    public function create(CreateProductDTO $dto): Product
-    {
-        return $this->productRepository->create([
-            'name' => $dto->name,
-            'description' => $dto->description,
-            'price' => $dto->price,
-        ]);
-    }
-}
-```
-
-#### 6. Crear Form Requests
-
-```bash
-docker compose exec app php artisan make:request Products/StoreProductRequest
-docker compose exec app php artisan make:request Products/UpdateProductRequest
-```
-
-#### 7. Crear Resource
-
-```bash
-docker compose exec app php artisan make:resource Products/ProductResource
-```
-
-#### 8. Crear Controller
-
-```bash
-docker compose exec app php artisan make:controller Products/ProductController
-```
-
-```php
-namespace App\Http\Controllers\Products;
-
-use App\Http\Controllers\Controller;
-use App\Services\ProductService;
-
-class ProductController extends Controller
-{
-    public function __construct(
-        protected ProductService $productService,
-    ) {}
-    
-    // index(), show(), store(), update(), destroy()
-}
-```
-
-#### 9. Registrar Ruta
-
-```php
-// routes/api.php
-Route::apiResource('products', ProductController::class);
-```
-
-#### 10. Crear Tests
-
-```bash
-docker compose exec app php artisan make:test Products/ProductTest
-docker compose exec app php artisan make:test Products/ProductServiceTest
-```
-
-## Directorios de Configuración
-
-```
-config/
-├── auth.php           → Configuración JWT y guards
-├── cache.php          → Redis y cache stores
-├── cors.php           → CORS policy
-├── database.php       → PostgreSQL connections
-├── jwt.php            → JWT Auth config
-├── permission.php     → Spatie Permission config
-├── queue.php          → Queue connections
-├── rate-limiter.php   → Rate limiting rules
-├── services.php       → External services
-└── settings.php       → Application settings
-```
-
-## Referencias
-
-- [Laravel 12 Documentation](https://laravel.com/docs/12)
-- [Repository Pattern](https://martinfowler.com/eaaCatalog/repository.html)
-- [Conventional Commits](https://www.conventionalcommits.org/)
-- [Keep a Changelog](https://keepachangelog.com/)
+- **Controllers**: hay dos bases. `ApiController` para controladores con acciones propias. `Controller` para el CRUD genérico. Las respuestas usan `sendSuccess`, `sendError` y `sendPaginated`.
+- **Form Requests**: heredan de `BaseFormRequest`.
+- **Resources**: heredan de `BaseResource`.
+- **Services** (`app/Services`): lógica de aplicación. Se inyectan por interfaz en `app/Contracts`, con los bindings en `ContractServiceProvider`.
+- **Repositories** (`app/Repositories`): existen para usuarios, roles, permisos, API keys, webhooks y archivos, con sus interfaces en `app/Contracts`. Hoy solo `AuthService` y `UserService` los usan; el resto de servicios accede a Eloquent directamente.
+- **Models** (`app/Models`): heredan de `App\Models\Model` (`HasFactory` y `SoftDeletes`). La búsqueda con Scout usa el trait `Searchable`, y el UUID es opcional con el trait `HasUuid`.
+- **DTOs** (`app/DTOs`): seis clases (login, registro, crear/actualizar usuario, crear API key, crear webhook). No todos los servicios los usan.
+- **Enums** (`app/Enums`): roles, estados de usuario, scopes de API key, eventos y estados de webhook, tipos de archivo.
+
+## Módulos
+
+| Módulo | Código principal | Rutas |
+|---|---|---|
+| Auth JWT | `AuthService`, `TokenService`, `AuthController`, `PasswordController` | `/auth/*`, `/auth/me`, `/auth/change-password` |
+| API Keys | `ApiKeyService`, `AuthenticateApiKey`, `CheckApiKeyScope` | `/api-keys` |
+| RBAC | modelos `Role` y `Permission`, `PermissionService`, `RoleService`, `CheckPermission`, `CheckRole` | `/roles`, `/permissions` |
+| Usuarios y perfil | `UserService`, `UserProfile`, `Users\UserController` | `/users`, `/user/profile`, `/user/preferences` |
+| Logging | `LogService`, `app/Services/Logging/*`, `app/Logging/` | `/admin/logs/*` |
+| Seguridad | `SecurityAuditService`, `SecurityService`, `Blacklist`, `SecurityScan` | `/admin/blacklist`, `/admin/security/scans` |
+| Webhooks salientes | `WebhookService`, `SendWebhookJob`, `WebhookDelivery` | `/webhooks/*` |
+| Correo | `MailService`, `app/Services/Mail/*`, `app/Models/Mail/*`, `SendMailJob` | `/admin/mail/*`, `/webhooks/mail` |
+| Gateway LLM | `app/Services/LLM` (`LlmGateway`, `LlmAgent`, `LlmAuditService`, proveedores OpenAI, DeepSeek y Null), `LlmArea` | `/admin/llm/*` |
+| Asistente RAG | `app/Services/Docs` (`DocsIndexer`, `DocsService`), `DocChunk`, `DocConversation` | `/docs/*` |
+| Menú dinámico | `MenuService`, `MenuItem` | `/admin/menu/*` |
+| Archivos | `FileService`, `FileRepository`, discos de `config/filesystems.php` | `/files/*` |
+| Búsqueda | Scout con Meilisearch, `SearchController`, trait `Searchable` | `/search` |
+| Notificaciones push | `FcmService`, `DeviceToken`, `DeviceTokenController` | — |
+| WebSockets | Reverb, `BroadcastAuthController`, `routes/channels.php` | `/broadcasting/auth` |
+| Caché | `CacheService`, comandos `cache:*` | — |
+| Backups | `BackupService`, comandos `backup:*` y `db:backup` | — |
+| Feature flags | `config/features.php`, helper `App\Helpers\Feature`, middleware `CheckFeatureFlag` | — |
+| Health | `HealthController` | `/health`, `/health/live`, `/health/ready`, `/health/detailed` |
+| Documentación API | Scramble (`config/scramble.php`) | `/docs/api` |
+
+Socialite tiene `SocialAuthController` y `SocialAuthService`, pero no hay rutas que los usen.
+
+## Flujos
+
+### Autenticación
+
+`AuthController` valida con un Form Request y delega en `AuthService`. `AuthService` usa `TokenService` para emitir y renovar el JWT, y `UserRepository` para buscar al usuario. Las API Keys entran por `auth:api-key` y se validan con `api-key-scope:`.
+
+### Webhooks salientes
+
+`WebhookService` crea la entrega (`WebhookDelivery`) y despacha `SendWebhookJob` a la cola. Los reintentos se lanzan desde `/webhooks/{id}/deliveries/{deliveryId}/retry`.
+
+### Correo
+
+`MailService` despacha `SendMailJob`. Los eventos de entrega del proveedor llegan a `/webhooks/mail` y se verifican con `SvixSignatureVerifier`.
+
+### Gateway LLM
+
+Los casos de uso llaman a `LlmGateway`, que elige el modelo según el área configurada en BD (`LlmArea`), usa el proveedor y los modelos de respaldo, y registra la llamada en `LlmAuditService`.
+
+### Asistente RAG
+
+`DocsIndexer` (comando `docs:index`) trocea los Markdown en `DocChunk`. La búsqueda usa `tsvector` de PostgreSQL. Según la migración `create_docs_tables`, no se usa pgvector.
+
+## Cómo agregar un módulo
+
+1. **Migración y modelo**: `app/Models/<Modelo>.php` que herede de `App\Models\Model`.
+2. **Servicio**: `app/Services/<Modulo>Service.php`. Si hace falta, interfaz en `app/Contracts/` y binding en `ContractServiceProvider`.
+3. **Form Requests** en `app/Http/Requests/<Modulo>/`, heredando de `BaseFormRequest`.
+4. **Resource** en `app/Http/Resources/<Modulo>/`, heredando de `BaseResource`.
+5. **Controller**: en `app/Http/Controllers/<Modulo>/`. Usa `ApiController` si tiene acciones propias o `Controller` si es CRUD genérico. No sobrescribas métodos con otra firma.
+6. **Rutas**: `routes/api/<modulo>.php`, incluido con `require` desde `routes/api.php`. Sin prefijo `/api`.
+7. **Permisos**: protege las rutas con `auth:api` y `permission:`.
+8. **Tests**: Pest, en `tests/Unit/` o `tests/Feature/`, con nombres en español que describan la conducta. Cubre también el caso denegado.
+9. **Calidad**: `make check` (Pint y PHPStan) y `make test-filter filter=<Nombre>`.
+
+## Configuración
+
+Cada área tiene su archivo en `config/` (por ejemplo `auth.php`, `jwt.php`, `cache.php`, `cors.php`, `database.php`, `filesystems.php`, `horizon.php`, `reverb.php`, `scout.php`, `scramble.php`, `security.php`, `rate-limiting.php`, `features.php`, `backups.php`, `logging.php`, `llm.php`, `docs-assistant.php`, `mail.php`, `mail-system.php`, `multi-tenancy.php`, `webhooks.php`). Los valores sensibles van en `.env`, no en el código.
+
+## Decisiones
+
+- **Repositorios y DTOs**: se usan en parte del código. El plan original pedía usarlos en todos los servicios; eso sigue pendiente (ver TASKS.md).
+- **Base de datos**: PostgreSQL exclusivamente (`jsonb`, `tsvector`, UUID).
+- **Rutas sin `/api`**: el prefijo se omite a propósito. Ver la tabla de prefijos en [README.md](./README.md#rutas).
