@@ -42,7 +42,7 @@ class LogsController extends Controller
             $query->where('created_at', '<=', $request->input('to'));
         }
 
-        $perPage = min(max(1, (int) $request->input('per_page', 20)), 100);
+        $perPage = $this->perPage($request, 20);
 
         return $this->sendPaginated($query->paginate($perPage));
     }
@@ -74,7 +74,7 @@ class LogsController extends Controller
             $query->where('created_at', '<=', $request->input('to'));
         }
 
-        $perPage = min(max(1, (int) $request->input('per_page', 20)), 100);
+        $perPage = $this->perPage($request, 20);
 
         return $this->sendPaginated($query->paginate($perPage));
     }
@@ -103,7 +103,7 @@ class LogsController extends Controller
             $query->where('created_at', '<=', $request->input('to'));
         }
 
-        $perPage = min(max(1, (int) $request->input('per_page', 20)), 100);
+        $perPage = $this->perPage($request, 20);
 
         return $this->sendPaginated($query->paginate($perPage));
     }
@@ -117,10 +117,7 @@ class LogsController extends Controller
         $days = max(1, (int) $request->input('days', 90));
         $deleted = ActivityLog::where('created_at', '<', now()->subDays($days))->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => "{$deleted} activity logs eliminados (anteriores a {$days} días)",
-        ]);
+        return $this->sendSuccess(null, "{$deleted} activity logs eliminados (anteriores a {$days} días)");
     }
 
     /**
@@ -132,10 +129,7 @@ class LogsController extends Controller
         $days = max(1, (int) $request->input('days', 30));
         $deleted = ApiLog::where('created_at', '<', now()->subDays($days))->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => "{$deleted} api logs eliminados (anteriores a {$days} días)",
-        ]);
+        return $this->sendSuccess(null, "{$deleted} api logs eliminados (anteriores a {$days} días)");
     }
 
     /**
@@ -147,9 +141,6 @@ class LogsController extends Controller
         $days = max(1, (int) $request->input('days', 180));
         $deleted = SecurityLog::where('created_at', '<', now()->subDays($days))->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => "{$deleted} security logs eliminados (anteriores a {$days} días)",
-        ]);
+        return $this->sendSuccess(null, "{$deleted} security logs eliminados (anteriores a {$days} días)");
     }
 }

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Llm;
 
-use App\Http\Controllers\ApiController;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Llm\StoreLlmAreaRequest;
 use App\Http\Requests\Llm\UpdateLlmAreaRequest;
 use App\Http\Resources\Llm\LlmAreaResource;
@@ -17,7 +17,7 @@ use Illuminate\Http\Request;
  * Gestión de las áreas de IA: qué modelo usa cada una y con qué fallbacks.
  * Permite cambiar de modelo sin desplegar.
  */
-class LlmAreaController extends ApiController
+class LlmAreaController extends Controller
 {
     public function index(Request $request): JsonResponse
     {

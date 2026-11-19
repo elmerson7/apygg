@@ -214,10 +214,10 @@ depende de un worker.
 
 ## Trampas que ya nos han mordido
 
-- **Firmas del `Controller` base.** Sobrescribir `show`/`update`/`store` con
-  route-model binding o un Form Request tipado es un *error fatal* de PHP.
-  Extiende `ApiController`. Lo mismo con los scopes del `Model` base, que están
-  sin tipar.
+- **Parámetros sin tipo en acciones.** `store($request)` no recibe el Form
+  Request (Laravel solo inyecta parámetros con tipo de clase) y la ruta da 500:
+  tipa siempre (`store(StoreXRequest $request)`). Los scopes del `Model` base
+  están sin tipar: no estreches su firma en los hijos.
 - **Los IDs son enteros**, no UUID (ver [id-strategy.md](id-strategy.md)). Un
   test que use `Str::uuid()` como id fallará contra columnas `bigint`.
 - **PostgreSQL devuelve los `bigint` como string** por PDO. Sin un cast a

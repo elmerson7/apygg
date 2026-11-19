@@ -5,55 +5,34 @@ namespace App\Http\Controllers\Users;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Users\AssignRoleRequest;
 use App\Http\Requests\Users\StoreUserRequest;
+use App\Http\Requests\Users\UpdateUserRequest;
 use App\Http\Resources\Users\UserDetailResource;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Role;
 use App\Models\User;
-use App\Rules\StrongPassword;
 use App\Services\UserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 /**
  * UserController
  *
  * Controlador para gestión de usuarios.
- * Extiende Controller base y usa UserService para lógica de negocio.
+ * La lógica de negocio vive en UserService.
  */
 class UserController extends Controller
 {
-    protected UserService $userService;
-
-    /**
-     * Modelo asociado al controlador
-     */
-    protected ?string $model = User::class;
-
     /**
      * Resource para transformar respuestas
      */
     protected ?string $resource = UserResource::class;
 
     /**
-     * Relaciones permitidas para eager loading
+     * Relaciones que el cliente puede pedir con `?include=`
      */
     protected array $allowedRelations = ['roles', 'permissions', 'activityLogs', 'apiTokens'];
 
-    /**
-     * Campos permitidos para ordenamiento
-     */
-    protected array $allowedSortFields = ['name', 'email', 'created_at', 'updated_at'];
-
-    /**
-     * Campos permitidos para filtrado
-     */
-    protected array $allowedFilterFields = ['email'];
-
-    public function __construct(UserService $userService)
-    {
-        $this->userService = $userService;
-    }
+    public function __construct(protected UserService $userService) {}
 
     /**
      * Display a listing of users.
@@ -95,28 +74,17 @@ class UserController extends Controller
             }
         }
 
-        // Usar UserDetailResource para vista detallada
-        $resource = new UserDetailResource($user);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Usuario obtenido exitosamente',
-            'data' => $resource,
-        ]);
+        return $this->sendSuccess(new UserDetailResource($user), 'Usuario obtenido exitosamente');
     }
 
     /**
      * Store a newly created user.
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreUserRequest $request): JsonResponse
     {
-        $this->authorize('create', User::class);
-
-        // Validar usando las reglas de StoreUserRequest
-        $formRequest = new StoreUserRequest;
-        $validated = $request->validate($formRequest->rules(), $formRequest->messages());
-
-        $roleIds = $request->input('role_ids', []);
+        $validated = $request->validated();
+        $roleIds = $validated['role_ids'] ?? [];
+        unset($validated['role_ids']);
 
         $user = $this->userService->create($validated, $roleIds);
 
@@ -126,61 +94,11 @@ class UserController extends Controller
     /**
      * Update the specified user.
      */
-    public function update(Request $request, string $id): JsonResponse
+    public function update(UpdateUserRequest $request, string $id): JsonResponse
     {
-        $user = $this->userService->find($id);
-
-        $this->authorize('update', $user);
-
-        // Editar el propio perfil (campos de perfil) y administrar usuarios
-        // (users.update) son cosas distintas:
-        // - roles: nunca por aquí; solo con POST /users/{id}/roles (users.manage-roles)
-        // - contraseña propia: solo por /auth/change-password (pide la actual)
-        // - email: solo con users.update (no hay flujo de verificación aquí)
-        $isSelf = (int) $request->user()->id === (int) $user->id;
-        $canManageUsers = $request->user()->can('users.update');
-
-        // Construir reglas manualmente con el $id correcto
-        $rules = [
-            'first_name' => ['sometimes', 'string', 'max:100'],
-            'last_name' => ['sometimes', 'string', 'max:100'],
-            'username' => ['sometimes', 'string', 'max:50', Rule::unique('users', 'username')->ignore($id)],
-            'name' => ['sometimes', 'string', 'max:255'],
-            'email' => $canManageUsers
-                ? ['sometimes', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($id)]
-                : ['prohibited'],
-            'password' => $isSelf
-                ? ['prohibited']
-                : ['sometimes', 'string', 'min:8', StrongPassword::basic()],
-            'identity_document' => [
-                'sometimes',
-                'nullable',
-                'regex:/^[0-9]{8,12}$/',
-                Rule::unique('users', 'identity_document')->ignore($id),
-            ],
-            'role_ids' => ['prohibited'],
-        ];
-
-        $messages = [
-            'role_ids.prohibited' => 'Los roles se asignan en POST /users/{id}/roles',
-            'password.prohibited' => 'Para cambiar tu contraseña usa /auth/change-password',
-            'email.prohibited' => 'No tienes permiso para cambiar el email',
-            'first_name.string' => 'El nombre debe ser texto',
-            'first_name.max' => 'El nombre no puede exceder 100 caracteres',
-            'last_name.string' => 'El apellido debe ser texto',
-            'last_name.max' => 'El apellido no puede exceder 100 caracteres',
-            'username.unique' => 'El username ya está en uso',
-            'name.string' => 'El nombre debe ser texto',
-            'name.max' => 'El nombre no puede exceder 255 caracteres',
-            'email.email' => 'El email debe ser válido',
-            'email.unique' => 'El email ya está en uso',
-            'password.min' => 'La contraseña debe tener al menos 8 caracteres',
-            'identity_document.unique' => 'El documento de identidad ya está registrado',
-            'identity_document.regex' => 'El documento de identidad debe tener entre 8 y 12 dígitos numéricos',
-        ];
-
-        $validated = $request->validate($rules, $messages);
-        $user = $this->userService->update($id, $validated);
+        // `UpdateUserRequest::authorize()` ya comprobó la policy; los campos permitidos
+        // dependen de quién edita (ver sus reglas).
+        $user = $this->userService->update($id, $request->validated());
 
         return $this->sendSuccess($user, 'Usuario actualizado exitosamente');
     }
@@ -216,16 +134,12 @@ class UserController extends Controller
     /**
      * Assign roles to a user.
      */
-    public function assignRoles(Request $request, string $id): JsonResponse
+    public function assignRoles(AssignRoleRequest $request, string $id): JsonResponse
     {
+        // `AssignRoleRequest::authorize()`: users.manage-roles + jerarquía
+        // (no tocar admins ni dar más privilegios que los propios)
         $user = $this->userService->find($id);
-
-        // users.manage-roles + jerarquía (no tocar admins ni dar más privilegios que los propios)
-        $this->authorize('manageRoles', $user);
-
-        // Validar usando las reglas de AssignRoleRequest
-        $formRequest = new AssignRoleRequest;
-        $validated = $request->validate($formRequest->rules(), $formRequest->messages());
+        $validated = $request->validated();
 
         $roleIds = array_map('intval', $validated['role_ids']);
 
@@ -257,43 +171,6 @@ class UserController extends Controller
     }
 
     /**
-     * Get current user's preferences.
-     */
-    public function showPreferences(Request $request): JsonResponse
-    {
-        $user = $request->user();
-
-        return response()->json([
-            'success' => true,
-            'data' => $user->preferences ?? new \stdClass,
-        ]);
-    }
-
-    /**
-     * Update current user's preferences.
-     */
-    public function updatePreferences(Request $request): JsonResponse
-    {
-        $user = $request->user();
-
-        $validated = $request->validate([
-            'theme' => ['sometimes', 'string', 'in:light,dark'],
-            'lang' => ['sometimes', 'string', 'in:es,en'],
-            'timezone' => ['sometimes', 'string', 'timezone'],
-            'notifications.email' => ['sometimes', 'boolean'],
-            'notifications.push' => ['sometimes', 'boolean'],
-        ]);
-
-        $user = $this->userService->updatePreferences((string) $user->id, $validated);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Preferencias actualizadas exitosamente',
-            'data' => $user->preferences,
-        ]);
-    }
-
-    /**
      * Get activity logs for a user.
      */
     public function getActivity(Request $request, string $id): JsonResponse
@@ -306,15 +183,6 @@ class UserController extends Controller
         $perPage = $request->get('per_page', 15);
         $activityLogs = $this->userService->getActivityLogs($id, $perPage);
 
-        return response()->json([
-            'success' => true,
-            'data' => $activityLogs->items(),
-            'meta' => [
-                'current_page' => $activityLogs->currentPage(),
-                'per_page' => $activityLogs->perPage(),
-                'total' => $activityLogs->total(),
-                'last_page' => $activityLogs->lastPage(),
-            ],
-        ]);
+        return $this->sendPaginated($activityLogs, resource: false);
     }
 }

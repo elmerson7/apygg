@@ -34,26 +34,18 @@ class PermissionController extends Controller
         return $this->sendSuccess($permission);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StorePermissionRequest $request): JsonResponse
     {
-        $this->authorize('create', Permission::class);
-
-        $formRequest = new StorePermissionRequest;
-        $validated = $request->validate($formRequest->rules(), $formRequest->messages());
+        $validated = $request->validated();
 
         $permission = $this->permissionService->create($validated);
 
         return $this->sendSuccess($permission->fresh(), 'Permiso creado exitosamente', 201);
     }
 
-    public function update(Request $request, string $id): JsonResponse
+    public function update(UpdatePermissionRequest $request, string $id): JsonResponse
     {
-        $permission = $this->permissionService->find($id);
-
-        $this->authorize('update', $permission);
-
-        $formRequest = new UpdatePermissionRequest;
-        $validated = $request->validate($formRequest->rules(), $formRequest->messages());
+        $validated = $request->validated();
 
         $this->permissionService->update($id, array_intersect_key($validated, array_flip(['name', 'display_name', 'description'])));
 

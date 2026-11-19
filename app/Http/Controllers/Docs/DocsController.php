@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Docs;
 
-use App\Http\Controllers\ApiController;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Docs\AskDocsRequest;
 use App\Models\Docs\DocChunk;
 use App\Models\Docs\DocConversation;
@@ -15,7 +15,7 @@ use Illuminate\Http\Request;
  *
  * Búsqueda y consulta sobre la documentación indexada.
  */
-class DocsController extends ApiController
+class DocsController extends Controller
 {
     public function __construct(private readonly DocsService $docs) {}
 

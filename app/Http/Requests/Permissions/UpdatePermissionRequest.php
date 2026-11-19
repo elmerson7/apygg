@@ -3,10 +3,16 @@
 namespace App\Http\Requests\Permissions;
 
 use App\Http\Requests\BaseFormRequest;
+use App\Models\Permission;
 use Illuminate\Validation\Rule;
 
 class UpdatePermissionRequest extends BaseFormRequest
 {
+    public function authorize(): bool
+    {
+        return $this->user()->can('update', Permission::findOrFail($this->route('id')));
+    }
+
     public function rules(): array
     {
         $id = $this->route('id');

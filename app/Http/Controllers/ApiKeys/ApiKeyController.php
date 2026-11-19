@@ -7,180 +7,112 @@ use App\Http\Requests\ApiKeys\RotateApiKeyRequest;
 use App\Http\Requests\ApiKeys\StoreApiKeyRequest;
 use App\Http\Resources\ApiKeys\ApiKeyResource;
 use App\Models\ApiKey;
-use App\Models\User;
 use App\Services\ApiKeyService;
 use Carbon\Carbon;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
  * ApiKeyController
  *
- * Controlador para gestión de API Keys.
- * Extiende Controller base y usa ApiKeyService para lógica de negocio.
+ * Gestión de API Keys del usuario autenticado; la lógica vive en ApiKeyService.
  */
 class ApiKeyController extends Controller
 {
-    protected ApiKeyService $apiKeyService;
-
-    /**
-     * Modelo asociado al controlador
-     */
-    protected ?string $model = ApiKey::class;
-
-    /**
-     * Resource para transformar respuestas
-     */
     protected ?string $resource = ApiKeyResource::class;
 
-    public function __construct(ApiKeyService $apiKeyService)
-    {
-        $this->apiKeyService = $apiKeyService;
-    }
+    public function __construct(protected ApiKeyService $apiKeyService) {}
 
     /**
-     * Display a listing of API Keys for the authenticated user.
+     * Listado de las API Keys del usuario autenticado.
      */
     public function index(Request $request): JsonResponse
     {
-        $user = $request->user();
-        $perPage = $request->get('per_page', 20);
-
-        $apiKeys = $this->apiKeyService->list($user, $perPage);
-
-        return response()->json([
-            'success' => true,
-            'data' => ApiKeyResource::collection($apiKeys->items()),
-            'meta' => [
-                'current_page' => $apiKeys->currentPage(),
-                'per_page' => $apiKeys->perPage(),
-                'total' => $apiKeys->total(),
-                'last_page' => $apiKeys->lastPage(),
-            ],
-        ]);
+        return $this->sendPaginated(
+            $this->apiKeyService->list($request->user(), $this->perPage($request, 20))
+        );
     }
 
     /**
-     * Store a newly created API Key.
-     *
-     * @param  StoreApiKeyRequest  $request
+     * Crear una API Key. La key completa solo se devuelve en esta respuesta.
      */
-    public function store($request): JsonResponse
+    public function store(StoreApiKeyRequest $request): JsonResponse
     {
-        /** @var StoreApiKeyRequest $request */
-        /** @var User $user */
-        $user = $request->user();
         $validated = $request->validated();
 
-        $name = $validated['name'];
-        $scopes = $validated['scopes'] ?? [];
-        $expiresAt = isset($validated['expires_at']) ? Carbon::parse($validated['expires_at']) : null;
-        $environment = $validated['environment'] ?? 'live';
+        $result = $this->apiKeyService->create(
+            $request->user(),
+            $validated['name'],
+            $validated['scopes'] ?? [],
+            isset($validated['expires_at']) ? Carbon::parse($validated['expires_at']) : null,
+            $validated['environment'] ?? 'live',
+        );
 
-        $result = $this->apiKeyService->create($user, $name, $scopes, $expiresAt, $environment);
-
-        // Retornar la key completa solo en creación
-        return response()->json([
-            'success' => true,
-            'message' => 'API Key creada exitosamente',
-            'data' => [
-                'api_key' => new ApiKeyResource($result['api_key']),
-                'key' => $result['key'], // Solo se retorna una vez
-                'warning' => 'Guarda esta key de forma segura. No se volverá a mostrar.',
-            ],
-        ], 201);
+        return $this->sendSuccess([
+            'api_key' => new ApiKeyResource($result['api_key']),
+            'key' => $result['key'], // Solo se retorna una vez
+            'warning' => 'Guarda esta key de forma segura. No se volverá a mostrar.',
+        ], 'API Key creada exitosamente', 201);
     }
 
     /**
-     * Display the specified API Key.
+     * Detalle de una API Key propia.
      */
     public function show(Request $request, string $id): JsonResponse
     {
-        $user = $request->user();
-        $apiKey = $this->apiKeyService->find($id);
-
-        // Verificar que la key pertenece al usuario autenticado
-        if ($apiKey->user_id !== $user->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No autorizado',
-                'error' => [
-                    'type' => 'unauthorized',
-                    'code' => 'UNAUTHORIZED',
-                ],
-            ], 403);
-        }
-
-        return response()->json([
-            'success' => true,
-            'data' => new ApiKeyResource($apiKey),
-        ]);
+        return $this->sendSuccess($this->ownedKey($request, $id), 'API Key obtenida exitosamente');
     }
 
     /**
-     * Remove the specified API Key (revoke).
+     * Revocar una API Key propia.
      */
-    public function destroy(string $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
-        $user = request()->user();
-        $apiKey = $this->apiKeyService->find($id);
-
-        // Verificar que la key pertenece al usuario autenticado
-        if ($apiKey->user_id !== $user->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No autorizado',
-                'error' => [
-                    'type' => 'unauthorized',
-                    'code' => 'UNAUTHORIZED',
-                ],
-            ], 403);
-        }
+        $this->ownedKey($request, $id);
 
         $this->apiKeyService->revoke($id);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'API Key revocada exitosamente',
-        ]);
+        return $this->sendSuccess(null, 'API Key revocada exitosamente');
     }
 
     /**
-     * Rotate an API Key (create new and expire old after grace period).
+     * Rotar una API Key (crea una nueva y caduca la anterior tras el periodo de gracia).
      */
     public function rotate(RotateApiKeyRequest $request, string $id): JsonResponse
     {
-        $user = $request->user();
-        $apiKey = $this->apiKeyService->find($id);
-
-        // Verificar que la key pertenece al usuario autenticado
-        if ($apiKey->user_id !== $user->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No autorizado',
-                'error' => [
-                    'type' => 'unauthorized',
-                    'code' => 'UNAUTHORIZED',
-                ],
-            ], 403);
-        }
+        $this->ownedKey($request, $id);
 
         $validated = $request->validated();
-        $name = $validated['name'] ?? null;
-        $scopes = $validated['scopes'] ?? null;
-        $environment = $validated['environment'] ?? 'live';
 
-        $result = $this->apiKeyService->rotate($id, $name, $scopes, $environment);
+        $result = $this->apiKeyService->rotate(
+            $id,
+            $validated['name'] ?? null,
+            $validated['scopes'] ?? null,
+            $validated['environment'] ?? 'live',
+        );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'API Key rotada exitosamente',
-            'data' => [
-                'api_key' => new ApiKeyResource($result['api_key']),
-                'key' => $result['key'], // Solo se retorna una vez
-                'old_key_expires_at' => $result['old_key_expires_at'],
-                'warning' => 'Guarda esta key de forma segura. No se volverá a mostrar. La key antigua expirará en '.$result['old_key_expires_at'],
-            ],
-        ], 201);
+        return $this->sendSuccess([
+            'api_key' => new ApiKeyResource($result['api_key']),
+            'key' => $result['key'], // Solo se retorna una vez
+            'old_key_expires_at' => $result['old_key_expires_at'],
+            'warning' => 'Guarda esta key de forma segura. No se volverá a mostrar. La key antigua expirará en '.$result['old_key_expires_at'],
+        ], 'API Key rotada exitosamente', 201);
+    }
+
+    /**
+     * Busca la key y comprueba que pertenece al usuario autenticado.
+     *
+     * @throws AuthorizationException
+     */
+    private function ownedKey(Request $request, string $id): ApiKey
+    {
+        $apiKey = $this->apiKeyService->find($id);
+
+        if ($apiKey->user_id !== $request->user()->id) {
+            throw new AuthorizationException('No autorizado');
+        }
+
+        return $apiKey;
     }
 }

@@ -47,7 +47,8 @@ class AuthService
 
     public function __construct(
         TokenService $tokenService,
-        UserRepositoryInterface $userRepository
+        UserRepositoryInterface $userRepository,
+        protected UserService $userService
     ) {
         $this->tokenService = $tokenService;
         $this->userRepository = $userRepository;
@@ -85,7 +86,8 @@ class AuthService
         }
 
         // Buscar usuario por email o username
-        $user = User::where('email', $login)
+        // El email no distingue mayúsculas; el username sí.
+        $user = User::whereRaw('lower(email) = ?', [mb_strtolower($login)])
             ->orWhere('username', $login)
             ->first();
 
@@ -174,6 +176,31 @@ class AuthService
 
             throw new \Exception('Error al generar tokens de autenticación', 0, $e);
         }
+    }
+
+    /**
+     * Registrar un usuario nuevo y abrirle sesión.
+     *
+     * Delega la creación en UserService (transacción usuario + perfil + rol por
+     * defecto, evento `UserCreated` con bienvenida, log y webhook) y genera los tokens.
+     *
+     * @param  array{name: string, email: string, password: string}  $data  Datos ya validados
+     * @return array{user: User, tokens: array}
+     *
+     * @throws JWTException
+     */
+    public function register(array $data): array
+    {
+        $user = $this->userService->create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => $data['password'],
+        ]);
+
+        return [
+            'user' => $user,
+            'tokens' => $this->tokenService->generateTokens($user),
+        ];
     }
 
     /**

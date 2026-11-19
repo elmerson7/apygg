@@ -73,11 +73,14 @@ app/
 Los servicios se inyectan **por interfaz** (`app/Contracts/`); el binding está en
 `ContractServiceProvider`.
 
-**Dos bases de controlador**: `ApiController` para controladores con acciones
-propias (route-model binding, Form Requests tipados) y `Controller` para el CRUD
-genérico. Sobrescribir los métodos CRUD de `Controller` con otra firma es un
-error fatal de PHP; lo mismo vale para los scopes del `Model` base, que están sin
-tipar. Detalle en `docs/CODING_STANDARDS.md`.
+**Una sola base de controlador**: `App\Http\Controllers\Controller` (abstracta,
+como la de Laravel). Trae autorización, validación y los helpers de respuesta
+(`sendSuccess`, `sendError`, `sendPaginated`) y **ninguna acción CRUD**: cada
+controller declara las suyas con Form Requests tipados
+(`store(StoreXRequest $request)`) y `findOrFail`/route-model binding. Un
+parámetro sin tipo (`store($request)`) hace que Laravel no inyecte el Request y
+la ruta dé 500. Los scopes del `Model` base están sin tipar: no estreches su
+firma en los hijos. Detalle en `docs/CODING_STANDARDS.md`.
 
 ## Rutas — NO existe el prefijo /api/
 

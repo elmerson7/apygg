@@ -37,19 +37,19 @@ use Illuminate\Http\JsonResponse;
  */
 class {Name}Controller extends Controller
 {
-    protected {Module}Service $service;
-
-    protected ?string $model = {Model}::class;
     protected ?string $resource = {Resource}::class;
 
-    public function __construct({Module}Service $service)
-    {
-        $this->service = $service;
-    }
+    public function __construct(protected {Module}Service $service) {}
 
-    // Métodos del controlador
+    // Acciones del controlador (Form Requests tipados, nunca parámetros sin tipo)
 }
 ```
+
+`Controller` es la **única base** (abstracta, como la de Laravel): aporta
+autorización, validación y los helpers de respuesta (`sendSuccess`, `sendError`,
+`sendPaginated`, `perPage`) y **no trae acciones CRUD**. Cada controller declara
+las suyas. Un parámetro sin tipo (`store($request)`) hace que Laravel no inyecte el
+Request y la ruta responda 500.
 
 ---
 
@@ -84,34 +84,24 @@ class UserController
 
 ## 3. Propiedades Protegidas
 
-Definir estas propiedades cuando corresponda:
+Define solo lo que el controller use:
 
 ```php
 /**
- * Modelo asociado al controlador
- */
-protected ?string $model = User::class;
-
-/**
- * Resource para transformar respuestas
+ * Resource con el que `sendSuccess` / `sendPaginated` transforman modelos
+ * (un array o un Resource ya armado no se envuelve)
  */
 protected ?string $resource = UserResource::class;
 
 /**
- * Relaciones permitidas para eager loading
+ * Relaciones que el cliente puede pedir con ?include= (si el controller lo soporta)
  */
 protected array $allowedRelations = ['roles', 'permissions', 'profile'];
-
-/**
- * Campos permitidos para ordenamiento
- */
-protected array $allowedSortFields = ['name', 'email', 'created_at'];
-
-/**
- * Campos permitidos para filtrado
- */
-protected array $allowedFilterFields = ['email', 'state_id'];
 ```
+
+Ya no existen `$model`, `$allowedSortFields` ni `$allowedFilterFields`: eran el
+andamiaje del CRUD genérico, que se eliminó. Filtros y orden van en el servicio
+o en la query del controller, con una lista blanca explícita.
 
 ---
 
@@ -125,12 +115,7 @@ protected array $allowedFilterFields = ['email', 'state_id'];
 
 ```php
 // ✅ Correcto
-protected UserService $userService;
-
-public function __construct(UserService $userService)
-{
-    $this->userService = $userService;
-}
+public function __construct(protected UserService $userService) {}
 ```
 
 ### ❌ NO HACER
@@ -305,16 +290,14 @@ Incluir PHPDoc descriptivo para cada método:
 
 ```php
 /**
- * Actualizar perfil del usuario autenticado.
+ * Editar el perfil del usuario en sesión (PUT /user/profile).
  *
- * Permite actualizar datos personales y de perfil del usuario actual.
- * Los campos de ubicación (department_id, province_id, district_id)
- * se guardan en el JSON location del perfil.
+ * Solo campos de perfil; email, contraseña y roles se rechazan con 422.
  *
  * @param UpdateProfileRequest $request Datos validados del perfil
- * @return JsonResponse Usuario actualizado con perfil completo
+ * @return JsonResponse Perfil actualizado
  */
-public function updateProfile(UpdateProfileRequest $request): JsonResponse
+public function update(UpdateProfileRequest $request): JsonResponse
 {
     // ...
 }
@@ -473,7 +456,7 @@ Usar verbos descriptivos:
 
 - `indexStudents()` - Listado específico de estudiantes
 - `assignRoles(string $id)` - Asignar roles a usuario
-- `updateProfile()` - Actualizar perfil del usuario autenticado
+- `ProfileController::update()` - Actualizar el perfil del usuario en sesión (`PUT /user/profile`)
 - `restore(string $id)` - Restaurar recurso eliminado
 
 ### Rutas y Controladores
@@ -516,18 +499,10 @@ use Illuminate\Http\Request;
  */
 class UserController extends Controller
 {
-    protected UserService $userService;
-
-    protected ?string $model = User::class;
     protected ?string $resource = UserResource::class;
     protected array $allowedRelations = ['roles', 'permissions', 'profile'];
-    protected array $allowedSortFields = ['name', 'email', 'created_at'];
-    protected array $allowedFilterFields = ['email'];
 
-    public function __construct(UserService $userService)
-    {
-        $this->userService = $userService;
-    }
+    public function __construct(protected UserService $userService) {}
 
     /**
      * Listado de usuarios con filtros y paginación.

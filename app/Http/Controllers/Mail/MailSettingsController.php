@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Mail;
 
-use App\Http\Controllers\ApiController;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Mail\UpdateMailSettingsRequest;
 use App\Models\Mail\MailSetting;
 use Illuminate\Http\JsonResponse;
@@ -12,7 +12,7 @@ use Illuminate\Http\JsonResponse;
  *
  * Ajustes globales del sistema de correo: pausa total y límites de envío.
  */
-class MailSettingsController extends ApiController
+class MailSettingsController extends Controller
 {
     public function index(): JsonResponse
     {

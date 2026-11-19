@@ -9,6 +9,18 @@ class LoginRequest extends BaseFormRequest
     /**
      * Get the validation rules that apply to the request.
      */
+    /**
+     * Si el identificador es un email se compara en minúsculas (el username se respeta tal cual).
+     */
+    protected function prepareForValidation(): void
+    {
+        $login = $this->input('login');
+
+        if (is_string($login) && str_contains($login, '@')) {
+            $this->merge(['login' => mb_strtolower(trim($login))]);
+        }
+    }
+
     public function rules(): array
     {
         return [

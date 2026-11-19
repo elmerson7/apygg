@@ -22,11 +22,6 @@ use Illuminate\Support\Facades\Storage;
 class FileController extends Controller
 {
     /**
-     * Modelo asociado al controlador
-     */
-    protected ?string $model = File::class;
-
-    /**
      * Resource para transformar respuestas
      */
     protected ?string $resource = FileResource::class;
@@ -66,11 +61,8 @@ class FileController extends Controller
         $query->orderBy($sortBy, $sortOrder);
 
         // Paginación
-        $perPage = min($request->input('per_page', 15), 100);
+        $perPage = $this->perPage($request);
         $files = $query->paginate($perPage);
-
-        // Configurar resource para transformación automática
-        $this->resource = FileResource::class;
 
         return $this->sendPaginated($files);
     }
@@ -100,19 +92,13 @@ class FileController extends Controller
      *
      * POST /api/files
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreFileRequest $request): JsonResponse
     {
-        // Validar usando StoreFileRequest (compatible con método padre)
-        $formRequest = StoreFileRequest::createFrom($request);
-        $formRequest->setContainer(app());
-        $formRequest->setRedirector(app('redirect'));
-        $formRequest->validateResolved();
-
         try {
-            $uploadedFile = $formRequest->file('file');
-            $category = $formRequest->input('category', 'default');
-            $description = $formRequest->input('description');
-            $isPublic = $formRequest->boolean('is_public', false);
+            $uploadedFile = $request->file('file');
+            $category = $request->input('category', 'default');
+            $description = $request->input('description');
+            $isPublic = $request->boolean('is_public', false);
 
             // Determinar tipo de archivo
             $type = $this->determineFileType($uploadedFile->getMimeType());
@@ -135,7 +121,7 @@ class FileController extends Controller
 
             // Crear registro en base de datos
             $file = File::create([
-                'user_id' => $formRequest->user()->id,
+                'user_id' => $request->user()->id,
                 'name' => $uploadedFile->getClientOriginalName(),
                 'filename' => $uploadResult['filename'],
                 'path' => $uploadResult['path'],
@@ -178,26 +164,20 @@ class FileController extends Controller
      *
      * PUT /api/files/{id}
      */
-    public function update(Request $request, string $id): JsonResponse
+    public function update(UpdateFileRequest $request, string $id): JsonResponse
     {
-        // Validar usando UpdateFileRequest (compatible con método padre)
-        $formRequest = UpdateFileRequest::createFrom($request);
-        $formRequest->setContainer(app());
-        $formRequest->setRedirector(app('redirect'));
-        $formRequest->validateResolved();
-
         $file = File::findOrFail($id);
 
         // Verificar permisos: solo el dueño o admin puede actualizar
-        if ($file->user_id !== $formRequest->user()->id && ! $formRequest->user()->isAdmin()) {
+        if ($file->user_id !== $request->user()->id && ! $request->user()->isAdmin()) {
             return $this->sendError('No tienes permiso para actualizar este archivo', 403);
         }
 
-        $file->update($formRequest->validated());
+        $file->update($request->validated());
 
         LogService::info('Archivo actualizado', [
             'file_id' => $file->id,
-            'changes' => $formRequest->validated(),
+            'changes' => $request->validated(),
         ], 'activity');
 
         return $this->sendSuccess(

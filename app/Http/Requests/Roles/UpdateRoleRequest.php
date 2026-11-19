@@ -3,22 +3,19 @@
 namespace App\Http\Requests\Roles;
 
 use App\Http\Requests\BaseFormRequest;
+use App\Models\Role;
 use Illuminate\Validation\Rule;
 
 class UpdateRoleRequest extends BaseFormRequest
 {
-    protected ?string $roleId = null;
-
-    public function setRoleId(string $id): static
+    public function authorize(): bool
     {
-        $this->roleId = $id;
-
-        return $this;
+        return $this->user()->can('update', Role::findOrFail($this->route('id')));
     }
 
     public function rules(): array
     {
-        $id = $this->roleId ?? $this->route('id');
+        $id = $this->route('id');
 
         return [
             'name' => ['sometimes', 'string', 'max:50', Rule::unique('roles', 'name')->ignore($id)],

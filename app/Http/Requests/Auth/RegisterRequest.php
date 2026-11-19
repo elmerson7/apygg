@@ -11,6 +11,16 @@ class RegisterRequest extends BaseFormRequest
     /**
      * Get the validation rules that apply to the request.
      */
+    /**
+     * El email se guarda y compara en minúsculas: `Admin@x.com` y `admin@x.com` son la misma cuenta.
+     */
+    protected function prepareForValidation(): void
+    {
+        if (is_string($this->input('email'))) {
+            $this->merge(['email' => mb_strtolower(trim($this->input('email')))]);
+        }
+    }
+
     public function rules(): array
     {
         return [

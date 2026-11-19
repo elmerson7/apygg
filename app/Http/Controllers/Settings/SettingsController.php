@@ -15,41 +15,16 @@ use Illuminate\Http\Request;
  * SettingsController
  *
  * Controlador para gestión de Settings.
- * Extiende Controller base y usa SettingsService para lógica de negocio.
+ * La lógica de negocio vive en SettingsService.
  */
 class SettingsController extends Controller
 {
-    protected SettingsService $settingsService;
-
-    /**
-     * Modelo asociado al controlador
-     */
-    protected ?string $model = Settings::class;
-
     /**
      * Resource para transformar respuestas
      */
     protected ?string $resource = SettingsResource::class;
 
-    /**
-     * Relaciones permitidas para eager loading
-     */
-    protected array $allowedRelations = [];
-
-    /**
-     * Campos permitidos para ordenamiento
-     */
-    protected array $allowedSortFields = ['key', 'group', 'created_at', 'updated_at'];
-
-    /**
-     * Campos permitidos para filtrado
-     */
-    protected array $allowedFilterFields = ['group', 'is_public'];
-
-    public function __construct(SettingsService $settingsService)
-    {
-        $this->settingsService = $settingsService;
-    }
+    public function __construct(protected SettingsService $settingsService) {}
 
     /**
      * Display a listing of settings.
@@ -86,12 +61,9 @@ class SettingsController extends Controller
 
     /**
      * Store a newly created setting.
-     *
-     * @param  StoreSettingsRequest  $request
      */
-    public function store($request): JsonResponse
+    public function store(StoreSettingsRequest $request): JsonResponse
     {
-        /** @var StoreSettingsRequest $request */
         $this->authorize('create', Settings::class);
 
         $validated = $request->validated();
@@ -102,12 +74,9 @@ class SettingsController extends Controller
 
     /**
      * Update the specified setting.
-     *
-     * @param  UpdateSettingsRequest  $request
      */
-    public function update($request, string $id): JsonResponse
+    public function update(UpdateSettingsRequest $request, string $id): JsonResponse
     {
-        /** @var UpdateSettingsRequest $request */
         $setting = $this->settingsService->find($id);
 
         $this->authorize('update', $setting);
@@ -142,10 +111,7 @@ class SettingsController extends Controller
         $setting = $this->settingsService->findByKey($key);
 
         if (! $setting) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Setting no encontrado',
-            ], 404);
+            return $this->sendError('Setting no encontrado', 404);
         }
 
         $this->authorize('view', $setting);

@@ -3,9 +3,15 @@
 namespace App\Http\Requests\Roles;
 
 use App\Http\Requests\BaseFormRequest;
+use App\Models\Role;
 
 class StoreRoleRequest extends BaseFormRequest
 {
+    public function authorize(): bool
+    {
+        return $this->user()->can('create', Role::class);
+    }
+
     public function rules(): array
     {
         return [

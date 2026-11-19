@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Mail;
 
-use App\Http\Controllers\ApiController;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Mail\UpdateMailTemplateRequest;
 use App\Http\Resources\Mail\MailTemplateConfigResource;
 use App\Models\Mail\MailTemplateConfig;
@@ -16,7 +16,7 @@ use Illuminate\Http\Request;
  * activa. Pausar una plantilla corta ese correo en el acto, incluso el que ya
  * está encolado (la política se evalúa al enviar, en el listener de `MessageSending`).
  */
-class MailTemplateController extends ApiController
+class MailTemplateController extends Controller
 {
     public function index(Request $request): JsonResponse
     {

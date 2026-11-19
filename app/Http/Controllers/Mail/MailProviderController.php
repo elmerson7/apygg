@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Mail;
 
-use App\Http\Controllers\ApiController;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Mail\StoreMailProviderRequest;
 use App\Http\Requests\Mail\UpdateMailProviderRequest;
 use App\Http\Resources\Mail\MailProviderResource;
@@ -15,7 +15,7 @@ use Illuminate\Http\Request;
  *
  * CRUD de proveedores de correo (Resend, SMTP, SES…).
  */
-class MailProviderController extends ApiController
+class MailProviderController extends Controller
 {
     public function index(Request $request): JsonResponse
     {

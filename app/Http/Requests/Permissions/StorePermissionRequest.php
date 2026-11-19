@@ -3,9 +3,15 @@
 namespace App\Http\Requests\Permissions;
 
 use App\Http\Requests\BaseFormRequest;
+use App\Models\Permission;
 
 class StorePermissionRequest extends BaseFormRequest
 {
+    public function authorize(): bool
+    {
+        return $this->user()->can('create', Permission::class);
+    }
+
     public function rules(): array
     {
         return [

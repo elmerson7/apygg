@@ -31,18 +31,12 @@ class BroadcastAuthController extends Controller
         $socketId = $request->input('socket_id');
 
         if (! $channelName || ! $socketId) {
-            return response()->json([
-                'success' => false,
-                'message' => 'channel_name y socket_id son requeridos',
-            ], 422);
+            return $this->sendError('channel_name y socket_id son requeridos', 422);
         }
 
         // Verificar que el usuario esté autenticado
         if (! $request->user()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No autenticado',
-            ], 401);
+            return $this->sendError('No autenticado', 401);
         }
 
         // Usar el sistema de autenticación de broadcasting de Laravel
@@ -52,10 +46,7 @@ class BroadcastAuthController extends Controller
 
             return $response;
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al autenticar canal: '.$e->getMessage(),
-            ], 403);
+            return $this->sendError('Error al autenticar canal: '.$e->getMessage(), 403);
         }
     }
 }

@@ -14,7 +14,6 @@ use Dedoc\Scramble\Attributes\BodyParameter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
 
 class AuthController
@@ -89,15 +88,9 @@ class AuthController
     public function register(RegisterRequest $request): JsonResponse
     {
         try {
-            // Crear usuario
-            $user = User::create([
-                'name' => $request->name,
-                'email' => $request->email,
-                'password' => Hash::make($request->password),
-            ]);
-
-            // Generar tokens para el nuevo usuario
-            $tokens = $this->authService->generateTokens($user);
+            $result = $this->authService->register($request->validated());
+            $user = $result['user'];
+            $tokens = $result['tokens'];
 
             // Registrar registro exitoso
             LogService::info('Usuario registrado', [

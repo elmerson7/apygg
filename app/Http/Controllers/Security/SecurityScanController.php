@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Security;
 
-use App\Http\Controllers\ApiController;
+use App\Http\Controllers\Controller;
 use App\Models\SecurityScan;
 use App\Services\SecurityAuditService;
 use Illuminate\Http\JsonResponse;
@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
  *
  * Lanzar y consultar escaneos de seguridad de la aplicación.
  */
-class SecurityScanController extends ApiController
+class SecurityScanController extends Controller
 {
     public function __construct(private readonly SecurityAuditService $audit) {}
 

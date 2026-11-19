@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Roles;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Roles\StoreRoleRequest;
+use App\Http\Requests\Roles\SyncRolePermissionsRequest;
 use App\Http\Requests\Roles\UpdateRoleRequest;
 use App\Models\Permission;
 use App\Models\Role;
@@ -37,12 +38,9 @@ class RoleController extends Controller
         return $this->sendSuccess($role);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreRoleRequest $request): JsonResponse
     {
-        $this->authorize('create', Role::class);
-
-        $formRequest = new StoreRoleRequest;
-        $validated = $request->validate($formRequest->rules(), $formRequest->messages());
+        $validated = $request->validated();
 
         // Asignar permisos al crear exige roles.manage-permissions, igual que PUT /roles/{id}/permissions
         $permissionIds = $validated['permission_ids'] ?? null;
@@ -60,14 +58,10 @@ class RoleController extends Controller
         return $this->sendSuccess($role->fresh('permissions'), 'Rol creado exitosamente', 201);
     }
 
-    public function update(Request $request, string $id): JsonResponse
+    public function update(UpdateRoleRequest $request, string $id): JsonResponse
     {
         $role = $this->roleService->find($id);
-
-        $this->authorize('update', $role);
-
-        $formRequest = (new UpdateRoleRequest)->setRoleId($id);
-        $validated = $request->validate($formRequest->rules(), $formRequest->messages());
+        $validated = $request->validated();
 
         // Cambiar permisos exige roles.manage-permissions, no basta roles.update
         $permissionIds = $validated['permission_ids'] ?? null;
@@ -105,16 +99,11 @@ class RoleController extends Controller
         return $this->sendSuccess($this->roleService->getPermissions($id));
     }
 
-    public function syncPermissions(Request $request, string $id): JsonResponse
+    public function syncPermissions(SyncRolePermissionsRequest $request, string $id): JsonResponse
     {
-        $role = $this->roleService->find($id);
+        $this->roleService->find($id);
 
-        $this->authorize('assignPermission', $role);
-
-        $validated = $request->validate([
-            'permissions' => ['required', 'array'],
-            'permissions.*' => ['integer', 'exists:permissions,id'],
-        ]);
+        $validated = $request->validated();
 
         $this->authorizePermissionIds($validated['permissions']);
 

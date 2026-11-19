@@ -70,26 +70,21 @@ class Report extends Model   // App\Models\Model, no Eloquent\Model
 
 ## Controller
 
-Hay **dos bases** y elegir la correcta evita un error fatal:
+Hay **una sola base**: `App\Http\Controllers\Controller` (abstracta, como la de Laravel). Trae autorización (`authorize()`), validación y las respuestas estándar (`sendSuccess`, `sendError`, `sendPaginated`, `perPage`), y **ninguna acción CRUD**: cada controller declara las suyas.
 
-| Base | Cuándo | Qué trae |
-|---|---|---|
-| `ApiController` | Controladores que definen sus propias acciones | Respuestas estándar y nada más |
-| `Controller` | CRUD genérico resuelto por la base | Andamiaje con filtros, orden y paginación |
-
-⚠️ `Controller` declara métodos concretos con firma fija —`show(Request $request, string $id)`, `update(Request $request, string $id)`…—. Sobrescribirlos con **route-model binding** (`show(Report $report)`) o con un **Form Request tipado** (`store(StoreReportRequest $request)`) es un **error fatal de PHP**: la firma de un hijo no puede estrechar la del padre. Si necesitas cualquiera de las dos cosas, extiende `ApiController`.
+⚠️ Tipa siempre los parámetros de las acciones. Laravel solo inyecta parámetros con tipo de clase: `store($request)` recibe el primer parámetro de ruta (o nada) y la ruta da 500. Usa un **Form Request tipado** (`store(StoreReportRequest $request)`) y **route-model binding** o `findOrFail` para el recurso.
 
 ```php
 <?php
 
 namespace App\Http\Controllers\Reports;
 
-use App\Http\Controllers\ApiController;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Reports\StoreReportRequest;
 use App\Contracts\ReportServiceInterface;
 use Illuminate\Http\JsonResponse;
 
-class ReportController extends ApiController
+class ReportController extends Controller
 {
     public function __construct(
         private readonly ReportServiceInterface $reports
@@ -106,7 +101,7 @@ class ReportController extends ApiController
 
 **Reglas:**
 - Un controller por módulo, en `Controllers/{Modulo}/`.
-- Extiende `ApiController` salvo que quieras el CRUD genérico de `Controller`.
+- Extiende siempre `Controller` (la única base) y declara tus acciones.
 - Métodos REST: `index`, `store`, `show`, `update`, `destroy`.
 - Type hints en parámetros y retorno; `JsonResponse` en escritura.
 - La validación vive en Form Requests, nunca en el controller.
@@ -363,9 +358,8 @@ degradar el rendimiento en producción de forma silenciosa.
    más común de endpoints de varios segundos.
 8. **No devolver `response()->json()` a mano** → métodos del Controller base.
 9. **No acceder a relaciones sin cargar** → `with()` / `withCount()`.
-10. **No sobrescribir los métodos CRUD de `Controller` con otra firma** → extiende
-    `ApiController`. Estrechar la firma del padre (route-model binding, Form
-    Request tipado) es un error fatal de PHP, no un aviso.
+10. **No dejar parámetros sin tipo en las acciones** (`store($request)`) → tipa el
+    Form Request; sin tipo Laravel no lo inyecta y la ruta da 500.
 11. **No estrechar la firma de los scopes del `Model` base** → `scopeActive($query)`
     está sin tipar; un `scopeActive(Builder $query): Builder` en el hijo revienta
     por el mismo motivo.

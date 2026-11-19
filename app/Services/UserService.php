@@ -62,6 +62,9 @@ class UserService
      */
     public function create(array $data, ?array $roleIds = null): User
     {
+        // El email es único sin distinguir mayúsculas: `Admin@x.com` y `admin@x.com` son la misma cuenta.
+        $data['email'] = mb_strtolower(trim($data['email']));
+
         if ($this->userRepository->findByEmail($data['email'])) {
             throw new \InvalidArgumentException("El email '{$data['email']}' ya está en uso");
         }
@@ -91,18 +94,21 @@ class UserService
             $data['state_id'] = 1;
         }
 
-        $user = $this->userRepository->create($data);
+        // Usuario, perfil y roles se crean juntos o no se crea nada.
+        $user = DB::transaction(function () use ($data, $profileData, $roleIds) {
+            $user = $this->userRepository->create($data);
 
-        // Crear profile con first_name y last_name
-        if (! empty($profileData)) {
+            // Todo usuario tiene perfil (aunque sea vacío): /user/profile lo asume.
             $user->profile()->create($profileData);
-        }
 
-        if (! empty($roleIds)) {
-            $user->syncRoles(array_map('intval', $roleIds));
-        } else {
-            $this->assignDefaultRole($user);
-        }
+            if (! empty($roleIds)) {
+                $user->syncRoles(array_map('intval', $roleIds));
+            } else {
+                $this->assignDefaultRole($user);
+            }
+
+            return $user;
+        });
 
         $this->clearCache();
         event(new UserCreated($user));
@@ -140,6 +146,10 @@ class UserService
     public function update(string $userId, array $data, ?array $roleIds = null): User
     {
         $user = $this->find($userId);
+
+        if (isset($data['email'])) {
+            $data['email'] = mb_strtolower(trim($data['email']));
+        }
 
         if (isset($data['email']) && $data['email'] !== $user->email) {
             if ($this->userRepository->findByEmail($data['email']) && $this->userRepository->findByEmail($data['email'])->id != $userId) {
@@ -191,6 +201,51 @@ class UserService
         event(new UserUpdated($user, $oldAttributes));
 
         return $user->fresh(['roles', 'permissions', 'profile']);
+    }
+
+    /**
+     * Actualizar el perfil del propio usuario.
+     *
+     * Solo campos de perfil: `name`, `username` y `timezone` (tabla users) y los
+     * de `user_profiles`. Email, contraseña y roles no se tocan aquí.
+     *
+     * @param  array<string, mixed>  $data  Datos ya validados
+     */
+    public function updateProfile(User $user, array $data): User
+    {
+        $oldAttributes = $user->getAttributes();
+
+        $accountData = array_intersect_key($data, array_flip(['name', 'username', 'timezone']));
+        $profileData = array_intersect_key($data, array_flip([
+            'first_name', 'last_name', 'phone', 'bio', 'date_of_birth', 'gender',
+            'address', 'city', 'state', 'country', 'postal_code', 'social_links',
+        ]));
+
+        DB::transaction(function () use ($user, $accountData, $profileData) {
+            $profile = $user->profile ?? $user->profile()->create([]);
+
+            // Sin `name` explícito, se deriva de nombre y apellidos
+            if (! isset($accountData['name']) && (isset($profileData['first_name']) || isset($profileData['last_name']))) {
+                $first = $profileData['first_name'] ?? $profile->first_name;
+                $last = $profileData['last_name'] ?? $profile->last_name;
+                $derived = trim(($first ?? '').' '.($last ?? ''));
+                if ($derived !== '') {
+                    $accountData['name'] = $derived;
+                }
+            }
+
+            if ($accountData !== []) {
+                $user->update($accountData);
+            }
+            if ($profileData !== []) {
+                $profile->update($profileData);
+            }
+        });
+
+        $this->clearCache((string) $user->id);
+        event(new UserUpdated($user, $oldAttributes));
+
+        return $user->fresh(['profile']);
     }
 
     /**

@@ -27,7 +27,7 @@ Petición → Middleware → Controller → Form Request → Service → (Reposi
                                      Resource → Respuesta
 ```
 
-- **Controllers**: hay dos bases. `ApiController` para controladores con acciones propias. `Controller` para el CRUD genérico. Las respuestas usan `sendSuccess`, `sendError` y `sendPaginated`.
+- **Controllers**: una sola base, `Controller` (abstracta, sin CRUD genérico). Cada controller declara sus acciones con Form Requests tipados. Las respuestas usan `sendSuccess`, `sendError` y `sendPaginated`.
 - **Form Requests**: heredan de `BaseFormRequest`.
 - **Resources**: heredan de `BaseResource`.
 - **Services** (`app/Services`): lógica de aplicación. Se inyectan por interfaz en `app/Contracts`, con los bindings en `ContractServiceProvider`.
@@ -91,7 +91,7 @@ Los casos de uso llaman a `LlmGateway`, que elige el modelo según el área conf
 2. **Servicio**: `app/Services/<Modulo>Service.php`. Si hace falta, interfaz en `app/Contracts/` y binding en `ContractServiceProvider`.
 3. **Form Requests** en `app/Http/Requests/<Modulo>/`, heredando de `BaseFormRequest`.
 4. **Resource** en `app/Http/Resources/<Modulo>/`, heredando de `BaseResource`.
-5. **Controller**: en `app/Http/Controllers/<Modulo>/`. Usa `ApiController` si tiene acciones propias o `Controller` si es CRUD genérico. No sobrescribas métodos con otra firma.
+5. **Controller**: en `app/Http/Controllers/<Modulo>/`. Extiende `Controller` y declara tus acciones con Form Requests tipados (nunca un parámetro sin tipo).
 6. **Rutas**: `routes/api/<modulo>.php`, incluido con `require` desde `routes/api.php`. Sin prefijo `/api`.
 7. **Permisos**: protege las rutas con `auth:api` y `permission:<recurso.accion>,api` (ver `docs/permissions.md`).
 8. **Tests**: Pest, en `tests/Unit/` o `tests/Feature/`, con nombres en español que describan la conducta. Cubre también el caso denegado.

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Llm;
 
-use App\Http\Controllers\ApiController;
+use App\Http\Controllers\Controller;
 use App\Http\Resources\Llm\LlmAuditLogResource;
 use App\Models\Logs\LlmAuditLog;
 use Illuminate\Http\JsonResponse;
@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
  * Consulta de la auditoría de IA: qué se llamó, con qué modelo, cuántos tokens
  * costó y si falló. Es la base para controlar el gasto.
  */
-class LlmAuditLogController extends ApiController
+class LlmAuditLogController extends Controller
 {
     public function index(Request $request): JsonResponse
     {

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Menu;
 
-use App\Http\Controllers\ApiController;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Menu\StoreMenuItemRequest;
 use App\Http\Requests\Menu\UpdateMenuItemRequest;
 use App\Http\Requests\Menu\UpdateMenuVisibilityRequest;
@@ -20,7 +20,7 @@ use Illuminate\Http\Request;
  * Recuerda: el menú es presentación, no autorización. Ocultar un ítem no
  * protege nada; cada ruta sigue exigiendo su permiso.
  */
-class MenuController extends ApiController
+class MenuController extends Controller
 {
     public function __construct(private readonly MenuService $menu) {}
 

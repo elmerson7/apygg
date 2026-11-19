@@ -30,7 +30,7 @@ class SearchController extends Controller
         $query = $request->input('q');
         $modelsToSearch = $request->getModelsToSearch();
         $filters = $request->input('filters', []);
-        $perPage = min(max(1, (int) $request->input('per_page', 20)), 100);
+        $perPage = $this->perPage($request, 20);
         $page = max(1, (int) $request->input('page', 1));
 
         $results = [];
@@ -49,11 +49,7 @@ class SearchController extends Controller
             'page' => $page,
         ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Búsqueda completada exitosamente',
-            'data' => $resource,
-        ]);
+        return $this->sendSuccess($resource, 'Búsqueda completada exitosamente');
     }
 
     /**
