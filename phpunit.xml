@@ -25,16 +25,22 @@
         </exclude>
     </source>
     <php>
-        <env name="BCRYPT_ROUNDS" value="4"/>
+        <!-- force="true": el contenedor exporta las variables de .env y sin
+             force ganarían ellas (cola en Redis, correo real, APP_ENV=dev...). -->
+        <env name="APP_ENV" value="testing" force="true"/>
+        <env name="BCRYPT_ROUNDS" value="4" force="true"/>
         <!-- La BD de tests es <DB_DATABASE>_test; la resuelve Tests\TestCase.
              Ponlo en false para correr contra la BD de la conexión por defecto. -->
         <env name="DB_TEST_ISOLATION" value="true"/>
         <!-- Caché en memoria: Redis persiste entre tests y RefreshDatabase no lo
              revierte, así que un test podría leer datos cacheados por otro. -->
-        <env name="CACHE_STORE" value="array"/>
-        <env name="SCOUT_DRIVER" value="null"/>
-        <env name="MAIL_MAILER" value="array"/>
-        <env name="QUEUE_CONNECTION" value="sync"/>
+        <env name="CACHE_STORE" force="true" value="array"/>
+        <env name="SCOUT_DRIVER" force="true" value="null"/>
+        <env name="MAIL_MAILER" force="true" value="array"/>
+        <env name="QUEUE_CONNECTION" force="true" value="sync"/>
+        <env name="SESSION_DRIVER" value="array" force="true"/>
+        <env name="BROADCAST_CONNECTION" value="null" force="true"/>
+        <env name="TELESCOPE_ENABLED" value="false" force="true"/>
         <ini name="memory_limit" value="1G"/>
     </php>
 </phpunit>
