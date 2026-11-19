@@ -4,6 +4,8 @@ namespace App\Models\Mail;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\DB;
 
 /**
  * MailEvent Model
@@ -37,5 +39,21 @@ class MailEvent extends Model
     public function mailLog(): BelongsTo
     {
         return $this->belongsTo(MailLog::class, 'mail_log_id');
+    }
+
+    /**
+     * Inserta el evento de forma atómica: la restricción única de `provider_event_id` decide
+     * quién gana. Devuelve null si ya existía (duplicado). La transacción (savepoint si ya hay
+     * una) evita que el fallo aborte la transacción externa en PostgreSQL.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    public static function recordOnce(array $attributes): ?self
+    {
+        try {
+            return DB::transaction(fn () => self::create($attributes));
+        } catch (UniqueConstraintViolationException) {
+            return null;
+        }
     }
 }

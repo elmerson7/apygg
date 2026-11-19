@@ -21,8 +21,9 @@ use Illuminate\Support\Facades\Log;
  *
  * Notas de implementación:
  * - La firma se verifica SIEMPRE; sin secreto configurado, se rechaza.
- * - Los eventos son idempotentes por `provider_event_id`: los proveedores
- *   reintentan las entregas y el mismo evento puede llegar varias veces.
+ * - Los eventos son idempotentes por `provider_event_id` (restricción única, sin
+ *   comprobación previa): los proveedores reintentan y el mismo evento puede llegar
+ *   varias veces, incluso a la vez.
  * - Un evento cuyo `MailLog` no se encuentra se guarda igual: sirve para
  *   diagnosticar y no se pierde información.
  * - Se responde 200 en casos "no accionables" (duplicado, log inexistente)
@@ -66,14 +67,13 @@ class MailWebhookController
 
         $eventId = $request->header('svix-id');
 
-        if ($eventId && MailEvent::where('provider_event_id', $eventId)->exists()) {
-            return response()->json(['message' => 'Evento duplicado, ignorado']);
-        }
-
         $log = MailLog::where('provider_message_id', $messageId)->first();
         $occurredAt = $payload['data']['timestamp'] ?? $payload['created_at'] ?? null;
 
-        MailEvent::create([
+        // Idempotencia ATÓMICA: sin comprobación previa (exists + create deja una ventana en la
+        // que dos entregas iguales pasan a la vez); la restricción única decide y el perdedor
+        // responde 200 como cualquier duplicado.
+        $event = MailEvent::recordOnce([
             'mail_log_id' => $log?->id,
             'provider_message_id' => $messageId,
             'provider_event_id' => $eventId,
@@ -81,6 +81,10 @@ class MailWebhookController
             'payload' => $payload,
             'occurred_at' => $occurredAt ? Carbon::parse($occurredAt) : null,
         ]);
+
+        if ($event === null) {
+            return response()->json(['message' => 'Evento duplicado, ignorado']);
+        }
 
         if (! $log) {
             Log::info('MailWebhook: evento sin MailLog asociado, guardado igualmente', [

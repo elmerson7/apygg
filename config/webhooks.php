@@ -57,7 +57,7 @@ return [
     |
     */
     'defaults' => [
-        'timeout' => 30, // Segundos
+        'timeout' => 30, // Segundos (timeout HTTP por webhook)
         'max_retries' => 3,
         'status' => 'active',
     ],
@@ -108,6 +108,15 @@ return [
         'allow_http' => (bool) env('WEBHOOKS_ALLOW_HTTP', false),
         'allowed_hosts' => array_values(array_filter(array_map('trim', explode(',', (string) env('WEBHOOKS_ALLOWED_HOSTS', ''))))),
     ],
+
+    /*
+    | Timeout HTTP máximo que admite un webhook (la validación lo exige y el envío lo
+    | recorta). `job_timeout` es el timeout del SendWebhookJob: debe ser mayor que
+    | `max_timeout` (resolución + conexión + margen) y menor que `retry_after` de la
+    | conexión de cola; un test lo comprueba.
+    */
+    'max_timeout' => (int) env('WEBHOOK_MAX_TIMEOUT', 120),
+    'job_timeout' => (int) env('WEBHOOK_JOB_TIMEOUT', 150),
 
     /*
     | Máximo de caracteres de la respuesta del destino que se guardan en cada entrega.

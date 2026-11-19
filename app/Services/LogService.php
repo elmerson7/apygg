@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
+use App\Helpers\Actor;
 use App\Models\Logs\ActivityLog;
 use App\Models\Logs\ApiLog;
 use App\Models\Logs\SecurityLog;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Sentry\SentrySdk;
@@ -53,7 +53,7 @@ class LogService
     {
         return array_merge([
             'trace_id' => self::getTraceId(),
-            'user_id' => Auth::id(),
+            'user_id' => Actor::id(),
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
             'url' => request()->fullUrl(),

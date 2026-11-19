@@ -55,6 +55,10 @@ $user = auth('api')->user();            // o Auth::guard('api')->user()
 $request->user('api');
 ```
 
+Para logs y auditoría (`LogService`, `ApiLogger`, `SecurityLoggerMiddleware`, `deleted_by`) usa
+`App\Helpers\Actor::user()` / `Actor::id()`: prueba `api` y luego `web` (back-office). El ArchTest
+prohíbe `auth()->...` y `Auth::id()/user()/check()` sin guard en `app/`; el back-office usa `auth('web')`.
+
 Ejemplos del repo: `AuthController` y `PasswordController` usan `Auth::guard('api')->user()`;
 `AdaptiveRateLimitingMiddleware` usa `auth('api')->id()`. Las rutas con permisos usan siempre
 `permission:x,api` (lo exige `PermissionCatalogTest`). El back-office fija `authGuard('web')`

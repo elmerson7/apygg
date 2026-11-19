@@ -2,7 +2,6 @@
 
 use App\Exceptions\ApiException;
 use App\Exceptions\BusinessLogicException;
-use App\Exceptions\ExternalServiceException;
 use App\Helpers\ApiResponse;
 use App\Services\LogService;
 use Illuminate\Foundation\Application;
@@ -208,21 +207,6 @@ return Application::configure(basePath: dirname(__DIR__))
                     422,
                     $e->getMessage(),
                     'business_logic_error',
-                    $request->path(),
-                    $e->getExtensions()
-                );
-            }
-
-            // ExternalServiceException
-            if ($e instanceof ExternalServiceException) {
-                $isCritical = $e->getStatusCode() >= 500;
-                $logException($e, $request, $isCritical);
-                
-                return ApiResponse::rfc7807(
-                    $e->getMessage(),
-                    $e->getStatusCode(),
-                    $e->getMessage(),
-                    'external_service_error',
                     $request->path(),
                     $e->getExtensions()
                 );

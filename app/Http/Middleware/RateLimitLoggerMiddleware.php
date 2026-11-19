@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Helpers\Actor;
 use App\Services\Logging\SecurityLogger;
 use App\Services\LogService;
 use Closure;
@@ -59,7 +60,7 @@ class RateLimitLoggerMiddleware
      */
     protected function logRateLimitBlock(Request $request, Response $response): void
     {
-        $user = auth()->user();
+        $user = Actor::model();
         $ipAddress = $request->ip();
         $path = $request->path();
         $method = $request->method();
@@ -135,7 +136,7 @@ class RateLimitLoggerMiddleware
      */
     protected function detectAbusePatterns(Request $request, Response $response): void
     {
-        $user = auth()->user();
+        $user = Actor::model();
         $ipAddress = $request->ip();
         $userId = $user?->id;
         $timeWindow = self::TIME_WINDOW_MINUTES * 60;
@@ -282,7 +283,7 @@ class RateLimitLoggerMiddleware
         $blocks[] = [
             'timestamp' => now()->timestamp,
             'ip' => $request->ip(),
-            'user_id' => auth()->id(),
+            'user_id' => Actor::id(),
         ];
 
         // Filtrar bloqueos en la ventana de tiempo

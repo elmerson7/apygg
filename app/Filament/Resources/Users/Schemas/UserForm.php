@@ -51,7 +51,7 @@ class UserForm
     /** Email y contraseña: solo de otros usuarios y con users.update (como UpdateUserRequest). */
     public static function canChangeCredentials(User $record): bool
     {
-        $actor = auth()->user();
+        $actor = auth('web')->user();
 
         return $actor instanceof User && $actor->id !== $record->id && $actor->can('users.update');
     }

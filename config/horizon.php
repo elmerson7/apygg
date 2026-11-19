@@ -210,6 +210,15 @@ return [
             'timeout' => 60,
             'nice' => 0,
         ],
+        'supervisor-webhooks' => [
+            'connection' => 'redis',
+            'queue' => [env('WEBHOOK_QUEUE_NAME', 'webhooks')],
+            'balance' => 'simple',
+            'maxProcesses' => 1,
+            'memory' => 128,
+            'tries' => 1,
+            'timeout' => (int) env('WEBHOOK_JOB_TIMEOUT', 150),
+        ],
     ],
 
     'environments' => [
@@ -226,6 +235,15 @@ return [
                 'tries' => 3,
                 'timeout' => 60,
             ],
+            'supervisor-webhooks' => [
+                'connection' => 'redis',
+                'queue' => [env('WEBHOOK_QUEUE_NAME', 'webhooks')],
+                'balance' => 'simple',
+                'maxProcesses' => 3,
+                'memory' => 256,
+                'tries' => 1,
+                'timeout' => (int) env('WEBHOOK_JOB_TIMEOUT', 150),
+            ],
         ],
 
         'staging' => [
@@ -241,6 +259,15 @@ return [
                 'tries' => 3,
                 'timeout' => 60,
             ],
+            'supervisor-webhooks' => [
+                'connection' => 'redis',
+                'queue' => [env('WEBHOOK_QUEUE_NAME', 'webhooks')],
+                'balance' => 'simple',
+                'maxProcesses' => 2,
+                'memory' => 192,
+                'tries' => 1,
+                'timeout' => (int) env('WEBHOOK_JOB_TIMEOUT', 150),
+            ],
         ],
 
         'local' => [
@@ -253,6 +280,15 @@ return [
                 'tries' => 3,
                 'timeout' => 60,
             ],
+            'supervisor-webhooks' => [
+                'connection' => 'redis',
+                'queue' => [env('WEBHOOK_QUEUE_NAME', 'webhooks')],
+                'balance' => 'simple',
+                'maxProcesses' => 1,
+                'memory' => 128,
+                'tries' => 1,
+                'timeout' => (int) env('WEBHOOK_JOB_TIMEOUT', 150),
+            ],
         ],
 
         'dev' => [
@@ -264,6 +300,15 @@ return [
                 'memory' => 128,
                 'tries' => 3,
                 'timeout' => 60,
+            ],
+            'supervisor-webhooks' => [
+                'connection' => 'redis',
+                'queue' => [env('WEBHOOK_QUEUE_NAME', 'webhooks')],
+                'balance' => 'simple',
+                'maxProcesses' => 1,
+                'memory' => 128,
+                'tries' => 1,
+                'timeout' => (int) env('WEBHOOK_JOB_TIMEOUT', 150),
             ],
         ],
     ],

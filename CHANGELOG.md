@@ -54,6 +54,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SendPasswordResetEmailJob`, que no se usaba
 
 ### Fixed
+- Webhooks salientes: la cola `webhooks` no la consumía ningún supervisor de Horizon (nunca se enviaban en producción); añadido `supervisor-webhooks` en todos los entornos y test que exige consumidor para cada cola usada
+- `retry_after` (660 s) ya supera el timeout de cualquier job; `JOB_TIMEOUT`, `SECURITY_SCAN_TIMEOUT`, `WEBHOOK_MAX_TIMEOUT` (120 s, antes 300) y `WEBHOOK_JOB_TIMEOUT` (150 s) configurables por `.env`
+- `SendWebhookJob`: un solo mecanismo de reintento (redespacho propio); 4xx del destino (salvo 408/429) es fallo permanente sin reintento
+- `MailWebhookController`: inserción atómica del evento (captura de la violación única) en vez de `exists()` + `create()`; dos entregas iguales simultáneas dan 200 y una fila
+- Guard explícito en vez de `auth()` sin guard (RoleController, loggers, `LogService`, `SoftDeletesWithUser`, Filament); nuevo helper `App\Helpers\Actor` y regla de ArchTest
+- `OCTANE_SERVER` por defecto `frankenphp` en `config/octane.php`
+- Eliminada `ExternalServiceException` (nadie la lanzaba)
 - `CheckPermission` y `CheckRole` usan el guard `api`: con el guard por defecto (`web`) podían dar 401/403 intermitentes bajo Octane
 - Listeners registrados dos veces por el autodescubrimiento (`withEvents(discover: false)`)
 - `TransformRequestMiddleware` alteraba cadenas como `"007"`, teléfonos con cero inicial, `"1e5"` o números de más de 15 dígitos

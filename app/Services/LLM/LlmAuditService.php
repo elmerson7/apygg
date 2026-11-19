@@ -2,9 +2,9 @@
 
 namespace App\Services\LLM;
 
+use App\Helpers\Actor;
 use App\Models\Logs\LlmAuditLog;
 use App\Services\LogService;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -65,7 +65,7 @@ class LlmAuditService
                     'prompt' => mb_substr($promptText, 0, self::TEXT_LIMIT),
                     'response' => $response !== null ? mb_substr($response->content, 0, self::TEXT_LIMIT) : null,
                     'meta' => $meta,
-                    'actor_id' => Auth::id(),
+                    'actor_id' => Actor::id(),
                     'trace_id' => LogService::getTraceId(),
                 ]);
             });

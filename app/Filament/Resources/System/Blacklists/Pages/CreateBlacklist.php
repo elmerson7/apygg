@@ -12,7 +12,7 @@ class CreateBlacklist extends CreateRecord
     /** Como POST /security/blacklist: quién bloquea queda registrado. */
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $data['added_by'] = auth()->id();
+        $data['added_by'] = auth('web')->id();
 
         return $data;
     }

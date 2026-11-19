@@ -3,6 +3,14 @@
 return [
 
     /*
+    | Timeouts de job (segundos). `retry_after` de cada conexión debe ser MAYOR que el más
+    | largo; si no, un job lento se entrega a un segundo worker y corre dos veces
+    | (lo comprueba tests/Unit/Queue/TimeoutsDeJobsTest).
+    */
+    'job_timeout' => (int) env('JOB_TIMEOUT', 60),
+    'security_scan_timeout' => (int) env('SECURITY_SCAN_TIMEOUT', 600),
+
+    /*
     |--------------------------------------------------------------------------
     | Default Queue Connection Name
     |--------------------------------------------------------------------------
@@ -68,7 +76,7 @@ return [
             'driver' => 'redis',
             'connection' => env('REDIS_QUEUE_CONNECTION', 'queue'),
             'queue' => env('REDIS_QUEUE', 'default'),
-            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 60),
+            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 660),
             'block_for' => null,
             'after_commit' => false,
         ],
@@ -77,7 +85,7 @@ return [
             'driver' => 'redis',
             'connection' => env('REDIS_QUEUE_CONNECTION', 'queue'),
             'queue' => env('REDIS_QUEUE_HIGH', 'high'),
-            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 60),
+            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 660),
             'block_for' => null,
             'after_commit' => false,
         ],
@@ -86,7 +94,7 @@ return [
             'driver' => 'redis',
             'connection' => env('REDIS_QUEUE_CONNECTION', 'queue'),
             'queue' => env('REDIS_QUEUE_DEFAULT', 'default'),
-            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 60),
+            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 660),
             'block_for' => null,
             'after_commit' => false,
         ],
@@ -95,7 +103,7 @@ return [
             'driver' => 'redis',
             'connection' => env('REDIS_QUEUE_CONNECTION', 'queue'),
             'queue' => env('REDIS_QUEUE_LOW', 'low'),
-            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 60),
+            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 660),
             'block_for' => null,
             'after_commit' => false,
         ],
@@ -104,7 +112,7 @@ return [
             'driver' => 'redis',
             'connection' => env('REDIS_QUEUE_CONNECTION', 'queue'),
             'queue' => env('REDIS_QUEUE_WEBHOOKS', 'webhooks'),
-            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 60),
+            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 660),
             'block_for' => null,
             'after_commit' => false,
         ],

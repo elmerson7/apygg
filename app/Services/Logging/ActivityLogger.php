@@ -2,11 +2,11 @@
 
 namespace App\Services\Logging;
 
+use App\Helpers\Actor;
 use App\Helpers\Redactor;
 use App\Models\Logs\ActivityLog;
 use App\Services\LogService;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Auth;
 
 /**
  * ActivityLogger
@@ -47,7 +47,7 @@ class ActivityLogger
     ): ?ActivityLog {
         try {
             // Obtener usuario (autenticado o especificado)
-            $userId = $userId ?? Auth::id();
+            $userId = $userId ?? Actor::id();
 
             // Filtrar valores sensibles
             $oldValuesFiltered = $oldValues ? self::filterSensitiveFields($oldValues) : null;

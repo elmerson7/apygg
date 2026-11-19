@@ -51,7 +51,7 @@ class EditRole extends EditRecord
                 Gate::authorize('assignPermission', $record);
 
                 $current = $record->permissions()->pluck('permissions.id')->map(fn ($id): int => (int) $id)->all();
-                $service->assertCanGrantPermissions(auth()->user() ?? new User, array_values(array_diff($submitted, $current)));
+                $service->assertCanGrantPermissions(auth('web')->user() ?? new User, array_values(array_diff($submitted, $current)));
 
                 $locked = array_filter($current, fn (int $id): bool => ! RoleForm::actorCanGrant($id));
                 $permissionIds = array_values(array_unique([...$submitted, ...$locked]));

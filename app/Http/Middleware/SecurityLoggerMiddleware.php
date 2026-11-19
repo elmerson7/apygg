@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Helpers\Actor;
 use App\Services\Logging\SecurityLogger;
 use App\Services\LogService;
 use Closure;
@@ -38,7 +39,7 @@ class SecurityLoggerMiddleware
         // Registrar eventos de seguridad según el código de respuesta
         try {
             $statusCode = $response->getStatusCode();
-            $user = auth()->user();
+            $user = Actor::user();
             $ipAddress = $request->ip();
 
             // Registrar eventos de seguridad
@@ -217,7 +218,7 @@ class SecurityLoggerMiddleware
         // Agregar denegación actual
         $denials[] = [
             'timestamp' => now()->timestamp,
-            'user_id' => auth()->id(),
+            'user_id' => Actor::id(),
             'path' => $request->path(),
             'status' => $statusCode,
         ];

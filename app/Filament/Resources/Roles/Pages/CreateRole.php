@@ -28,7 +28,7 @@ class CreateRole extends CreateRecord
 
             if ($permissionIds !== []) {
                 Gate::authorize('assignPermission', new Role);
-                $service->assertCanGrantPermissions(auth()->user() ?? new User, $permissionIds);
+                $service->assertCanGrantPermissions(auth('web')->user() ?? new User, $permissionIds);
             }
 
             $role = $service->create($data);

@@ -101,7 +101,6 @@ Estructura `type`, `title`, `status`, `detail`, `instance` (+ extensiones) y `me
 ```
 
 - `BusinessLogicException` → 422, `type: "business_logic_error"`.
-- `ExternalServiceException` → su código, `type: "external_service_error"`.
 - Error interno → 500, `type: "internal_server_error"`, título
   `An internal server error occurred.`; con `APP_DEBUG=true` incluye
   `exception`, `file`, `line` y `trace`.

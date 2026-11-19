@@ -81,8 +81,10 @@ del cliente. La capa de integración traduce a una excepción propia con la info
 
 - `LlmProviderException` (mensaje + `statusCode`): `AbstractHttpProvider::send()` convierte
   `ConnectionException` (timeout, DNS, conexión) en ella, igual que un HTTP 5xx.
-- `ExternalServiceException` (`app/Exceptions/`, 502/503, con `timeout()`): disponible para
-  integraciones nuevas. Hoy ningún servicio la lanza; úsala en lugar de inventar otra.
+- No hay una excepción genérica de «servicio externo» (existió `ExternalServiceException` y se
+  borró: ningún código la lanzaba). Cada integración define la suya, pequeña y tipada, como
+  `LlmProviderException`; si debe llegar al cliente como error HTTP, que extienda
+  `ApiException` y se registre en el handler de `bootstrap/app.php`.
 
 **Cuándo reintentar:**
 
@@ -119,10 +121,10 @@ Orden obligatorio:
    que el proveedor no reintente sin fin.
 5. **Guardar y responder rápido.** Valida, guarda el evento y haz el trabajo pesado en un job.
 
-> **Observación:** `MailWebhookController` comprueba duplicado con `exists()` y luego `create()`:
-> dos entregas simultáneas pueden pasar ambas y la segunda chocar con el índice único (500 en
-> lugar de 200). El patrón robusto es insertar y capturar la violación única, o
-> `firstOrCreate` dentro de una transacción.
+> `MailWebhookController` no comprueba el duplicado antes: inserta dentro de una transacción
+> (savepoint) y captura `UniqueConstraintViolationException` sobre `provider_event_id`, de modo
+> que dos entregas simultáneas dan 200 y una sola fila (`tests/Concurrency/MailWebhookDuplicadoTest`).
+> Copia ese patrón: insertar y dejar que la restricción única decida, nunca `exists()` + `create()`.
 
 Pruébalo con los tres casos: firma válida, firma inválida (401) y timestamp fuera de ventana, más
 el duplicado. Un verificador falso (`WebhookSignatureVerifierInterface`) permite probar el

@@ -225,3 +225,28 @@ test('no hay propiedades estáticas mutables en App (estado compartido en Octane
 
     expect($violaciones)->toBe([]);
 });
+
+test('no se usa auth() ni Auth::id()/user()/check() sin guard explícito en App', function () {
+    // El guard por defecto (`auth.defaults.guard`, `AUTH_GUARD`) no tiene por qué ser el de la
+    // API (`api`, JWT): `auth()->user()` puede devolver null aunque haya un token válido.
+    // Usa `auth('api')`, `auth('web')` (back-office), `$request->user()` o `App\Helpers\Actor`
+    // (api y luego web, para logs y auditoría).
+    // Excepciones (archivo => motivo): ninguna por ahora.
+    $excepciones = [];
+
+    $violaciones = [];
+
+    foreach (archPhpFiles('app') as $file) {
+        if (isset($excepciones[$file])) {
+            continue;
+        }
+
+        $code = (string) preg_replace('~/\*.*?\*/|//[^\n]*~s', '', file_get_contents(base_path($file)));
+
+        if (preg_match('/\bauth\(\s*\)\s*->|\bAuth::(?:id|user|check|guest|hasUser)\s*\(/', $code)) {
+            $violaciones[] = $file;
+        }
+    }
+
+    expect($violaciones)->toBe([]);
+});

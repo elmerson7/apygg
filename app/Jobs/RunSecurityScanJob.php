@@ -29,7 +29,10 @@ class RunSecurityScanJob implements ShouldQueue
 
     public int $timeout = 600;
 
-    public function __construct(private readonly int $scanId) {}
+    public function __construct(private readonly int $scanId)
+    {
+        $this->timeout = (int) config('queue.security_scan_timeout', 600);
+    }
 
     public function handle(SecurityAuditServiceInterface $service): void
     {

@@ -40,3 +40,5 @@ El secreto se devuelve **una sola vez**, al crear el webhook, y al rotarlo (`POS
 ## Entrega e idempotencia
 
 Cada entrega se "reclama" con un UPDATE atómico: un reintento automático y uno manual a la vez no envían dos veces, y una entrega ya exitosa no se reenvía. El envío se despacha tras el commit.
+
+Reintentos: un 4xx del destino (salvo 408/429) es fallo permanente y no se reintenta; 5xx, 408, 429, timeout y errores de conexión se reintentan con backoff exponencial hasta `max_retries` (un solo mecanismo: el redespacho del `SendWebhookJob`, ver `docs/queues-and-jobs.md`). El timeout HTTP por webhook va de 5 a `WEBHOOK_MAX_TIMEOUT` (120 s). La cola `webhooks` la consume `supervisor-webhooks` de Horizon.

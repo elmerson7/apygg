@@ -47,7 +47,7 @@ class RoleForm
 
     public static function actorCanGrant(int $permissionId): bool
     {
-        $actor = auth()->user();
+        $actor = auth('web')->user();
 
         if (! $actor instanceof User) {
             return false;

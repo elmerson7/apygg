@@ -25,16 +25,17 @@ class SendWebhookJob extends Job
     protected int|string $deliveryId;
 
     /**
-     * Número máximo de intentos (configurable por webhook)
-     * Se sobrescribe dinámicamente según el webhook
+     * Un solo mecanismo de reintento: el REDESPACHO propio (con delay exponencial), porque
+     * el máximo de intentos es por webhook (`max_retries`) y se cuenta en la entrega
+     * (`WebhookDelivery::attempts`), no en el job. Por eso Laravel no reintenta este job
+     * (`$tries = 1`, sin `backoff`): cada ejecución es un intento y decide si encola otro.
      */
-    public int $tries = 3;
+    public int $tries = 1;
 
     /**
-     * Backoff exponencial para reintentos
-     * Se calcula dinámicamente según configuración
+     * @var array<int>
      */
-    public array $backoff = [60, 120, 240]; // 1 min, 2 min, 4 min
+    public array $backoff = [];
 
     /**
      * Crear una nueva instancia del job
@@ -42,6 +43,7 @@ class SendWebhookJob extends Job
     public function __construct(int|string $webhookId, int|string $deliveryId)
     {
         parent::__construct();
+        $this->timeout = (int) config('webhooks.job_timeout', 150);
         $this->webhookId = $webhookId;
         $this->deliveryId = $deliveryId;
     }
@@ -62,9 +64,6 @@ class SendWebhookJob extends Job
         if ($delivery->isSuccessful()) {
             return;
         }
-
-        // Configurar tries según el webhook
-        $this->tries = $webhook->max_retries ?? config('webhooks.defaults.max_retries', 3);
 
         // Verificar que el webhook esté activo
         if (! $webhook->isActive()) {
@@ -96,9 +95,24 @@ class SendWebhookJob extends Job
         // Procesar entrega
         $success = $webhookService->processDelivery($webhook, $delivery);
 
-        if (! $success && $delivery->attempts < $maxRetries) {
-            // Si falló y aún hay reintentos disponibles, relanzar con delay exponencial
-            // Laravel manejará el retry automáticamente usando el backoff configurado
+        if ($success) {
+            return;
+        }
+
+        // Error permanente: el destino rechazó la petición por algo nuestro (4xx salvo
+        // 408/429). Reintentar solo repetiría el mismo rechazo.
+        if ($this->isPermanentFailure($delivery->response_code)) {
+            $this->log('warning', 'Webhook rechazado por el destino (4xx): sin reintento', [
+                'webhook_id' => $this->webhookId,
+                'delivery_id' => $this->deliveryId,
+                'response_code' => $delivery->response_code,
+            ]);
+
+            return;
+        }
+
+        // 5xx, 408, 429, timeout o error de conexión: reintento con backoff exponencial
+        if ($delivery->attempts < $maxRetries) {
             $delay = $this->calculateBackoffDelay($delivery->attempts);
             $this->log('info', "Reintentando webhook después de {$delay} segundos", [
                 'webhook_id' => $this->webhookId,
@@ -107,12 +121,22 @@ class SendWebhookJob extends Job
                 'delay' => $delay,
             ]);
 
-            // Relanzar el job con delay
             self::dispatch($this->webhookId, $this->deliveryId)
                 ->delay(now()->addSeconds($delay))
                 ->onQueue(config('webhooks.queue.queue', 'webhooks'))
                 ->onConnection(config('webhooks.queue.connection', 'redis'));
         }
+    }
+
+    /**
+     * ¿Un código HTTP del destino indica un fallo que no se arregla reintentando?
+     */
+    protected function isPermanentFailure(?int $responseCode): bool
+    {
+        return $responseCode !== null
+            && $responseCode >= 400
+            && $responseCode < 500
+            && ! in_array($responseCode, [408, 429], true);
     }
 
     /**

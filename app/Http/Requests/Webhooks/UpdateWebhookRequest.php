@@ -42,7 +42,7 @@ class UpdateWebhookRequest extends BaseFormRequest
                 WebhookStatusEnum::inactive->value,
                 WebhookStatusEnum::paused->value,
             ])],
-            'timeout' => ['sometimes', 'integer', 'min:5', 'max:300'],
+            'timeout' => ['sometimes', 'integer', 'min:5', 'max:'.config('webhooks.max_timeout', 120)],
             'max_retries' => ['sometimes', 'integer', 'min:1', 'max:10'],
         ];
     }
@@ -67,7 +67,7 @@ class UpdateWebhookRequest extends BaseFormRequest
             'status.in' => 'El estado debe ser: active, inactive o paused',
             'timeout.integer' => 'El timeout debe ser un número entero',
             'timeout.min' => 'El timeout debe ser al menos 5 segundos',
-            'timeout.max' => 'El timeout no puede exceder 300 segundos',
+            'timeout.max' => 'El timeout no puede exceder '.config('webhooks.max_timeout', 120).' segundos',
             'max_retries.integer' => 'El máximo de reintentos debe ser un número entero',
             'max_retries.min' => 'El máximo de reintentos debe ser al menos 1',
             'max_retries.max' => 'El máximo de reintentos no puede exceder 10',

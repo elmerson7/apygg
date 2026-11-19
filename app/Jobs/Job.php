@@ -52,6 +52,7 @@ abstract class Job implements ShouldQueue
      */
     public function __construct()
     {
+        $this->timeout = (int) config('queue.job_timeout', 60);
         $this->traceId = (string) Str::uuid();
     }
 

@@ -82,7 +82,10 @@ class WebhookService implements WebhookServiceInterface
             );
             $timestamp = now()->timestamp;
 
-            $request = Http::timeout($webhook->timeout ?? config('webhooks.defaults.timeout', 30))
+            $request = Http::timeout(min(
+                (int) ($webhook->timeout ?? config('webhooks.defaults.timeout', 30)),
+                (int) config('webhooks.max_timeout', 120)
+            ))
                 ->withoutRedirecting()
                 ->withHeaders($this->prepareHeaders($body, $timestamp, $webhook))
                 ->withBody($body, 'application/json');

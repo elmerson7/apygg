@@ -2,6 +2,7 @@
 
 namespace App\Services\Logging;
 
+use App\Helpers\Actor;
 use App\Helpers\Redactor;
 use App\Models\Logs\ApiLog;
 use App\Services\LogService;
@@ -71,7 +72,7 @@ class ApiLogger
             }
 
             // Obtener usuario autenticado
-            $userId = auth()->id();
+            $userId = Actor::id();
 
             // Preparar datos del request
             $requestData = [

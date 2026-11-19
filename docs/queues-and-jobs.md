@@ -13,11 +13,13 @@ consume el supervisor (`supervisor-1`, igual en todos los entornos):
 | `high` | urgente | sí |
 | `default` | lo normal (correo, notificaciones, bienvenida) | sí |
 | `low` | lo no urgente | sí |
-| `webhooks` | entregas de webhooks salientes (`WEBHOOK_QUEUE_NAME`) | **no** (ver nota) |
+| `webhooks` | entregas de webhooks salientes (`WEBHOOK_QUEUE_NAME`) | sí (`supervisor-webhooks`) |
 
-> **Incumplimiento conocido:** `config/horizon.php` solo lista `['high', 'default', 'low']`,
-> así que los jobs de la cola `webhooks` no los procesa Horizon. Hasta corregirlo, añade
-> `webhooks` a `queue` en el supervisor o apunta `WEBHOOK_QUEUE_NAME=default`.
+`supervisor-webhooks` (en `defaults` y en cada entorno de `config/horizon.php`) consume la cola
+`webhooks`, aislada de `default` para que un destino lento no retrase el correo.
+`tests/Unit/Queue/ColasYTimeoutsTest` recorre las colas que usa el código (`onQueue`,
+`config('webhooks.queue.queue')`, `config('mail-system.queue')`) y falla si alguna no la consume
+un supervisor en algún entorno.
 
 Regla: **toda cola que uses debe estar en el `queue` del supervisor de Horizon**. Si creas una
 cola nueva, añádela a `config/queue.php`, a `config/horizon.php` y documenta su nombre aquí.
@@ -54,13 +56,15 @@ class SendWebhookJob extends Job
 Valores por defecto de la base: `$tries = 3`, `$timeout = 60`, `$backoff = [1, 2, 4]` (segundos).
 Sobrescríbelos en el job cuando el trabajo lo pida:
 
-- `SendWebhookJob`: `$backoff = [60, 120, 240]` (el receptor externo necesita tiempo).
-- `RunSecurityScanJob`: `$timeout = 600` (trabajo largo).
+- `SendWebhookJob`: `$tries = 1` y `$backoff = []`; reintenta con **redespacho propio** y delay exponencial (ver abajo). `$timeout = WEBHOOK_JOB_TIMEOUT` (150 s).
+- `RunSecurityScanJob`: `$timeout = SECURITY_SCAN_TIMEOUT` (600 s, trabajo largo).
+- Base `Job`: `$timeout = JOB_TIMEOUT` (60 s), asignado en el constructor desde `config('queue.job_timeout')`.
 
 Reglas:
 
 - El `timeout` del job debe ser **menor** que `retry_after` de la conexión
-  (`REDIS_QUEUE_RETRY_AFTER`, 60 en `config/queue.php`); si no, otro worker puede recoger el
+  (`REDIS_QUEUE_RETRY_AFTER`, 660 en `config/queue.php`, mayor que el job más largo, 600 s;
+  lo comprueba `ColasYTimeoutsTest`); si no, otro worker puede recoger el
   mismo job mientras se ejecuta. Si subes un timeout, sube también `retry_after` y el
   `timeout` del supervisor de Horizon.
 - Lanza la excepción para que se reintente; captúrala solo si el fallo es definitivo y
@@ -68,11 +72,16 @@ Reglas:
 - Un job que llama a un servicio externo usa un timeout HTTP **menor** que el del job
   (ver `docs/integrations.md`).
 
-> **Incumplimientos conocidos:** `retry_after` (60) es igual al `timeout` del job (60) en
-> `config/queue.php` y `Job.php`; y los webhooks aceptan `timeout` de hasta 300 s
-> (`StoreWebhookRequest`) mientras el job se corta a 60 s. Además `SendWebhookJob::process()`
-> asigna `$this->tries` en tiempo de ejecución (no tiene efecto en el intento en curso) y se
-> redespacha a sí mismo con retraso, además del backoff de Laravel: dos mecanismos de reintento.
+Decisión sobre webhooks: el timeout HTTP por webhook admite hasta `WEBHOOK_MAX_TIMEOUT` (120 s,
+validación y recorte en el envío), el job se corta a `WEBHOOK_JOB_TIMEOUT` (150 s = máximo + 30 s de
+margen para DNS/SSRF/BD) y `retry_after` (660 s) lo supera con holgura.
+
+**Reintentos de `SendWebhookJob`: un solo mecanismo.** Laravel no reintenta el job (`tries = 1`);
+el máximo es por webhook (`max_retries`) y se cuenta en `WebhookDelivery::attempts`, así que tras un
+fallo reintentable el propio job se redespacha con `delay` exponencial (`webhooks.retry`). Un 4xx del
+destino (salvo 408/429) es **fallo permanente**: la entrega queda `failed` y no se reencola; 5xx,
+408, 429, timeout y errores de conexión sí se reintentan hasta `max_retries`. Cada intento empieza con
+`WebhookDelivery::claim()`, así que un duplicado no reenvía.
 
 ## Jobs idempotentes
 

@@ -2,12 +2,12 @@
 
 namespace App\Traits;
 
+use App\Helpers\Actor;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Support\Facades\Auth;
 
 /**
  * Trait SoftDeletesWithUser
@@ -25,8 +25,8 @@ trait SoftDeletesWithUser
     {
         static::deleting(function ($model) {
             // Registrar usuario que elimina antes de soft delete
-            if (Auth::check() && $model->isFillable('deleted_by')) {
-                $model->deleted_by = Auth::id();
+            if (Actor::id() !== null && $model->isFillable('deleted_by')) {
+                $model->deleted_by = Actor::id();
                 $model->saveQuietly(); // Guardar sin disparar eventos
             }
         });
@@ -91,6 +91,6 @@ trait SoftDeletesWithUser
      */
     public function wasDeletedByCurrentUser(): bool
     {
-        return Auth::check() && $this->wasDeletedBy(Auth::id());
+        return Actor::id() !== null && $this->wasDeletedBy(Actor::id());
     }
 }
