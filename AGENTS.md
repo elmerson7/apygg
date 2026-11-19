@@ -18,7 +18,15 @@ no va aquí.
 3. `docs/api-routes-conventions.md` → rutas y prefijos
 4. `docs/api-response-structure.md` + `docs/error-handling.md` → contrato de respuestas
 5. `docs/api-contract.md` → contrato OpenAPI (`docs/openapi.json`), tests de contrato y tipos para los fronts
-5. `docs/permissions.md` → roles, permisos, middlewares `permission:`/`role:`, super admin, teams
+6. `docs/permissions.md` → roles, permisos, middlewares `permission:`/`role:`, super admin, teams
+
+**Grafo del proyecto (graphify):** si existe `graphify-out/` (no se versiona), antes de explorar el
+código o los documentos consulta `graphify query "<pregunta>"` (o `graphify path` / `graphify explain`)
+y lee solo los archivos que señale. El grafo orienta, el código manda: lee el archivo real antes de
+editarlo (puede haber ramas sin unir). Qué se excluye: `.graphifyignore`. El código se refresca sin
+modelo con `graphify update .`; los documentos, solo cuando el dueño lo pide y con Gemini desde la
+terminal (`graphify extract . --backend gemini`). **Claude no construye ni actualiza el grafo con un
+modelo de Claude**, solo lo consulta.
 
 ## Proyecto nuevo y entorno local
 

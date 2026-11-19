@@ -1,0 +1,10 @@
+# Archivos grandes o generados que no aportan al grafo
+docs/openapi.json
+docs/api-types.d.ts
+composer.lock
+package-lock.json
+docs/archive/
+public/
+storage/
+bootstrap/cache/
+database/schema.sql

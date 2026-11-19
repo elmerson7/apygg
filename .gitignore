@@ -38,3 +38,6 @@ frankenphp-worker.php
 
 # Tipos TS generados desde docs/openapi.json (make types): se generan en cada front, no se versionan aquí
 /docs/api-types.d.ts
+
+# Grafo local de graphify (se regenera)
+graphify-out/
