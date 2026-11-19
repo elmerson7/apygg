@@ -3,8 +3,8 @@
 namespace App\Http\Requests\Auth;
 
 use App\Http\Requests\BaseFormRequest;
+use App\Rules\AllowedResetUrl;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Validation\Rule;
 
 class ForgotPasswordRequest extends BaseFormRequest
 {
@@ -20,12 +20,12 @@ class ForgotPasswordRequest extends BaseFormRequest
                 'required',
                 'email',
                 'max:255',
-                Rule::exists('users', 'email'),
             ],
             'reset_url' => [
                 'nullable',
                 'url',
                 'max:500',
+                new AllowedResetUrl,
             ],
         ];
     }
@@ -40,7 +40,6 @@ class ForgotPasswordRequest extends BaseFormRequest
         return [
             'email.required' => 'El email es requerido.',
             'email.email' => 'El email debe ser una dirección válida.',
-            'email.exists' => 'No encontramos una cuenta con ese email.',
             'reset_url.url' => 'La URL de reset debe ser una URL válida.',
             'reset_url.max' => 'La URL de reset no puede exceder 500 caracteres.',
         ];

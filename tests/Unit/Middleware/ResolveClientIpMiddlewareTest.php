@@ -91,3 +91,22 @@ test('las listas de rangos Cloudflare contienen CIDRs válidos', function () {
         expect(str_contains($range, '/'))->toBeTrue();
     }
 });
+
+test('no deja falsificar a Cloudflare con X-Forwarded-For cuando los proxies de confianza son *', function () use ($run) {
+    Request::setTrustedProxies(['*'], Request::HEADER_X_FORWARDED_FOR);
+
+    try {
+        $request = Request::create('/users', 'GET');
+        $request->server->set('REMOTE_ADDR', '203.0.113.9');
+        // El atacante dice que viene de Cloudflare y manda la IP que quiere
+        $request->headers->set('X-Forwarded-For', '173.245.48.1');
+        $request->headers->set('CF-Connecting-IP', '200.1.2.34');
+
+        $run($request);
+
+        expect($request->server->get('REMOTE_ADDR'))->toBe('203.0.113.9')
+            ->and($request->getClientIp())->not->toBe('200.1.2.34');
+    } finally {
+        Request::setTrustedProxies([], Request::HEADER_X_FORWARDED_FOR);
+    }
+});

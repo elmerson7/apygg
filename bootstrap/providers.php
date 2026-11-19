@@ -8,4 +8,5 @@ return [
     Laravel\Telescope\TelescopeServiceProvider::class,
     Sentry\Laravel\ServiceProvider::class,
     App\Providers\ContractServiceProvider::class,
+    App\Providers\AuthSecurityServiceProvider::class,
 ];

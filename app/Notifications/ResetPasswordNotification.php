@@ -46,7 +46,7 @@ class ResetPasswordNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         // Construir URL de reset
-        $resetUrl = $this->resetUrl ?? url("/reset-password?token={$this->token}&email=".urlencode($notifiable->email));
+        $resetUrl = $this->buildResetUrl($notifiable->email);
 
         return (new MailMessage)
             ->subject('Restablecer Contraseña')
@@ -56,6 +56,25 @@ class ResetPasswordNotification extends Notification implements ShouldQueue
             ->line('Este enlace expirará en 60 minutos.')
             ->line('Si no solicitaste este cambio, ignora este email.')
             ->salutation('Saludos, '.config('app.name'));
+    }
+
+    /**
+     * URL del enlace: la personalizada (ya validada contra la lista blanca) o
+     * la por defecto. El token y el email van SIEMPRE en la query.
+     */
+    protected function buildResetUrl(string $email): string
+    {
+        $base = $this->resetUrl ?? url('/reset-password');
+        $query = http_build_query(['token' => $this->token, 'email' => $email]);
+
+        // El fragmento (#/ruta de una SPA) debe ir después de la query
+        $fragment = '';
+        if (($pos = strpos($base, '#')) !== false) {
+            $fragment = substr($base, $pos);
+            $base = substr($base, 0, $pos);
+        }
+
+        return $base.(str_contains($base, '?') ? '&' : '?').$query.$fragment;
     }
 
     /**

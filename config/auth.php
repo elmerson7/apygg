@@ -134,4 +134,39 @@ return [
 
     'default_role' => env('AUTH_DEFAULT_ROLE', 'user'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Bloqueo por intentos fallidos de login
+    |--------------------------------------------------------------------------
+    |
+    | max_attempts: fallos permitidos por pareja identidad + IP.
+    | max_attempts_per_identity: fallos permitidos contra una misma identidad
+    | sumando todas las IP (impide esquivar el límite rotando de IP).
+    |
+    */
+
+    'login' => [
+        'max_attempts' => (int) env('AUTH_LOGIN_MAX_ATTEMPTS', 5),
+        'max_attempts_per_identity' => (int) env('AUTH_LOGIN_MAX_ATTEMPTS_PER_IDENTITY', 10),
+        'lockout_minutes' => (int) env('AUTH_LOGIN_LOCKOUT_MINUTES', 15),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Orígenes permitidos para el enlace de recuperación de contraseña
+    |--------------------------------------------------------------------------
+    |
+    | `reset_url` de POST /auth/forgot-password solo se acepta si su origen
+    | (esquema://host[:puerto]) está en esta lista; si no se define, se usa
+    | ALLOWED_ORIGINS (CORS). Sin ninguno, solo se admite el enlace por defecto.
+    |
+    */
+
+    'password_reset_per_email_per_hour' => (int) env('AUTH_PASSWORD_RESET_PER_EMAIL_PER_HOUR', 3),
+
+    'password_reset_urls' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('PASSWORD_RESET_ALLOWED_ORIGINS', ''))
+    ))),
+
 ];

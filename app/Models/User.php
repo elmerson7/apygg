@@ -33,6 +33,7 @@ use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
  * @property string|null $provider
  * @property string|null $provider_id
  * @property array|null $preferences
+ * @property int $token_version
  * @property string|null $deleted_by
  * @property Carbon $email_verified_at
  * @property Carbon $created_at
@@ -120,7 +121,18 @@ class User extends Authenticatable implements JWTSubject
      */
     public function getJWTCustomClaims()
     {
-        return [];
+        // `tv`: versión de tokens; ver revokeAllTokens().
+        return ['tv' => (int) ($this->token_version ?? 0)];
+    }
+
+    /**
+     * Invalida todas las sesiones (access y refresh) emitidas hasta ahora.
+     *
+     * Incremento atómico en SQL: dos revocaciones concurrentes no se pisan.
+     */
+    public function revokeAllTokens(): void
+    {
+        $this->increment('token_version');
     }
 
     /**

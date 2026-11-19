@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Exceptions\AccountBlockedException;
 use App\Helpers\ApiResponse;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
@@ -64,6 +65,8 @@ class AuthController
                 ]),
                 'Login exitoso'
             );
+        } catch (AccountBlockedException $e) {
+            return ApiResponse::forbidden('No es posible iniciar sesión con esta cuenta.');
         } catch (\Exception $e) {
             // Manejar bloqueo por intentos fallidos
             if (str_contains($e->getMessage(), 'Demasiados intentos')) {
@@ -134,13 +137,17 @@ class AuthController
     /**
      * Logout y revocación de token
      */
-    public function logout(): JsonResponse
+    public function logout(Request $request): JsonResponse
     {
         try {
-            $user = Auth::guard('api')->user();
+            // Revoca el access token de la petición y, si el cliente lo envía,
+            // el refresh token de esa misma sesión.
+            $refreshToken = $request->input('refresh_token');
 
-            // Revocar token usando AuthService
-            $this->authService->revokeToken();
+            $this->authService->revokeToken(
+                null,
+                is_string($refreshToken) && $refreshToken !== '' ? $refreshToken : null
+            );
 
             return ApiResponse::success(null, 'Logout exitoso');
         } catch (JWTException $e) {

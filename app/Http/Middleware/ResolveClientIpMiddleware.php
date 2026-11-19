@@ -70,7 +70,11 @@ class ResolveClientIpMiddleware
         }
 
         $clientIp = $request->header('CF-Connecting-IP');
-        $peerIp = $request->getClientIp();
+
+        // El peer es la conexión TCP real (REMOTE_ADDR). `getClientIp()` NO sirve
+        // aquí: con TRUSTED_PROXIES mal configurado devuelve la IP que diga
+        // X-Forwarded-For, y un atacante podría hacerse pasar por Cloudflare.
+        $peerIp = $request->server->get('REMOTE_ADDR');
 
         if ($clientIp && $this->isCloudflareIp($peerIp) && $this->isValidIp($clientIp)) {
             $request->server->set('REMOTE_ADDR', $clientIp);

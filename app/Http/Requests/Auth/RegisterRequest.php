@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Auth;
 
 use App\Http\Requests\BaseFormRequest;
+use App\Rules\NotBlacklisted;
 use Illuminate\Validation\Rules\Password;
 
 class RegisterRequest extends BaseFormRequest
@@ -14,8 +15,8 @@ class RegisterRequest extends BaseFormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => $this->emailRule(required: true, unique: true, table: 'users'),
-            'password' => ['required', 'string', 'confirmed', Password::min(8)->mixedCase()->numbers()],
+            'email' => [...$this->emailRule(required: true, unique: true, table: 'users'), new NotBlacklisted('email')],
+            'password' => ['required', 'string', 'confirmed', Password::defaults()],
         ];
     }
 

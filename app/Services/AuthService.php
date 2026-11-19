@@ -5,9 +5,12 @@ namespace App\Services;
 use App\Contracts\UserRepositoryInterface;
 use App\Events\UserLoggedIn;
 use App\Events\UserLoggedOut;
+use App\Exceptions\AccountBlockedException;
+use App\Models\Blacklist;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
 
 /**
@@ -32,6 +35,12 @@ class AuthService
     protected int $maxAttempts = 5;
 
     /**
+     * Tope de fallos contra una misma identidad sumando todas las IP (más alto
+     * que el de IP+identidad para no facilitar que alguien bloquee a otro).
+     */
+    protected int $maxAttemptsPerIdentity = 10;
+
+    /**
      * Tiempo de bloqueo en minutos después de alcanzar maxAttempts
      */
     protected int $lockoutTime = 15;
@@ -42,6 +51,9 @@ class AuthService
     ) {
         $this->tokenService = $tokenService;
         $this->userRepository = $userRepository;
+        $this->maxAttempts = (int) config('auth.login.max_attempts', 5);
+        $this->maxAttemptsPerIdentity = (int) config('auth.login.max_attempts_per_identity', 10);
+        $this->lockoutTime = (int) config('auth.login.lockout_minutes', 15);
     }
 
     /**
@@ -78,6 +90,10 @@ class AuthService
             ->first();
 
         if (! $user) {
+            // Mismo coste que un login real: sin esto la diferencia de tiempo
+            // revela qué cuentas existen.
+            Hash::make($password);
+
             $this->recordFailedAttempt($login, $ipAddress);
             LogService::warning('Intento de login fallido - Usuario no encontrado', [
                 'identifier' => $login,
@@ -97,6 +113,21 @@ class AuthService
             ], 'security');
 
             return null;
+        }
+
+        // Identidad bloqueada por un administrador (se comprueba tras validar la
+        // contraseña para no revelar la lista a quien no es el titular).
+        if (Blacklist::isBlocked(
+            email: $user->email,
+            identityDocument: $user->identity_document,
+            userId: $user->id
+        )) {
+            LogService::warning('Login denegado: usuario en lista negra', [
+                'user_id' => $user->id,
+                'ip' => $ipAddress,
+            ], 'security');
+
+            throw new AccountBlockedException('Cuenta bloqueada');
         }
 
         // Rehash automático si la contraseña usa un algoritmo diferente o necesita actualización
@@ -209,11 +240,17 @@ class AuthService
      *
      * @throws JWTException
      */
-    public function revokeToken(?string $token = null): bool
+    public function revokeToken(?string $token = null, ?string $refreshToken = null): bool
     {
         try {
             // Intentar obtener usuario antes de revocar (para logging y eventos)
             $user = $this->tokenService->getUserFromToken($token);
+
+            // El refresh token de esta sesión se revoca primero: revocar el
+            // access deja el estado del servicio de JWT apuntando a otro token.
+            if ($refreshToken && $user) {
+                $this->tokenService->revokeRefreshToken($refreshToken, $user);
+            }
 
             // Revocar token (maneja automáticamente el caso de token ya blacklisted)
             $result = $this->tokenService->revokeToken($token);
@@ -256,67 +293,90 @@ class AuthService
     /**
      * Verificar si un identificador/IP está bloqueado por intentos fallidos
      *
-     * @param  string  $identifier  Número de identidad del usuario
+     * Bloquea tanto por la pareja identidad+IP como por la identidad sola: rotar
+     * de IP no esquiva el límite de la cuenta.
+     *
+     * @param  string  $identifier  Email o username
      * @param  string|null  $ipAddress  Dirección IP
      * @return bool True si está bloqueado
      */
     public function isLocked(string $identifier, ?string $ipAddress = null): bool
     {
-        $key = $this->getLockoutKey($identifier, $ipAddress);
+        if (Cache::has($this->getLockoutKey($identifier))) {
+            return true;
+        }
 
-        return Cache::has($key);
+        return $ipAddress !== null && Cache::has($this->getLockoutKey($identifier, $ipAddress));
     }
 
     /**
      * Registrar intento fallido
      *
-     * @param  string  $identifier  Número de identidad del usuario
+     * Contadores atómicos (RateLimiter::hit usa el incremento atómico de la caché).
+     *
+     * @param  string  $identifier  Email o username
      * @param  string|null  $ipAddress  Dirección IP
      */
     protected function recordFailedAttempt(string $identifier, ?string $ipAddress = null): void
     {
-        $key = $this->getAttemptsKey($identifier, $ipAddress);
-        $attempts = Cache::get($key, 0) + 1;
+        $counters = [[null, $this->maxAttemptsPerIdentity]];
 
-        Cache::put($key, $attempts, now()->addMinutes($this->lockoutTime));
+        if ($ipAddress !== null) {
+            $counters[] = [$ipAddress, $this->maxAttempts];
+        }
 
-        // Si alcanzó el máximo de intentos, bloquear
-        if ($attempts >= $this->maxAttempts) {
-            $lockoutKey = $this->getLockoutKey($identifier, $ipAddress);
-            Cache::put($lockoutKey, true, now()->addMinutes($this->lockoutTime));
+        foreach ($counters as [$ip, $max]) {
+            $key = $this->getAttemptsKey($identifier, $ip);
 
-            LogService::warning('Usuario bloqueado por intentos fallidos', [
-                'identifier' => $identifier,
-                'ip' => $ipAddress,
-                'attempts' => $attempts,
-                'lockout_minutes' => $this->lockoutTime,
-            ], 'security');
+            RateLimiter::hit($key, $this->lockoutTime * 60);
+            $attempts = RateLimiter::attempts($key);
+
+            // Si alcanzó el máximo de intentos, bloquear
+            if ($attempts >= $max) {
+                Cache::put($this->getLockoutKey($identifier, $ip), true, now()->addMinutes($this->lockoutTime));
+
+                LogService::warning('Usuario bloqueado por intentos fallidos', [
+                    'identifier' => $identifier,
+                    'ip' => $ip,
+                    'attempts' => $attempts,
+                    'lockout_minutes' => $this->lockoutTime,
+                ], 'security');
+            }
         }
     }
 
     /**
      * Limpiar intentos fallidos después de autenticación exitosa
      *
-     * @param  string  $identifier  Número de identidad del usuario
+     * @param  string  $identifier  Email o username
      * @param  string|null  $ipAddress  Dirección IP
      */
     protected function clearFailedAttempts(string $identifier, ?string $ipAddress = null): void
     {
-        $attemptsKey = $this->getAttemptsKey($identifier, $ipAddress);
-        $lockoutKey = $this->getLockoutKey($identifier, $ipAddress);
+        foreach (array_unique([null, $ipAddress]) as $ip) {
+            RateLimiter::clear($this->getAttemptsKey($identifier, $ip));
+            Cache::forget($this->getLockoutKey($identifier, $ip));
+        }
+    }
 
-        Cache::forget($attemptsKey);
-        Cache::forget($lockoutKey);
+    /**
+     * Normalizar la identidad: mayúsculas y espacios no crean contadores nuevos.
+     */
+    protected function normalizeIdentifier(string $identifier): string
+    {
+        return mb_strtolower(trim($identifier));
     }
 
     /**
      * Obtener clave de caché para intentos fallidos
+     *
+     * Sin IP, la clave es la de la identidad sola.
      */
     protected function getAttemptsKey(string $identifier, ?string $ipAddress = null): string
     {
-        $key = $ipAddress ? "{$identifier}:{$ipAddress}" : $identifier;
+        $key = $this->normalizeIdentifier($identifier).($ipAddress ? "|{$ipAddress}" : '');
 
-        return 'auth:failed_attempts:'.md5($key);
+        return 'auth:failed_attempts:'.sha1($key);
     }
 
     /**
@@ -324,24 +384,26 @@ class AuthService
      */
     protected function getLockoutKey(string $identifier, ?string $ipAddress = null): string
     {
-        $key = $ipAddress ? "{$identifier}:{$ipAddress}" : $identifier;
+        $key = $this->normalizeIdentifier($identifier).($ipAddress ? "|{$ipAddress}" : '');
 
-        return 'auth:lockout:'.md5($key);
+        return 'auth:lockout:'.sha1($key);
     }
 
     /**
      * Obtener número de intentos fallidos restantes
      *
-     * @param  string  $identifier  Número de identidad del usuario
+     * @param  string  $identifier  Email o username
      * @param  string|null  $ipAddress  Dirección IP
      * @return int Número de intentos restantes antes del bloqueo
      */
     public function getRemainingAttempts(string $identifier, ?string $ipAddress = null): int
     {
-        $key = $this->getAttemptsKey($identifier, $ipAddress);
-        $attempts = Cache::get($key, 0);
+        $byIdentity = $this->maxAttemptsPerIdentity - RateLimiter::attempts($this->getAttemptsKey($identifier));
+        $byIp = $ipAddress !== null
+            ? $this->maxAttempts - RateLimiter::attempts($this->getAttemptsKey($identifier, $ipAddress))
+            : $byIdentity;
 
-        return max(0, $this->maxAttempts - $attempts);
+        return max(0, min($byIdentity, $byIp));
     }
 
     /**

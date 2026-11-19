@@ -6,12 +6,12 @@ use App\Helpers\ApiResponse;
 use App\Http\Requests\Auth\ChangePasswordRequest;
 use App\Http\Requests\Auth\ForgotPasswordRequest;
 use App\Http\Requests\Auth\ResetPasswordRequest;
-use App\Models\User;
-use App\Notifications\ResetPasswordNotification;
+use App\Jobs\SendPasswordResetLinkJob;
 use App\Services\LogService;
 use App\Services\PasswordService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 
 class PasswordController
 {
@@ -32,26 +32,18 @@ class PasswordController
             $email = $validated['email'];
             $resetUrl = $validated['reset_url'] ?? null;
 
-            // Buscar usuario
-            $user = User::where('email', $email)->first();
+            // Límite por email (además del de IP): no se puede inundar de
+            // correos a una víctima. Se ignora en silencio para no dar pistas.
+            $key = 'forgot-password:'.sha1(mb_strtolower($email));
+            $limite = (int) config('auth.password_reset_per_email_per_hour', 3);
 
-            if (! $user) {
-                // Por seguridad, no revelar si el email existe o no
-                return ApiResponse::success(
-                    null,
-                    'Si el email existe, recibirás un enlace para restablecer tu contraseña.'
-                );
+            if (RateLimiter::attempt($key, $limite, fn () => true, 3600)) {
+                // Siempre se despacha, exista o no la cuenta: la respuesta y su
+                // tiempo no revelan nada. El job busca al usuario.
+                SendPasswordResetLinkJob::dispatch($email, $resetUrl);
             }
 
-            // Generar token de reset
-            $token = $this->passwordService->generateResetToken($user);
-
-            // Enviar notificación por email con URL personalizada si se proporcionó
-            $user->notify(new ResetPasswordNotification($token, $resetUrl));
-
-            LogService::info('Solicitud de reset de contraseña enviada', [
-                'user_id' => $user->id,
-                'email' => $user->email,
+            LogService::info('Solicitud de reset de contraseña recibida', [
                 'ip' => $request->ip(),
                 'reset_url_provided' => $resetUrl !== null,
             ], 'security');

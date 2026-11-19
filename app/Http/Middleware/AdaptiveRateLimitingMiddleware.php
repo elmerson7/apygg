@@ -138,8 +138,16 @@ class AdaptiveRateLimitingMiddleware
      */
     protected function getIdentifier(Request $request, string $by): string
     {
-        if ($by === 'user' && auth()->check()) {
-            return 'user:'.auth()->id();
+        // Este middleware corre antes de `auth:api`, y el guard por defecto es
+        // `web`: hay que consultar el guard `api` explícitamente. La IP sale de
+        // `$request->ip()`, que solo hace caso a X-Forwarded-For si el peer está
+        // en TRUSTED_PROXIES.
+        if ($by === 'user') {
+            $userId = auth('api')->id();
+
+            if ($userId !== null) {
+                return 'user:'.$userId;
+            }
         }
 
         return 'ip:'.$request->ip();

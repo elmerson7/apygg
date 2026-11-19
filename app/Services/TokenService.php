@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Blacklist;
 use App\Models\User;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenBlacklistedException;
@@ -40,7 +41,8 @@ class TokenService
             $userClaims = $user->getJWTCustomClaims();
 
             // Combinar claims del usuario con claims adicionales
-            $claims = array_merge($userClaims, $customClaims);
+            // `type` va al final: nadie puede pasar un claim que lo sobrescriba.
+            $claims = array_merge($userClaims, $customClaims, ['type' => 'access']);
 
             // Generar token con claims
             $token = $this->jwtAuth->customClaims($claims)->fromUser($user);
@@ -296,6 +298,34 @@ class TokenService
     }
 
     /**
+     * Revocar un refresh token concreto (logout de esa sesión).
+     *
+     * Solo se revoca si es de refresco y pertenece al usuario indicado: un
+     * usuario no puede invalidar tokens ajenos.
+     *
+     * @return bool True si se revocó
+     */
+    public function revokeRefreshToken(string $refreshToken, User $user): bool
+    {
+        try {
+            $claims = $this->jwtAuth->setToken($refreshToken)->getPayload()->toArray();
+
+            if (($claims['type'] ?? null) !== 'refresh' || (string) ($claims['sub'] ?? '') !== (string) $user->getKey()) {
+                return false;
+            }
+
+            $this->jwtAuth->invalidate(true);
+
+            return true;
+        } catch (JWTException $e) {
+            // Caducado, ya revocado o malformado: no hay nada que revocar
+            return false;
+        } finally {
+            $this->jwtAuth->unsetToken();
+        }
+    }
+
+    /**
      * Renovar access token usando refresh token (con rotación)
      *
      * @param  string|null  $refreshToken  Refresh token a usar (null = usar token del request)
@@ -370,6 +400,24 @@ class TokenService
             $authenticatedUser = User::find($userId);
             if (! $authenticatedUser instanceof User) {
                 throw new TokenInvalidException('Usuario no encontrado');
+            }
+
+            // Sesión revocada (cambio/reset de contraseña): versión de tokens distinta
+            if ((int) ($claims['tv'] ?? 0) !== (int) $authenticatedUser->token_version) {
+                throw new TokenInvalidException('Sesión revocada');
+            }
+
+            // Identidad bloqueada por un administrador
+            if (Blacklist::isBlocked(
+                email: $authenticatedUser->email,
+                identityDocument: $authenticatedUser->identity_document,
+                userId: $authenticatedUser->id
+            )) {
+                LogService::warning('Refresh denegado: usuario en lista negra', [
+                    'user_id' => $authenticatedUser->id,
+                ], 'security');
+
+                throw new TokenInvalidException('Sesión no permitida');
             }
 
             // Revocar el refresh token antiguo (rotación)

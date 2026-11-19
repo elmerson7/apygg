@@ -24,6 +24,11 @@ class PasswordService
      */
     protected int $tokenExpirationMinutes = 60;
 
+    public function __construct()
+    {
+        $this->tokenExpirationMinutes = (int) config('auth.passwords.users.expire', 60);
+    }
+
     /**
      * Generar token de reset de contraseña
      *
@@ -121,12 +126,27 @@ class PasswordService
             return false;
         }
 
-        // Actualizar contraseña
-        $user->password = Hash::make($newPassword);
-        $user->save();
+        // Uso único y atómico: solo quien logra borrar el token puede seguir; dos
+        // peticiones simultáneas con el mismo token no pueden cambiar la clave
+        // las dos. La contraseña y la revocación de sesiones van en la misma
+        // transacción.
+        $cambiada = DB::transaction(function () use ($email, $user, $newPassword): bool {
+            $borrados = DB::table('password_reset_tokens')->where('email', $email)->delete();
 
-        // Eliminar token usado (uso único)
-        $this->deleteResetToken($email);
+            if ($borrados === 0) {
+                return false;
+            }
+
+            $user->password = Hash::make($newPassword);
+            $user->save();
+            $user->revokeAllTokens();
+
+            return true;
+        });
+
+        if (! $cambiada) {
+            return false;
+        }
 
         LogService::info('Contraseña reseteada exitosamente', [
             'user_id' => $user->id,
@@ -167,6 +187,10 @@ class PasswordService
         // Actualizar contraseña
         $user->password = Hash::make($newPassword);
         $user->save();
+
+        // Cierra todas las sesiones (access y refresh), incluida la actual: el
+        // cliente debe volver a iniciar sesión.
+        $user->revokeAllTokens();
 
         LogService::info('Contraseña cambiada exitosamente', [
             'user_id' => $user->id,
