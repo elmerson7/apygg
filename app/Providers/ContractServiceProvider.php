@@ -20,6 +20,7 @@ use App\Contracts\PermissionServiceInterface;
 use App\Contracts\RoleServiceInterface;
 use App\Contracts\SecurityAuditServiceInterface;
 use App\Contracts\SecurityServiceInterface;
+use App\Contracts\SequenceInterface;
 use App\Contracts\SettingsServiceInterface;
 use App\Contracts\TokenServiceInterface;
 use App\Contracts\UserServiceInterface;
@@ -48,6 +49,7 @@ use App\Services\TokenService;
 use App\Services\UserService;
 use App\Services\Webhooks\DnsHostResolver;
 use App\Services\WebhookService;
+use App\Support\Sequences\Sequence;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Support\ServiceProvider;
 
@@ -98,6 +100,7 @@ class ContractServiceProvider extends ServiceProvider
         $this->app->bind(MailSendPolicyInterface::class, MailSendPolicy::class);
         $this->app->bind(WebhookSignatureVerifierInterface::class, SvixSignatureVerifier::class);
         $this->app->bind(SecurityAuditServiceInterface::class, SecurityAuditService::class);
+        $this->app->bind(SequenceInterface::class, Sequence::class);
 
         // Colaborador sin estado: el DNS real; los tests lo sustituyen con `$this->app->instance(...)`.
         $this->app->singleton(HostResolverInterface::class, DnsHostResolver::class);

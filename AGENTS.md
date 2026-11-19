@@ -291,7 +291,8 @@ Una norma por documento; esos archivos son la fuente de verdad de cada tema:
 - [`docs/queues-and-jobs.md`](docs/queues-and-jobs.md) → colas, base `Job`, reintentos, idempotencia, `afterCommit`.
 - [`docs/integrations.md`](docs/integrations.md) → integraciones externas con versión simulada y webhooks entrantes (pagos, WhatsApp, SMS, push…).
 - [`docs/migrations.md`](docs/migrations.md) → migraciones inmutables, expandir/contraer, `jsonb`, estados, pruebas.
-- [`docs/money.md`](docs/money.md) → dinero en unidades menores + moneda (norma para la fase de suscripciones).
+- [`docs/money.md`](docs/money.md) → dinero: `Money` (entero en unidad menor + ISO 4217), `MoneyCast`, regla `MoneyAmount`, `config/currencies.php`. Nunca float.
+- [`docs/sequences.md`](docs/sequences.md) → numeraciones atómicas (`SequenceInterface`): facturas, pedidos, tickets; nunca `count()+1` ni `max()+1`.
 
 ## Al añadir algo al boilerplate
 

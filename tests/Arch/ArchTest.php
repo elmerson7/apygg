@@ -265,3 +265,23 @@ test('el aislamiento por tenant solo se salta con TenantQuery::withoutTenant (no
 
     expect($violaciones)->toBe([]);
 });
+
+arch('Money y las secuencias no usan float ni dependen de la capa HTTP')
+    ->expect(['App\Support\Money', 'App\Support\Sequences'])
+    ->not->toUse(['App\Http\Controllers', 'App\Http\Requests', 'App\Http\Resources']);
+
+test('las migraciones no guardan dinero en float, double ni decimal (docs/money.md)', function () {
+    $offenders = [];
+
+    foreach (glob(database_path('migrations/*.php')) ?: [] as $file) {
+        $code = (string) file_get_contents($file);
+
+        if (preg_match_all('/->(float|double|decimal|unsignedDecimal)\(\s*[\'"]([a-z0-9_]*(amount|price|total|balance)[a-z0-9_]*)[\'"]/i', $code, $m, PREG_SET_ORDER)) {
+            foreach ($m as $hit) {
+                $offenders[] = basename($file).": {$hit[1]}('{$hit[2]}')";
+            }
+        }
+    }
+
+    expect($offenders)->toBe([], 'El dinero va en `<concepto>_minor` bigint + `currency` char(3) (docs/money.md). Columnas: '.implode(', ', $offenders));
+});
