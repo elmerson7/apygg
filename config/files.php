@@ -185,8 +185,8 @@ return [
     |    GET /files/{id}/download (dueño o permiso files.manage) o con una URL temporal
     |    firmada (GET /files/{id}/temporary-url).
     |
-    | Valores: `public` / `local` (disco local), `s3` / `s3_private` (S3 o MinIO).
-    | Con S3/MinIO usa un bucket PRIVADO para `private` (AWS_PRIVATE_BUCKET): la
+    | Valores: `public` / `local` (disco local), `s3` / `s3_private` (S3 o el emulador local).
+    | Con S3 usa un bucket PRIVADO para `private` (AWS_PRIVATE_BUCKET): la
     | visibilidad por objeto no se respeta igual en todos los proveedores.
     |
     */

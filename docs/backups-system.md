@@ -66,7 +66,7 @@ php artisan backup:clean --dry-run
 
 ```bash
 # Probar conexión y configuración de S3/MinIO
-php artisan test:s3
+php artisan storage:check
 ```
 
 Este comando verifica:
@@ -88,7 +88,7 @@ Configuración S3:
 | Driver    | s3                |
 | Bucket    | elmerson          |
 | Region    | us-east-1         |
-| Endpoint  | http://minio:9000 |
+| Endpoint  | http://s3:9000    |
 +-----------+-------------------+
 ✓ Acceso al bucket verificado
 ✓ Archivo subido exitosamente: backups/test-1234567890.txt
@@ -128,16 +128,16 @@ BACKUP_NOTIFY_ON_FAILURE=true
 
 ### Configuración de S3/MinIO
 
-**Para desarrollo con MinIO:**
+**Para desarrollo (emulador S3 local, ver `docs/local-services.md`):**
 
 ```env
-AWS_ACCESS_KEY_ID=minioadmin
-AWS_SECRET_ACCESS_KEY=minioadmin
+AWS_ACCESS_KEY_ID=apygg-dev
+AWS_SECRET_ACCESS_KEY=apygg-dev-secret
 AWS_DEFAULT_REGION=us-east-1
-AWS_BUCKET=elmerson  # O el nombre de tu bucket
-AWS_ENDPOINT=http://minio:9000
+AWS_BUCKET=apygg  # O el nombre de tu bucket
+AWS_ENDPOINT=http://s3:9000
 AWS_USE_PATH_STYLE_ENDPOINT=true
-AWS_URL=http://localhost:8015
+AWS_URL=http://localhost:8018/apygg
 BACKUP_REMOTE_ENABLED=true
 BACKUP_REMOTE_DISK=s3
 ```
@@ -212,7 +212,7 @@ php artisan backup:clean --dry-run
 ### Probar conexión a S3/MinIO
 
 ```bash
-php artisan test:s3
+php artisan storage:check
 ```
 
 ## Notas Importantes
@@ -258,11 +258,9 @@ ls -lh storage/app/backups/
 
 El bucket debe existir antes de crear backups. Crear el bucket:
 
-**En MinIO (desarrollo):**
+**En desarrollo:**
 ```bash
-# Acceder a la consola web: http://localhost:8016
-# O usar mc (MinIO Client):
-docker compose exec minio mc mb local/elmerson
+make s3-init   # crea los buckets del emulador S3 local
 ```
 
 **En AWS S3 (producción):**
@@ -274,7 +272,7 @@ docker compose exec minio mc mb local/elmerson
 **Primer paso: Probar conexión**
 
 ```bash
-php artisan test:s3
+php artisan storage:check
 ```
 
 Este comando prueba la conexión completa y muestra detalles del error si falla:
@@ -293,7 +291,7 @@ Configuración S3:
 | Driver    | s3                |
 | Bucket    | elmerson          |
 | Region    | us-east-1         |
-| Endpoint  | http://minio:9000 |
+| Endpoint  | http://s3:9000    |
 +-----------+-------------------+
 ✓ Acceso al bucket verificado
 ✓ Archivo subido exitosamente: backups/test-1234567890.txt
@@ -303,9 +301,9 @@ Configuración S3:
 ```
 
 **Si el test falla, verificar:**
-1. Que MinIO esté corriendo: `docker compose ps minio`
-2. Que el bucket exista: `docker compose exec minio mc ls local/`
+1. Que el emulador esté corriendo: `make ps` (servicio `s3`, perfil dev)
+2. Que el bucket exista: `make s3-init`
 3. Que las credenciales sean correctas en `.env`
 4. Que el endpoint sea accesible desde el contenedor app
 
-**Nota:** Si `test:s3` falla, los backups seguirán funcionando pero se guardarán solo en storage local (fallback automático).
+**Nota:** Si `storage:check` falla, los backups seguirán funcionando pero se guardarán solo en storage local (fallback automático).

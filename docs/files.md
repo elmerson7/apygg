@@ -25,9 +25,11 @@ Un archivo privado se obtiene por:
 
 Cambiar `is_public` con `PUT /files/{id}` mueve el archivo de disco.
 
-## S3 / MinIO
+## S3 / emulador local
 
-Usa un bucket **privado** distinto para los privados: `FILE_DISK_PUBLIC=s3`, `FILE_DISK_PRIVATE=s3_private`, `AWS_PRIVATE_BUCKET=<bucket privado>` (disco `s3_private` en `config/filesystems.php`). Ver `docs/minio-configuration.md`.
+Para desarrollo, `make up-dev` levanta un S3 local con los dos buckets (ver `docs/local-services.md`).
+
+Usa un bucket **privado** distinto para los privados: `FILE_DISK_PUBLIC=s3`, `FILE_DISK_PRIVATE=s3_private`, `AWS_PRIVATE_BUCKET=<bucket privado>` (disco `s3_private` en `config/filesystems.php`). Ver `docs/local-services.md`.
 
 ## Servir `/storage`
 

@@ -51,3 +51,9 @@ testdb-migrate:
 testdb-parallel:
 	@bash ./create_testdb.sh --migrate --parallel=$(or $(PROCESSES),4)
 
+
+# Pruebas de integración contra los servicios reales del perfil dev (Mailpit y S3).
+# Requiere make up-dev y MAIL_MAILER / AWS_* de .env apuntando a ellos; sin los
+# servicios, la suite se omite. Ver docs/local-services.md
+test-integration:
+	$(DC) exec app sh -c 'INTEGRATION_MAIL_URL=http://mailpit:8025 INTEGRATION_S3_ENDPOINT=$$AWS_ENDPOINT ./vendor/bin/pest --testsuite=Integration'

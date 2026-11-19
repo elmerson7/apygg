@@ -78,7 +78,8 @@ Los targets viven en `make/*.mk` (uno por tema). El `Makefile` raíz define vari
 | Tema | Comandos |
 |---|---|
 | Servicios | `make build`, `make up`, `make down`, `make restart service=app`, `make logs`, `make ps`, `make sh` |
-| Entornos | `make up ENV=prod` (añade pgbouncer), `make up SEARCH=true` (añade meilisearch) |
+| Entornos | `make up ENV=prod` (añade pgbouncer), `make up SEARCH=true` (añade meilisearch), `make up-dev` (añade Mailpit y S3 local) |
+| Servicios dev | `make mail-ui`, `make mail-clear`, `make s3-ui`, `make s3-init`, `make s3-test`, `make test-integration` (ver `docs/local-services.md`) |
 | App | `make art cmd="<artisan>"`, `make composer cmd="<composer>"`, `make key`, `make jwt`, `make clear`, `make storage-link`, `make horizon`, `make reverb`, `make octane` |
 | Base de datos | `make migrate`, `make seed`, `make schema`, `make schema-dump`, `make dbtest`, `make redistest`, `make meilitest`, `make upsearch`, `make scout` |
 | Backups | `make backup`, `make backup-list`, `make restore-backup`, `make restore-remote` |
@@ -99,6 +100,10 @@ Valores por defecto de `compose.env.example`:
 | Redis | `REDIS_PORT` | 8013 |
 | Meilisearch | `MEILISEARCH_PORT` | 8014 |
 | PgBouncer (perfil `prod`) | `PGBOUNCER_PORT` | 8015 |
+| Mailpit SMTP (perfil `dev`) | `MAILPIT_SMTP_PORT` | 8016 |
+| Mailpit UI (perfil `dev`) | `MAILPIT_UI_PORT` | 8017 |
+| S3 local, API (perfil `dev`) | `S3_PORT` | 8018 |
+| S3 local, consola (perfil `dev`) | `S3_CONSOLE_PORT` | 8019 |
 
 `compose.env` controla los puertos del host. Los valores de `compose.env` se pasan a Compose con `--env-file`.
 
@@ -136,7 +141,7 @@ database/               # migraciones, factories, seeders
 docker/                 # Dockerfile y configuración de cada servicio
 make/                   # targets de Make por tema
 routes/                 # api.php + api/*.php
-tests/                  # Unit/ (incluye Arch) y Feature/
+tests/                  # Unit/ (incluye Arch), Feature/ e Integration/ (servicios reales)
 ```
 
 ## Documentación

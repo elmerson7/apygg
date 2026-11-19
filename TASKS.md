@@ -36,7 +36,7 @@ Revisado contra el código el 2026-11-19. Lo marcado como hecho está comprobado
 
 - [ ] **Multiempresa.** Existen `Tenant`, `create_tenants_table`, `BelongsToTenant`, `TenantScope`, el middleware `ResolveTenant` (sin registrar) y `PERMISSION_TEAMS=false`. Ninguna tabla tiene `tenant_id` y `config/multi-tenancy.php` viene apagado. Decidir si se completa (fase de multiempresa) o se retira todo junto. `Tenant::$currentTenant` es la única excepción a la regla de estáticos.
 - [ ] **Suscripciones y cobros.** No hay pasarela de pagos, ni Cashier ni modelos de suscripción. Decisión de cada proyecto; no entra en el boilerplate salvo que se decida lo contrario.
-- [ ] **Mailpit y MinIO en Compose.** `docs/minio-configuration.md` y el disco `s3_private` existen, pero el Compose no trae servicios `mailpit` ni `minio` para desarrollo local (`.env.example` usa `MAIL_MAILER=log`). Añadirlos como perfiles opcionales.
+- [x] **Mailpit y S3 local en Compose.** Perfil `dev` (`make up-dev`): Mailpit y RustFS (MinIO ya no publica imágenes), buckets automáticos, `make s3-test`, suite `Integration`. Ver `docs/local-services.md`.
 - [ ] **`make init`.** Un único comando que cree `compose.env` y `.env`, levante los servicios, genere `APP_KEY` y el secreto JWT, migre y siembre. Hoy son varios pasos manuales (ver README, "Instalación").
 - [ ] **Backup de archivos.** `BackupCreateCommand` lo marca como TODO.
 - [ ] **Mover archivos privados antiguos** al disco privado en proyectos que vengan de una versión previa (no hay comando; ver `docs/upgrading.md`).

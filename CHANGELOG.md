@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Perfil `dev` de Compose con Mailpit y un emulador S3 (RustFS; MinIO ya no publica imágenes) con buckets público y privado creados solos; targets `up-dev`, `mail-ui`, `mail-clear`, `s3-ui`, `s3-init`, `s3-test`; suite `Integration` (`make test-integration`); `docs/local-services.md` (sustituye a `docs/minio-configuration.md`)
+- `php artisan storage:check`: prueba los discos de archivos configurados (sustituye a `test:s3` y `minio:test`)
 - CHANGELOG.md con formato Keep a Changelog
 - CONTRIBUTING.md con guías de contribución
 - ARCHITECTURE.md con documentación de arquitectura
@@ -25,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RoleService::assertCanGrantPermissions` y `MailTemplateConfig::toggleActive`: la lógica que estaba en un controller pasa a un sitio que comparten la API y el back-office
 
 ### Changed
+- Todas las imágenes de Compose con versión fija (PgBouncer ya no usa `latest`)
 - `chillerlan/php-qrcode` baja a `^5.0` (Filament 5 lo exige; `QrCodeService` ya usaba la API v5) y `composer update -W` sube `laravel/framework` a 13.43 y dependencias de Symfony
 - `post-autoload-dump` publica los assets de Filament (`filament:upgrade`); no se versionan (`public/{css,js,fonts}/filament`)
 - `bootstrap/app.php`: las rutas del back-office y de Livewire no pasan por el render JSON de la API

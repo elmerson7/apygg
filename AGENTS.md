@@ -168,7 +168,8 @@ Middleware con alias disponibles: `auth:api`, `permission:`, `role:`,
 
 Guía completa: `docs/testing.md`.
 
-- Pest 4 sobre PHPUnit. Tests en `tests/Unit/` y `tests/Feature/`.
+- Pest 4 sobre PHPUnit. Tests en `tests/Unit/` y `tests/Feature/`; `tests/Integration/`
+  (contra Mailpit y S3 reales, `make test-integration`) se omite sin servicios.
 - **Antes de correr tests la primera vez**: `make testdb-migrate`. Los tests usan
   una BD aislada `<DB_DATABASE>_test` que nunca toca la de desarrollo
   (ver `docs/testing-database.md`).
@@ -212,6 +213,13 @@ Guía completa: `docs/testing.md`.
 - Para poder pausarlo desde el panel, implementa `App\Contracts\Mail\HasMailTemplate`.
 - ❌ No llames a `Mail::mailer('x')` a mano ni crees otro camino de envío.
 - Detalle: `docs/mail-system.md`.
+
+## Servicios de desarrollo (perfil `dev`)
+
+- `make up-dev` añade **Mailpit** (bandeja de correo, `make mail-ui`) y un **S3 local**
+  (RustFS; MinIO ya no publica imágenes) con buckets público y privado.
+- `make s3-test` / `php artisan storage:check` prueban los discos de archivos.
+- Imágenes de Compose con versión fija: nunca `latest`. Detalle: `docs/local-services.md`.
 
 ## Rendimiento — no paginar en memoria
 

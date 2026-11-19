@@ -13,6 +13,12 @@
         <testsuite name="Feature">
             <directory>tests/Feature</directory>
         </testsuite>
+        <!-- Contra servicios reales (Mailpit y S3 del perfil dev). Sin
+             INTEGRATION_MAIL_URL / INTEGRATION_S3_ENDPOINT sus tests se omiten.
+             Se lanza con: make test-integration (ver docs/local-services.md) -->
+        <testsuite name="Integration">
+            <directory>tests/Integration</directory>
+        </testsuite>
     </testsuites>
     <source>
         <include>
