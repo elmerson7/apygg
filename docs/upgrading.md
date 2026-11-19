@@ -182,6 +182,16 @@ Form Requests y tu frontend.
   desarrollo: `WEBHOOKS_ALLOW_HTTP=true` y `WEBHOOKS_ALLOWED_HOSTS`. Revisa los
   destinos ya guardados.
 - Cada webhook recibe solo eventos de su dueño. El secreto solo se ve al crear y rotar.
+- **Cola `webhooks`**: antes ningún supervisor de Horizon la consumía (los webhooks
+  no se enviaban). Ahora hay `supervisor-webhooks`: **reinicia Horizon**
+  (`php artisan horizon:terminate`) tras desplegar.
+- **Timeouts**: sube `REDIS_QUEUE_RETRY_AFTER` a `660` (o a un valor mayor que el
+  timeout del job más largo); con `60` un job lento se ejecuta dos veces. Nuevas
+  variables `JOB_TIMEOUT`, `SECURITY_SCAN_TIMEOUT`, `WEBHOOK_MAX_TIMEOUT` (120) y
+  `WEBHOOK_JOB_TIMEOUT` (150). El `timeout` de un webhook ya no puede pasar de 120 s;
+  los guardados con más se recortan al enviar.
+- **Reintentos**: un 4xx del destino (salvo 408 y 429) es fallo permanente y no se
+  reintenta.
 
 ### 10. API keys
 
