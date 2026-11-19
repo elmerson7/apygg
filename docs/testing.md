@@ -9,10 +9,30 @@ El proyecto usa **Pest 4** sobre PHPUnit. Todo se ejecuta dentro de Docker vía
 |---|---|---|---|
 | **Unitarios** | `tests/Unit/` | Una clase aislada: servicios, modelos, helpers | `make test-unit` |
 | **Integración (Feature)** | `tests/Feature/` | Un endpoint de punta a punta: ruta, middleware, validación, BD | `make test-feature` |
-| **Arquitectura** | `tests/Unit/ArchTest.php` | Reglas estructurales del código, no comportamiento | `make test-arch` |
+| **Arquitectura** | `tests/Arch/` | Reglas estructurales del código, no comportamiento | `make test-arch` |
+| **Contrato** | `tests/Contract/` | La forma pública de la API (envelope, tipos, códigos) | `make test-contract` |
+| **Concurrencia** | `tests/Concurrency/` | Carreras reales con varios procesos PHP a la vez | `make test-concurrency` |
+| **E2E** | `tests/E2E/` | Flujos de punta a punta (suite reservada, vacía) | `make test-e2e` |
 | **Cobertura** | — | Qué porcentaje del código ejecutan los tests | `make test-coverage` |
 | **Mutación** | — | Si los tests **detectarían** un cambio en el código | `make test-mutate` |
 | **Paralelo** | — | La misma suite repartida en N procesos | `make test-parallel` |
+
+## Suites y cuándo usar cada una
+
+`phpunit.xml` define las suites. **`make test` corre solo `Unit` + `Feature` +
+`Arch`** (`defaultTestSuite`); el resto se pide a propósito.
+
+| Suite | Úsala cuando... |
+|---|---|
+| `Unit` | pruebas una clase aislada |
+| `Feature` | pruebas un endpoint completo: ruta, middleware, validación, BD |
+| `Arch` | quieres fijar una regla estructural (qué puede usar qué) |
+| `Contract` | quieres que un cambio accidental en la forma de una respuesta falle |
+| `Concurrency` | el fallo solo aparece con peticiones simultáneas (únicos, contadores, idempotencia) |
+| `E2E` | necesitas el flujo completo contra la API levantada de verdad |
+
+Los tests de las suites nuevas usan `Tests\TestCase` igual que Feature/Unit
+(`tests/Pest.php`). Registrar otra suite es una línea más en `<testsuites>`.
 
 ## Puesta en marcha
 
@@ -26,7 +46,13 @@ Vuelve a ejecutar `make testdb-migrate` cada vez que añadas una migración.
 ## Comandos
 
 ```bash
-make test                              # suite completa
+make test                              # suite por defecto: Unit + Feature + Arch
+make test-all                          # todas las suites sin servicios extra
+make test-contract                     # solo Contract
+make test-concurrency                  # solo Concurrency (procesos reales)
+make test-e2e                          # solo E2E (reservada)
+make test-changed                      # solo tests con cambios sin commitear (pest --dirty)
+make ci                                # como el CI: check + cobertura mínima
 make test-unit                         # solo tests/Unit
 make test-feature                      # solo tests/Feature
 make test-filter filter='login'        # por nombre
@@ -34,7 +60,7 @@ make test-arch                          # solo reglas de arquitectura
 make test-watch                         # re-ejecuta al guardar
 
 make test-coverage                      # informe de cobertura
-make test-coverage-min MIN=70           # falla si baja del umbral
+make test-coverage-min                  # falla si baja del mínimo (COVERAGE_MIN)
 
 make testdb-parallel PROCESSES=4        # prepara una BD por proceso
 make test-parallel PROCESSES=4          # ejecuta en paralelo
@@ -111,7 +137,7 @@ arch('los modelos no conocen la capa HTTP')
     ->not->toUse(['App\Http\Controllers', 'App\Http\Requests']);
 ```
 
-Las reglas vigentes están en `tests/Unit/ArchTest.php`. Cuando una excepción
+Las reglas vigentes están en `tests/Arch/ArchTest.php`. Cuando una excepción
 sea legítima, documéntala con `->ignoring(...)` y un comentario que explique por
 qué —no la borres—.
 
@@ -119,7 +145,8 @@ qué —no la borres—.
 
 ```bash
 make test-coverage              # informe por archivo
-make test-coverage-min MIN=70   # falla por debajo del umbral (útil en CI)
+make test-coverage-min          # falla por debajo de COVERAGE_MIN (make/test.mk)
+make test-coverage-min MIN=80   # con otro umbral puntual
 ```
 
 Usa **pcov**, que va instalado pero desactivado (`pcov.enabled=0` en el
@@ -129,6 +156,11 @@ la aplicación. Los targets del Makefile lo encienden solo para esa ejecución.
 La cobertura mide qué líneas se ejecutan, **no si están bien comprobadas**. Un
 80% con aserciones flojas vale menos que un 50% con aserciones que muerden. Úsala
 para encontrar lo que nadie ha tocado, no como objetivo.
+
+El mínimo vigente es `COVERAGE_MIN` en `make/test.mk` y `--min` en
+`.github/workflows/ci.yml` (misma cifra en ambos): la cobertura medida redondeada
+hacia abajo a múltiplo de 5. Súbelo cuando la cobertura real suba; nunca lo bajes
+para que pase un cambio.
 
 ## 5. Mutation testing
 
@@ -163,6 +195,41 @@ Referencia en esta base de código: 250 tests en ~41 s con 4 procesos frente a
 ~129 s en serie.
 
 ---
+
+## Concurrencia con procesos reales
+
+Un test secuencial no ve las carreras: dos peticiones que comprueban `unique` a la
+vez y luego insertan. `Tests\Support\ConcurrentRunner` lanza N procesos PHP
+(`proc_open`) con el patrón barrera: cada hijo arranca la app, avisa de que está
+listo y espera un archivo "go"; el padre lo crea cuando todos están listos y todos
+ejecutan la misma operación a la vez.
+
+```php
+$results = ConcurrentRunner::run(2, function (int $i) use ($email) {   // sin $this
+    $response = app(\Illuminate\Contracts\Http\Kernel::class)->handle(/* Request */);
+
+    return ['status' => $response->getStatusCode()];
+});
+// $results[$i] = ['ok' => bool, 'result' => <lo que devolvió la closure>, 'error' => ?string]
+```
+
+Reglas:
+
+- Los hijos usan la **misma BD de tests** que el padre, y lo que escriben queda
+  **comprometido**: `RefreshDatabase`/`DatabaseTransactions` no cubren a otros
+  procesos. Usa datos propios (p. ej. emails `carrera-*@example.com`) y bórralos en
+  `afterEach`.
+- La closure se serializa (`laravel/serializable-closure`): captura solo valores
+  escalares/arrays, no uses `$this` ni modelos con relaciones.
+- Cada hijo tiene su propia caché `array` y su propio rate limiter en memoria.
+- Un hijo que muere o no llega a la barrera en el tiempo límite hace fallar el test
+  con su error.
+
+Primer caso real: `tests/Concurrency/RegistroConcurrenteTest.php` (dos registros
+con el mismo email). Encontró una carrera: la validación `unique` pasaba en ambos
+y el segundo `INSERT` daba **500** con el SQL en el título. Ahora el handler global
+(`bootstrap/app.php`) convierte `UniqueConstraintViolationException` en **422** con
+el formato de validación y sin exponer SQL ni valor.
 
 ## La base de datos de tests
 
@@ -226,11 +293,19 @@ depende de un worker.
 - **Los roles sembrados ya existen.** `Role::create(['name' => 'editor'])` en un
   test choca con `RoleSeeder`; usa `firstOrCreate`.
 
+## Datos de prueba únicos
+
+Las factories con columnas únicas (`UserFactory` email e `identity_document`,
+`SettingsFactory` key, `RoleFactory` name) añaden un sufijo aleatorio en lugar de
+`fake()->unique()`: ese se reinicia en cada test y solo conoce lo que generó él
+mismo, de modo que chocaba de forma intermitente con filas ya existentes. Si
+añades una factory con una columna única, haz lo mismo.
+
 ## En CI
 
 ```yaml
 - run: php artisan migrate --force        # sobre la BD de tests
-- run: ./vendor/bin/pest --parallel
+- run: ./vendor/bin/pest --ci --coverage --min=<COVERAGE_MIN>
 - run: ./vendor/bin/pint --test
 - run: ./vendor/bin/phpstan analyse
 ```
@@ -241,5 +316,5 @@ depende de un worker.
 
 - [testing-database.md](testing-database.md) → la BD aislada en detalle
 - `tests/TestCase.php` → helpers y preparación
-- `tests/Unit/ArchTest.php` → reglas de arquitectura
+- `tests/Arch/ArchTest.php` → reglas de arquitectura
 - `phpunit.xml` → entorno de test

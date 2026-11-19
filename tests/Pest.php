@@ -14,7 +14,7 @@ use Tests\TestCase;
 |
 */
 
-uses(TestCase::class)->in('Feature', 'Unit', 'Integration');
+uses(TestCase::class)->in('Feature', 'Unit', 'Arch', 'Contract', 'Concurrency', 'E2E', 'Integration');
 
 /*
 |--------------------------------------------------------------------------

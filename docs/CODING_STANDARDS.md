@@ -130,7 +130,7 @@ Ver también [CONTROLLER_CONVENTIONS.md](CONTROLLER_CONVENTIONS.md).
    En jobs, en `process(ReportServiceInterface $reports)`; en comandos, en
    `handle(...)`; en middlewares y listeners, por constructor.
 5. **Registro en el arch test**: añade `ReportService => ReportServiceInterface` a
-   `archServiciosConInterfaz()` en `tests/Unit/ArchTest.php`.
+   `archServiciosConInterfaz()` en `tests/Arch/ArchTest.php`.
 6. **Test**: unitario del servicio (`app(ReportServiceInterface::class)`) y
    feature del endpoint, con el camino denegado. Para sustituir una dependencia
    usa `$this->app->instance(Interfaz::class, $fake)` (ver `fakeDns()` en

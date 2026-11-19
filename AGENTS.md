@@ -107,7 +107,7 @@ y middlewares reciben **la interfaz** por constructor o método. Nada de
 - **Octane**: prohibidas las propiedades estáticas mutables en `App\` (usa
   constantes, `config()`, atributos de la petición o un binding). Única excepción
   temporal: `Tenant::$currentTenant`.
-- Lo comprueban las reglas de `tests/Unit/ArchTest.php`: los controllers solo
+- Lo comprueban las reglas de `tests/Arch/ArchTest.php`: los controllers solo
   importan `App\Contracts`, cada servicio con interfaz la implementa y no hay
   estáticos mutables.
 

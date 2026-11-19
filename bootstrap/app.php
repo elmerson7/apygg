@@ -256,6 +256,20 @@ return Application::configure(basePath: dirname(__DIR__))
                 return ApiResponse::validation($e->errors(), 'The given data was invalid.');
             }
 
+            // Violación de restricción única: la validación `unique` no cierra la carrera entre
+            // dos peticiones simultáneas; la BD sí. Se responde 422 (como la validación) y no 500,
+            // sin exponer el SQL ni el valor duplicado.
+            if ($e instanceof \Illuminate\Database\UniqueConstraintViolationException) {
+                $logException($e, $request, false);
+
+                $field = preg_match('/Key \(([a-z0-9_, ]+)\)=/i', $e->getMessage(), $m) ? trim(explode(',', $m[1])[0]) : 'resource';
+
+                return ApiResponse::validation(
+                    [$field => ['Ya existe un registro con este valor.']],
+                    'The given data was invalid.'
+                );
+            }
+
             // RBAC denegado (middlewares permission:/role: de Spatie): 403 con el formato del proyecto,
             // 401 si ni siquiera hay sesión en el guard de la API.
             if ($e instanceof \Spatie\Permission\Exceptions\UnauthorizedException) {

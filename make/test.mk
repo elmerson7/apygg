@@ -1,5 +1,9 @@
 # Tests (Pest) y bases de datos de testing (targets: make/*.mk)
-# Ejecutar tests
+# Suites (phpunit.xml): Unit, Feature, Arch (por defecto) + Contract, Concurrency, E2E (a propósito).
+# Cobertura mínima de la suite por defecto; sube junto con la cobertura real (misma cifra en .github/workflows/ci.yml).
+COVERAGE_MIN ?= 55
+
+# Suite por defecto: Unit + Feature + Arch
 test:
 	$(DC) exec app composer test
 
@@ -19,13 +23,36 @@ test-parallel:
 test-coverage:
 	$(DC) exec app php -d pcov.enabled=1 ./vendor/bin/pest --coverage
 
-# Tests con coverage y umbral mínimo. Uso: make test-coverage-min MIN=70
+# Tests con coverage y umbral mínimo. Uso: make test-coverage-min [MIN=NN] (por defecto COVERAGE_MIN)
 test-coverage-min:
-	$(DC) exec app php -d pcov.enabled=1 ./vendor/bin/pest --coverage --min=$(or $(MIN),70)
+	$(DC) exec app php -d pcov.enabled=1 ./vendor/bin/pest --coverage --min=$(or $(MIN),$(COVERAGE_MIN))
 
 # Tests de arquitectura (reglas estructurales del código)
 test-arch:
-	$(DC) exec app ./vendor/bin/pest --group=arch
+	$(DC) exec app ./vendor/bin/pest --testsuite=Arch
+
+# Todas las suites que no necesitan servicios extra (Unit, Feature, Arch, Contract, Concurrency)
+test-all:
+	$(DC) exec app ./vendor/bin/pest --testsuite=Unit,Feature,Arch,Contract,Concurrency
+
+# Contrato público de la API (forma de las respuestas)
+test-contract:
+	$(DC) exec app ./vendor/bin/pest --testsuite=Contract
+
+# Carreras reales con procesos PHP hijos (datos comprometidos en la BD de tests)
+test-concurrency:
+	$(DC) exec app ./vendor/bin/pest --testsuite=Concurrency
+
+# Flujos de punta a punta (suite reservada; vacía por ahora)
+test-e2e:
+	$(DC) exec app ./vendor/bin/pest --testsuite=E2E
+
+# Solo los tests con cambios sin commitear según Git (Pest --dirty): ciclo rápido al desarrollar
+test-changed:
+	$(DC) exec app ./vendor/bin/pest --dirty
+
+# Lo mismo que el CI: calidad (pint + phpstan) + suite por defecto con cobertura mínima
+ci: check test-coverage-min
 
 # Mutation testing: cambia el código a propósito y comprueba que algún test falle
 test-mutate:

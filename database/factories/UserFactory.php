@@ -20,6 +20,37 @@ class UserFactory extends Factory
     protected static ?string $password;
 
     /**
+     * Documentos ya generados en este proceso (identity_document es único en BD).
+     *
+     * @var array<int, true>
+     */
+    protected static array $usedDocuments = [];
+
+    /**
+     * Email único de verdad: `fake()->unique()` se reinicia en cada test y solo
+     * conoce lo que generó él mismo, así que puede chocar con filas ya existentes
+     * (datos sembrados, tests que no revierten). El sufijo aleatorio lo evita.
+     */
+    protected static function uniqueEmail(): string
+    {
+        return strtolower(fake()->userName().'.'.Str::random(8).'@example.com');
+    }
+
+    /**
+     * Documento de 10 dígitos que no se repite dentro del proceso y casi nunca fuera de él.
+     */
+    protected static function uniqueIdentityDocument(): string
+    {
+        do {
+            $document = random_int(1_000_000_000, 9_999_999_999);
+        } while (isset(static::$usedDocuments[$document]));
+
+        static::$usedDocuments[$document] = true;
+
+        return (string) $document;
+    }
+
+    /**
      * Define the model's default state.
      *
      * @return array<string, mixed>
@@ -28,10 +59,10 @@ class UserFactory extends Factory
     {
         return [
             'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
+            'email' => static::uniqueEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
-            'identity_document' => fake()->optional()->numerify('##########'),
+            'identity_document' => fake()->boolean() ? static::uniqueIdentityDocument() : null,
             'remember_token' => Str::random(10),
         ];
     }

@@ -127,14 +127,11 @@ jobs:
       - name: Run database migrations
         run: php artisan migrate --force --env=testing
 
-      - name: Run Pest tests
-        run: ./vendor/bin/pest --ci
+      # Suite por defecto (Unit + Feature + Arch) con cobertura. Mínimo = COVERAGE_MIN de
+      # make/test.mk (cobertura medida redondeada a múltiplo de 5): súbelo con la cobertura.
+      - name: Run Pest tests (coverage minimum)
+        run: ./vendor/bin/pest --ci --coverage --coverage-clover=coverage.xml --min=55
         continue-on-error: false
-
-      - name: Generate coverage report
-        if: success()
-        run: ./vendor/bin/pest --ci --coverage --coverage-clover=coverage.xml --min=0
-        continue-on-error: true
         env:
           XDEBUG_MODE: coverage
 

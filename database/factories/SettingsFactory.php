@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Settings;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * @extends Factory<Settings>
@@ -25,7 +26,7 @@ class SettingsFactory extends Factory
     public function definition(): array
     {
         return [
-            'key' => $this->faker->unique()->word,
+            'key' => strtolower($this->faker->word.'_'.Str::random(8)),
             'value' => $this->faker->sentence,
             'type' => $this->faker->randomElement(['string', 'integer', 'boolean', 'json', 'array']),
             'group' => $this->faker->randomElement(['app', 'system', 'security', 'payment', 'notification']),
