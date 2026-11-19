@@ -27,7 +27,7 @@ setup:
 	@echo "→ Arrancando PostgreSQL, Redis y la app..."
 	$(DC) up -d postgres redis app
 	@echo "→ Esperando a PostgreSQL y Redis..."
-	@bash scripts/wait-healthy.sh $(PROJECT_NAME)_postgres $(PROJECT_NAME)_redis
+	@bash scripts/wait-healthy.sh $(PROJECT_NAME)-postgres $(PROJECT_NAME)-redis
 	@echo "→ Esperando a que la app instale las dependencias (primera vez: 1-3 min)..."
 	@for i in $$(seq 1 240); do \
 		if $(DC) logs app 2>&1 | grep -q "Starting Laravel Octane"; then break; fi; \
@@ -50,8 +50,12 @@ setup:
 		echo "→ Buckets S3 locales..."; \
 		$(MAKE) --no-print-directory s3-init DEV=true; \
 	fi
-	@bash scripts/wait-healthy.sh $(PROJECT_NAME)_app
+	@bash scripts/wait-healthy.sh $(PROJECT_NAME)-app
 	@bash scripts/setup-summary.sh "$(DEV)"
+
+# Migra volúmenes con nombre antiguo (<proyecto>_pgdata) a <proyecto>-pgdata. Stack parado. DRY=1 solo simula.
+rename-volumes:
+	@bash scripts/migrate-docker-names.sh $(if $(DRY),--dry-run) $(PROJECT_NAME)
 
 # Diagnóstico del entorno local: explica cómo arreglar lo que falle (código de salida != 0 si algo falla)
 doctor:

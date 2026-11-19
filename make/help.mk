@@ -23,6 +23,7 @@ help:
 	@printf "  %-20s %s\n" "init" "Inicializar proyecto: NAME=<slug> [PORT_BASE= TITLE= VENDOR= README=1 YES=1]"
 	@printf "  %-20s %s\n" "setup" "Del clon a la API corriendo (build, up, composer, migrate, seed, tests DB, S3)"
 	@printf "  %-20s %s\n" "doctor" "Diagnosticar el entorno y explicar cómo arreglarlo"
+	@printf "  %-20s %s\n" "rename-volumes" "Copiar volúmenes <proy>_x a <proy>-x (stack parado; DRY=1 simula)"
 	@printf "  %-20s %s\n" "fresh" "migrate:fresh --seed en dev (pide confirmación; YES=1 la salta)"
 	@printf "  %-20s %s\n" "upgrade-check" "Commits de upstream/main que el proyecto aún no tiene"
 	@printf "  %-20s %s\n" "wt-env" "Entorno aislado por worktree: NAME=<tarea> (compose.env + .env propios)"

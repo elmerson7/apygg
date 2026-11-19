@@ -57,8 +57,8 @@ if [[ -z "$DB_DATABASE" || -z "$DB_USERNAME" ]]; then
 fi
 
 TEST_DB="${DB_DATABASE}_test"
-PG_CONTAINER="${PROJECT}_postgres"
-APP_CONTAINER="${PROJECT}_app"
+PG_CONTAINER="${PROJECT}-postgres"
+APP_CONTAINER="${PROJECT}-app"
 
 echo "Proyecto:    ${PROJECT}"
 echo "BD dev:      ${DB_DATABASE}  (no se toca)"

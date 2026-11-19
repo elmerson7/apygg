@@ -41,7 +41,7 @@ El servicio Meilisearch está configurado en `docker-compose.yml`:
 ```yaml
 meilisearch:
   image: getmeili/meilisearch:v1.16
-  container_name: apygg_meili
+  container_name: apygg-meili
   profiles: ["dev", "staging", "prod"]
   environment:
     MEILI_MASTER_KEY: ${MEILISEARCH_KEY:-masterKey}

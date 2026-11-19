@@ -315,7 +315,30 @@ autenticación (CVE-2026-109618 y CVE-2026-109619): una imagen con PHP 8.5.3
 Repite esto con cada parche de seguridad de PHP; no uses etiquetas flotantes
 (`php8.5`) en producción.
 
-### 15. Verificación final
+### 15. Nomenclatura Docker uniforme con guion (renombrar volúmenes)
+
+Contenedores, imágenes, volúmenes y red pasan de `<proyecto>_<x>` a `<proyecto>-<x>`
+(p. ej. `apygg_postgres` → `apygg-postgres`, volumen `apygg_pgdata` → `apygg-pgdata`,
+red `apygg_network` → `apygg-network`; también `meili`, `s3`, `s3_init` → `s3-init`).
+Los volúmenes viejos contienen tus datos: si solo haces `make up`, Compose crea volúmenes
+vacíos nuevos y parecerá que perdiste la BD. Procedimiento (con ventana de parada):
+
+```bash
+make backup                      # red de seguridad
+make down                        # para el stack (sin -v: NO borres volúmenes)
+make rename-volumes DRY=1        # simula: lista qué copiaría
+make rename-volumes              # copia <p>_pgdata → <p>-pgdata (y redis, meili, s3) con alpine
+make up                          # levanta con los nombres nuevos
+make doctor                      # todo en verde; comprueba /health y que tus datos están
+docker volume rm <proyecto>_pgdata <proyecto>_redisdata ...   # solo tras comprobar (lo imprime el script)
+```
+
+El script es idempotente, no borra nada y se niega a copiar si hay contenedores usando el volumen
+viejo. Los contenedores/redes viejos desaparecen con `make down`. Actualiza también scripts de
+deploy, monitorización o cron propios que llamen a `docker exec <proyecto>_app` (ahora `<proyecto>-app`)
+y los filtros `docker ps --filter name=^<proyecto>_`.
+
+### 16. Verificación final
 
 ```bash
 make art cmd="route:list"        # cada ruta con permission:x.y,api

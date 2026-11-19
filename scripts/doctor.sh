@@ -95,7 +95,7 @@ fi
 if (( HAVE_CE )); then
     section "Puertos"
     OURS=""
-    (( DOCKER_OK )) && OURS=$(docker ps --filter "name=^${PROJECT}_" --format '{{.Ports}}' 2>/dev/null || true)
+    (( DOCKER_OK )) && OURS=$(docker ps --filter "name=^${PROJECT}-" --format '{{.Ports}}' 2>/dev/null || true)
     BUSY=0
     while IFS='=' read -r key val; do
         val="${val%%#*}"; val="${val//[[:space:]]/}"
@@ -117,7 +117,7 @@ if (( DOCKER_OK && HAVE_CE )) && [[ -n "$PROJECT" ]]; then
     SERVICES="app postgres redis reverb horizon scheduler"
     [[ "$(get_kv compose.env DEV)" == "true" ]] && SERVICES="$SERVICES mailpit s3"
     for svc in $SERVICES; do
-        c="${PROJECT}_${svc}"
+        c="${PROJECT}-${svc}"
         st=$(docker inspect -f '{{.State.Status}} {{if .State.Health}}{{.State.Health.Status}}{{end}}' "$c" 2>/dev/null || true)
         if [[ -z "$st" ]]; then
             fail "$c no existe" "make setup   (primera vez)  ·  make up   (si ya estaba instalado)"
@@ -135,7 +135,7 @@ fi
 if (( STACK_UP && HAVE_ENV )); then
     section "Base de datos"
     DBN=$(get_kv .env DB_DATABASE); DBU=$(get_kv .env DB_USERNAME); DBP=$(get_kv .env DB_PASSWORD)
-    pg() { docker exec -e PGPASSWORD="$DBP" "${PROJECT}_postgres" psql -U "$DBU" -d "$1" -tAc "$2" 2>/dev/null; }
+    pg() { docker exec -e PGPASSWORD="$DBP" "${PROJECT}-postgres" psql -U "$DBU" -d "$1" -tAc "$2" 2>/dev/null; }
     FILES=$(ls database/migrations/*.php 2>/dev/null | wc -l)
     for db in "$DBN" "${DBN}_test"; do
         if [[ "$(pg postgres "SELECT 1 FROM pg_database WHERE datname='${db}'")" != "1" ]]; then

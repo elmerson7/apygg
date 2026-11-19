@@ -126,7 +126,7 @@ Los scripts incluyen verificación de:
 
 ### Health check falla
 - Verificar que el servicio esté corriendo
-- Revisar logs: `docker logs apygg_app` o `kubectl logs deployment/apygg`
+- Revisar logs: `docker logs apygg-app` o `kubectl logs deployment/apygg`
 - Verificar conectividad de red
 
 ### Rollback no funciona

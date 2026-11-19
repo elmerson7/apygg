@@ -187,7 +187,7 @@ Para Canary deployments, monitorea:
 ### El despliegue falla en health check
 
 1. Verificar que el servicio esté corriendo
-2. Revisar logs: `docker logs apygg_app` o `kubectl logs deployment/apygg`
+2. Revisar logs: `docker logs apygg-app` o `kubectl logs deployment/apygg`
 3. Verificar conectividad de red
 4. Revisar configuración de health checks
 

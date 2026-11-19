@@ -161,7 +161,7 @@ tests/                  # Unit/ (incluye Arch), Feature/ e Integration/ (servici
 - [ARCHITECTURE.md](./ARCHITECTURE.md): capas, módulos y flujos.
 - [TECH_STACK.md](./TECH_STACK.md): stack completo y versiones.
 - [TASKS.md](./TASKS.md): estado actual y pendientes.
-- [docs/new-project.md](./docs/new-project.md): de cero a API corriendo (`make init`, `make setup`, `make doctor`), recibir mejoras del boilerplate y worktrees aislados.
+- [docs/new-project.md](./docs/new-project.md): de cero a API corriendo (`make init`, `make setup`, `make doctor`), [nomenclatura y puertos](./docs/new-project.md#nomenclatura-y-puertos), recibir mejoras del boilerplate y worktrees aislados.
 - [docs/upgrading.md](./docs/upgrading.md): notas de actualización para proyectos derivados (qué rompe y qué hacer).
 - [CONTRIBUTING.md](./CONTRIBUTING.md): cómo contribuir.
 - [CHANGELOG.md](./CHANGELOG.md): cambios por versión.

@@ -28,6 +28,46 @@ make init NAME=miapp [PORT_BASE=8100] [TITLE="Mi App"] [VENDOR=miorg] [README=1]
 | `README=1` | Crea `README.project.md` con un README mínimo del proyecto. | no |
 | `YES=1` | No pide confirmación si ya estaba inicializado. | pide |
 
+### Nomenclatura y puertos
+
+Todo sale de dos valores de `compose.env`: **`PROJECT`** (nombres) y **`PORT_BASE`/los `*_PORT`**
+(puertos; `make init` los escribe). Los recursos Docker se llaman `<PROJECT>-<servicio>`
+(guion, nunca guion bajo) y la BD `<NAME>` (guiones → `_`). Boilerplate (`PROJECT=apygg`) frente a
+`make init NAME=clinkuna PORT_BASE=8100`:
+
+| Qué | Boilerplate (`apygg`) | Proyecto (`clinkuna`) |
+|---|---|---|
+| Contenedores | `apygg-app`, `apygg-postgres`, `apygg-redis`, `apygg-horizon`, `apygg-reverb`, `apygg-scheduler`, `apygg-pgbouncer`, `apygg-meili`, `apygg-mailpit`, `apygg-s3`, `apygg-s3-init` | `clinkuna-app`, `clinkuna-postgres`, `clinkuna-redis`, `clinkuna-horizon`, `clinkuna-reverb`, `clinkuna-scheduler`, `clinkuna-pgbouncer`, `clinkuna-meili`, `clinkuna-mailpit`, `clinkuna-s3`, `clinkuna-s3-init` |
+| Imágenes construidas | `apygg-app`, `apygg-horizon`, … | `clinkuna-app`, `clinkuna-horizon`, … |
+| Volúmenes | `apygg-pgdata`, `apygg-redisdata`, `apygg-meilidata`, `apygg-s3data` | `clinkuna-pgdata`, `clinkuna-redisdata`, `clinkuna-meilidata`, `clinkuna-s3data` |
+| Red | `apygg-network` | `clinkuna-network` |
+| Base de datos | `apygg` (y `apygg_test`) | `clinkuna` (y `clinkuna_test`) |
+| Puertos | bloque `8010`–`8019` | bloque propio `8100`–`8109` |
+
+Puertos por servicio (host; valor del boilerplate → proyecto con `PORT_BASE=8100`):
+
+| Variable en `compose.env` | Servicio | apygg | clinkuna |
+|---|---|---|---|
+| `APP_PORT` | app (API) | 8010 | 8100 |
+| `POSTGRES_PORT` | PostgreSQL | 8011 | 8101 |
+| `REVERB_PORT` | Reverb (WebSocket) | 8012 | 8102 |
+| `REDIS_PORT` | Redis | 8013 | 8103 |
+| `MEILISEARCH_PORT` | Meilisearch | 8014 | 8104 |
+| `PGBOUNCER_PORT` | PgBouncer | 8015 | 8105 |
+| `MAILPIT_SMTP_PORT` | Mailpit SMTP | 8016 | 8106 |
+| `MAILPIT_UI_PORT` | Mailpit web | 8017 | 8107 |
+| `S3_PORT` | S3 local (API) | 8018 | 8108 |
+| `S3_CONSOLE_PORT` | S3 local (consola) | 8019 | 8109 |
+
+Como cada proyecto tiene su `PROJECT` y su bloque de puertos, **varios proyectos conviven en el
+mismo servidor sin chocar** (ni contenedores, ni volúmenes, ni red, ni puertos). Cambiar `PROJECT`
+a mano sin cambiar los puertos sí colisiona. `make validate` comprueba que `compose.env` sea
+coherente y `make doctor` avisa si un proyecto derivado sigue con `PROJECT=apygg` o si un puerto
+está ocupado.
+
+Para proyectos creados antes de este cambio (nombres con guion bajo): `docs/upgrading.md`
+(sección «Nomenclatura Docker», `make rename-volumes`).
+
 ### Qué genera
 
 - **`compose.env`** (Docker): `PROJECT=<slug>`, `USER_ID`/`GROUP_ID` del host, `DEV=true`,
