@@ -12,10 +12,12 @@ use App\Events\UserCreated;
 use App\Events\UserDeleted;
 use App\Events\UserRestored;
 use App\Events\UserUpdated;
+use App\Exceptions\BusinessLogicException;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 /**
@@ -264,7 +266,12 @@ class UserService
     public function delete(string $userId): bool
     {
         $user = $this->find($userId);
-        $deleted = $this->userRepository->delete($userId);
+
+        $deleted = DB::transaction(function () use ($user, $userId) {
+            $this->ensureNotLastAdmin($user);
+
+            return $this->userRepository->delete($userId);
+        });
         $this->clearCache($userId);
         event(new UserDeleted($user));
 
@@ -396,6 +403,21 @@ class UserService
             throw new \InvalidArgumentException('Los siguientes roles no existen: '.implode(', ', $invalidRoles));
         }
 
+        return DB::transaction(function () use ($user, $userId, $roleIds) {
+            $adminRoleId = Role::where('name', 'admin')->value('id');
+            if ($adminRoleId !== null && ! in_array((int) $adminRoleId, array_map('intval', $roleIds), true)) {
+                $this->ensureNotLastAdmin($user);
+            }
+
+            return $this->syncRolesAndFire($user, $userId, $roleIds);
+        });
+    }
+
+    /**
+     * Sincronizar roles y emitir los eventos de alta/baja.
+     */
+    private function syncRolesAndFire(User $user, string $userId, array $roleIds): User
+    {
         $previousRoleIds = $user->roles()->select('roles.id')->pluck('id')->toArray();
         $user->roles()->sync($roleIds);
         $this->clearCache($userId);
@@ -428,11 +450,41 @@ class UserService
             throw new \Exception('No se puede remover el último rol de un administrador');
         }
 
-        $user->roles()->detach($roleId);
-        $this->clearCache($userId);
-        event(new RoleRemoved($user, $role));
+        return DB::transaction(function () use ($user, $userId, $roleId, $role) {
+            if ($role->name === 'admin') {
+                $this->ensureNotLastAdmin($user);
+            }
 
-        return $user->fresh(['roles', 'permissions']);
+            $user->roles()->detach($roleId);
+            $this->clearCache($userId);
+            event(new RoleRemoved($user, $role));
+
+            return $user->fresh(['roles', 'permissions']);
+        });
+    }
+
+    /**
+     * Impedir que el sistema se quede sin administradores.
+     *
+     * Debe llamarse dentro de una transacción: bloquea las filas de los admins
+     * para que dos peticiones simultáneas no quiten a los dos últimos.
+     *
+     * @throws BusinessLogicException Si $user es admin y no hay otro admin
+     */
+    protected function ensureNotLastAdmin(User $user): void
+    {
+        if (! $user->hasRole('admin')) {
+            return;
+        }
+
+        $otherAdmins = User::whereHas('roles', fn ($q) => $q->where('roles.name', 'admin'))
+            ->where('users.id', '!=', $user->id)
+            ->lockForUpdate()
+            ->pluck('users.id');
+
+        if ($otherAdmins->isEmpty()) {
+            throw new BusinessLogicException('No se puede dejar el sistema sin administradores', 'LAST_ADMIN');
+        }
     }
 
     /**

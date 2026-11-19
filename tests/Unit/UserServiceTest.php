@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\BusinessLogicException;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\UserService;
@@ -143,6 +144,7 @@ test('puede remover un rol de un usuario', function () {
     $managerRole = Role::where('name', 'manager')->first();
 
     $user->roles()->attach([$adminRole->id, $managerRole->id]);
+    User::factory()->admin()->create(); // debe quedar otro admin
 
     $this->userService->removeRole($user->id, $adminRole->id);
 
@@ -193,4 +195,15 @@ test('lanza excepción si el usuario no existe al buscar', function () {
     // Los IDs son enteros auto-incrementales (ver docs/id-strategy.md)
     expect(fn () => $this->userService->find(999999))
         ->toThrow(ModelNotFoundException::class);
+});
+
+test('no puede remover el rol admin al último administrador', function () {
+    $user = User::factory()->admin()->create();
+    $user->roles()->attach(Role::where('name', 'manager')->first()->id);
+    $adminRole = Role::where('name', 'admin')->first();
+
+    expect(fn () => $this->userService->removeRole($user->id, $adminRole->id))
+        ->toThrow(BusinessLogicException::class);
+
+    expect($user->fresh()->hasRole('admin'))->toBeTrue();
 });

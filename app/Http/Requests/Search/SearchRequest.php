@@ -22,11 +22,41 @@ class SearchRequest extends BaseFormRequest
     ];
 
     /**
-     * Determine if the user is authorized to make this request.
+     * Permiso requerido para buscar en cada modelo. Un modelo sin entrada aquí
+     * no se puede buscar: añadirlo exige decidir antes quién lo ve.
+     */
+    protected array $requiredPermissions = [
+        'users' => 'users.read',
+    ];
+
+    /**
+     * Filtros permitidos por modelo (lista blanca). Nunca campos personales
+     * (identity_document, email) ni de privilegios (is_admin, roles, role_ids):
+     * servirían de oráculo para averiguar datos de otras personas.
+     */
+    protected array $allowedFilters = [
+        'users' => ['email_verified_at', 'timezone', 'created_at'],
+    ];
+
+    /**
+     * Quien busca debe tener el permiso de lectura de cada modelo consultado.
      */
     public function authorize(): bool
     {
-        // La búsqueda está disponible para usuarios autenticados
+        $user = $this->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        foreach (array_keys($this->getModelsToSearch()) as $modelKey) {
+            $permission = $this->requiredPermissions[$modelKey] ?? null;
+
+            if ($permission === null || ! $user->hasPermission($permission)) {
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -44,7 +74,22 @@ class SearchRequest extends BaseFormRequest
                 Rule::in(array_keys($this->availableModels)),
             ],
             'filters' => ['sometimes', 'nullable', 'array'],
-            'filters.*' => ['sometimes', 'array'],
+            'filters.*' => [
+                'sometimes',
+                'array',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    $modelKey = substr($attribute, strlen('filters.'));
+                    $allowed = $this->allowedFilters[$modelKey] ?? [];
+
+                    foreach (array_keys((array) $value) as $field) {
+                        if (! in_array($field, $allowed, true)) {
+                            $fail("El filtro '{$field}' no está permitido para {$modelKey}");
+                        }
+                    }
+                },
+            ],
+            // Valores simples y sin comillas ni barras: el filtro de Meilisearch no las escapa
+            'filters.*.*' => ['nullable', 'string', 'max:100', 'not_regex:/["\\\\]/'],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
             'page' => ['sometimes', 'integer', 'min:1'],
         ];

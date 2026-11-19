@@ -2,6 +2,7 @@
 
 namespace App\Services\Logging;
 
+use App\Helpers\Redactor;
 use App\Models\Logs\ActivityLog;
 use App\Services\LogService;
 use Illuminate\Database\Eloquent\Model;
@@ -115,9 +116,11 @@ class ActivityLogger
      */
     protected static function filterSensitiveFields(array $values): array
     {
-        return array_filter($values, function ($key) {
-            return ! in_array(strtolower($key), self::$excludedFields);
+        $values = array_filter($values, function ($key) {
+            return ! in_array(strtolower((string) $key), self::$excludedFields);
         }, ARRAY_FILTER_USE_KEY);
+
+        return Redactor::redact($values);
     }
 
     /**

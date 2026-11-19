@@ -134,4 +134,30 @@ class RolePolicy
     {
         return $this->assignPermission($user, $role);
     }
+
+    /**
+     * Determinar si el usuario puede dar (o quitar) este rol a otro usuario.
+     *
+     * Nadie asigna un rol con más privilegios que los suyos: el rol admin solo
+     * lo asigna un admin y los demás roles solo si todos sus permisos los tiene
+     * también quien asigna.
+     */
+    public function assign(User $user, Role $role): bool
+    {
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        if ($role->name === 'admin') {
+            return false;
+        }
+
+        foreach ($role->permissions()->pluck('name') as $permissionName) {
+            if (! $user->hasPermission($permissionName)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }

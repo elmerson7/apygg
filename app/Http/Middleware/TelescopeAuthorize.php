@@ -4,13 +4,14 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
  * TelescopeAuthorize
  *
  * Middleware personalizado para autorizar acceso a Telescope.
- * Permite acceso solo en entornos de desarrollo sin requerir autenticación.
+ * Delega en el gate viewTelescope (ver DevToolsAccess).
  */
 class TelescopeAuthorize
 {
@@ -21,9 +22,9 @@ class TelescopeAuthorize
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Solo permitir acceso en desarrollo
-        if (! app()->environment(['local', 'dev'])) {
-            abort(403, 'Telescope solo está disponible en desarrollo');
+        // Abierto solo en 'local'; en otro entorno exige admin o email autorizado
+        if (! Gate::forUser($request->user())->allows('viewTelescope')) {
+            abort(403, 'No tienes acceso a Telescope');
         }
 
         return $next($request);

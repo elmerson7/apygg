@@ -5,9 +5,9 @@ namespace App\Http\Controllers\Users;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Users\AssignRoleRequest;
 use App\Http\Requests\Users\StoreUserRequest;
-use App\Http\Requests\Users\UpdateUserRequest;
 use App\Http\Resources\Users\UserDetailResource;
 use App\Http\Resources\Users\UserResource;
+use App\Models\Role;
 use App\Models\User;
 use App\Rules\StrongPassword;
 use App\Services\UserService;
@@ -132,32 +132,39 @@ class UserController extends Controller
 
         $this->authorize('update', $user);
 
-        // Validar usando las reglas de UpdateUserRequest
+        // Editar el propio perfil (campos de perfil) y administrar usuarios
+        // (users.update) son cosas distintas:
+        // - roles: nunca por aquí; solo con POST /users/{id}/roles (users.manage-roles)
+        // - contraseña propia: solo por /auth/change-password (pide la actual)
+        // - email: solo con users.update (no hay flujo de verificación aquí)
+        $isSelf = (int) $request->user()->id === (int) $user->id;
+        $canManageUsers = $request->user()->hasPermission('users.update');
+
         // Construir reglas manualmente con el $id correcto
         $rules = [
             'first_name' => ['sometimes', 'string', 'max:100'],
             'last_name' => ['sometimes', 'string', 'max:100'],
             'username' => ['sometimes', 'string', 'max:50', Rule::unique('users', 'username')->ignore($id)],
             'name' => ['sometimes', 'string', 'max:255'],
-            'email' => [
-                'sometimes',
-                'string',
-                'email',
-                'max:255',
-                Rule::unique('users', 'email')->ignore($id),
-            ],
-            'password' => ['sometimes', 'string', 'min:8', StrongPassword::basic()],
+            'email' => $canManageUsers
+                ? ['sometimes', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($id)]
+                : ['prohibited'],
+            'password' => $isSelf
+                ? ['prohibited']
+                : ['sometimes', 'string', 'min:8', StrongPassword::basic()],
             'identity_document' => [
                 'sometimes',
                 'nullable',
                 'regex:/^[0-9]{8,12}$/',
                 Rule::unique('users', 'identity_document')->ignore($id),
             ],
-            'role_ids' => ['sometimes', 'array'],
-            'role_ids.*' => ['integer', 'exists:roles,id'],
+            'role_ids' => ['prohibited'],
         ];
 
         $messages = [
+            'role_ids.prohibited' => 'Los roles se asignan en POST /users/{id}/roles',
+            'password.prohibited' => 'Para cambiar tu contraseña usa /auth/change-password',
+            'email.prohibited' => 'No tienes permiso para cambiar el email',
             'first_name.string' => 'El nombre debe ser texto',
             'first_name.max' => 'El nombre no puede exceder 100 caracteres',
             'last_name.string' => 'El apellido debe ser texto',
@@ -173,8 +180,7 @@ class UserController extends Controller
         ];
 
         $validated = $request->validate($rules, $messages);
-        $roleIds = $validated['role_ids'] ?? null;
-        $user = $this->userService->update($id, $validated, $roleIds);
+        $user = $this->userService->update($id, $validated);
 
         return $this->sendSuccess($user, 'Usuario actualizado exitosamente');
     }
@@ -214,14 +220,22 @@ class UserController extends Controller
     {
         $user = $this->userService->find($id);
 
-        // Verificar permiso usando policy
-        $this->authorize('update', $user);
+        // users.manage-roles + jerarquía (no tocar admins ni dar más privilegios que los propios)
+        $this->authorize('manageRoles', $user);
 
         // Validar usando las reglas de AssignRoleRequest
         $formRequest = new AssignRoleRequest;
         $validated = $request->validate($formRequest->rules(), $formRequest->messages());
 
-        $roleIds = $validated['role_ids'];
+        $roleIds = array_map('intval', $validated['role_ids']);
+
+        // Cada rol que se añade o se quita debe poder ser asignado por quien actúa
+        $currentIds = $user->roles->pluck('id')->map(fn ($v) => (int) $v)->all();
+        $changed = array_merge(array_diff($roleIds, $currentIds), array_diff($currentIds, $roleIds));
+        foreach (Role::whereIn('id', $changed)->get() as $role) {
+            $this->authorize('assign', $role);
+        }
+
         $user = $this->userService->assignRoles($id, $roleIds);
 
         return $this->sendSuccess($user, 'Roles asignados exitosamente');
@@ -234,8 +248,8 @@ class UserController extends Controller
     {
         $user = $this->userService->find($id);
 
-        // Verificar permiso usando policy
-        $this->authorize('update', $user);
+        $this->authorize('manageRoles', $user);
+        $this->authorize('assign', Role::findOrFail($roleId));
 
         $user = $this->userService->removeRole($id, $roleId);
 

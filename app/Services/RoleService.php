@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\BusinessLogicException;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Database\Eloquent\Collection;
@@ -80,6 +81,11 @@ class RoleService
             }
         }
 
+        // El rol admin es la base de isAdmin(): renombrarlo dejaría al sistema sin administradores
+        if ($role->name === 'admin' && isset($data['name']) && $data['name'] !== 'admin') {
+            throw new BusinessLogicException('No se puede renombrar el rol admin', 'ADMIN_ROLE_PROTECTED');
+        }
+
         $role->update($data);
 
         // Limpiar cache
@@ -106,6 +112,10 @@ class RoleService
     public function delete(int|string $roleId): bool
     {
         $role = $this->find($roleId);
+
+        if ($role->name === 'admin') {
+            throw new BusinessLogicException('No se puede eliminar el rol admin', 'ADMIN_ROLE_PROTECTED');
+        }
 
         // Verificar si tiene usuarios asignados
         if ($role->users()->count() > 0) {

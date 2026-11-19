@@ -13,8 +13,8 @@ use Illuminate\Http\Request;
  * LogsController
  *
  * Expone los logs almacenados en BD vía API.
- * Todos los endpoints requieren auth:api + permiso logs.view.
- * El endpoint de limpieza requiere permiso logs.delete.
+ * Todos los endpoints requieren auth:api + permiso system.logs.
+ * Los endpoints de limpieza requieren permiso system.logs-delete.
  */
 class LogsController extends Controller
 {

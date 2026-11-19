@@ -125,6 +125,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Acceso a Telescope y Horizon
+    |--------------------------------------------------------------------------
+    |
+    | Solo en APP_ENV=local quedan abiertos. En cualquier otro entorno (incluido
+    | 'dev', que puede estar expuesto a internet) entra un admin o un email de
+    | esta lista (separados por comas).
+    |
+    */
+
+    'devtools_allowed_emails' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('DEVTOOLS_ALLOWED_EMAILS', ''))
+    ))),
+
+    /*
+    |--------------------------------------------------------------------------
     | Allowed Origins Whitelist
     |--------------------------------------------------------------------------
     |

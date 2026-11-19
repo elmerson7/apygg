@@ -2,6 +2,7 @@
 
 namespace App\Services\Logging;
 
+use App\Helpers\Redactor;
 use App\Models\ApiKey;
 use App\Models\Logs\SecurityLog;
 use App\Models\User;
@@ -85,7 +86,7 @@ class SecurityLogger
                     'detected_at' => now()->toIso8601String(),
                     'route' => $request->route()?->getName(),
                     'url' => $request->fullUrl(),
-                ], $details),
+                ], Redactor::redact($details)),
             ]);
 
             // Log crítico para actividades sospechosas (solo si no estamos en modo testing)
@@ -98,7 +99,7 @@ class SecurityLogger
                 LogService::critical('Suspicious activity detected', [
                     'user_id' => $user?->id,
                     'description' => $description,
-                    'details' => $details,
+                    'details' => Redactor::redact($details),
                 ]);
             }
 
@@ -241,7 +242,7 @@ class SecurityLogger
                 'user_agent' => $request->userAgent(),
                 'details' => array_merge([
                     'logged_at' => now()->toIso8601String(),
-                ], $details),
+                ], Redactor::redact($details)),
             ]);
         } catch (\Exception $e) {
             LogService::error('Failed to log security event', [

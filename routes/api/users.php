@@ -26,6 +26,8 @@ Route::middleware(['auth:api'])->prefix('users')->group(function () {
         ->middleware('permission:users')
         ->name('users.store');
 
+    // Sin middleware de permiso: cada quien edita su perfil; administrar a otros
+    // lo decide UserPolicy::update (users.update). Roles y contraseña: ver controller.
     Route::put('/{id}', [UserController::class, 'update'])
         ->name('users.update');
 
@@ -39,11 +41,11 @@ Route::middleware(['auth:api'])->prefix('users')->group(function () {
         ->name('users.restore');
 
     Route::post('/{id}/roles', [UserController::class, 'assignRoles'])
-        ->middleware('permission:users.update')
+        ->middleware('permission:users.manage-roles')
         ->name('users.assignRoles');
 
     Route::delete('/{id}/roles/{roleId}', [UserController::class, 'removeRole'])
-        ->middleware('permission:users.update')
+        ->middleware('permission:users.manage-roles')
         ->name('users.removeRole');
 
     Route::get('/{id}/activity', [UserController::class, 'getActivity'])

@@ -5,10 +5,13 @@ namespace App\Http\Controllers\Roles;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Roles\StoreRoleRequest;
 use App\Http\Requests\Roles\UpdateRoleRequest;
+use App\Models\Permission;
 use App\Models\Role;
 use App\Services\RoleService;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 
 class RoleController extends Controller
 {
@@ -41,10 +44,17 @@ class RoleController extends Controller
         $formRequest = new StoreRoleRequest;
         $validated = $request->validate($formRequest->rules(), $formRequest->messages());
 
+        // Asignar permisos al crear exige roles.manage-permissions, igual que PUT /roles/{id}/permissions
+        $permissionIds = $validated['permission_ids'] ?? null;
+        if ($permissionIds !== null) {
+            $this->authorize('assignPermission', new Role);
+            $this->authorizePermissionIds($permissionIds);
+        }
+
         $role = $this->roleService->create($validated);
 
-        if ($request->has('permission_ids')) {
-            $this->roleService->syncPermissions((string) $role->id, $request->input('permission_ids'));
+        if ($permissionIds !== null) {
+            $this->roleService->syncPermissions((string) $role->id, $permissionIds);
         }
 
         return $this->sendSuccess($role->fresh('permissions'), 'Rol creado exitosamente', 201);
@@ -59,10 +69,17 @@ class RoleController extends Controller
         $formRequest = (new UpdateRoleRequest)->setRoleId($id);
         $validated = $request->validate($formRequest->rules(), $formRequest->messages());
 
-        $this->roleService->update($id, $validated);
+        // Cambiar permisos exige roles.manage-permissions, no basta roles.update
+        $permissionIds = $validated['permission_ids'] ?? null;
+        if ($permissionIds !== null) {
+            $this->authorize('assignPermission', $role);
+            $this->authorizePermissionIds($permissionIds);
+        }
 
-        if ($request->has('permission_ids')) {
-            $this->roleService->syncPermissions($id, $request->input('permission_ids'));
+        $this->roleService->update($id, Arr::except($validated, ['permission_ids']));
+
+        if ($permissionIds !== null) {
+            $this->roleService->syncPermissions($id, $permissionIds);
         }
 
         return $this->sendSuccess($this->roleService->find($id), 'Rol actualizado exitosamente');
@@ -99,8 +116,32 @@ class RoleController extends Controller
             'permissions.*' => ['integer', 'exists:permissions,id'],
         ]);
 
+        $this->authorizePermissionIds($validated['permissions']);
+
         $this->roleService->syncPermissions($id, $validated['permissions']);
 
         return $this->sendSuccess($this->roleService->getPermissions($id), 'Permisos actualizados exitosamente');
+    }
+
+    /**
+     * Nadie concede permisos que no tiene (salvo un admin).
+     *
+     * @param  array<int, int|string>  $permissionIds
+     *
+     * @throws AuthorizationException
+     */
+    private function authorizePermissionIds(array $permissionIds): void
+    {
+        $actor = auth()->user();
+
+        if ($actor->isAdmin()) {
+            return;
+        }
+
+        foreach (Permission::whereIn('id', $permissionIds)->pluck('name') as $name) {
+            if (! $actor->hasPermission($name)) {
+                throw new AuthorizationException('No puedes conceder permisos que no tienes');
+            }
+        }
     }
 }

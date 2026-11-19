@@ -76,6 +76,7 @@ class PermissionSeeder extends Seeder
             // Permisos de Sistema
             ['name' => 'system.settings', 'resource' => 'system', 'action' => 'settings', 'display_name' => 'Gestionar Configuración', 'description' => 'Permite modificar configuración del sistema'],
             ['name' => 'system.logs', 'resource' => 'system', 'action' => 'logs', 'display_name' => 'Ver Logs', 'description' => 'Permite ver logs del sistema'],
+            ['name' => 'system.logs-delete', 'resource' => 'system', 'action' => 'logs-delete', 'display_name' => 'Borrar Logs', 'description' => 'Permite borrar los logs de actividad, API y seguridad'],
             ['name' => 'system.backup', 'resource' => 'system', 'action' => 'backup', 'display_name' => 'Gestionar Backups', 'description' => 'Permite crear y restaurar backups'],
             ['name' => 'system.users', 'resource' => 'system', 'action' => 'users', 'display_name' => 'Gestionar Usuarios del Sistema', 'description' => 'Permite gestionar usuarios del sistema'],
         ];
@@ -134,17 +135,19 @@ class PermissionSeeder extends Seeder
             $this->command->info('Permisos asignados a Manager: '.$managerPermissions->count());
         }
 
-        // User: Permisos básicos
+        // User: Permisos básicos. Sin users.read/roles.read/permissions.read: un
+        // usuario normal no lista usuarios (con email y documento), roles ni permisos.
         $userPermissions = Permission::whereIn('name', [
-            'users.read', 'roles.read', 'permissions.read',
             'posts.create', 'posts.read', 'posts.update', 'posts.delete',
             'comments.create', 'comments.read', 'comments.update', 'comments.delete',
         ])->get();
         $userRole->permissions()->sync($userPermissions->pluck('id')->toArray());
         $this->command->info('Permisos asignados a User: '.$userPermissions->count());
 
-        // Guest: Solo lectura
-        $guestPermissions = Permission::where('action', 'read')->get();
+        // Guest: Solo lectura de contenido (nunca usuarios, roles ni permisos)
+        $guestPermissions = Permission::where('action', 'read')
+            ->whereNotIn('resource', ['users', 'roles', 'permissions'])
+            ->get();
         $guestRole->permissions()->sync($guestPermissions->pluck('id')->toArray());
         $this->command->info('Permisos asignados a Guest: '.$guestPermissions->count());
 

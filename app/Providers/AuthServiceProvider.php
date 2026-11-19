@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Helpers\DevToolsAccess;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\Settings;
@@ -39,9 +40,7 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        // Configurar gate para Telescope (solo desarrollo)
-        Gate::define('viewTelescope', function ($user = null) {
-            return app()->environment(['local', 'dev']);
-        });
+        // Telescope: abierto solo en 'local'; en otro entorno, admin o email autorizado
+        Gate::define('viewTelescope', fn ($user = null) => DevToolsAccess::allows($user));
     }
 }

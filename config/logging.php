@@ -193,4 +193,27 @@ return [
         'patterns' => [],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Redacción de datos sensibles
+    |--------------------------------------------------------------------------
+    |
+    | Los loggers de BD (API, actividad, seguridad) nunca guardan el valor de
+    | estas claves, en cuerpos de petición/respuesta ni anidadas. Ver
+    | App\Helpers\Redactor.
+    |
+    | 'redact_keys': nombre exacto (sin distinguir mayúsculas).
+    | 'redact_key_fragments': se oculta toda clave que contenga el fragmento.
+    |
+    */
+
+    'redact_keys' => [
+        'password', 'current_password', 'new_password', 'password_confirmation',
+        'token', 'access_token', 'refresh_token', 'api_token', 'remember_token',
+        'secret', 'new_secret', 'client_secret', 'api_key', 'authorization',
+        'cookie', 'key', 'credit_card', 'cvv', 'ssn',
+    ],
+
+    'redact_key_fragments' => ['password', '_token', 'secret', 'api_key', 'authorization', 'cookie'],
+
 ];

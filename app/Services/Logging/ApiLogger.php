@@ -2,6 +2,7 @@
 
 namespace App\Services\Logging;
 
+use App\Helpers\Redactor;
 use App\Models\Logs\ApiLog;
 use App\Services\LogService;
 use Illuminate\Http\Request;
@@ -157,43 +158,15 @@ class ApiLogger
      */
     protected static function sanitizeQuery(array $query): array
     {
-        $sensitiveKeys = ['password', 'token', 'key', 'secret', 'api_key'];
-        $sanitized = [];
-
-        foreach ($query as $key => $value) {
-            if (in_array(strtolower($key), $sensitiveKeys)) {
-                $sanitized[$key] = '[REDACTED]';
-            } else {
-                $sanitized[$key] = $value;
-            }
-        }
-
-        return $sanitized;
+        return Redactor::redact($query);
     }
 
     /**
-     * Sanitizar body (eliminar campos sensibles)
+     * Sanitizar body (eliminar campos sensibles, también anidados)
      */
     protected static function sanitizeBody(?array $body): ?array
     {
-        if ($body === null) {
-            return null;
-        }
-
-        $sensitiveKeys = ['password', 'password_confirmation', 'token', 'api_token', 'secret', 'key'];
-        $sanitized = [];
-
-        foreach ($body as $key => $value) {
-            if (in_array(strtolower($key), $sensitiveKeys)) {
-                $sanitized[$key] = '[REDACTED]';
-            } elseif (is_array($value)) {
-                $sanitized[$key] = self::sanitizeBody($value);
-            } else {
-                $sanitized[$key] = $value;
-            }
-        }
-
-        return $sanitized;
+        return $body === null ? null : Redactor::redact($body);
     }
 
     /**

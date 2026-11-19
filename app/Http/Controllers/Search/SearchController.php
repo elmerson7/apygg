@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Search;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Search\SearchRequest;
 use App\Http\Resources\Search\SearchResource;
-use App\Http\Resources\Users\UserResource;
+use App\Http\Resources\Users\UserSearchResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Laravel\Scout\Searchable;
@@ -19,7 +19,7 @@ use Laravel\Scout\Searchable;
 class SearchController extends Controller
 {
     protected array $modelResources = [
-        User::class => UserResource::class,
+        User::class => UserSearchResource::class,
     ];
 
     /**

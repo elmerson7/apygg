@@ -29,24 +29,27 @@ test('usuario con rol admin tiene todos los permisos', function () {
         ->and($admin->hasPermission('roles.create'))->toBeTrue();
 });
 
-test('usuario con rol user tiene permisos básicos', function () {
+test('usuario con rol user tiene permisos básicos pero no lista usuarios, roles ni permisos', function () {
     $user = User::factory()->create();
     $userRole = Role::where('name', 'user')->first();
     $user->roles()->attach($userRole->id);
 
-    expect($user->hasPermission('users.read'))->toBeTrue()
+    expect($user->hasPermission('users.read'))->toBeFalse()
+        ->and($user->hasPermission('roles.read'))->toBeFalse()
+        ->and($user->hasPermission('permissions.read'))->toBeFalse()
         ->and($user->hasPermission('posts.create'))->toBeTrue()
         ->and($user->hasPermission('posts.read'))->toBeTrue()
         ->and($user->hasPermission('users.create'))->toBeFalse()
         ->and($user->hasPermission('users.delete'))->toBeFalse();
 });
 
-test('usuario con rol guest solo tiene permisos de lectura', function () {
+test('usuario con rol guest solo lee contenido, no usuarios ni roles', function () {
     $guest = User::factory()->create();
     $guestRole = Role::where('name', 'guest')->first();
     $guest->roles()->attach($guestRole->id);
 
-    expect($guest->hasPermission('users.read'))->toBeTrue()
+    expect($guest->hasPermission('users.read'))->toBeFalse()
+        ->and($guest->hasPermission('roles.read'))->toBeFalse()
         ->and($guest->hasPermission('posts.read'))->toBeTrue()
         ->and($guest->hasPermission('users.create'))->toBeFalse()
         ->and($guest->hasPermission('posts.create'))->toBeFalse();
