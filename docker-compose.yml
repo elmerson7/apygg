@@ -39,7 +39,8 @@ services:
     ports:
       - "${REVERB_PORT:-8012}:8080"
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8080 || exit 1"]
+      # Reverb responde 404 en "/": basta con que acepte la conexión (sin -f)
+      test: ["CMD-SHELL", "curl -sS -o /dev/null http://localhost:8080 || exit 1"]
       interval: 10s
       timeout: 3s
       retries: 5
@@ -64,6 +65,9 @@ services:
     <<: *app
     container_name: ${PROJECT:-apygg}_scheduler
     command: php artisan schedule:work
+    # La imagen trae un healthcheck de Caddy (:2019) que no aplica a este proceso
+    healthcheck:
+      disable: true
     depends_on:
       postgres:
         condition: service_healthy

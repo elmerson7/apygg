@@ -234,6 +234,21 @@ Si tu proyecto lo usaba, cópialo a tu repo antes de actualizar:
 - `App\Exceptions\Handler` (el handler real vive en `bootstrap/app.php`).
 - `LogAuthEvents` (ver punto 6).
 
+### 14b. Arranque de proyecto y nombre visible
+
+- Nuevo `APP_TITLE` en `.env` (`config('app.title')`): la ficha de `/` y el título de
+  `/docs/api` ya no dicen "APYGG API" fijo. Añádelo a tu `.env` (`APP_TITLE="Mi API"`);
+  sin él se sigue viendo "APYGG API". Si tu test comprueba el nombre de la ficha,
+  compáralo con `config('app.title')`.
+- `make down` / `make down-v` ahora paran también los servicios de los perfiles
+  (`dev`, `prod`, `search`); antes dejaban Mailpit/S3 colgados.
+- `DEV=true` en `compose.env` activa el perfil dev en todos los `make` (antes solo con
+  `make up-dev`). `DEV=false` ya no activa el perfil (antes cualquier valor lo hacía).
+- `make validate` es más estricto: falla con puertos repetidos, `REDIS_PASSWORD` vacío
+  o puertos de BD/Redis/S3/Mailpit publicados fuera de `127.0.0.1`.
+- Proyectos nuevos: `docs/new-project.md`. Proyectos existentes: nada que hacer; para
+  recibir mejoras, `git remote add upstream <repo-apygg>` y `make upgrade-check`.
+
 ### 15. Verificación final
 
 ```bash

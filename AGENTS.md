@@ -19,6 +19,14 @@ no va aquí.
 4. `docs/api-response-structure.md` + `docs/error-handling.md` → contrato de respuestas
 5. `docs/permissions.md` → roles, permisos, middlewares `permission:`/`role:`, super admin, teams
 
+## Proyecto nuevo y entorno local
+
+- Arrancar un proyecto derivado: `make init NAME=<slug>` → `make setup` → `make doctor`.
+  Nunca copies `compose.env.example` a mano con `PROJECT=apygg`: colisiona con otros stacks.
+- `make doctor` diagnostica el entorno; `make upgrade-check` lista lo que trae `upstream`.
+- Para trabajar en el boilerplate con varios worktrees: `make wt-env NAME=<tarea>`.
+- Guía completa: `docs/new-project.md`.
+
 ## Comandos — TODO va por Docker vía Make (NUNCA en el host)
 
 - ❌ `php artisan <cmd>` directamente en el host (no hay PHP ni BD locales)

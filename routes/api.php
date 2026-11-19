@@ -18,7 +18,7 @@ Route::get('/', function () {
     $broadcastingEnabled = config('broadcasting.default') !== 'null';
 
     $response = [
-        'name' => 'APYGG API',
+        'name' => config('app.title'),
         'status' => 'running',
         'version' => config('app.version', '1.0.0'),
         'endpoints' => [

@@ -2,39 +2,7 @@
 # Validar configuración antes de hacer build/up
 # Verifica que compose.env tenga los valores necesarios
 validate:
-	@echo "═══════════════════════════════════════════════════════════════"
-	@echo "Validando configuración..."
-	@echo ""
-	@if [ ! -f compose.env ]; then \
-		echo "❌ ERROR: compose.env no existe"; \
-		echo "   Ejecuta: cp compose.env.example compose.env"; \
-		exit 1; \
-	fi
-	@echo "✅ compose.env existe"
-	@echo ""
-	@echo "Configuración actual:"
-	@echo "  PROJECT:          $$(grep '^PROJECT=' compose.env | cut -d= -f2)"
-	@echo "  APP_PORT:         $$(grep '^APP_PORT=' compose.env | cut -d= -f2)"
-	@echo "  POSTGRES_PORT:    $$(grep '^POSTGRES_PORT=' compose.env | cut -d= -f2)"
-	@echo "  REDIS_PORT:       $$(grep '^REDIS_PORT=' compose.env | cut -d= -f2)"
-	@echo "  REVERB_PORT:      $$(grep '^REVERB_PORT=' compose.env | cut -d= -f2)"
-	@echo "  MEILISEARCH_PORT: $$(grep '^MEILISEARCH_PORT=' compose.env | cut -d= -f2)"
-	@echo "  PGBOUNCER_PORT:   $$(grep '^PGBOUNCER_PORT=' compose.env | cut -d= -f2)"
-	@echo ""
-	@if [ "$$(grep '^PROJECT=' compose.env | cut -d= -f2)" = "$$(grep '^PROJECT=' compose.env.example | cut -d= -f2)" ]; then \
-		echo ""; \
-		echo "⚠️  IMPORTANTE: Los valores son los del template (default)."; \
-		echo "   Si clonas este proyecto, cambia PROJECT y puertos"; \
-		echo "   en compose.env para evitar conflictos con otros proyectos."; \
-	fi
-	@echo ""
-	@if [ ! -f .env ]; then \
-		echo "⚠️  .env no existe - se creará automáticamente"; \
-	else \
-		echo "✅ .env existe"; \
-	fi
-	@echo ""
-	@echo "═══════════════════════════════════════════════════════════════"
+	@bash scripts/validate-env.sh
 
 # Construir imágenes Docker
 # Args: USER_ID, GROUP_ID → se pasan al Dockerfile para permisos de archivos
@@ -90,11 +58,11 @@ check-project:
 
 # Detener contenedores
 down:
-	$(DC) down
+	$(DCALL) down
 
 # Detener contenedores eliminando volúmenes
 down-v:
-	$(DC) down -v
+	$(DCALL) down -v
 
 # Detener sin eliminar volúmenes
 stop:

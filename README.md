@@ -57,6 +57,16 @@ No incluidos a propósito: login social, notificaciones push y suscripciones/cob
 
 ## Instalación
 
+**Proyecto nuevo desde este boilerplate** (recomendado; guía completa en [docs/new-project.md](./docs/new-project.md)):
+
+```bash
+make init NAME=miapp     # compose.env y .env con puertos, contraseñas y claves propios
+make setup               # build, up, composer, migraciones, seed, BD de tests, S3 local
+make doctor              # diagnóstico del entorno
+```
+
+Instalación manual (equivale a lo anterior, paso a paso):
+
 ```bash
 cp compose.env.example compose.env   # variables de Docker (puertos, PROJECT)
 make build                           # valida compose.env, crea .env si falta y construye las imágenes
@@ -77,6 +87,7 @@ Los targets viven en `make/*.mk` (uno por tema). El `Makefile` raíz define vari
 
 | Tema | Comandos |
 |---|---|
+| Proyecto nuevo | `make init NAME=<slug>`, `make setup`, `make doctor`, `make fresh`, `make upgrade-check`, `make wt-env NAME=<tarea>` (ver `docs/new-project.md`) |
 | Servicios | `make build`, `make up`, `make down`, `make restart service=app`, `make logs`, `make ps`, `make sh` |
 | Entornos | `make up ENV=prod` (añade pgbouncer), `make up SEARCH=true` (añade meilisearch), `make up-dev` (añade Mailpit y S3 local) |
 | Servicios dev | `make mail-ui`, `make mail-clear`, `make s3-ui`, `make s3-init`, `make s3-test`, `make test-integration` (ver `docs/local-services.md`) |
@@ -150,6 +161,7 @@ tests/                  # Unit/ (incluye Arch), Feature/ e Integration/ (servici
 - [ARCHITECTURE.md](./ARCHITECTURE.md): capas, módulos y flujos.
 - [TECH_STACK.md](./TECH_STACK.md): stack completo y versiones.
 - [TASKS.md](./TASKS.md): estado actual y pendientes.
+- [docs/new-project.md](./docs/new-project.md): de cero a API corriendo (`make init`, `make setup`, `make doctor`), recibir mejoras del boilerplate y worktrees aislados.
 - [docs/upgrading.md](./docs/upgrading.md): notas de actualización para proyectos derivados (qué rompe y qué hacer).
 - [CONTRIBUTING.md](./CONTRIBUTING.md): cómo contribuir.
 - [CHANGELOG.md](./CHANGELOG.md): cambios por versión.

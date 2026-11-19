@@ -4,6 +4,8 @@
 .env.backup
 .env.production
 compose.env
+compose.env.bak-*
+.env.bak-*
 env/*.env
 !env/*.env.example
 .phpactor.json

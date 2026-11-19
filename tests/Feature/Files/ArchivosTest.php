@@ -257,5 +257,5 @@ test('el listado solo muestra los archivos propios', function () {
 });
 
 test('la ruta raiz sigue respondiendo la ficha de la API', function () {
-    $this->getJson('/')->assertOk()->assertJsonPath('name', 'APYGG API');
+    $this->getJson('/')->assertOk()->assertJsonPath('name', config('app.title'));
 });
