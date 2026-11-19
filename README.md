@@ -37,7 +37,7 @@ Cada módulo está implementado en el código. Lo que aún no está completo fig
 - **Gateway LLM**: capa agnóstica del proveedor (`app/Services/LLM`) con áreas, modelos de respaldo y auditoría (`/admin/llm`).
 - **Asistente de documentación (RAG)**: indexa los Markdown del proyecto y responde preguntas (`/docs/search`, `/docs/ask`).
 - **Menú dinámico**: ítems y visibilidad desde BD (`/admin/menu`).
-- **Archivos**: `FileService` con discos `local`, `public` y `s3` (`/files`).
+- **Archivos**: `FileService` con discos público y privado (`local`, `public`, `s3`, `s3_private`); ver `docs/files.md`.
 - **Búsqueda**: Scout con Meilisearch (`/search`).
 - **Colas y procesos**: Redis, Horizon y scheduler (servicios de Docker Compose).
 - **WebSockets**: Reverb y autorización de canales (`/broadcasting/auth`).
@@ -112,7 +112,7 @@ La API no usa el prefijo `/api`. Cada módulo vive en `routes/api/<modulo>.php` 
 | Perfil del usuario | `/user` | `GET /user/profile`, `PUT /user/preferences` |
 | Administración | `/admin/...` | `GET /admin/logs/activity`, `GET /admin/mail/providers`, `GET /admin/llm/status` |
 
-Middleware con alias registrados en `bootstrap/app.php`: `auth:api-key`, `api-key-scope:`, `permission:`, `role:`, `role_or_permission:`, `ip.whitelist`, `feature:`, `auth.optional`. `auth:api` es el guard JWT de Laravel.
+Middleware con alias registrados en `bootstrap/app.php`: `api-key-scope:`, `permission:`, `role:`, `role_or_permission:`, `ip.whitelist`, `feature:`, `auth.optional`. `auth:api` es el guard JWT y `auth:api-key` el guard de API Keys (ver `docs/api-keys.md`).
 
 ## Estructura
 

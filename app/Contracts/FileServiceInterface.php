@@ -18,9 +18,10 @@ interface FileServiceInterface
      * @param  string  $path  Ruta de destino (relativa al disco)
      * @param  string|null  $filename  Nombre del archivo (opcional)
      * @param  string|null  $disk  Disco de almacenamiento (opcional)
-     * @return array ['path', 'url', 'filename', 'size', 'mime_type', 'disk']
+     * @param  bool  $isPublic  false = visibilidad privada y sin URL pública
+     * @return array ['path', 'url', 'filename', 'size', 'mime_type', 'extension', 'disk']
      */
-    public function upload(UploadedFile $file, string $path = 'uploads', ?string $filename = null, ?string $disk = null): array;
+    public function upload(UploadedFile $file, string $path = 'uploads', ?string $filename = null, ?string $disk = null, bool $isPublic = true): array;
 
     /**
      * Subir imagen con procesamiento opcional (resize/formato)

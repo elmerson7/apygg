@@ -101,6 +101,21 @@ class ApiKeyController extends Controller
     }
 
     /**
+     * Quién es la API Key que llama (ruta de ejemplo del mecanismo `auth:api-key` + `api-key-scope:`).
+     *
+     * GET /api-key/whoami
+     */
+    public function whoami(Request $request): JsonResponse
+    {
+        $apiKey = ApiKey::findOrFail($request->attributes->get('api_key_id'));
+
+        return $this->sendSuccess([
+            'api_key' => ['id' => $apiKey->id, 'name' => $apiKey->name, 'scopes' => $apiKey->scopes ?? []],
+            'user' => ['id' => $request->user('api-key')->id, 'name' => $request->user('api-key')->name],
+        ], 'API Key autenticada');
+    }
+
+    /**
      * Busca la key y comprueba que pertenece al usuario autenticado.
      *
      * @throws AuthorizationException

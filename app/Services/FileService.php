@@ -2,10 +2,14 @@
 
 namespace App\Services;
 
+use App\Models\File;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Intervention\Image\Facades\Image;
+use Symfony\Component\Mime\MimeTypes;
 
 /**
  * FileService
@@ -19,46 +23,183 @@ class FileService
     /**
      * Subir archivo
      *
-     * @return array ['path', 'url', 'filename', 'size', 'mime_type', 'disk']
+     * El nombre en disco se GENERA (ULID + extensión deducida del contenido); el nombre
+     * original del cliente nunca se usa como ruta (evita path traversal y colisiones).
+     * Los archivos privados se guardan con visibilidad `private` y sin URL pública.
+     *
+     * @return array ['path', 'url', 'filename', 'size', 'mime_type', 'extension', 'disk']
+     *
+     * @throws \InvalidArgumentException si el contenido, la extensión o el tamaño no son válidos
      */
     public static function upload(
         UploadedFile $file,
         string $path = 'uploads',
         ?string $filename = null,
-        ?string $disk = null
+        ?string $disk = null,
+        bool $isPublic = true
     ): array {
         $disk = $disk ?? self::$defaultDisk;
         self::validateFile($file);
-        $filename = $filename ?? self::generateFilename($file);
-        $storedPath = Storage::disk($disk)->putFileAs($path, $file, $filename);
+        $extension = self::resolveExtension($file);
+        $filename = $filename !== null ? basename($filename) : self::generateFilename($file, $extension);
+        $mimeType = $file->getMimeType();
+        $size = $file->getSize();
 
-        // S3/Minio: marcar como público
-        if ($disk === 's3') {
-            try {
-                Storage::disk($disk)->setVisibility($storedPath, 'public');
-            } catch (\Throwable $e) {
-                LogService::warning('No se pudo establecer visibilidad pública en S3/Minio', [
-                    'path' => $storedPath,
-                    'error' => $e->getMessage(),
-                ], 'files');
-            }
+        $storedPath = Storage::disk($disk)->putFileAs(
+            trim($path, '/'),
+            $file,
+            $filename,
+            ['visibility' => $isPublic ? 'public' : 'private']
+        );
+
+        if ($storedPath === false) {
+            throw new \RuntimeException('No se pudo guardar el archivo en el almacenamiento.');
         }
 
         LogService::info('Archivo subido', [
             'path' => $storedPath,
             'disk' => $disk,
-            'size' => $file->getSize(),
-            'mime_type' => $file->getMimeType(),
+            'size' => $size,
+            'mime_type' => $mimeType,
+            'is_public' => $isPublic,
         ], 'files');
 
         return [
             'path' => $storedPath,
-            'url' => self::getUrl($storedPath, $disk),
+            // Un archivo privado NUNCA expone URL pública.
+            'url' => $isPublic ? self::getUrl($storedPath, $disk) : null,
             'filename' => $filename,
-            'size' => $file->getSize(),
-            'mime_type' => $file->getMimeType(),
+            'size' => $size,
+            'mime_type' => $mimeType,
+            'extension' => $extension,
             'disk' => $disk,
         ];
+    }
+
+    /**
+     * Disco configurado para archivos públicos o privados.
+     */
+    public static function diskFor(bool $isPublic): string
+    {
+        return $isPublic
+            ? (string) config('files.disks.public', 'public')
+            : (string) config('files.disks.private', 'local');
+    }
+
+    /**
+     * Mover un archivo entre discos (cambio de visibilidad) conservando su ruta.
+     * Copia, y solo si la copia se completó borra el original.
+     *
+     * @throws \RuntimeException
+     */
+    public static function transfer(string $path, string $fromDisk, string $toDisk, bool $toPublic): void
+    {
+        if ($fromDisk === $toDisk) {
+            Storage::disk($toDisk)->setVisibility($path, $toPublic ? 'public' : 'private');
+
+            return;
+        }
+
+        $stream = Storage::disk($fromDisk)->readStream($path);
+        if (! is_resource($stream)) {
+            throw new \RuntimeException('No se pudo leer el archivo original.');
+        }
+
+        try {
+            $ok = Storage::disk($toDisk)->writeStream($path, $stream, ['visibility' => $toPublic ? 'public' : 'private']);
+        } finally {
+            fclose($stream);
+        }
+
+        if (! $ok) {
+            throw new \RuntimeException('No se pudo copiar el archivo al disco de destino.');
+        }
+
+        Storage::disk($fromDisk)->delete($path);
+    }
+
+    /**
+     * Actualiza el registro y, si cambia la visibilidad, mueve el archivo al disco público o
+     * privado. Si algo falla, el archivo vuelve a su disco original (consistencia BD/disco).
+     *
+     * @throws \Throwable
+     */
+    public static function updateWithVisibility(File $file, array $data, ?bool $makePublic): void
+    {
+        $from = $file->disk;
+        $moved = false;
+
+        try {
+            DB::transaction(function () use ($file, $data, $makePublic, $from, &$moved) {
+                if ($makePublic !== null && $makePublic !== $file->is_public) {
+                    $to = self::diskFor($makePublic);
+                    self::transfer($file->path, $from, $to, $makePublic);
+                    $moved = $to !== $from;
+
+                    $data['disk'] = $to;
+                    $data['url'] = $makePublic ? self::getUrl($file->path, $to) : null;
+                }
+
+                $file->update($data);
+            });
+        } catch (\Throwable $e) {
+            if ($moved) {
+                self::transfer($file->path, self::diskFor((bool) $makePublic), $from, ! $makePublic);
+            }
+
+            throw $e;
+        }
+    }
+
+    /**
+     * URL temporal firmada para descargar un archivo privado.
+     *
+     * S3/MinIO: URL prefirmada del proveedor. Disco local: ruta firmada de Laravel
+     * (`files.signed`), que expira y no necesita sesión.
+     */
+    public static function temporaryDownloadUrl(File $file, ?int $minutes = null): ?string
+    {
+        $minutes = $minutes ?? (int) config('files.temporary_url_minutes', 15);
+        $expiresAt = now()->addMinutes($minutes);
+
+        if (config("filesystems.disks.{$file->disk}.driver") === 's3') {
+            try {
+                return Storage::disk($file->disk)->temporaryUrl($file->path, $expiresAt, [
+                    'ResponseContentDisposition' => 'attachment; filename="'.self::safeDownloadName($file).'"',
+                ]);
+            } catch (\Throwable $e) {
+                LogService::error('Error al generar URL temporal', ['file_id' => $file->id, 'error' => $e->getMessage()], 'files');
+
+                return null;
+            }
+        }
+
+        return URL::temporarySignedRoute('files.signed', $expiresAt, ['id' => $file->id]);
+    }
+
+    /**
+     * Nombre de descarga seguro (sin comillas ni saltos de línea ni rutas).
+     */
+    public static function safeDownloadName(File $file): string
+    {
+        $name = preg_replace('/[\x00-\x1F\x7F"\\\\\/]+/', '_', basename((string) $file->name)) ?: 'archivo';
+
+        return mb_substr($name, 0, 200);
+    }
+
+    /**
+     * Tipo de archivo según su MIME (image, video, audio, archive, document, other).
+     */
+    public static function detectType(string $mimeType): string
+    {
+        return match (true) {
+            str_starts_with($mimeType, 'image/') => 'image',
+            str_starts_with($mimeType, 'video/') => 'video',
+            str_starts_with($mimeType, 'audio/') => 'audio',
+            in_array($mimeType, config('files.allowed_mimes.archive', []), true) => 'archive',
+            str_starts_with($mimeType, 'application/'), str_starts_with($mimeType, 'text/') => 'document',
+            default => 'other',
+        };
     }
 
     /**
@@ -166,6 +307,11 @@ class FileService
     public static function getUrl(string $path, ?string $disk = null): ?string
     {
         $disk = $disk ?? self::$defaultDisk;
+
+        // El disco privado no tiene URL pública, solo URLs temporales.
+        if ($disk === config('files.disks.private') && $disk !== config('files.disks.public')) {
+            return null;
+        }
 
         try {
             if ($disk === 's3') {
@@ -327,47 +473,70 @@ class FileService
     }
 
     /**
-     * Validar archivo antes de subir
+     * Validar archivo antes de subir: el tipo se decide por el CONTENIDO (finfo), no por
+     * el nombre ni por el Content-Type que declara el cliente.
      *
      * @throws \InvalidArgumentException
      */
     protected static function validateFile(UploadedFile $file): void
     {
-        $maxSize = config('files.max_sizes.default', 10 * 1024 * 1024);
+        if (! $file->isValid()) {
+            throw new \InvalidArgumentException('El archivo no se subió correctamente.');
+        }
+
+        $mime = (string) $file->getMimeType();
+        $clientExtension = strtolower($file->getClientOriginalExtension());
+
+        if (in_array($mime, config('files.blocked_mimes', []), true)
+            || in_array($clientExtension, config('files.blocked_extensions', []), true)) {
+            throw new \InvalidArgumentException('Tipo de archivo no permitido.');
+        }
+
+        $maxSize = config('files.max_sizes.'.self::detectType($mime), config('files.max_sizes.default', 10 * 1024 * 1024));
         if ($file->getSize() > $maxSize) {
             throw new \InvalidArgumentException('El archivo excede el tamaño máximo permitido.');
         }
 
         $allAllowedMimes = array_unique(array_merge(...array_values(config('files.allowed_mimes', []))));
-        if (empty($allAllowedMimes)) {
-            $allAllowedMimes = [
-                'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-                'application/pdf', 'application/msword',
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            ];
-        }
-        if (! in_array($file->getMimeType(), $allAllowedMimes)) {
+        if (! in_array($mime, $allAllowedMimes, true)) {
             throw new \InvalidArgumentException('Tipo de archivo no permitido.');
         }
 
         $allAllowedExtensions = array_unique(array_merge(...array_values(config('files.allowed_extensions', []))));
-        if (empty($allAllowedExtensions)) {
-            $allAllowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx'];
-        }
-        $extension = strtolower($file->getClientOriginalExtension());
-        if (! in_array($extension, $allAllowedExtensions)) {
+        if (! in_array($clientExtension, $allAllowedExtensions, true)) {
             throw new \InvalidArgumentException('Extensión de archivo no permitida.');
         }
     }
 
     /**
-     * Generar nombre único para archivo
+     * Extensión definitiva: la que corresponde al contenido detectado. Se respeta la del
+     * cliente solo si es una de las extensiones válidas para ese contenido.
+     */
+    protected static function resolveExtension(UploadedFile $file): string
+    {
+        $mime = (string) $file->getMimeType();
+        $client = strtolower($file->getClientOriginalExtension());
+        $candidates = MimeTypes::getDefault()->getExtensions($mime);
+
+        if ($mime === 'text/plain' && in_array($client, ['txt', 'csv'], true)) {
+            return $client;
+        }
+
+        if ($client !== '' && in_array($client, $candidates, true)) {
+            return $client;
+        }
+
+        return $candidates[0] ?? $client;
+    }
+
+    /**
+     * Generar nombre único y no adivinable; no incluye nada del nombre original.
      */
     protected static function generateFilename(UploadedFile $file, ?string $extension = null): string
     {
-        $extension = $extension ?? $file->getClientOriginalExtension();
-        $baseName = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
+        $extension = $extension ?? self::resolveExtension($file);
+        $extension = preg_replace('/[^a-z0-9]/', '', strtolower($extension));
 
-        return "{$baseName}_".now()->format('YmdHis').'_'.Str::random(8).".$extension";
+        return strtolower((string) Str::ulid()).($extension !== '' ? ".{$extension}" : '');
     }
 }

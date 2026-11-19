@@ -40,8 +40,15 @@ class WebhookListener implements ShouldQueue
             return;
         }
 
-        // Obtener webhooks activos que escuchan este evento
-        $webhooks = app(WebhookService::class)->getWebhooksForEvent($eventName);
+        // Regla de ámbito: un webhook recibe SOLO los eventos de recursos de su dueño.
+        // Los eventos de otros usuarios (logins, roles, altas...) nunca se le entregan.
+        $ownerId = $this->ownerIdFor($event);
+
+        if ($ownerId === null) {
+            return;
+        }
+
+        $webhooks = app(WebhookService::class)->getWebhooksForEvent($eventName, $ownerId);
 
         if ($webhooks->isEmpty()) {
             return;
@@ -57,6 +64,19 @@ class WebhookListener implements ShouldQueue
                 $webhookService->send($webhook, $eventName, $payload);
             }
         }
+    }
+
+    /**
+     * Dueño del recurso al que se refiere el evento: el usuario afectado.
+     *
+     * Es el punto donde un proyecto define su propio ámbito (p. ej. el tenant o la empresa);
+     * ver docs/webhooks.md. Sin dueño identificable el evento no se entrega a nadie.
+     *
+     * @param  mixed  $event
+     */
+    protected function ownerIdFor($event): int|string|null
+    {
+        return $event->user->id ?? null;
     }
 
     /**

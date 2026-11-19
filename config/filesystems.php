@@ -60,6 +60,22 @@ return [
             'report' => false,
         ],
 
+        // Bucket PRIVADO para archivos con is_public=false (ver config/files.php).
+        // Mismas credenciales y endpoint que `s3`; solo cambia el bucket. Sin AWS_URL: nunca
+        // se construye una URL pública, solo URLs temporales firmadas.
+        's3_private' => [
+            'driver' => 's3',
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_DEFAULT_REGION'),
+            'bucket' => env('AWS_PRIVATE_BUCKET', env('AWS_BUCKET')),
+            'endpoint' => env('AWS_ENDPOINT'),
+            'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+            'visibility' => 'private',
+            'throw' => false,
+            'report' => false,
+        ],
+
     ],
 
     /*

@@ -13,6 +13,11 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+// Descarga con URL firmada y temporal (archivos privados). Sin JWT: la firma es la credencial.
+Route::get('/files/{id}/signed', [FileController::class, 'signedDownload'])
+    ->middleware(['signed', 'throttle:60,1'])
+    ->name('files.signed');
+
 Route::middleware(['auth:api'])->prefix('files')->group(function () {
     // Listar archivos
     Route::get('/', [FileController::class, 'index'])
@@ -37,4 +42,8 @@ Route::middleware(['auth:api'])->prefix('files')->group(function () {
     // Descargar archivo
     Route::get('/{id}/download', [FileController::class, 'download'])
         ->name('files.download');
+
+    // URL temporal firmada para descargar sin cabecera Authorization
+    Route::get('/{id}/temporary-url', [FileController::class, 'temporaryUrl'])
+        ->name('files.temporary-url');
 });

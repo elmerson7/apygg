@@ -4,6 +4,7 @@ namespace Tests;
 
 use App\Models\Permission;
 use App\Models\User;
+use App\Services\Webhooks\WebhookUrlGuard;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Contracts\Console\Kernel;
@@ -63,6 +64,9 @@ abstract class TestCase extends BaseTestCase
         // leer lo que cacheó otro (y con IDs auto-incrementales reiniciados,
         // devolver el registro equivocado).
         Cache::flush();
+
+        // DNS falso: los tests no dependen de la red. Los dominios resuelven a una IP pública.
+        WebhookUrlGuard::resolveUsing(fn (string $host) => ['93.184.216.34']);
 
         // Seed roles y permisos base antes de cada test
         $this->seedRolesAndPermissions();

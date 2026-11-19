@@ -32,49 +32,32 @@ interface WebhookServiceInterface
     public function processDelivery(Webhook $webhook, WebhookDelivery $delivery): bool;
 
     /**
-     * Validar firma HMAC de un webhook recibido
+     * Firma HMAC de un webhook: `sha256=` + HMAC(secreto, "{timestamp}.{cuerpo}")
      *
-     * @param  array  $payload  Payload recibido
-     * @param  string  $signature  Firma recibida en el header
-     * @param  string  $secret  Secret para validar
-     * @return bool True si la firma es válida
+     * @param  int  $timestamp  Valor de la cabecera X-Webhook-Timestamp
+     * @param  string  $body  Cuerpo crudo tal como se envía
+     * @param  string  $secret  Secreto del webhook
      */
-    public function validateSignature(array $payload, string $signature, string $secret): bool;
+    public function sign(int $timestamp, string $body, string $secret): string;
 
     /**
-     * Validar timestamp de un webhook recibido
+     * Verificar firma y timestamp de un webhook recibido
      *
-     * @param  int  $timestamp  Timestamp recibido en el header
-     * @param  int|null  $tolerance  Tolerancia en segundos (default: config)
-     * @return bool True si el timestamp es válido
+     * @param  string  $body  Cuerpo CRUDO recibido
+     * @param  string  $signatureHeader  Valor de X-Webhook-Signature (una o varias firmas)
+     * @param  int  $timestamp  Valor de X-Webhook-Timestamp
+     * @param  string|null  $oldSecret  Secreto anterior (rotación)
      */
-    public function validateTimestamp(int $timestamp, ?int $tolerance = null): bool;
+    public function verify(string $body, string $signatureHeader, int $timestamp, string $secret, ?string $oldSecret = null, ?int $tolerance = null): bool;
 
     /**
-     * Validar webhook completo (firma + timestamp)
-     *
-     * @param  array  $payload  Payload recibido
-     * @param  string  $signature  Firma recibida en el header
-     * @param  int  $timestamp  Timestamp recibido en el header
-     * @param  string  $secret  Secret para validar
-     * @param  string|null  $oldSecret  Secret anterior (opcional, para rotación)
-     * @return bool True si el webhook es válido
-     */
-    public function validateWebhook(
-        array $payload,
-        string $signature,
-        int $timestamp,
-        string $secret,
-        ?string $oldSecret = null
-    ): bool;
-
-    /**
-     * Obtener webhooks activos que escuchan un evento específico
+     * Obtener webhooks activos DEL DUEÑO indicado que escuchan un evento específico
      *
      * @param  string  $eventType  Tipo de evento a filtrar
+     * @param  int|string  $ownerId  Dueño del recurso del evento
      * @return Collection<int, Webhook> Colección de webhooks
      */
-    public function getWebhooksForEvent(string $eventType): Collection;
+    public function getWebhooksForEvent(string $eventType, int|string $ownerId): Collection;
 
     /**
      * Reintentar entrega fallida
@@ -83,34 +66,6 @@ interface WebhookServiceInterface
      * @return bool True si se despachó el reintento
      */
     public function retryDelivery(WebhookDelivery $delivery): bool;
-
-    /**
-     * Preparar payload con metadatos adicionales
-     *
-     * @param  array  $payload  Payload original
-     * @param  Webhook  $webhook  Webhook asociado
-     * @param  WebhookDelivery  $delivery  Entrega asociada
-     * @return array Payload con metadatos
-     */
-    public function preparePayload(array $payload, Webhook $webhook, WebhookDelivery $delivery): array;
-
-    /**
-     * Generar firma HMAC-SHA256 del payload
-     *
-     * @param  array  $payload  Payload a firmar
-     * @param  string  $secret  Secret para la firma
-     * @return string Firma HMAC
-     */
-    public function generateSignature(array $payload, string $secret): string;
-
-    /**
-     * Preparar headers HTTP para el webhook
-     *
-     * @param  string  $signature  Firma para incluir en headers
-     * @param  Webhook  $webhook  Webhook para obtener configuración
-     * @return array Headers HTTP
-     */
-    public function prepareHeaders(string $signature, Webhook $webhook): array;
 
     /**
      * Calcular delay para reintento usando backoff exponencial

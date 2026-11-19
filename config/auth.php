@@ -47,6 +47,13 @@ return [
             'driver' => 'jwt',
             'provider' => 'users',
         ],
+
+        // API Keys (máquina a máquina): `auth:api-key` + `api-key-scope:<scope>`.
+        // El driver se registra en AuthServiceProvider (Auth::viaRequest).
+        'api-key' => [
+            'driver' => 'api-key',
+            'provider' => 'users',
+        ],
     ],
 
     /*

@@ -35,6 +35,9 @@
         Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
     }
 
+    # Archivos subidos: nunca interpretar el contenido (ver docs/files.md)
+    header /storage/* X-Content-Type-Options "nosniff"
+
     # Reverse proxy a FrankenPHP
     reverse_proxy localhost:{$CADDY_INTERNAL_PORT:8000} {
         # Headers para el proxy

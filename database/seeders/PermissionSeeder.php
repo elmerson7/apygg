@@ -48,6 +48,9 @@ class PermissionSeeder extends Seeder
             ['name' => 'permissions.update', 'display_name' => 'Actualizar Permisos', 'description' => 'Permite editar permisos'],
             ['name' => 'permissions.delete', 'display_name' => 'Eliminar Permisos', 'description' => 'Permite eliminar permisos'],
 
+            // Archivos
+            ['name' => 'files.manage', 'display_name' => 'Gestionar Archivos de Otros', 'description' => 'Permite ver, descargar, editar y borrar los archivos de otros usuarios (los propios no lo necesitan)'],
+
             // Correo
             ['name' => 'mail.manage', 'display_name' => 'Gestionar Correo', 'description' => 'Permite administrar proveedores, cuentas, plantillas y ajustes de correo'],
             ['name' => 'mail.logs', 'display_name' => 'Ver Historial de Correo', 'description' => 'Permite consultar el historial y las estadísticas de correos enviados'],

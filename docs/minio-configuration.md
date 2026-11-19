@@ -46,6 +46,8 @@ AWS_DEFAULT_REGION=us-east-1
 AWS_BUCKET=apygg
 AWS_ENDPOINT=http://minio:9000
 AWS_USE_PATH_STYLE_ENDPOINT=true
+# Bucket privado para archivos con is_public=false (disco s3_private); ver docs/files.md
+AWS_PRIVATE_BUCKET=apygg-private
 AWS_URL=http://localhost:8015
 ```
 

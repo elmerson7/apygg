@@ -31,3 +31,12 @@ Route::middleware(['auth:api'])->prefix('api-keys')->group(function () {
     Route::post('/{id}/rotate', [ApiKeyController::class, 'rotate'])
         ->name('api-keys.rotate');
 });
+
+/*
+| Ejemplo del mecanismo para integraciones máquina a máquina: autenticación con API Key
+| (`auth:api-key`, guard `api-key`) + scope (`api-key-scope:`). Úsalo como plantilla para
+| exponer rutas a integraciones; ver docs/api-keys.md.
+*/
+Route::middleware(['auth:api-key', 'api-key-scope:profile.read', 'throttle:60,1'])
+    ->get('/api-key/whoami', [ApiKeyController::class, 'whoami'])
+    ->name('api-key.whoami');

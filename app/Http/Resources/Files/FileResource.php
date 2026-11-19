@@ -24,9 +24,10 @@ class FileResource extends BaseResource
         return array_merge($this->getBaseFields(), [
             'name' => $file->name,
             'filename' => $file->filename,
-            'path' => $file->path,
+            // Los archivos privados no exponen ruta ni URL: se bajan por download_url
+            'path' => $this->when($file->is_public, $file->path),
             'url' => $file->getUrl(),
-            'disk' => $file->disk,
+            'download_url' => route('files.download', ['id' => $file->id]),
             'mime_type' => $file->mime_type,
             'extension' => $file->extension,
             'size' => $file->size,

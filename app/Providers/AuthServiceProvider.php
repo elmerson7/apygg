@@ -3,15 +3,20 @@
 namespace App\Providers;
 
 use App\Helpers\DevToolsAccess;
+use App\Models\File;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\Settings;
 use App\Models\User;
+use App\Policies\FilePolicy;
 use App\Policies\PermissionPolicy;
 use App\Policies\RolePolicy;
 use App\Policies\SettingsPolicy;
 use App\Policies\UserPolicy;
+use App\Services\ApiKeyService;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 
 /**
@@ -27,6 +32,7 @@ class AuthServiceProvider extends ServiceProvider
      * @var array<class-string, class-string>
      */
     protected $policies = [
+        File::class => FilePolicy::class,
         User::class => UserPolicy::class,
         Role::class => RolePolicy::class,
         Permission::class => PermissionPolicy::class,
@@ -39,6 +45,9 @@ class AuthServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerPolicies();
+
+        // Guard `api-key`: la API Key del request (X-API-Key o Bearer) -> usuario dueño de la key.
+        Auth::viaRequest('api-key', fn (Request $request) => app(ApiKeyService::class)->authenticate($request));
 
         // Super admin: el rol admin pasa cualquier comprobación de permiso (can(), middleware
         // `permission:`...) aunque el permiso no esté asignado o ni siquiera exista.

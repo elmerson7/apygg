@@ -89,7 +89,30 @@ return [
         'timestamp_header' => 'X-Webhook-Timestamp',
         'timestamp_tolerance' => 300, // Tolerancia en segundos (5 minutos)
         'algorithm' => 'sha256', // Algoritmo para firma HMAC
+        'rotation_grace_days' => 7, // Días que el secreto anterior sigue firmando tras rotar
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Protección SSRF (URLs de destino)
+    |--------------------------------------------------------------------------
+    |
+    | Se aplica al crear/actualizar el webhook y de nuevo en cada envío. Bloquea IPs
+    | privadas, loopback, link-local (metadata cloud), CGNAT e IPv6 locales, y no sigue
+    | redirecciones. `allow_http`: permitir http (solo desarrollo). `allowed_hosts`:
+    | hostnames internos de confianza que se saltan el bloqueo de IPs (p. ej.
+    | `host.docker.internal` en local); déjalo vacío en producción.
+    |
+    */
+    'ssrf' => [
+        'allow_http' => (bool) env('WEBHOOKS_ALLOW_HTTP', false),
+        'allowed_hosts' => array_values(array_filter(array_map('trim', explode(',', (string) env('WEBHOOKS_ALLOWED_HOSTS', ''))))),
+    ],
+
+    /*
+    | Máximo de caracteres de la respuesta del destino que se guardan en cada entrega.
+    */
+    'max_response_body' => 1000,
 
     /*
     |--------------------------------------------------------------------------

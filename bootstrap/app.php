@@ -67,7 +67,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
-            'auth:api-key' => \App\Http\Middleware\AuthenticateApiKey::class,
+            // `auth:api-key` NO es un alias: es el middleware estándar `auth` con el guard `api-key`
+            // (config/auth.php, registrado en AuthServiceProvider con Auth::viaRequest).
             'api-key-scope' => \App\Http\Middleware\CheckApiKeyScope::class,
             'ip.whitelist' => \App\Http\Middleware\IpWhitelistMiddleware::class,
             'feature' => \App\Http\Middleware\CheckFeatureFlag::class,

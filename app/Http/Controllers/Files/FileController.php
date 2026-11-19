@@ -36,7 +36,7 @@ class FileController extends Controller
         $query = File::query();
 
         // Filtrar por usuario autenticado (solo sus archivos)
-        if (! $request->user()->isAdmin()) {
+        if (! $request->user()->can('files.manage')) {
             $query->where('user_id', $request->user()->id);
         } elseif ($request->has('user_id')) {
             $query->where('user_id', $request->input('user_id'));
@@ -56,8 +56,10 @@ class FileController extends Controller
         }
 
         // Ordenamiento
-        $sortBy = $request->input('sort_by', 'created_at');
-        $sortOrder = $request->input('sort_order', 'desc');
+        $sortBy = in_array($request->input('sort_by'), ['created_at', 'name', 'size', 'type'], true)
+            ? $request->input('sort_by')
+            : 'created_at';
+        $sortOrder = $request->input('sort_order') === 'asc' ? 'asc' : 'desc';
         $query->orderBy($sortBy, $sortOrder);
 
         // Paginación
@@ -76,8 +78,8 @@ class FileController extends Controller
     {
         $file = File::findOrFail($id);
 
-        // Verificar permisos: solo el dueño o admin puede ver archivos privados
-        if (! $file->is_public && $file->user_id !== $request->user()->id && ! $request->user()->isAdmin()) {
+        // Un archivo privado solo lo ve su dueño o quien tenga files.manage
+        if (! $request->user()->can('view', $file)) {
             return $this->sendError('No tienes permiso para ver este archivo', 403);
         }
 
@@ -94,69 +96,66 @@ class FileController extends Controller
      */
     public function store(StoreFileRequest $request): JsonResponse
     {
+        $uploadedFile = $request->file('file');
+        $category = $request->input('category', 'default');
+        $isPublic = $request->boolean('is_public', false);
+        $uploadResult = null;
+
         try {
-            $uploadedFile = $request->file('file');
-            $category = $request->input('category', 'default');
-            $description = $request->input('description');
-            $isPublic = $request->boolean('is_public', false);
-
-            // Determinar tipo de archivo
-            $type = $this->determineFileType($uploadedFile->getMimeType());
-
-            // Obtener configuración según categoría
+            // El disco depende de la visibilidad, no de la categoría (ver config/files.php)
+            $disk = FileService::diskFor($isPublic);
             $storagePath = config("files.storage_paths.{$category}", config('files.storage_paths.default'));
-            $disk = config("files.disk_by_type.{$category}", config('files.disk_by_type.default'));
 
-            // Subir archivo usando FileService
-            $uploadResult = FileService::upload(
-                $uploadedFile,
-                $storagePath,
-                null, // Generar nombre automático
-                $disk
-            );
+            // Valida el contenido real y guarda con nombre generado
+            $uploadResult = FileService::upload($uploadedFile, $storagePath, null, $disk, $isPublic);
 
-            // Calcular fecha de expiración según política de retención
             $retentionDays = config("files.retention_policies.{$category}");
             $expiresAt = $retentionDays ? now()->addDays($retentionDays) : null;
 
-            // Crear registro en base de datos
             $file = File::create([
                 'user_id' => $request->user()->id,
-                'name' => $uploadedFile->getClientOriginalName(),
+                'name' => $this->cleanOriginalName($uploadedFile->getClientOriginalName()),
                 'filename' => $uploadResult['filename'],
                 'path' => $uploadResult['path'],
                 'url' => $uploadResult['url'],
                 'disk' => $uploadResult['disk'],
                 'mime_type' => $uploadResult['mime_type'],
-                'extension' => $uploadedFile->getClientOriginalExtension(),
+                'extension' => $uploadResult['extension'],
                 'size' => $uploadResult['size'],
-                'type' => $type,
+                'type' => FileService::detectType($uploadResult['mime_type']),
                 'category' => $category,
-                'description' => $description,
+                'description' => $request->input('description'),
                 'is_public' => $isPublic,
                 'expires_at' => $expiresAt,
             ]);
+        } catch (\InvalidArgumentException $e) {
+            return $this->sendError($e->getMessage(), 422);
+        } catch (\Throwable $e) {
+            // Si el registro falló, no dejar el archivo huérfano en el disco
+            if ($uploadResult !== null) {
+                FileService::delete($uploadResult['path'], $uploadResult['disk']);
+            }
 
-            LogService::info('Archivo subido exitosamente', [
-                'file_id' => $file->id,
-                'filename' => $file->filename,
-                'size' => $file->size,
-                'type' => $file->type,
-            ], 'activity');
-
-            return $this->sendSuccess(
-                new FileResource($file),
-                'Archivo subido exitosamente',
-                201
-            );
-        } catch (\Exception $e) {
             LogService::error('Error al subir archivo', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            return $this->sendError('Error al subir archivo: '.$e->getMessage(), 500);
+            return $this->sendError('Error al subir archivo', 500);
         }
+
+        LogService::info('Archivo subido exitosamente', [
+            'file_id' => $file->id,
+            'filename' => $file->filename,
+            'size' => $file->size,
+            'type' => $file->type,
+        ], 'activity');
+
+        return $this->sendSuccess(
+            new FileResource($file),
+            'Archivo subido exitosamente',
+            201
+        );
     }
 
     /**
@@ -168,12 +167,20 @@ class FileController extends Controller
     {
         $file = File::findOrFail($id);
 
-        // Verificar permisos: solo el dueño o admin puede actualizar
-        if ($file->user_id !== $request->user()->id && ! $request->user()->isAdmin()) {
+        if (! $request->user()->can('update', $file)) {
             return $this->sendError('No tienes permiso para actualizar este archivo', 403);
         }
 
-        $file->update($request->validated());
+        $data = $request->validated();
+        $makePublic = array_key_exists('is_public', $data) ? (bool) $data['is_public'] : null;
+
+        try {
+            FileService::updateWithVisibility($file, $data, $makePublic);
+        } catch (\Throwable $e) {
+            LogService::error('Error al actualizar archivo', ['file_id' => $file->id, 'error' => $e->getMessage()]);
+
+            return $this->sendError('Error al actualizar archivo', 500);
+        }
 
         LogService::info('Archivo actualizado', [
             'file_id' => $file->id,
@@ -181,7 +188,7 @@ class FileController extends Controller
         ], 'activity');
 
         return $this->sendSuccess(
-            new FileResource($file),
+            new FileResource($file->fresh()),
             'Archivo actualizado exitosamente'
         );
     }
@@ -191,82 +198,107 @@ class FileController extends Controller
      *
      * DELETE /api/files/{id}
      */
-    public function destroy(string $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
         $file = File::findOrFail($id);
-        $request = request();
 
-        // Verificar permisos: solo el dueño o admin puede eliminar
-        if ($file->user_id !== $request->user()->id && ! $request->user()->isAdmin()) {
+        if (! $request->user()->can('delete', $file)) {
             return $this->sendError('No tienes permiso para eliminar este archivo', 403);
         }
 
         try {
-            // Eliminar archivo físico
-            FileService::delete($file->path, $file->disk);
-
-            // Eliminar registro de base de datos (soft delete)
+            // Primero el registro (soft delete); el archivo físico solo si eso salió bien
             $file->delete();
-
-            LogService::info('Archivo eliminado', [
-                'file_id' => $file->id,
-                'filename' => $file->filename,
-            ], 'activity');
-
-            return $this->sendSuccess(null, 'Archivo eliminado exitosamente');
-        } catch (\Exception $e) {
+            FileService::delete($file->path, $file->disk);
+        } catch (\Throwable $e) {
             LogService::error('Error al eliminar archivo', [
                 'file_id' => $file->id,
                 'error' => $e->getMessage(),
             ]);
 
-            return $this->sendError('Error al eliminar archivo: '.$e->getMessage(), 500);
+            return $this->sendError('Error al eliminar archivo', 500);
         }
+
+        LogService::info('Archivo eliminado', [
+            'file_id' => $file->id,
+            'filename' => $file->filename,
+        ], 'activity');
+
+        return $this->sendSuccess(null, 'Archivo eliminado exitosamente');
     }
 
     /**
-     * Descargar archivo
+     * Descargar archivo (dueño, files.manage, o cualquiera si es público)
      *
-     * GET /api/files/{id}/download
+     * GET /files/{id}/download
      */
     public function download(Request $request, string $id)
     {
         $file = File::findOrFail($id);
 
-        // Verificar permisos: solo el dueño o admin puede descargar archivos privados
-        if (! $file->is_public && $file->user_id !== $request->user()->id && ! $request->user()->isAdmin()) {
+        if (! $request->user()->can('download', $file)) {
             return $this->sendError('No tienes permiso para descargar este archivo', 403);
         }
 
-        // Verificar que el archivo existe físicamente
+        return $this->streamDownload($file);
+    }
+
+    /**
+     * URL temporal para descargar un archivo sin cabecera Authorization.
+     * Privado: URL firmada que caduca. Público: su URL estable.
+     *
+     * GET /files/{id}/temporary-url
+     */
+    public function temporaryUrl(Request $request, string $id): JsonResponse
+    {
+        $file = File::findOrFail($id);
+
+        if (! $request->user()->can('download', $file)) {
+            return $this->sendError('No tienes permiso para descargar este archivo', 403);
+        }
+
+        $minutes = (int) config('files.temporary_url_minutes', 15);
+        $url = $file->is_public ? $file->getUrl() : FileService::temporaryDownloadUrl($file, $minutes);
+
+        if ($url === null) {
+            return $this->sendError('No se pudo generar la URL temporal', 500);
+        }
+
+        return $this->sendSuccess([
+            'url' => $url,
+            'expires_at' => $file->is_public ? null : now()->addMinutes($minutes)->toIso8601String(),
+        ], 'URL generada exitosamente');
+    }
+
+    /**
+     * Descarga con URL firmada (middleware `signed`, sin sesión).
+     *
+     * GET /files/{id}/signed
+     */
+    public function signedDownload(string $id)
+    {
+        return $this->streamDownload(File::findOrFail($id));
+    }
+
+    protected function streamDownload(File $file)
+    {
         if (! Storage::disk($file->disk)->exists($file->path)) {
             return $this->sendError('El archivo no existe en el almacenamiento', 404);
         }
 
-        return Storage::disk($file->disk)->download($file->path, $file->name);
+        return Storage::disk($file->disk)->download($file->path, FileService::safeDownloadName($file), [
+            'X-Content-Type-Options' => 'nosniff',
+            'Content-Security-Policy' => "default-src 'none'; sandbox",
+        ]);
     }
 
     /**
-     * Determinar tipo de archivo basado en MIME type
+     * Nombre original para mostrar: sin rutas ni caracteres de control.
      */
-    protected function determineFileType(string $mimeType): string
+    protected function cleanOriginalName(string $name): string
     {
-        if (str_starts_with($mimeType, 'image/')) {
-            return 'image';
-        }
-        if (str_starts_with($mimeType, 'video/')) {
-            return 'video';
-        }
-        if (str_starts_with($mimeType, 'audio/')) {
-            return 'audio';
-        }
-        if (in_array($mimeType, ['application/zip', 'application/x-rar-compressed', 'application/x-tar', 'application/gzip'])) {
-            return 'archive';
-        }
-        if (str_starts_with($mimeType, 'application/') || str_starts_with($mimeType, 'text/')) {
-            return 'document';
-        }
+        $name = preg_replace('/[\x00-\x1F\x7F]+/', '', basename(str_replace('\\', '/', $name))) ?: 'archivo';
 
-        return 'other';
+        return mb_substr($name, 0, 255);
     }
 }

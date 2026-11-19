@@ -41,7 +41,7 @@ Petición → Middleware → Controller → Form Request → Service → (Reposi
 | Módulo | Código principal | Rutas |
 |---|---|---|
 | Auth JWT | `AuthService`, `TokenService`, `AuthController`, `PasswordController` | `/auth/*`, `/auth/me`, `/auth/change-password` |
-| API Keys | `ApiKeyService`, `AuthenticateApiKey`, `CheckApiKeyScope` | `/api-keys` |
+| API Keys | `ApiKeyService`, guard `api-key`, `CheckApiKeyScope` | `/api-keys` |
 | RBAC | spatie/laravel-permission: modelos `Role` y `Permission` (extienden los del paquete), `PermissionService`, `RoleService`, policies, middlewares `permission:`/`role:` del paquete | `/roles`, `/permissions` |
 | Usuarios y perfil | `UserService`, `UserProfile`, `Users\UserController` | `/users`, `/user/profile`, `/user/preferences` |
 | Logging | `LogService`, `app/Services/Logging/*`, `app/Logging/` | `/admin/logs/*` |

@@ -214,7 +214,7 @@ Route::middleware('auth.optional')
 - Middleware disponibles: `auth:api`, `permission:`, `role:`, `role_or_permission:`
   (spatie/laravel-permission, siempre con el permiso exacto y el guard:
   `permission:reports.delete,api`; ver [permissions.md](permissions.md)),
-  `auth:api-key`, `api-key-scope:`, `ip.whitelist`, `feature:`, `auth.optional`.
+  `api-key-scope:`, `ip.whitelist`, `feature:`, `auth.optional`.
 
 ## Migración
 

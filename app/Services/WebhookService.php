@@ -5,8 +5,11 @@ namespace App\Services;
 use App\Jobs\SendWebhookJob;
 use App\Models\Webhook;
 use App\Models\WebhookDelivery;
+use App\Services\Webhooks\WebhookUrlGuard;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 /**
  * WebhookService
@@ -39,42 +42,64 @@ class WebhookService
         // Despachar job para enviar webhook
         SendWebhookJob::dispatch($webhook->id, $delivery->id)
             ->onQueue(config('webhooks.queue.queue', 'webhooks'))
-            ->onConnection(config('webhooks.queue.connection', 'redis'));
+            ->onConnection(config('webhooks.queue.connection', 'redis'))
+            ->afterCommit();
 
         return $delivery;
     }
 
     /**
-     * Procesar entrega de webhook (llamado desde el Job)
+     * Procesar entrega de webhook (llamado desde el Job).
+     *
+     * Idempotente: la entrega se "reclama" con un UPDATE atómico; si otra ejecución (un
+     * reintento automático y uno manual a la vez) ya la tomó o ya se entregó, no se vuelve
+     * a enviar. El receptor puede además deduplicar por `event.id`.
      */
     public function processDelivery(Webhook $webhook, WebhookDelivery $delivery): bool
     {
-        // Marcar como procesando
-        $delivery->update(['status' => WebhookDelivery::STATUS_PROCESSING]);
+        if (! $delivery->claim()) {
+            LogService::info('Entrega de webhook omitida: ya procesada o en curso', [
+                'webhook_id' => $webhook->id,
+                'delivery_id' => $delivery->id,
+            ]);
+
+            return $delivery->isSuccessful();
+        }
+
         $delivery->incrementAttempts();
 
         try {
-            // Preparar payload con metadatos
-            $payload = $this->preparePayload($delivery->payload, $webhook, $delivery);
+            // SSRF: se vuelve a validar y resolver el destino justo antes de enviar
+            $target = WebhookUrlGuard::inspect($webhook->url);
 
-            // Generar firma HMAC usando el secret actual
-            // Durante período de gracia después de rotación, siempre usar el nuevo secret
-            $signature = $this->generateSignature($payload, $webhook->secret ?? '');
+            // Se serializa UNA vez: lo que se firma es exactamente lo que se envía
+            $body = json_encode(
+                $this->preparePayload($delivery->payload, $webhook, $delivery),
+                JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR
+            );
+            $timestamp = now()->timestamp;
 
-            // Preparar headers
-            $headers = $this->prepareHeaders($signature, $webhook);
+            $request = Http::timeout($webhook->timeout ?? config('webhooks.defaults.timeout', 30))
+                ->withoutRedirecting()
+                ->withHeaders($this->prepareHeaders($body, $timestamp, $webhook))
+                ->withBody($body, 'application/json');
 
-            // Enviar HTTP request
-            $response = Http::timeout($webhook->timeout ?? config('webhooks.defaults.timeout', 30))
-                ->withHeaders($headers)
-                ->post($webhook->url, $payload);
+            // Fija la IP validada: un DNS-rebinding no puede cambiarla antes de conectar
+            if (! $target['is_literal']) {
+                $ip = str_contains($target['ip'], ':') ? "[{$target['ip']}]" : $target['ip'];
+                $request = $request->withOptions([
+                    'curl' => [CURLOPT_RESOLVE => ["{$target['host']}:{$target['port']}:{$ip}"]],
+                ]);
+            }
 
-            // Verificar respuesta
+            $response = $request->send('POST', $webhook->url);
+            $excerpt = Str::limit($response->body(), (int) config('webhooks.max_response_body', 1000), '…');
+
             if ($response->successful()) {
-                // Marcar como exitosa
-                $delivery->markAsSuccessful($response->status(), $response->body());
-                $webhook->incrementSuccess();
-                $webhook->updateLastTriggered();
+                DB::transaction(function () use ($delivery, $webhook, $response, $excerpt) {
+                    $delivery->markAsSuccessful($response->status(), $excerpt);
+                    $webhook->incrementSuccess();
+                });
 
                 LogService::info('Webhook entregado exitosamente', [
                     'webhook_id' => $webhook->id,
@@ -84,29 +109,12 @@ class WebhookService
                 ]);
 
                 return true;
-            } else {
-                // Marcar como fallida
-                $errorMessage = "HTTP {$response->status()}: {$response->body()}";
-                $delivery->markAsFailed($errorMessage, $response->status());
-                $webhook->incrementFailure();
-                $webhook->updateLastTriggered();
-
-                LogService::warning('Webhook falló', [
-                    'webhook_id' => $webhook->id,
-                    'delivery_id' => $delivery->id,
-                    'event_type' => $delivery->event_type,
-                    'response_code' => $response->status(),
-                    'error' => $errorMessage,
-                ]);
-
-                return false;
             }
-        } catch (\Exception $e) {
-            // Marcar como fallida por excepción
-            $delivery->markAsFailed($e->getMessage());
-            $webhook->incrementFailure();
-            $webhook->updateLastTriggered();
 
+            $errorMessage = "HTTP {$response->status()}: {$excerpt}";
+
+            return $this->recordFailure($webhook, $delivery, $errorMessage, $response->status());
+        } catch (\Throwable $e) {
             LogService::error('Error al procesar webhook', [
                 'webhook_id' => $webhook->id,
                 'delivery_id' => $delivery->id,
@@ -115,8 +123,26 @@ class WebhookService
                 'exception' => get_class($e),
             ]);
 
-            return false;
+            return $this->recordFailure($webhook, $delivery, Str::limit($e->getMessage(), 500, '…'));
         }
+    }
+
+    protected function recordFailure(Webhook $webhook, WebhookDelivery $delivery, string $message, ?int $status = null): bool
+    {
+        DB::transaction(function () use ($delivery, $webhook, $message, $status) {
+            $delivery->markAsFailed($message, $status);
+            $webhook->incrementFailure();
+        });
+
+        LogService::warning('Webhook falló', [
+            'webhook_id' => $webhook->id,
+            'delivery_id' => $delivery->id,
+            'event_type' => $delivery->event_type,
+            'response_code' => $status,
+            'error' => $message,
+        ]);
+
+        return false;
     }
 
     /**
@@ -140,125 +166,84 @@ class WebhookService
     }
 
     /**
-     * Generar firma HMAC-SHA256 del payload
+     * Firma HMAC de un webhook: `sha256=` + HMAC(secreto, "{timestamp}.{cuerpo}").
+     * El timestamp va firmado, así un payload capturado no se puede reenviar más tarde.
+     *
+     * @param  string  $body  Cuerpo crudo tal como se envía
      */
-    protected function generateSignature(array $payload, string $secret): string
+    public function sign(int $timestamp, string $body, string $secret): string
     {
-        if (empty($secret)) {
-            return '';
-        }
-
         $algorithm = config('webhooks.security.algorithm', 'sha256');
-        $payloadString = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
-        return hash_hmac($algorithm, $payloadString, $secret);
+        return $algorithm.'='.hash_hmac($algorithm, "{$timestamp}.{$body}", $secret);
     }
 
     /**
-     * Validar firma HMAC de un webhook recibido
-     * Útil para validar webhooks entrantes de otros servicios
+     * Verificar un webhook recibido (referencia para el receptor y para los tests).
      *
-     * @param  array  $payload  Payload recibido
-     * @param  string  $signature  Firma recibida en el header
-     * @param  string  $secret  Secret para validar
+     * @param  string  $body  Cuerpo CRUDO de la petición (no el JSON re-serializado)
+     * @param  string  $signatureHeader  Valor de `X-Webhook-Signature` (una o varias firmas separadas por espacio)
+     * @param  int  $timestamp  Valor de `X-Webhook-Timestamp`
+     * @param  string|null  $oldSecret  Secreto anterior (durante la rotación)
      */
-    public function validateSignature(array $payload, string $signature, string $secret): bool
+    public function verify(string $body, string $signatureHeader, int $timestamp, string $secret, ?string $oldSecret = null, ?int $tolerance = null): bool
     {
-        if (empty($secret) || empty($signature)) {
+        $tolerance = $tolerance ?? (int) config('webhooks.security.timestamp_tolerance', 300);
+
+        if ($secret === '' || $signatureHeader === '' || abs(now()->timestamp - $timestamp) > $tolerance) {
             return false;
         }
 
-        $expectedSignature = $this->generateSignature($payload, $secret);
+        $received = preg_split('/\s+/', trim($signatureHeader)) ?: [];
 
-        // Usar hash_equals para prevenir timing attacks
-        return hash_equals($expectedSignature, $signature);
-    }
-
-    /**
-     * Validar timestamp de un webhook recibido
-     * Previene replay attacks rechazando webhooks muy antiguos
-     *
-     * @param  int  $timestamp  Timestamp recibido en el header
-     * @param  int|null  $tolerance  Tolerancia en segundos (default: config)
-     */
-    public function validateTimestamp(int $timestamp, ?int $tolerance = null): bool
-    {
-        $tolerance = $tolerance ?? config('webhooks.security.timestamp_tolerance', 300);
-        $now = now()->timestamp;
-
-        // Verificar que el timestamp no sea muy antiguo ni muy futuro
-        $diff = abs($now - $timestamp);
-
-        return $diff <= $tolerance;
-    }
-
-    /**
-     * Validar webhook completo (firma + timestamp)
-     * Útil para validar webhooks entrantes de otros servicios
-     *
-     * @param  array  $payload  Payload recibido
-     * @param  string  $signature  Firma recibida en el header
-     * @param  int  $timestamp  Timestamp recibido en el header
-     * @param  string  $secret  Secret para validar
-     * @param  string|null  $oldSecret  Secret anterior (opcional, para rotación)
-     */
-    public function validateWebhook(
-        array $payload,
-        string $signature,
-        int $timestamp,
-        string $secret,
-        ?string $oldSecret = null
-    ): bool {
-        // Validar timestamp primero (más rápido)
-        if (! $this->validateTimestamp($timestamp)) {
-            return false;
-        }
-
-        // Validar firma con secret actual
-        if ($this->validateSignature($payload, $signature, $secret)) {
-            return true;
-        }
-
-        // Si hay secret anterior y aún es válido, intentar validar con él
-        if (! empty($oldSecret)) {
-            return $this->validateSignature($payload, $signature, $oldSecret);
+        foreach (array_filter([$secret, $oldSecret]) as $candidate) {
+            $expected = $this->sign($timestamp, $body, $candidate);
+            foreach ($received as $signature) {
+                if (hash_equals($expected, $signature)) {
+                    return true;
+                }
+            }
         }
 
         return false;
     }
 
     /**
-     * Preparar headers HTTP para el webhook
+     * Cabeceras HTTP del webhook (firma incluida).
+     *
+     * Durante la ventana de rotación se envían DOS firmas (nuevo y anterior secreto) en
+     * la misma cabecera, para que los receptores no se corten mientras migran.
      */
-    protected function prepareHeaders(string $signature, Webhook $webhook): array
+    protected function prepareHeaders(string $body, int $timestamp, Webhook $webhook): array
     {
         $headers = [
-            'Content-Type' => 'application/json',
             'User-Agent' => 'APYGG-Webhook/1.0',
             'X-Webhook-Id' => $webhook->id,
+            config('webhooks.security.timestamp_header', 'X-Webhook-Timestamp') => $timestamp,
         ];
 
-        // Agregar firma si existe
-        if (! empty($signature)) {
-            $signatureHeader = config('webhooks.security.signature_header', 'X-Webhook-Signature');
-            $headers[$signatureHeader] = $signature;
-        }
+        if (! empty($webhook->secret)) {
+            $signatures = [$this->sign($timestamp, $body, $webhook->secret)];
 
-        // Agregar timestamp
-        $timestampHeader = config('webhooks.security.timestamp_header', 'X-Webhook-Timestamp');
-        $headers[$timestampHeader] = now()->timestamp;
+            if ($webhook->isOldSecretValid((int) config('webhooks.security.rotation_grace_days', 7))) {
+                $signatures[] = $this->sign($timestamp, $body, $webhook->old_secret);
+            }
+
+            $headers[config('webhooks.security.signature_header', 'X-Webhook-Signature')] = implode(' ', $signatures);
+        }
 
         return $headers;
     }
 
     /**
-     * Obtener webhooks activos que escuchan un evento específico
+     * Obtener webhooks activos de UN dueño que escuchan un evento específico.
+     * Un webhook nunca recibe eventos de recursos que no son de su dueño.
      *
      * @return Collection<int, Webhook>
      */
-    public function getWebhooksForEvent(string $eventType): Collection
+    public function getWebhooksForEvent(string $eventType, int|string $ownerId): Collection
     {
-        return Webhook::forEvent($eventType)->get();
+        return Webhook::forEvent($eventType)->byUser((string) $ownerId)->get();
     }
 
     /**

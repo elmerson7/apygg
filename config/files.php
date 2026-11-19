@@ -36,7 +36,6 @@ return [
             'image/png',
             'image/gif',
             'image/webp',
-            'image/svg+xml',
             'image/bmp',
         ],
         'document' => [
@@ -82,11 +81,42 @@ return [
     */
 
     'allowed_extensions' => [
-        'image' => ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'],
+        'image' => ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'],
         'document' => ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv'],
         'video' => ['mp4', 'mpeg', 'mov', 'avi', 'webm'],
         'audio' => ['mp3', 'wav', 'ogg', 'webm'],
         'archive' => ['zip', 'rar', 'tar', 'gz'],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Tipos y Extensiones Prohibidos (lista negra)
+    |--------------------------------------------------------------------------
+    |
+    | Contenido que el navegador ejecuta (XSS almacenado) o el servidor
+    | interpreta. Se rechaza SIEMPRE, aunque alguien lo añada por error a las
+    | listas permitidas. El tipo se detecta por el CONTENIDO del archivo, no por
+    | lo que declara el cliente. No elimines SVG de aquí: un SVG puede llevar
+    | <script> y se ejecutaría en el origen de la API.
+    |
+    */
+
+    'blocked_mimes' => [
+        'image/svg+xml',
+        'text/html',
+        'application/xhtml+xml',
+        'text/xml',
+        'application/xml',
+        'text/javascript',
+        'application/javascript',
+        'application/x-javascript',
+        'application/x-httpd-php',
+        'text/x-php',
+    ],
+
+    'blocked_extensions' => [
+        'svg', 'svgz', 'html', 'htm', 'xhtml', 'shtml', 'xml', 'xsl',
+        'js', 'mjs', 'php', 'phtml', 'phar', 'pht', 'htaccess',
     ],
 
     /*
@@ -145,22 +175,31 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Configuración de Disco por Tipo
+    | Discos de Almacenamiento (público / privado)
     |--------------------------------------------------------------------------
     |
-    | Define qué disco de almacenamiento usar según el tipo de archivo.
-    | Opciones: 'local', 'public', 's3'
+    | El disco depende de `is_public`, no de la categoría:
+    |
+    |  - is_public = true  -> disco `public`: URL estable servida sin autenticación.
+    |  - is_public = false -> disco `private`: NUNCA tiene URL pública. Se descarga por
+    |    GET /files/{id}/download (dueño o permiso files.manage) o con una URL temporal
+    |    firmada (GET /files/{id}/temporary-url).
+    |
+    | Valores: `public` / `local` (disco local), `s3` / `s3_private` (S3 o MinIO).
+    | Con S3/MinIO usa un bucket PRIVADO para `private` (AWS_PRIVATE_BUCKET): la
+    | visibilidad por objeto no se respeta igual en todos los proveedores.
     |
     */
 
-    'disk_by_type' => [
-        'avatar' => env('FILE_DISK_AVATAR', 'public'),
-        'document' => env('FILE_DISK_DOCUMENT', 'local'),
-        'image' => env('FILE_DISK_IMAGE', 'public'),
-        'video' => env('FILE_DISK_VIDEO', 'local'),
-        'audio' => env('FILE_DISK_AUDIO', 'local'),
-        'default' => env('FILE_DISK_DEFAULT', 'public'),
+    'disks' => [
+        'public' => env('FILE_DISK_PUBLIC', 'public'),
+        'private' => env('FILE_DISK_PRIVATE', 'local'),
     ],
+
+    /*
+    | Minutos de validez de las URLs temporales firmadas de archivos privados.
+    */
+    'temporary_url_minutes' => (int) env('FILE_TEMPORARY_URL_MINUTES', 15),
 
     /*
     |--------------------------------------------------------------------------

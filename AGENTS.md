@@ -95,7 +95,7 @@ incluye con `require` desde `routes/api.php`.
 | Administración | `/admin` | `GET /admin/logs` |
 
 Middleware con alias disponibles: `auth:api`, `permission:`, `role:`,
-`role_or_permission:`, `auth:api-key`, `api-key-scope:`, `ip.whitelist`,
+`role_or_permission:`, `api-key-scope:`, `ip.whitelist`,
 `feature:`, `auth.optional`.
 
 ### Permisos (spatie/laravel-permission, guard `api`)
@@ -114,7 +114,7 @@ Middleware con alias disponibles: `auth:api`, `permission:`, `role:`,
 
 - **JWT** (`php-open-source-saver/jwt-auth`) → método principal de la API
 - **Sanctum** → tokens alternativos
-- **API Keys** (`auth:api-key` + `api-key-scope:`) → integraciones máquina a máquina
+- **API Keys** (guard `api-key`: `auth:api-key` + `api-key-scope:`; sin scopes = sin acceso) → integraciones máquina a máquina. Ver `docs/api-keys.md`, `docs/files.md` y `docs/webhooks.md`
 - Rutas protegidas con `auth:api`; autenticación opcional con `auth.optional`
   (deja el usuario en `$request->attributes->get('auth_user')`)
 

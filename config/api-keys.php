@@ -40,12 +40,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Keys de prueba en producción
+    |--------------------------------------------------------------------------
+    |
+    | Las keys `apygg_test_` solo se crean y se aceptan fuera de producción.
+    | Pon API_KEYS_ALLOW_TEST_IN_PRODUCTION=true solo para un entorno de staging
+    | que corra con APP_ENV=production.
+    |
+    */
+
+    'allow_test_in_production' => (bool) env('API_KEYS_ALLOW_TEST_IN_PRODUCTION', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Scopes Disponibles
     |--------------------------------------------------------------------------
     |
     | Lista de scopes disponibles en el sistema.
     | Formato: 'resource.action' (ej: 'users.read', 'users.write')
-    | El scope '*' otorga acceso total.
+    | El scope '*' otorga acceso total (explícito). Una key SIN scopes no tiene acceso a nada.
     |
     | Si está vacío, se aceptan todos los scopes con formato válido.
     |
@@ -89,6 +102,9 @@ return [
         // Health
         'health.read',
         'health.detailed',
+
+        // Perfil de la key (ruta de ejemplo GET /api-key/whoami)
+        'profile.read',
     ],
 
     /*

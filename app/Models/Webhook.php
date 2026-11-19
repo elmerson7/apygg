@@ -205,8 +205,7 @@ class Webhook extends Model
      */
     public function incrementSuccess(): bool
     {
-        return $this->increment('success_count') &&
-            $this->update(['last_success_at' => now()]);
+        return $this->increment('success_count', 1, ['last_success_at' => now(), 'last_triggered_at' => now()]) > 0;
     }
 
     /**
@@ -214,8 +213,7 @@ class Webhook extends Model
      */
     public function incrementFailure(): bool
     {
-        return $this->increment('failure_count') &&
-            $this->update(['last_failure_at' => now()]);
+        return $this->increment('failure_count', 1, ['last_failure_at' => now(), 'last_triggered_at' => now()]) > 0;
     }
 
     /**

@@ -13,11 +13,13 @@ use Symfony\Component\HttpFoundation\Response;
  * CheckApiKeyScope Middleware
  *
  * Middleware para verificar que la API Key tenga los scopes requeridos.
- * Solo funciona si la autenticación fue con API Key (no JWT).
+ * FALLA EN CERRADO: solo deja pasar una petición autenticada con API Key (guard `api-key`)
+ * cuya key tenga al menos uno de los scopes. Sin API Key responde 401; una key sin scopes
+ * no tiene acceso (el acceso total es el scope explícito `*`).
  *
- * Uso en rutas:
- * Route::get('/users', [Controller::class, 'method'])->middleware('api-key-scope:users.read');
- * Route::post('/users', [Controller::class, 'method'])->middleware('api-key-scope:users.write,users.create');
+ * Uso en rutas (siempre tras `auth:api-key`):
+ * Route::get('/users', [Controller::class, 'method'])->middleware(['auth:api-key', 'api-key-scope:users.read']);
+ * Route::post('/users', [Controller::class, 'method'])->middleware(['auth:api-key', 'api-key-scope:users.write,users.create']);
  */
 class CheckApiKeyScope
 {
@@ -30,8 +32,14 @@ class CheckApiKeyScope
     {
         // Verificar que la autenticación fue con API Key
         if ($request->attributes->get('authenticated_via') !== 'api-key') {
-            // Si no fue con API Key, permitir acceso (puede ser JWT con permisos RBAC)
-            return $next($request);
+            return response()->json([
+                'success' => false,
+                'message' => 'Esta ruta requiere una API Key',
+                'error' => [
+                    'type' => 'api_key_missing',
+                    'code' => 'API_KEY_REQUIRED',
+                ],
+            ], 401);
         }
 
         // Obtener API Key ID del request
@@ -48,7 +56,7 @@ class CheckApiKeyScope
             ], 401);
         }
 
-        // Obtener API Key
+        // Obtener API Key (una revocada entre medias ya no existe)
         $apiKey = ApiKey::find($apiKeyId);
 
         if (! $apiKey) {
@@ -62,7 +70,7 @@ class CheckApiKeyScope
             ], 401);
         }
 
-        // Si no se especifican scopes, permitir acceso
+        // Sin scopes declarados en la ruta basta con una API Key válida
         if (empty($scopes)) {
             return $next($request);
         }

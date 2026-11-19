@@ -2,10 +2,14 @@
 
 namespace App\Services;
 
+use App\Exceptions\BusinessLogicException;
 use App\Models\ApiKey;
 use App\Models\User;
+use App\Services\Logging\SecurityLogger;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
@@ -48,6 +52,11 @@ class ApiKeyService
      */
     public function create(User $user, string $name, array $scopes = [], ?\DateTimeInterface $expiresAt = null, string $environment = 'live'): array
     {
+        // Las keys de prueba no valen en producción
+        if ($environment === 'test' && ! $this->testKeysAllowed()) {
+            throw new BusinessLogicException('Las API Keys de prueba no están permitidas en producción', 'TEST_KEY_IN_PRODUCTION');
+        }
+
         // Validar scopes
         $this->validateScopes($scopes);
 
@@ -159,7 +168,12 @@ class ApiKeyService
      */
     public function rotate(string $keyId, ?string $newName = null, ?array $newScopes = null, string $environment = 'live'): array
     {
-        $oldApiKey = ApiKey::findOrFail($keyId);
+        $oldApiKey = ApiKey::findOrFail($keyId); // una key revocada (borrada) no se encuentra
+
+        if ($oldApiKey->isExpired()) {
+            throw new BusinessLogicException('No se puede rotar una API Key caducada', 'API_KEY_EXPIRED');
+        }
+
         $user = $oldApiKey->user;
 
         if (! $user || ! ($user instanceof User)) {
@@ -168,32 +182,85 @@ class ApiKeyService
 
         // Usar valores de la key antigua si no se proporcionan nuevos
         $name = $newName ?? $oldApiKey->name.' (rotated)';
-        $scopes = $newScopes ?? $oldApiKey->scopes;
+        $scopes = $newScopes ?? ($oldApiKey->scopes ?? []);
         $expiresAt = $oldApiKey->expires_at;
 
-        // Crear nueva key
-        $result = $this->create($user, $name, $scopes, $expiresAt, $environment);
-        $newApiKey = $result['api_key'];
+        // Nueva key + periodo de gracia de la antigua en una sola transacción
+        return DB::transaction(function () use ($user, $name, $scopes, $expiresAt, $environment, $oldApiKey) {
+            $result = $this->create($user, $name, $scopes, $expiresAt, $environment);
+            $newApiKey = $result['api_key'];
 
-        // Establecer expiración de la key antigua al período de gracia
-        $gracePeriodExpiresAt = now()->addDays(self::ROTATION_GRACE_PERIOD_DAYS);
-        $oldApiKey->update([
-            'expires_at' => $gracePeriodExpiresAt,
-        ]);
+            // La key antigua caduca al acabar el periodo de gracia, pero nunca DESPUÉS de su
+            // propia fecha de caducidad (no se alarga una key que ya iba a morir)
+            $gracePeriodExpiresAt = now()->addDays(self::ROTATION_GRACE_PERIOD_DAYS);
+            if ($oldApiKey->expires_at && $oldApiKey->expires_at->lt($gracePeriodExpiresAt)) {
+                $gracePeriodExpiresAt = $oldApiKey->expires_at->copy();
+            }
+            $oldApiKey->update(['expires_at' => $gracePeriodExpiresAt]);
+            $this->clearKeyCache($oldApiKey->key);
 
-        // Registrar en ActivityLog
-        LogService::logActivity('updated', ApiKey::class, $oldApiKey->id, [
-            'action' => 'rotated',
-            'old_key_id' => $oldApiKey->id,
-            'new_key_id' => $newApiKey->id,
-            'grace_period_expires_at' => $gracePeriodExpiresAt->toIso8601String(),
-        ]);
+            LogService::logActivity('updated', ApiKey::class, $oldApiKey->id, [
+                'action' => 'rotated',
+                'old_key_id' => $oldApiKey->id,
+                'new_key_id' => $newApiKey->id,
+                'grace_period_expires_at' => $gracePeriodExpiresAt->toIso8601String(),
+            ]);
 
-        return [
-            'api_key' => $newApiKey,
-            'key' => $result['key'],
-            'old_key_expires_at' => $gracePeriodExpiresAt->toIso8601String(),
-        ];
+            return [
+                'api_key' => $newApiKey,
+                'key' => $result['key'],
+                'old_key_expires_at' => $gracePeriodExpiresAt->toIso8601String(),
+            ];
+        });
+    }
+
+    /**
+     * Autenticar un request por API Key (driver del guard `api-key`).
+     *
+     * Devuelve el usuario dueño de la key, o null si falta, es inválida, está revocada o
+     * caducada. Deja en el request `authenticated_via` y `api_key_id` para `api-key-scope:`.
+     */
+    public function authenticate(Request $request): ?User
+    {
+        $key = $request->header('X-API-Key');
+
+        if (! $key && preg_match('/^Bearer\s+(.+)$/i', (string) $request->header('Authorization'), $m)) {
+            $key = $m[1];
+        }
+
+        if (! $key) {
+            return null;
+        }
+
+        $apiKey = $this->validate($key);
+        $user = $apiKey?->user;
+
+        if (! $apiKey || ! $user instanceof User) {
+            SecurityLogger::logSuspiciousActivity(
+                'Intento de acceso con API Key inválida, revocada o expirada',
+                null,
+                ['api_key_prefix' => substr($key, 0, 12).'...', 'ip_address' => $request->ip()],
+                $request
+            );
+
+            return null;
+        }
+
+        $request->attributes->set('authenticated_via', 'api-key');
+        $request->attributes->set('api_key_id', $apiKey->id);
+
+        // last_used_at como mucho una vez por minuto (evita una escritura por request)
+        if ($apiKey->last_used_at === null || $apiKey->last_used_at->lt(now()->subMinute())) {
+            try {
+                $apiKey->updateLastUsed();
+            } catch (\Throwable $e) {
+                LogService::warning('No se pudo actualizar last_used_at de la API Key', ['api_key_id' => $apiKey->id, 'error' => $e->getMessage()]);
+            }
+        }
+
+        SecurityLogger::logApiKeyUsage($apiKey, $request);
+
+        return $user;
     }
 
     /**
@@ -204,6 +271,11 @@ class ApiKeyService
      */
     public function validate(string $key): ?ApiKey
     {
+        // Una key de prueba no vale en producción
+        if (! $this->testKeysAllowed() && str_starts_with($key, (string) config('api-keys.prefixes.test', 'apygg_test_'))) {
+            return null;
+        }
+
         // Hash de la key
         $hashedKey = hash('sha256', $key);
 
@@ -313,6 +385,14 @@ class ApiKeyService
                 throw new \InvalidArgumentException("El scope '{$scope}' no está disponible");
             }
         }
+    }
+
+    /**
+     * Las keys `test` solo se aceptan fuera de producción (o con api-keys.allow_test_in_production).
+     */
+    protected function testKeysAllowed(): bool
+    {
+        return ! app()->isProduction() || (bool) config('api-keys.allow_test_in_production', false);
     }
 
     /**

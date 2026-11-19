@@ -154,6 +154,31 @@ class WebhookDelivery extends Model
     }
 
     /**
+     * Reclama la entrega para enviarla (UPDATE atómico): solo una ejecución lo consigue.
+     * Se puede reclamar si está pendiente o fallida (reintento), o si quedó "processing"
+     * de una ejecución que murió hace más de 5 minutos. Nunca si ya se entregó.
+     */
+    public function claim(): bool
+    {
+        $claimed = static::query()
+            ->whereKey($this->getKey())
+            ->where(function ($q) {
+                $q->whereIn('status', [self::STATUS_PENDING, self::STATUS_FAILED])
+                    ->orWhere(fn ($q) => $q->where('status', self::STATUS_PROCESSING)
+                        ->where('updated_at', '<', now()->subMinutes(5)));
+            })
+            ->update(['status' => self::STATUS_PROCESSING, 'updated_at' => now()]) === 1;
+
+        if ($claimed) {
+            $this->status = self::STATUS_PROCESSING;
+        } else {
+            $this->refresh();
+        }
+
+        return $claimed;
+    }
+
+    /**
      * Marcar como exitosa
      */
     public function markAsSuccessful(int $responseCode, ?string $responseBody = null): bool
@@ -161,7 +186,7 @@ class WebhookDelivery extends Model
         return $this->update([
             'status' => self::STATUS_SUCCESS,
             'response_code' => $responseCode,
-            'response_body' => $responseBody,
+            'response_body' => $responseBody !== null ? mb_substr($responseBody, 0, (int) config('webhooks.max_response_body', 1000)) : null,
             'delivered_at' => now(),
         ]);
     }

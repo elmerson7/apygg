@@ -5,6 +5,7 @@ namespace App\Http\Requests\Webhooks;
 use App\Enums\WebhookStatusEnum;
 use App\Http\Requests\BaseFormRequest;
 use App\Models\Webhook;
+use App\Rules\SafeWebhookUrl;
 use Illuminate\Validation\Rule;
 
 /**
@@ -31,7 +32,7 @@ class UpdateWebhookRequest extends BaseFormRequest
 
         return [
             'name' => ['sometimes', 'string', 'max:255', 'min:2'],
-            'url' => ['sometimes', 'url', 'max:2048'],
+            'url' => ['sometimes', 'url', 'max:2048', new SafeWebhookUrl],
             'events' => ['sometimes', 'nullable', 'array'],
             'events.*' => ['required', 'string', Rule::in($availableEvents)],
             'status' => ['sometimes', 'string', Rule::in([

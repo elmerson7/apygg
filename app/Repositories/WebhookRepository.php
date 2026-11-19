@@ -126,12 +126,13 @@ class WebhookRepository implements RepositoryInterface
      * Obtener webhooks activos que escuchan un evento específico
      *
      * @param  string  $eventType  Tipo de evento a filtrar
+     * @param  int|string  $ownerId  Solo los webhooks de este dueño
      * @param  array  $columns  Columnas a seleccionar
      * @return Collection
      */
-    public function getWebhooksForEvent(string $eventType, $columns = ['*'])
+    public function getWebhooksForEvent(string $eventType, int|string $ownerId, $columns = ['*'])
     {
-        return Webhook::where(function ($query) use ($eventType) {
+        return Webhook::where('user_id', $ownerId)->where(function ($query) use ($eventType) {
             $query->whereNull('events')
                 ->orWhereJsonContains('events', $eventType);
         })->where('status', 'active')->get($columns);

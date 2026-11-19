@@ -58,6 +58,11 @@ class SendWebhookJob extends Job
             throw new \RuntimeException("Webhook o entrega no encontrada: webhook_id={$this->webhookId}, delivery_id={$this->deliveryId}");
         }
 
+        // Idempotencia: una entrega ya realizada no se vuelve a enviar (reintento duplicado)
+        if ($delivery->isSuccessful()) {
+            return;
+        }
+
         // Configurar tries según el webhook
         $this->tries = $webhook->max_retries ?? config('webhooks.defaults.max_retries', 3);
 

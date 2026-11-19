@@ -125,7 +125,7 @@ class ApiKey extends Model
     }
 
     /**
-     * Verificar si la key tiene un scope específico
+     * Verificar si la key tiene un scope específico (sin scopes = ninguno; '*' = todos)
      *
      * @param  string  $scope  Scope a verificar (ej: 'users.read')
      */
@@ -133,9 +133,9 @@ class ApiKey extends Model
     {
         $scopes = $this->scopes ?? [];
 
-        // Si no tiene scopes definidos, tiene acceso total
+        // Sin scopes NO es acceso total: falla en cerrado. El acceso total es explícito: ['*'].
         if (empty($scopes)) {
-            return true;
+            return false;
         }
 
         // Verificar scope wildcard

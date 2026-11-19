@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Traits\LogsActivity;
 use App\Traits\SoftDeletesWithUser;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,21 +18,7 @@ use Illuminate\Support\Facades\Storage;
  */
 class File extends Model
 {
-    use HasFactory, HasUuids, LogsActivity, SoftDeletes, SoftDeletesWithUser;
-
-    /**
-     * Indicates if the IDs are auto-incrementing.
-     *
-     * @var bool
-     */
-    public $incrementing = false;
-
-    /**
-     * The "type" of the primary key ID.
-     *
-     * @var string
-     */
-    protected $keyType = 'string';
+    use HasFactory, LogsActivity, SoftDeletes, SoftDeletesWithUser;
 
     /**
      * The attributes that are mass assignable.
@@ -175,10 +160,15 @@ class File extends Model
     }
 
     /**
-     * Obtener URL del archivo
+     * URL pública del archivo. Un archivo privado NO tiene URL pública (se descarga por
+     * `files.download` o con una URL temporal firmada).
      */
     public function getUrl(): ?string
     {
+        if (! $this->is_public) {
+            return null;
+        }
+
         if ($this->url) {
             return $this->url;
         }
