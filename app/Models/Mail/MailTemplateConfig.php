@@ -14,7 +14,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * proveedor está limitando.
  *
  * `template_key` es la clave que usa el código al enviar
- * (`MailService::send(..., templateKey: 'welcome')`).
+ * (`HasMailTemplate::mailTemplateKey()` en un Mailable o Notification, o
+ * `MailService::send(..., templateKey: 'welcome')`).
  */
 class MailTemplateConfig extends Model
 {
@@ -63,9 +64,6 @@ class MailTemplateConfig extends Model
         return [
             ['template_key' => 'welcome', 'template_name' => 'Bienvenida', 'is_active' => true],
             ['template_key' => 'password_reset', 'template_name' => 'Recuperar contraseña', 'is_active' => true],
-            ['template_key' => 'verification', 'template_name' => 'Verificación de correo', 'is_active' => true],
-            ['template_key' => 'api_key_created', 'template_name' => 'API Key creada', 'is_active' => true],
-            ['template_key' => 'webhook_failed', 'template_name' => 'Fallo de webhook', 'is_active' => true],
         ];
     }
 

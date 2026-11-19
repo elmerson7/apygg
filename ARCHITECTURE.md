@@ -47,7 +47,7 @@ Petición → Middleware → Controller → Form Request → Service → (Reposi
 | Logging | `LogService`, `app/Services/Logging/*`, `app/Logging/` | `/admin/logs/*` |
 | Seguridad | `SecurityAuditService`, `SecurityService`, `Blacklist`, `SecurityScan` | `/admin/blacklist`, `/admin/security/scans` |
 | Webhooks salientes | `WebhookService`, `SendWebhookJob`, `WebhookDelivery` | `/webhooks/*` |
-| Correo | `MailService`, `app/Services/Mail/*`, `app/Models/Mail/*`, `SendMailJob` | `/admin/mail/*`, `/webhooks/mail` |
+| Correo | Mailables/Notifications estándar, `AccountsTransport`, `MailSystemListener`, `app/Services/Mail/*`, `app/Models/Mail/*` | `/admin/mail/*`, `/webhooks/mail` |
 | Gateway LLM | `app/Services/LLM` (`LlmGateway`, `LlmAgent`, `LlmAuditService`, proveedores OpenAI, DeepSeek y Null), `LlmArea` | `/admin/llm/*` |
 | Asistente RAG | `app/Services/Docs` (`DocsIndexer`, `DocsService`), `DocChunk`, `DocConversation` | `/docs/*` |
 | Menú dinámico | `MenuService`, `MenuItem` | `/admin/menu/*` |
@@ -75,7 +75,7 @@ Socialite tiene `SocialAuthController` y `SocialAuthService`, pero no hay rutas 
 
 ### Correo
 
-`MailService` despacha `SendMailJob`. Los eventos de entrega del proveedor llegan a `/webhooks/mail` y se verifican con `SvixSignatureVerifier`.
+Todo correo es un Mailable o Notification de Laravel; un transport propio (`accounts`) y listeners de `MessageSending`/`MessageSent` aplican cuenta, pausa, límites y registro (ver `docs/mail-system.md`). Los eventos de entrega del proveedor llegan a `/webhooks/mail` y se verifican con `SvixSignatureVerifier`.
 
 ### Gateway LLM
 

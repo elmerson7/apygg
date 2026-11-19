@@ -162,6 +162,15 @@ Guía completa: `docs/testing.md`.
 - ❌ No verifiques existencia a mano con `if (! $model)`: usa `findOrFail()` y
   deja que la excepción llegue al handler.
 
+## Correo — un solo camino
+
+- Todo correo es un **Mailable** o una **Notification** de Laravel, en cola, enviado
+  con `Mail::` / `->notify()`. Cuentas en BD, pausa, límites y `mail_logs` se
+  aplican solos (transport `accounts` + listeners de `MessageSending`/`MessageSent`).
+- Para poder pausarlo desde el panel, implementa `App\Contracts\Mail\HasMailTemplate`.
+- ❌ No llames a `Mail::mailer('x')` a mano ni crees otro camino de envío.
+- Detalle: `docs/mail-system.md`.
+
 ## Rendimiento — no paginar en memoria
 
 - Listados **siempre** con `->paginate()` en SQL. Nunca `->get()` seguido de

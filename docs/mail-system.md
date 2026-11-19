@@ -1,33 +1,94 @@
 # Sistema de correo multi-cuenta
 
-Laravel sabe enviar correo. Lo que no trae de fábrica es la capa que hace falta
-en cuanto el proyecto está en producción:
+Un **único camino**, el estándar de Laravel: todo correo es un **Mailable** o una
+**Notification** y se envía con `Mail::` / `->notify()`. Las capacidades propias
+del módulo (cuentas en BD, pausa, límite diario, registro, estados por webhook)
+no son un camino paralelo: se enganchan al sistema de correo de Laravel, así que
+valen para cualquier correo sin que el código que lo envía haga nada especial.
 
 - enviar desde **varias direcciones** (transaccional, notificaciones, soporte);
 - **pausar** un tipo de correo concreto sin desplegar;
 - saber **si un correo llegó**, rebotó o se abrió, sin entrar al panel del proveedor;
 - un **botón de emergencia** que corte todos los envíos.
 
-Eso es lo que añade este módulo, encima del mailer de Laravel.
+## Cómo enviar un correo nuevo
 
-## Piezas
+1. Crea un **Mailable** (`make art cmd="make:mail PedidoEnviado"`) o una
+   **Notification** (`make:notification`) con `ShouldQueue`.
+2. Si quieres poder **pausarlo o asignarle cuenta** desde el panel, implementa
+   `App\Contracts\Mail\HasMailTemplate` y devuelve su clave:
 
-| Tabla | Modelo | Qué guarda |
-|---|---|---|
-| `mail_providers` | `MailProvider` | Proveedor y driver (resend, smtp, ses…) + config no sensible |
-| `mail_accounts` | `MailAccount` | Direcciones de envío (`from_email` / `from_name`) |
-| `mail_template_configs` | `MailTemplateConfig` | Qué cuenta usa cada plantilla y si está activa |
-| `mail_settings` | `MailSetting` | Pausa global y límites de envío |
-| `mail_logs` | `MailLog` | Un registro por correo enviado |
-| `mail_events` | `MailEvent` | Eventos del proveedor recibidos por webhook |
+```php
+class PedidoEnviadoNotification extends Notification implements HasMailTemplate, ShouldQueue
+{
+    use Queueable;
 
-| Clase | Rol |
-|---|---|
-| `MailService` | Punto de entrada único para enviar |
-| `SendMailJob` | Envío asíncrono con reintentos y actualización del registro |
-| `MailEventStatusService` | Traduce los eventos del proveedor al estado del envío |
-| `SvixSignatureVerifier` | Verifica la firma de los webhooks |
-| `MailWebhookController` | Recibe los eventos de entrega |
+    public static function mailTemplateKey(): string
+    {
+        return 'pedido_enviado';
+    }
+
+    public function via(object $notifiable): array
+    {
+        return ['mail'];
+    }
+
+    public function toMail(object $notifiable): MailMessage { /* ... */ }
+}
+
+$user->notify(new PedidoEnviadoNotification);           // en cola
+Mail::to($email)->queue(new PedidoEnviadoMail($pedido)); // Mailable
+```
+
+3. Registra la clave en `MailTemplateConfig::getDefaults()` (o desde el panel,
+   `POST /admin/mail/templates/seed-defaults`).
+
+Sin `HasMailTemplate` el correo sale igual (pasa por pausa global, límite y
+registro) pero no se puede pausar ni asignar por separado.
+
+Para enviar una **vista Blade** suelta sin escribir clase, `MailService::send()`
+construye un `SimpleMail` y lo envía por el mismo camino:
+
+```php
+MailService::send('ana@ejemplo.com', 'Aviso', 'emails.test', $data, 'mi_plantilla');
+MailService::send(..., queue: false);       // síncrono: devuelve si se envió
+MailService::send(..., delaySeconds: 3600); // programado
+```
+
+Nunca uses `Mail::mailer('smtp')` ni otro mailer a mano: te saltarías la cuenta
+y el registro. Los tests usan `Mail::fake()` / `Notification::fake()` como en
+cualquier proyecto Laravel.
+
+## Qué pasa por debajo
+
+`MAIL_DEFAULT_MAILER=accounts` (el mailer por defecto de `config/mail.php`) usa
+`AccountsTransport`. En cada envío:
+
+1. `MailSystemListener` escucha `MessageSending`. Resuelve la clave de plantilla
+   (la del Mailable/Notification) y consulta `MailSendPolicy`: **pausa global**,
+   **plantilla pausada** y **límite diario**. Si deniega, crea un `MailLog` con
+   estado `skipped` y el motivo, y devuelve `false`: Laravel cancela el envío.
+   Se evalúa **al enviar**, no al encolar: un correo que esperaba en cola
+   respeta la pausa que se activó mientras tanto.
+2. Si procede, elige la **cuenta** (la de la plantilla → la predeterminada → la de
+   menor prioridad), pone su `from` (salvo que el correo fije uno propio) y crea
+   el `MailLog` en `pending`.
+3. `AccountsTransport` toma la cuenta, resuelve el transport real de su proveedor
+   (`resend`, `smtp`, `ses`…) y entrega el mensaje sin las cabeceras internas
+   `X-Mail-*`. No guarda estado: cambiar la cuenta activa surte efecto en el
+   siguiente envío, también con Octane y workers de larga vida.
+4. `MessageSent` marca el registro `sent` con el `message id` del proveedor (el
+   de Resend permite correlacionar los webhooks). Si el proveedor falla, el
+   transport marca `failed` con el error y relanza: la cola reintenta (cada
+   intento deja su propio registro).
+5. Con webhooks activos, el proveedor confirma después `delivered` o `bounced`.
+
+Sin ninguna cuenta en la BD, el correo sale por el mailer real de respaldo
+(`MAIL_MAILER`, ver `config('mail.fallback')`) y el registro queda sin cuenta.
+
+Limitaciones conocidas: `rate_limit` (por minuto) se guarda pero no se aplica;
+el `from` de la cuenta sustituye al de la app (`MAIL_FROM_ADDRESS`) pero no a uno
+fijado en el propio Mailable.
 
 ## Puesta en marcha
 
@@ -41,82 +102,49 @@ El seeder crea el proveedor y la cuenta a partir de las variables que ya tienes
 (`MAIL_MAILER`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME`), registra las plantillas
 por defecto y deja el sistema sin pausas ni límites. Es idempotente.
 
-## Enviar correo
-
-**Siempre** a través de `MailService`. Nunca `Mail::send()` directo: te saltarías
-el registro, la pausa y la selección de cuenta.
-
-```php
-use App\Services\MailService;
-
-// Mínimo
-MailService::send('ana@ejemplo.com', 'Bienvenida', 'emails.welcome', ['name' => 'Ana']);
-
-// Con plantilla (permite pausarlo y asignarle una cuenta desde el panel)
-MailService::send(
-    to: ['email' => 'ana@ejemplo.com', 'name' => 'Ana'],
-    subject: 'Bienvenida',
-    view: 'emails.welcome',
-    data: ['name' => 'Ana'],
-    templateKey: 'welcome',
-);
-
-// Varios destinatarios: un registro y un job por cada uno
-MailService::send(['a@ejemplo.com', 'b@ejemplo.com'], 'Aviso', 'emails.notice');
-
-// Programado (1 hora)
-MailService::send('ana@ejemplo.com', 'Recordatorio', 'emails.reminder', delaySeconds: 3600);
-
-// Síncrono: solo cuando necesitas el resultado en el acto
-MailService::send('ana@ejemplo.com', 'Prueba', 'emails.test', queue: false);
-```
-
-### Qué ocurre en cada envío
-
-1. Se comprueba la pausa global, la pausa de la plantilla y el límite diario.
-2. Se resuelve la cuenta: la de la plantilla → la predeterminada → la de menor
-   prioridad.
-3. Se crea el `MailLog` en estado `pending`.
-4. Se despacha `SendMailJob`, que vuelve a comprobar la pausa de la plantilla
-   (un correo encolado hace una hora puede haberse pausado mientras tanto).
-5. El job envía y actualiza el registro a `sent` o `failed`.
-6. Si hay webhooks activos, el proveedor confirma después `delivered` o `bounced`.
-
-### Estados
+## Estados
 
 | Estado | Significado |
 |---|---|
 | `pending` | Registrado, aún no enviado |
-| `scheduled` | Programado para más tarde |
+| `scheduled` | Reservado (no lo usa el envío estándar) |
 | `sent` | Aceptado por el proveedor |
 | `delivered` | Confirmado en el buzón (vía webhook) |
 | `bounced` | Rechazado de forma permanente o marcado como spam |
 | `failed` | Error de envío |
+| `skipped` | Cancelado por pausa global, plantilla pausada o límite diario |
 
-## Plantillas
+## Piezas
 
-Una `template_key` es la etiqueta con la que el código identifica un tipo de
-correo. Registrarla permite, desde el panel:
+| Tabla | Modelo | Qué guarda |
+|---|---|---|
+| `mail_providers` | `MailProvider` | Proveedor y driver (resend, smtp, ses…) + config no sensible |
+| `mail_accounts` | `MailAccount` | Direcciones de envío (`from_email` / `from_name`) |
+| `mail_template_configs` | `MailTemplateConfig` | Qué cuenta usa cada plantilla y si está activa |
+| `mail_settings` | `MailSetting` | Pausa global y límites de envío |
+| `mail_logs` | `MailLog` | Un registro por intento de correo |
+| `mail_events` | `MailEvent` | Eventos del proveedor recibidos por webhook |
 
-- **Pausarla**: `POST /admin/mail/templates/{id}/toggle`. Corta ese correo en el
-  acto, incluido el que ya está en cola.
-- **Asignarle una cuenta**: los avisos de facturación salen desde
-  `facturacion@`, los de producto desde `hola@`.
-
-Añade las tuyas en `MailTemplateConfig::getDefaults()`.
-
-## Pausa global y límites
+## Pausa global, plantillas y límites
 
 ```http
 PUT /admin/mail/settings
 { "global_pause": true }
+
+POST /admin/mail/templates/{id}/toggle
 ```
 
-Con la pausa activa, `MailService` descarta cualquier envío y lo deja anotado en
-el log de la aplicación. Es el botón de emergencia cuando un bucle empieza a
-mandar miles de correos.
+La pausa global es el botón de emergencia cuando un bucle empieza a mandar miles
+de correos; la de plantilla corta un tipo concreto. `daily_limit` (0 = sin límite)
+protege la cuota del proveedor. Todo lo cancelado queda en el historial como
+`skipped`.
 
-`daily_limit` y `rate_limit` (0 = sin límite) protegen la cuota del proveedor.
+## Ver los logs
+
+- Panel/API: `GET /admin/mail/logs` (filtros `status`, `template_key`,
+  `to_email`, `from`, `to`), `/logs/stats` y `/logs/{id}` con sus eventos.
+- Por consola: `make art cmd="tinker"` → `MailLog::latest()->limit(10)->get()`.
+- El motivo de una cancelación o un fallo está en `error_message`.
 
 ## Webhooks de entrega
 
@@ -180,9 +208,9 @@ con la retención de `config/mail-system.php`.
 - Las **credenciales no se guardan en la BD**. `mail_providers.config` solo lleva
   datos no sensibles (host, puerto, cifrado); la clave sale de
   `config/services.php` y `config/mail.php`, es decir, del `.env`.
-- Los **datos sensibles no llegan al registro**: `MailService` filtra
-  `password`, `token`, `reset_url`, `secret`, `api_key` y `content` antes de
-  guardar los metadatos.
+- Los **datos sensibles no llegan al registro**: `mail_logs.metadata` solo guarda
+  la clase que originó el correo (y la lista de destinatarios si hay varios);
+  nunca los datos de la vista, que pueden traer tokens o contraseñas.
 - El **webhook siempre verifica la firma**.
 
 ## Notas de rendimiento
@@ -190,13 +218,16 @@ con la retención de `config/mail-system.php`.
 - `mail_logs` es la tabla que más crece. Tiene índices por estado, plantilla,
   destinatario y `provider_message_id` (el que usa el webhook para correlacionar).
 - El listado del historial pagina en SQL; nunca cargues la tabla entera.
-- `SendMailJob` se despacha a la cola de `config/mail-system.php` → `queue`.
-  Sepárala de la cola por defecto (`MAIL_QUEUE=mail`) si tienes trabajos pesados:
+- Los Mailables y Notifications del sistema (`SimpleMail`, bienvenida, reset) van
+  a la cola de `config/mail-system.php` → `queue`. Sepárala de la cola por defecto (`MAIL_QUEUE=mail`) si tienes trabajos pesados:
   evita que un lote de PDFs retrase las notificaciones.
 
 ## Referencias
 
-- `app/Services/MailService.php` → punto de entrada
-- `app/Jobs/SendMailJob.php` → envío y reintentos
+- `app/Mail/Transport/AccountsTransport.php` → transport que elige proveedor por envío
+- `app/Listeners/Mail/MailSystemListener.php` → pausa, límites, registro (`MessageSending`/`MessageSent`)
+- `app/Services/Mail/MailSendPolicy.php` → reglas de pausa y límite
+- `app/Providers/MailSystemServiceProvider.php` → engancha todo a Laravel
+- `app/Services/MailService.php` → atajo para enviar una vista sin Mailable
 - `config/mail-system.php` → retención, cola, webhooks
 - `docs/logging-file-structure.md` → dónde aterrizan los logs de la aplicación

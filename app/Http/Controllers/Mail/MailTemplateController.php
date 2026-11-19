@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
  *
  * Gestión de plantillas: desde qué cuenta sale cada tipo de correo y si está
  * activa. Pausar una plantilla corta ese correo en el acto, incluso el que ya
- * está encolado (`SendMailJob` lo comprueba antes de enviar).
+ * está encolado (la política se evalúa al enviar, en el listener de `MessageSending`).
  */
 class MailTemplateController extends ApiController
 {

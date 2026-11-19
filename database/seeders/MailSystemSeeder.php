@@ -21,7 +21,7 @@ class MailSystemSeeder extends Seeder
 {
     public function run(): void
     {
-        $driver = (string) config('mail.default', 'log');
+        $driver = (string) config('mail.fallback', 'log');
 
         $provider = MailProvider::firstOrCreate(
             ['driver' => $driver],

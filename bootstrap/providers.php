@@ -9,4 +9,5 @@ return [
     Sentry\Laravel\ServiceProvider::class,
     App\Providers\ContractServiceProvider::class,
     App\Providers\AuthSecurityServiceProvider::class,
+    App\Providers\MailSystemServiceProvider::class,
 ];

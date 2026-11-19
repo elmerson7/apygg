@@ -2,59 +2,50 @@
 
 namespace App\Mail;
 
+use App\Mail\Transport\AccountsTransport;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Mail\Mailables\Headers;
 use Illuminate\Queue\SerializesModels;
 
 /**
  * SimpleMail
  *
- * Mailable simple para enviar emails usando vistas.
- * Puede ser usado con queue automáticamente si se implementa ShouldQueue.
+ * Mailable genérico para enviar una vista Blade con datos. Es lo que usa
+ * `MailService` (y por tanto el "correo de prueba"). Para un correo propio de
+ * la app, crea su Mailable o Notification; no hace falta pasar por aquí.
+ *
+ * Va en cola (`ShouldQueue`); `Mail::...->sendNow()` lo envía en el acto.
  */
 class SimpleMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    /**
-     * Vista del email
-     */
-    protected string $emailView;
+    public int $tries = 3;
+
+    public int $backoff = 30;
+
+    public int $timeout = 60;
 
     /**
-     * Datos para la vista
-     */
-    protected array $emailData;
-
-    /**
-     * Asunto del email
-     */
-    protected string $emailSubject;
-
-    /**
-     * Create a new message instance.
-     *
-     * @param  string  $view  Vista del email
-     * @param  array  $data  Datos para la vista
-     * @param  string  $subject  Asunto del email
+     * @param  array<string, mixed>  $emailData  Datos para la vista
+     * @param  array<int, array{content: string, filename: string}>  $files  Adjuntos
      */
     public function __construct(
-        string $view,
-        array $data = [],
-        string $subject = ''
+        protected string $emailView,
+        protected array $emailData = [],
+        protected string $emailSubject = '',
+        protected ?string $templateKey = null,
+        protected ?int $accountId = null,
+        protected array $files = [],
     ) {
-        $this->emailView = $view;
-        $this->emailData = $data;
-        $this->emailSubject = $subject;
+        $this->onQueue(config('mail-system.queue', 'default'));
     }
 
-    /**
-     * Get the message envelope.
-     */
     public function envelope(): Envelope
     {
         return new Envelope(
@@ -62,9 +53,6 @@ class SimpleMail extends Mailable implements ShouldQueue
         );
     }
 
-    /**
-     * Get the message content definition.
-     */
     public function content(): Content
     {
         return new Content(
@@ -74,12 +62,25 @@ class SimpleMail extends Mailable implements ShouldQueue
     }
 
     /**
-     * Get the attachments for the message.
-     *
+     * Clave de plantilla y cuenta forzada: cabeceras internas que el listener
+     * del sistema de correo lee y el transport retira antes de enviar.
+     */
+    public function headers(): Headers
+    {
+        return new Headers(text: array_filter([
+            AccountsTransport::HEADER_TEMPLATE => $this->templateKey,
+            AccountsTransport::HEADER_ACCOUNT => $this->accountId ? (string) $this->accountId : null,
+        ]));
+    }
+
+    /**
      * @return array<int, Attachment>
      */
     public function attachments(): array
     {
-        return [];
+        return array_map(
+            fn (array $file) => Attachment::fromData(fn () => $file['content'], $file['filename']),
+            $this->files,
+        );
     }
 }

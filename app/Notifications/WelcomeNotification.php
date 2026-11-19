@@ -2,21 +2,31 @@
 
 namespace App\Notifications;
 
+use App\Contracts\Mail\HasMailTemplate;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class WelcomeNotification extends Notification implements ShouldQueue
+class WelcomeNotification extends Notification implements HasMailTemplate, ShouldQueue
 {
     use Queueable;
+
+    public int $tries = 3;
+
+    public int $backoff = 30;
+
+    public static function mailTemplateKey(): string
+    {
+        return 'welcome';
+    }
 
     /**
      * Create a new notification instance.
      */
     public function __construct()
     {
-        //
+        $this->onQueue(config('mail-system.queue', 'default'));
     }
 
     /**

@@ -17,7 +17,13 @@ return [
     // Configuración por entorno:
     // - Desarrollo: 'log' (emails se guardan en storage/logs/laravel.log)
     // - Producción: 'smtp' (requiere configuración SMTP)
-    'default' => env('MAIL_MAILER', env('APP_ENV') === 'production' ? 'smtp' : 'log'),
+    'default' => env('MAIL_DEFAULT_MAILER', 'accounts'),
+
+    /*
+    | Mailer real que se usa cuando no hay ninguna cuenta en `mail_accounts`
+    | (y driver de las cuentas sin proveedor). Es el `MAIL_MAILER` de siempre.
+    */
+    'fallback' => env('MAIL_MAILER', env('APP_ENV') === 'production' ? 'smtp' : 'log'),
 
     /*
     |--------------------------------------------------------------------------
@@ -39,6 +45,11 @@ return [
     */
 
     'mailers' => [
+        // Elige el proveedor en cada envío según la cuenta activa en la BD
+        // (ver docs/mail-system.md). No usar como driver de una cuenta.
+        'accounts' => [
+            'transport' => 'accounts',
+        ],
 
         'smtp' => [
             'transport' => 'smtp',

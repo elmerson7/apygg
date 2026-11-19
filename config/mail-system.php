@@ -48,7 +48,8 @@ return [
     | Cola
     |--------------------------------------------------------------------------
     |
-    | Cola en la que se despacha SendMailJob. Separar el correo de la cola por
+    | Cola en la que van los Mailables/Notifications del sistema (SimpleMail,
+    | Welcome/ResetPassword). Separar el correo de la cola por
     | defecto evita que un pico de trabajos pesados retrase las notificaciones.
     |
     */

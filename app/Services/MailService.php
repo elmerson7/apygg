@@ -2,40 +2,37 @@
 
 namespace App\Services;
 
-use App\Jobs\SendMailJob;
 use App\Mail\SimpleMail;
 use App\Models\Mail\MailAccount;
-use App\Models\Mail\MailLog;
-use App\Models\Mail\MailSetting;
-use App\Models\Mail\MailTemplateConfig;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 /**
  * MailService
  *
- * Punto de entrada único para enviar correo. Ningún módulo debe llamar a
- * `Mail::send()` directamente: pasando por aquí se obtiene, sin esfuerzo,
+ * Fachada fina para enviar una VISTA Blade sin escribir un Mailable. Todo lo
+ * demás (cuenta, pausa, límites, registro en `mail_logs`) NO ocurre aquí sino
+ * en el sistema de correo de Laravel (listener de `MessageSending`, transport
+ * `accounts`), así que vale igual para Mailables y Notifications propios.
  *
- *   - selección de la cuenta de envío según la plantilla,
- *   - respeto de la pausa global y de los límites de envío,
- *   - registro en `mail_logs` de cada intento,
- *   - envío asíncrono con reintentos, y
- *   - correlación posterior con los webhooks del proveedor.
+ * Para un correo de la app, prefiere un Mailable o una Notification
+ * (ver docs/mail-system.md).
  *
- * Uso básico:
- *   MailService::send('ana@ejemplo.com', 'Bienvenida', 'emails.welcome', $data, 'welcome');
+ *   MailService::send('ana@ejemplo.com', 'Hola', 'emails.test', $data, 'mi_plantilla');
  */
 class MailService
 {
     /**
      * Enviar un correo (encolado por defecto).
      *
+     * Con `queue: false` devuelve si el envío se realizó; encolado devuelve
+     * true al aceptarlo (la pausa y el límite se aplican al enviar de verdad).
+     *
      * @param  string|array{email: string, name?: string}|array<int, string|array{email: string, name?: string}>  $to
      * @param  array<string, mixed>  $data  Datos para la vista
      * @param  string|null  $templateKey  Clave de `mail_template_configs`
+     * @param  MailAccount|null  $account  Fuerza esta cuenta de envío
      * @param  array<int, array{content: string, filename: string}>  $attachments
-     * @return bool true si se aceptó para envío
      */
     public static function send(
         string|array $to,
@@ -47,146 +44,34 @@ class MailService
         ?MailAccount $account = null,
         array $attachments = [],
         ?int $delaySeconds = null,
-        ?string $recipientType = null,
     ): bool {
-        if (! self::canSend($templateKey, $to)) {
-            return false;
-        }
+        $accepted = false;
 
-        $account ??= MailAccount::getActiveForSending($templateKey);
-
-        if (! $account) {
-            Log::error('MailService: no hay cuenta de correo disponible', [
-                'to' => $to,
-                'template' => $templateKey,
-            ]);
-
-            return false;
-        }
-
-        $sentAny = false;
-
+        // Un Mailable por destinatario: un registro en `mail_logs` por cada uno.
         foreach (self::normalizeRecipients($to) as $recipient) {
-            $log = self::createLog($account, $templateKey, $recipient, $subject, $recipientType, $data);
+            $mailable = new SimpleMail($view, $data, $subject, $templateKey, $account?->id, $attachments);
+            $pending = Mail::to([['email' => $recipient['email'], 'name' => $recipient['name']]]);
 
-            if ($queue) {
-                $job = SendMailJob::dispatch(
-                    $recipient['email'],
-                    $recipient['name'],
-                    $subject,
-                    $view,
-                    $data,
-                    $templateKey,
-                    $account->id,
-                    $log?->id,
-                    $attachments,
-                );
-
-                if ($delaySeconds !== null && $delaySeconds > 0) {
-                    $job->delay(now()->addSeconds($delaySeconds));
-
-                    $log?->update([
-                        'scheduled_at' => now()->addSeconds($delaySeconds),
-                        'status' => MailLog::STATUS_SCHEDULED,
-                    ]);
+            try {
+                if (! $queue) {
+                    $accepted = $pending->sendNow($mailable) !== null || $accepted;
+                } elseif ($delaySeconds !== null && $delaySeconds > 0) {
+                    $pending->later(now()->addSeconds($delaySeconds), $mailable);
+                    $accepted = true;
+                } else {
+                    $pending->queue($mailable);
+                    $accepted = true;
                 }
-
-                $sentAny = true;
-
-                continue;
+            } catch (\Throwable $e) {
+                Log::error('MailService: error de envío', [
+                    'to' => $recipient['email'],
+                    'subject' => $subject,
+                    'error' => $e->getMessage(),
+                ]);
             }
-
-            $sentAny = self::sendNow($account, $recipient, $subject, $view, $data, $log) || $sentAny;
         }
 
-        return $sentAny;
-    }
-
-    /**
-     * ¿Se puede enviar ahora mismo? Pausa global, plantilla pausada y límite diario.
-     */
-    /**
-     * @param  string|array<mixed>  $to
-     */
-    protected static function canSend(?string $templateKey, string|array $to): bool
-    {
-        if (MailSetting::isGloballyPaused()) {
-            Log::warning('MailService: envío omitido, pausa global activa', [
-                'to' => $to,
-                'template' => $templateKey,
-            ]);
-
-            return false;
-        }
-
-        if ($templateKey && MailTemplateConfig::isPaused($templateKey)) {
-            Log::info('MailService: envío omitido, plantilla pausada', [
-                'to' => $to,
-                'template' => $templateKey,
-            ]);
-
-            return false;
-        }
-
-        $dailyLimit = (int) MailSetting::getValue(MailSetting::KEY_DAILY_LIMIT, 0);
-
-        if ($dailyLimit > 0 && MailLog::sentToday() >= $dailyLimit) {
-            Log::warning('MailService: envío omitido, límite diario alcanzado', [
-                'limit' => $dailyLimit,
-                'to' => $to,
-            ]);
-
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Envío síncrono. Úsalo solo cuando necesites saber el resultado en el acto
-     * (por ejemplo, un "enviar correo de prueba" del panel).
-     *
-     * @param  array{email: string, name: string|null}  $recipient
-     * @param  array<string, mixed>  $data
-     */
-    protected static function sendNow(
-        MailAccount $account,
-        array $recipient,
-        string $subject,
-        string $view,
-        array $data,
-        ?MailLog $log,
-    ): bool {
-        try {
-            $mailable = new SimpleMail($view, $data, $subject);
-            $mailable->from($account->from_email, $account->from_name);
-
-            // Mailer::to() recibe un único destinatario; el nombre se
-            // pasa como array, no como segundo argumento.
-            Mail::mailer($account->getDriver())
-                ->to([['email' => $recipient['email'], 'name' => $recipient['name']]])
-                ->send($mailable);
-
-            $log?->update([
-                'status' => MailLog::STATUS_SENT,
-                'sent_at' => now(),
-            ]);
-
-            return true;
-        } catch (\Throwable $e) {
-            Log::error('MailService: error en envío síncrono', [
-                'to' => $recipient['email'],
-                'subject' => $subject,
-                'error' => $e->getMessage(),
-            ]);
-
-            $log?->update([
-                'status' => MailLog::STATUS_FAILED,
-                'error_message' => $e->getMessage(),
-            ]);
-
-            return false;
-        }
+        return $accepted;
     }
 
     /**
@@ -216,94 +101,5 @@ class MailService
         }
 
         return $recipients;
-    }
-
-    /**
-     * @param  array{email: string, name: string|null}  $recipient
-     * @param  array<string, mixed>  $data
-     */
-    protected static function createLog(
-        MailAccount $account,
-        ?string $templateKey,
-        array $recipient,
-        string $subject,
-        ?string $recipientType,
-        array $data,
-    ): ?MailLog {
-        try {
-            return MailLog::create([
-                'mail_account_id' => $account->id,
-                'template_key' => $templateKey,
-                'to_email' => $recipient['email'],
-                'to_name' => $recipient['name'],
-                'recipient_type' => $recipientType,
-                'subject' => $subject,
-                'status' => MailLog::STATUS_PENDING,
-                'metadata' => self::sanitizeMetadata($data),
-            ]);
-        } catch (\Throwable $e) {
-            // Un fallo al registrar no debe impedir el envío del correo.
-            Log::error('MailService: no se pudo crear el registro de correo', [
-                'error' => $e->getMessage(),
-            ]);
-
-            return null;
-        }
-    }
-
-    /**
-     * Los datos de la vista pueden traer tokens, contraseñas temporales o
-     * adjuntos en base64. Nada de eso debe acabar en la BD.
-     *
-     * @param  array<string, mixed>  $data
-     * @return array<string, mixed>
-     */
-    protected static function sanitizeMetadata(array $data): array
-    {
-        $sensitive = ['password', 'token', 'reset_url', 'secret', 'api_key', 'content'];
-        $clean = [];
-
-        foreach ($data as $key => $value) {
-            if (in_array(strtolower((string) $key), $sensitive, true)) {
-                continue;
-            }
-
-            if (is_scalar($value) || $value === null) {
-                $clean[$key] = $value;
-            }
-        }
-
-        return $clean;
-    }
-
-    // ─────────────────────────────────────────────────────────────────────
-    // Atajos para los correos del boilerplate
-    // ─────────────────────────────────────────────────────────────────────
-
-    public static function sendWelcome(string $email, string $name): bool
-    {
-        return self::send(
-            ['email' => $email, 'name' => $name],
-            'Bienvenido a '.config('app.name'),
-            'emails.welcome',
-            ['name' => $name, 'app_name' => config('app.name'), 'app_url' => config('app.url')],
-            'welcome',
-        );
-    }
-
-    public static function sendPasswordReset(string $email, string $name, string $resetUrl): bool
-    {
-        return self::send(
-            ['email' => $email, 'name' => $name],
-            'Restablecer contraseña — '.config('app.name'),
-            'emails.password-reset',
-            [
-                'name' => $name,
-                'reset_url' => $resetUrl,
-                'app_name' => config('app.name'),
-                'expires_minutes' => 60,
-            ],
-            'password_reset',
-        );
     }
 }

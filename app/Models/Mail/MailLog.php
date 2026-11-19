@@ -44,6 +44,9 @@ class MailLog extends Model
     /** Error al enviar */
     public const STATUS_FAILED = 'failed';
 
+    /** Cancelado por pausa global, plantilla pausada o límite diario */
+    public const STATUS_SKIPPED = 'skipped';
+
     /**
      * @var array<int, string>
      */
@@ -54,6 +57,7 @@ class MailLog extends Model
         self::STATUS_DELIVERED,
         self::STATUS_BOUNCED,
         self::STATUS_FAILED,
+        self::STATUS_SKIPPED,
     ];
 
     protected $fillable = [

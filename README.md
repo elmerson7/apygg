@@ -33,7 +33,7 @@ Cada módulo está implementado en el código. Lo que aún no está completo fig
 - **Logging**: `LogService` y canales `activity`, `security`, `auth` y `sentry`; registro de API en BD.
 - **Seguridad**: `SecurityAuditService` (escaneos en `/admin/security/scans`), lista de bloqueo (`/admin/blacklist`), headers de seguridad, rate limiting adaptativo y registro de eventos.
 - **Webhooks salientes**: suscripciones, entregas, reintentos y rotación de secreto (`/webhooks`).
-- **Correo**: multi-cuenta y multi-proveedor (`MailService`, modelos en `app/Models/Mail`), registro de envíos y webhook de entrega verificado con firma Svix (`/admin/mail`).
+- **Correo**: multi-cuenta y multi-proveedor (Mailables/Notifications estándar enganchados al sistema de correo; modelos en `app/Models/Mail`), registro de envíos y webhook de entrega verificado con firma Svix (`/admin/mail`).
 - **Gateway LLM**: capa agnóstica del proveedor (`app/Services/LLM`) con áreas, modelos de respaldo y auditoría (`/admin/llm`).
 - **Asistente de documentación (RAG)**: indexa los Markdown del proyecto y responde preguntas (`/docs/search`, `/docs/ask`).
 - **Menú dinámico**: ítems y visibilidad desde BD (`/admin/menu`).

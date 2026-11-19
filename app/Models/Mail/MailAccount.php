@@ -111,7 +111,7 @@ class MailAccount extends Model
     {
         $provider = $this->mailProvider;
 
-        return $provider ? $provider->driver : (string) config('mail.default');
+        return $provider ? $provider->driver : (string) config('mail.fallback');
     }
 
     public function isResend(): bool
