@@ -8836,6 +8836,857 @@
                 ]
             }
         },
+        "/tenants": {
+            "post": {
+                "operationId": "tenants.store",
+                "summary": "Alta de empresa: el usuario autenticado queda como dueño",
+                "tags": [
+                    "Tenant"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreTenantRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Creado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/TenantResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationFailed"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/tenants/mine": {
+            "get": {
+                "operationId": "tenants.mine",
+                "summary": "Empresas del usuario autenticado",
+                "tags": [
+                    "Tenant"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/TenantResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/tenant/invitations/accept": {
+            "post": {
+                "operationId": "tenant.invitations.accept",
+                "summary": "Aceptar con el token del correo. NO usa el middleware `tenant` (el invitado aún no es miembro)",
+                "tags": [
+                    "TenantInvitation"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AcceptTenantInvitationRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/TenantResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationFailed"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/tenant/invitations": {
+            "get": {
+                "operationId": "tenant.invitations.index",
+                "tags": [
+                    "TenantInvitation"
+                ],
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "accepted",
+                                "revoked",
+                                "expired"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 100
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Número de página (empieza en 1).",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Ítems por página; se acota al máximo del endpoint (100 por defecto).",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15,
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/TenantInvitationResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "$ref": "#/components/schemas/PaginationMeta"
+                                        },
+                                        "links": {
+                                            "$ref": "#/components/schemas/PaginationLinks"
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "data",
+                                        "meta",
+                                        "links"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationFailed"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "operationId": "tenant.invitations.store",
+                "tags": [
+                    "TenantInvitation"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreTenantInvitationRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Creado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/TenantInvitationResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationFailed"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/tenant/invitations/{id}/resend": {
+            "post": {
+                "operationId": "tenant.invitations.resend",
+                "tags": [
+                    "TenantInvitation"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/TenantInvitationResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/tenant/invitations/{id}": {
+            "delete": {
+                "operationId": "tenant.invitations.destroy",
+                "tags": [
+                    "TenantInvitation"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/TenantInvitationResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/tenant/members": {
+            "get": {
+                "operationId": "tenant.members.index",
+                "tags": [
+                    "TenantMember"
+                ],
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "$ref": "#/components/schemas/TenantMembershipStatus"
+                        }
+                    },
+                    {
+                        "name": "role",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "owner",
+                                "admin",
+                                "member"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 100
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Número de página (empieza en 1).",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Ítems por página; se acota al máximo del endpoint (100 por defecto).",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15,
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/TenantMemberResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "$ref": "#/components/schemas/PaginationMeta"
+                                        },
+                                        "links": {
+                                            "$ref": "#/components/schemas/PaginationLinks"
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "data",
+                                        "meta",
+                                        "links"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationFailed"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/tenant/members/{userId}": {
+            "patch": {
+                "operationId": "tenant.members.update",
+                "tags": [
+                    "TenantMember"
+                ],
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateTenantMemberRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/TenantMemberResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationFailed"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "operationId": "tenant.members.destroy",
+                "tags": [
+                    "TenantMember"
+                ],
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/tenant/members/{userId}/suspend": {
+            "post": {
+                "operationId": "tenant.members.suspend",
+                "tags": [
+                    "TenantMember"
+                ],
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/TenantMemberResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/tenant/members/{userId}/reactivate": {
+            "post": {
+                "operationId": "tenant.members.reactivate",
+                "tags": [
+                    "TenantMember"
+                ],
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/TenantMemberResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/users": {
             "get": {
                 "operationId": "users.index",
@@ -10269,6 +11120,19 @@
             }
         },
         "schemas": {
+            "AcceptTenantInvitationRequest": {
+                "type": "object",
+                "properties": {
+                    "token": {
+                        "type": "string",
+                        "maxLength": 128
+                    }
+                },
+                "required": [
+                    "token"
+                ],
+                "title": "AcceptTenantInvitationRequest"
+            },
             "ApiError": {
                 "type": "object",
                 "description": "Error de la API. Los clientes ramifican por `code` (estable), no por `message` (cambia con el idioma). Según quién lo produce (controller o handler RFC 7807) puede traer además `success`, `message`, `type`, `title`, `status`, `detail`, `instance`, `errors` y `meta`.",
@@ -12798,6 +13662,50 @@
                 ],
                 "title": "StoreSettingsRequest"
             },
+            "StoreTenantInvitationRequest": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "maxLength": 254
+                    },
+                    "role": {
+                        "type": "string",
+                        "enum": [
+                            "owner",
+                            "admin",
+                            "member"
+                        ]
+                    }
+                },
+                "required": [
+                    "email"
+                ],
+                "title": "StoreTenantInvitationRequest"
+            },
+            "StoreTenantRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 2,
+                        "maxLength": 120
+                    },
+                    "slug": {
+                        "type": "string",
+                        "description": "El middleware `tenant` trata un identificador solo numérico como id: el slug lleva al menos una letra.",
+                        "pattern": "^(?=.*[a-z])[a-z0-9]+(?:-[a-z0-9]+)*$",
+                        "minLength": 3,
+                        "maxLength": 63
+                    }
+                },
+                "required": [
+                    "name",
+                    "slug"
+                ],
+                "title": "StoreTenantRequest"
+            },
             "StoreUserRequest": {
                 "type": "object",
                 "description": "StoreUserRequest\n\nForm Request para validación de creación de usuarios.\nIncluye sanitización automática heredada de BaseFormRequest.",
@@ -12933,6 +13841,346 @@
                     "permissions"
                 ],
                 "title": "SyncRolePermissionsRequest"
+            },
+            "Tenant": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "domain": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "settings": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "additionalProperties": {}
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "deleted_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/TenantStatus"
+                    },
+                    "parent_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "trial_ends_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "locale": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "timezone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "currency": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "slug",
+                    "domain",
+                    "settings",
+                    "created_at",
+                    "updated_at",
+                    "deleted_at",
+                    "status",
+                    "parent_id",
+                    "trial_ends_at",
+                    "locale",
+                    "timezone",
+                    "currency"
+                ],
+                "title": "Tenant"
+            },
+            "TenantInvitation": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "tenant_id": {
+                        "type": "integer"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string"
+                    },
+                    "invited_by": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "accepted_by": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "expires_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "accepted_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "revoked_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "deleted_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "id",
+                    "tenant_id",
+                    "email",
+                    "role",
+                    "invited_by",
+                    "accepted_by",
+                    "expires_at",
+                    "accepted_at",
+                    "revoked_at",
+                    "created_at",
+                    "updated_at",
+                    "deleted_at"
+                ],
+                "title": "TenantInvitation"
+            },
+            "TenantInvitationResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "accepted",
+                            "revoked",
+                            "expired",
+                            "pending"
+                        ]
+                    },
+                    "invited_by": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "expires_at": {
+                        "type": "string"
+                    },
+                    "accepted_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "revoked_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "email",
+                    "role",
+                    "status",
+                    "invited_by",
+                    "expires_at",
+                    "accepted_at",
+                    "revoked_at",
+                    "created_at"
+                ],
+                "title": "TenantInvitationResource"
+            },
+            "TenantMemberResource": {
+                "type": "object",
+                "properties": {
+                    "user_id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "role": {},
+                    "status": {},
+                    "joined_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "user_id",
+                    "name",
+                    "email",
+                    "role",
+                    "status",
+                    "joined_at"
+                ],
+                "title": "TenantMemberResource"
+            },
+            "TenantMembershipStatus": {
+                "type": "string",
+                "description": "Estado de la pertenencia de un usuario a un tenant (`tenant_user.status`, string). Solo `active` da acceso al tenant.\n",
+                "enum": [
+                    "active",
+                    "invited",
+                    "suspended"
+                ],
+                "title": "TenantMembershipStatus"
+            },
+            "TenantResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "trial_ends_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "role": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Solo si se cargó por la membresía del usuario (`GET /tenants/mine`, alta de empresa)."
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "slug",
+                    "status",
+                    "trial_ends_at",
+                    "created_at"
+                ],
+                "title": "TenantResource"
+            },
+            "TenantStatus": {
+                "type": "string",
+                "description": "Estado de un tenant (columna `tenants.status`, string). Solo `active` permite operar: cualquier otro valor hace que el middleware `tenant` responda 403 `tenant_suspended`. Añadir un estado no exige migración (ver docs/migrations.md §4).\n| |\n|---|\n| `active` <br/>  |\n| `suspended` <br/>  |\n| `pending` <br/> Alta libre pendiente de revisión de la plataforma (`tenancy:approve`). |",
+                "enum": [
+                    "active",
+                    "suspended",
+                    "pending"
+                ],
+                "title": "TenantStatus"
             },
             "UpdateFileRequest": {
                 "type": "object",
@@ -13643,6 +14891,23 @@
                     }
                 },
                 "title": "UpdateTenantLocaleRequest"
+            },
+            "UpdateTenantMemberRequest": {
+                "type": "object",
+                "properties": {
+                    "role": {
+                        "type": "string",
+                        "enum": [
+                            "owner",
+                            "admin",
+                            "member"
+                        ]
+                    }
+                },
+                "required": [
+                    "role"
+                ],
+                "title": "UpdateTenantMemberRequest"
             },
             "UpdateUserLocaleRequest": {
                 "type": "object",

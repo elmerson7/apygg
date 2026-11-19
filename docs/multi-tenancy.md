@@ -68,7 +68,8 @@ Los logs (`000061`) llevan la columna con índice y sin FK (solo-añadir, alto v
    (`header,route,subdomain,domain`, en orden), `TENANT_HEADER` (por defecto `X-Tenant`),
    `TENANT_BASE_DOMAIN` (para subdominios). Todo en `config/multi-tenancy.php`.
 2. Migraciones: `tenants` (con `status` y `parent_id`) y `tenant_user` ya vienen en el boilerplate.
-3. Crea tenants y membresías (`$tenant->users()->attach($user, ['status' => 'active', 'joined_at' => now()])`).
+3. Crea tenants y membresías: por alta libre (`POST /tenants`) e invitaciones (`docs/tenant-onboarding.md`) o a mano
+   (`$tenant->users()->attach($user, ['status' => 'active', 'role' => 'owner', 'joined_at' => now()])`).
 4. Seeder de permisos: `tenants.access-any` (solo para soporte de plataforma).
 
 ## Hacer un modelo multiempresa
@@ -112,7 +113,8 @@ El middleware limpia el contexto al terminar la petición. Con multi-tenancy apa
 
 ## Membresías
 
-`tenant_user (tenant_id, user_id, status, invited_by, joined_at)`, único por par. Una persona puede
+`tenant_user (tenant_id, user_id, status, role, invited_by, joined_at)`, único por par (`role` es el rol del tenant:
+`owner`/`admin`/`member`; ver `docs/tenant-onboarding.md`). Una persona puede
 estar en varios tenants; solo `status = active` da acceso (`invited` y `suspended` no).
 `User::tenants()`, `Tenant::users()`, `User::isActiveMemberOf($tenant)`. `Tenant::parent()/children()`
 modelan una jerarquía opcional (agencia → negocio) **solo como dato**: no concede acceso heredado;
@@ -154,8 +156,9 @@ Con `forgetPattern` incluye el segmento `t<id>:` si quieres limitar al tenant.
 ## Huecos conocidos (léelos antes de activarlo)
 
 - `/users`, `/roles`, `/admin/*` son **de plataforma**: no usan el middleware `tenant`. Un usuario con
-  `users.read` ve a todos los usuarios; la administración de usuarios *dentro* de un tenant requiere un módulo
-  propio (filtrando por `tenant_user`). No des permisos de plataforma a roles de cliente.
+  `users.read` ve a todos los usuarios. La administración *dentro* de un tenant (miembros, roles del tenant,
+  invitaciones, alta de empresa) ya existe en `/tenant/members`, `/tenant/invitations` y `/tenants`:
+  ver `docs/tenant-onboarding.md`. No des permisos de plataforma a roles de cliente.
 - Un evento fuera de tenant no llega a webhooks (decisión de seguridad, no un fallo).
 - Las filas con `tenant_id` NULL son invisibles para los tenants pero visibles en `withoutTenant()`.
 - Los archivos antiguos conservan su ruta sin `tenants/<id>/`.

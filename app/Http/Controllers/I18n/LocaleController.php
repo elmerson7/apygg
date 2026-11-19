@@ -44,7 +44,7 @@ class LocaleController extends Controller
 
     public function updateTenant(UpdateTenantLocaleRequest $request): JsonResponse
     {
-        $tenant = $this->settings->updateTenant($this->tenants->require(), $request->validated());
+        $tenant = $this->settings->updateTenant($this->tenants->require(), $request->user(), $request->validated());
 
         return $this->sendSuccess($this->tenantPayload($tenant), __('messages.locale.tenant_updated'));
     }

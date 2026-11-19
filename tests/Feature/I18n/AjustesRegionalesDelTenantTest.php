@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use App\Support\Tenancy\TenantRoles;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,10 +17,11 @@ beforeEach(function () {
     $this->a = $this->makeTenant('acme');
     $this->b = $this->makeTenant('beta');
 
+    // Quien gestiona es admin DE ESTE tenant (tenant_user.role): el permiso suelto no basta (docs/tenant-onboarding.md).
     $this->adminA = User::factory()->create();
     $this->adminA->assignRole(Role::where('name', 'user')->first());
-    $this->adminA->givePermissionTo(Permission::where('name', 'tenant-settings.manage')->first());
-    $this->addMember($this->a, $this->adminA);
+    $this->a->users()->attach($this->adminA->getKey(), ['status' => 'active', 'role' => 'admin', 'joined_at' => now()]);
+    TenantRoles::sync($this->adminA, $this->a, 'admin');
 
     $this->miembroA = User::factory()->create();
     $this->miembroA->assignRole(Role::where('name', 'user')->first());
@@ -67,6 +68,14 @@ test('la moneda se valida contra config/currencies.php y I18N_CURRENCIES la rest
     $this->putJson('/tenant/locale', ['currency' => 'EUR'], $h)->assertStatus(422)->assertJsonValidationErrors('currency');
     // Una moneda que Money no conoce no se acepta aunque esté en la lista.
     $this->putJson('/tenant/locale', ['currency' => 'ZZZ'], $h)->assertStatus(422)->assertJsonValidationErrors('currency');
+});
+
+test('el rol de admin en A no permite cambiar los ajustes de B a quien allí es miembro raso', function () {
+    $this->addMember($this->b, $this->adminA); // rol `member` en B; con equipos apagados su rol de Spatie es global
+    $h = ['Authorization' => 'Bearer '.JWTAuth::fromUser($this->adminA), 'X-Tenant' => 'beta'];
+
+    $this->putJson('/tenant/locale', ['locale' => 'en'], $h)->assertForbidden()->assertJsonPath('code', 'tenant_role_insufficient');
+    expect($this->b->refresh()->locale)->toBeNull();
 });
 
 test('el tenant A no puede tocar los ajustes del tenant B', function () {

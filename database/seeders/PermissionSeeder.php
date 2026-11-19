@@ -70,6 +70,9 @@ class PermissionSeeder extends Seeder
             ['name' => 'tenants.access-any', 'display_name' => 'Acceder a Cualquier Tenant', 'description' => 'Permite entrar en cualquier tenant activo sin ser miembro (soporte de plataforma)'],
 
             ['name' => 'tenant-settings.manage', 'display_name' => 'Gestionar Ajustes del Tenant', 'description' => 'Permite cambiar los ajustes de la empresa activa (idioma, zona horaria y moneda por defecto)'],
+            ['name' => 'tenant-members.read', 'display_name' => 'Ver Miembros del Tenant', 'description' => 'Permite listar los miembros de la empresa activa'],
+            ['name' => 'tenant-members.manage', 'display_name' => 'Gestionar Miembros del Tenant', 'description' => 'Permite cambiar el rol, suspender, reactivar y quitar miembros de la empresa activa'],
+            ['name' => 'tenant-invitations.manage', 'display_name' => 'Gestionar Invitaciones del Tenant', 'description' => 'Permite listar, crear, reenviar y revocar invitaciones a la empresa activa'],
 
             // Back-office (Filament, opcional): ver docs/backoffice.md
             ['name' => 'backoffice.access', 'display_name' => 'Acceder al Back-office', 'description' => 'Permite entrar al panel interno (Filament); además exige MFA. Cada recurso pide sus propios permisos'],

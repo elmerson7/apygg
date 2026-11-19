@@ -24,6 +24,9 @@ use App\Contracts\SecurityAuditServiceInterface;
 use App\Contracts\SecurityServiceInterface;
 use App\Contracts\SequenceInterface;
 use App\Contracts\SettingsServiceInterface;
+use App\Contracts\TenantInvitationServiceInterface;
+use App\Contracts\TenantMemberServiceInterface;
+use App\Contracts\TenantOnboardingServiceInterface;
 use App\Contracts\TokenServiceInterface;
 use App\Contracts\UserServiceInterface;
 use App\Contracts\WebhookServiceInterface;
@@ -49,6 +52,9 @@ use App\Services\RoleService;
 use App\Services\SecurityAuditService;
 use App\Services\SecurityService;
 use App\Services\SettingsService;
+use App\Services\TenantInvitationService;
+use App\Services\TenantMemberService;
+use App\Services\TenantOnboardingService;
 use App\Services\TokenService;
 use App\Services\UserService;
 use App\Services\Webhooks\DnsHostResolver;
@@ -108,6 +114,9 @@ class ContractServiceProvider extends ServiceProvider
 
         $this->app->bind(LocaleResolverInterface::class, LocaleResolver::class);
         $this->app->bind(LocaleSettingsServiceInterface::class, LocaleSettingsService::class);
+        $this->app->bind(TenantOnboardingServiceInterface::class, TenantOnboardingService::class);
+        $this->app->bind(TenantInvitationServiceInterface::class, TenantInvitationService::class);
+        $this->app->bind(TenantMemberServiceInterface::class, TenantMemberService::class);
 
         // Colaborador sin estado: el DNS real; los tests lo sustituyen con `$this->app->instance(...)`.
         $this->app->singleton(HostResolverInterface::class, DnsHostResolver::class);

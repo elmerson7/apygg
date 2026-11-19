@@ -116,6 +116,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'feature' => CheckFeatureFlag::class,
             'auth.optional' => OptionalAuthMiddleware::class,
             'tenant' => \App\Http\Middleware\ResolveTenant::class,
+            'tenancy.enabled' => \App\Http\Middleware\EnsureTenancyEnabled::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

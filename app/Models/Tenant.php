@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\TenantMembershipStatus;
 use App\Enums\TenantStatus;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -25,6 +26,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $locale
  * @property string|null $timezone
  * @property string|null $currency
+ * @property CarbonInterface|null $trial_ends_at
  */
 class Tenant extends Model
 {
@@ -38,11 +40,13 @@ class Tenant extends Model
         'locale',
         'timezone',
         'currency',
+        'trial_ends_at',
     ];
 
     protected $casts = [
         'settings' => 'array',
         'status' => TenantStatus::class,
+        'trial_ends_at' => 'datetime',
     ];
 
     /**
@@ -53,7 +57,7 @@ class Tenant extends Model
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'tenant_user')
-            ->withPivot(['status', 'invited_by', 'joined_at'])
+            ->withPivot(['status', 'role', 'invited_by', 'joined_at'])
             ->withTimestamps();
     }
 

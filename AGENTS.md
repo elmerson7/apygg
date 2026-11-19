@@ -287,6 +287,7 @@ Una norma por documento; esos archivos son la fuente de verdad de cada tema:
 
 - [`docs/modules.md`](docs/modules.md) → anatomía de un módulo, checklist «añadir un módulo» y qué es núcleo u opcional.
 - [`docs/multi-tenancy.md`](docs/multi-tenancy.md) → multiempresa opt-in: `TenantContext`, `BelongsToTenant` fail-closed, middleware `tenant`, jobs y caché.
+- [`docs/tenant-onboarding.md`](docs/tenant-onboarding.md) → alta de empresa, invitaciones y miembros por tenant (roles, último dueño, tokens hasheados).
 - [`docs/octane.md`](docs/octane.md) → código seguro con Octane/FrankenPHP (estado, bindings, guards, caché de permisos).
 - [`docs/queues-and-jobs.md`](docs/queues-and-jobs.md) → colas, base `Job`, reintentos, idempotencia, `afterCommit`.
 - [`docs/integrations.md`](docs/integrations.md) → integraciones externas con versión simulada y webhooks entrantes (pagos, WhatsApp, SMS, push…).

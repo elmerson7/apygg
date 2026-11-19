@@ -296,6 +296,16 @@ Solo afecta si activas `MULTI_TENANCY_ENABLED=true` (con `false` todo sigue igua
 - `User::isAdmin()` con teams = admin del tenant activo o de la plataforma; nuevo `User::canEnterTenant()`.
 - `CacheService`: dentro de `TenantQuery::withoutTenant()` las claves no llevan prefijo de tenant.
 
+### 14d-bis. Multiempresa: alta, invitaciones y miembros
+
+Solo si activas `MULTI_TENANCY_ENABLED=true`. Migraciones nuevas `2026_11_19_000100` (`tenants.trial_ends_at` y
+`tenant_user.role`, por defecto `member`) y `000101` (`tenant_invitations`). Pasos: `make art cmd="migrate"`;
+`make art cmd="db:seed --class=RoleSeeder"` (nuevos permisos `tenant-members.*`, `tenant-invitations.manage` y roles
+`tenant-owner/admin/member`); y, si ya tenías membresías, nombra a los dueños:
+`php artisan tenancy:set-role <tenant> <email> owner` (sin dueño, solo la plataforma puede administrar miembros).
+Variables nuevas en `.env.example` (`TENANT_SIGNUP_*`, `TENANT_INVITATION_*`, `TENANT_TRIAL_DAYS`). `TenantStatus`
+gana el caso `pending`. Detalle: `docs/tenant-onboarding.md`.
+
 ### 14e. Actualizar la imagen por seguridad (PHP / FrankenPHP)
 
 La imagen de la app fija la versión exacta en `docker/app/Dockerfile`

@@ -154,6 +154,9 @@ function archServiciosConInterfaz(): array
         'App\Services\Webhooks\DnsHostResolver' => 'App\Contracts\HostResolverInterface',
         'App\Services\I18n\LocaleResolver' => 'App\Contracts\LocaleResolverInterface',
         'App\Services\I18n\LocaleSettingsService' => 'App\Contracts\LocaleSettingsServiceInterface',
+        'App\Services\TenantOnboardingService' => 'App\Contracts\TenantOnboardingServiceInterface',
+        'App\Services\TenantInvitationService' => 'App\Contracts\TenantInvitationServiceInterface',
+        'App\Services\TenantMemberService' => 'App\Contracts\TenantMemberServiceInterface',
     ];
 }
 

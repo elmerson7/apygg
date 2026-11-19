@@ -41,6 +41,23 @@ class RoleSeeder extends Seeder
                     'roles.read', 'roles.create', 'roles.update',
                 ],
             ],
+            // Roles DEL TENANT (multi-tenancy.onboarding.roles): se asignan al crear/invitar miembros.
+            // Con PERMISSION_TEAMS=true se asignan por tenant; ver docs/tenant-onboarding.md.
+            'tenant-owner' => [
+                'display_name' => 'Dueño de la empresa',
+                'description' => 'Gestiona miembros, invitaciones y ajustes de su empresa',
+                'permissions' => ['tenant-members.read', 'tenant-members.manage', 'tenant-invitations.manage', 'tenant-settings.manage'],
+            ],
+            'tenant-admin' => [
+                'display_name' => 'Administrador de la empresa',
+                'description' => 'Gestiona miembros, invitaciones y ajustes de su empresa (sin superar su rango)',
+                'permissions' => ['tenant-members.read', 'tenant-members.manage', 'tenant-invitations.manage', 'tenant-settings.manage'],
+            ],
+            'tenant-member' => [
+                'display_name' => 'Miembro de la empresa',
+                'description' => 'Ve a los demás miembros de su empresa',
+                'permissions' => ['tenant-members.read'],
+            ],
             'user' => [
                 'display_name' => 'Usuario',
                 'description' => 'Usuario estándar: sin permisos de administración',

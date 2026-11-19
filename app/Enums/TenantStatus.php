@@ -12,4 +12,6 @@ enum TenantStatus: string
 {
     case Active = 'active';
     case Suspended = 'suspended';
+    /** Alta libre pendiente de revisión de la plataforma (`tenancy:approve`). */
+    case Pending = 'pending';
 }

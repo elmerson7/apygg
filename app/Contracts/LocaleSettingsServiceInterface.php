@@ -17,7 +17,9 @@ interface LocaleSettingsServiceInterface
     /**
      * Guarda idioma, zona horaria y moneda del tenant (null = heredar de la instalación).
      *
+     * Exige que el rol del actor en ese tenant conceda `tenant-settings.manage` (403 si no).
+     *
      * @param  array<string, mixed>  $data  Ya validado: `locale`, `timezone`, `currency`
      */
-    public function updateTenant(Tenant $tenant, array $data): Tenant;
+    public function updateTenant(Tenant $tenant, User $actor, array $data): Tenant;
 }

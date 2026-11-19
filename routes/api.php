@@ -59,6 +59,7 @@ require __DIR__.'/api/menu.php';
 require __DIR__.'/api/security.php';
 require __DIR__.'/api/docs.php';
 require __DIR__.'/api/settings.php';
+require __DIR__.'/api/tenant-onboarding.php';
 
 // Usuario autenticado (/user)
 require __DIR__.'/api/user.php';
