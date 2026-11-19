@@ -45,6 +45,7 @@ Cada módulo está implementado en el código. Lo que aún no está completo fig
 - **Backups**: volcado de BD con subida opcional a remoto (comandos `backup:*`). El respaldo de archivos no está implementado.
 - **Feature flags**: `config/features.php` y helper `Feature`.
 - **Health**: `/health`, `/health/live`, `/health/ready` y `/health/detailed` (autenticado).
+- **Back-office interno (opcional)**: panel Filament para el dueño de la plataforma (usuarios, roles, logs, correo, ajustes, lista negra) con MFA obligatorio, en `/backoffice`; se apaga con `BACKOFFICE_ENABLED=false` y se puede quitar (ver `docs/backoffice.md`).
 - **Documentación de API**: Scramble en `/docs/api`.
 
 Autenticación social (Socialite) tiene controlador y servicio, pero no tiene rutas. Ver TASKS.md.

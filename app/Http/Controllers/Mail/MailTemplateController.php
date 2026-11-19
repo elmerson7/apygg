@@ -51,7 +51,7 @@ class MailTemplateController extends Controller
      */
     public function toggle(MailTemplateConfig $mailTemplate): JsonResponse
     {
-        $mailTemplate->update(['is_active' => ! $mailTemplate->is_active]);
+        $mailTemplate->toggleActive();
 
         return $this->sendSuccess(
             new MailTemplateConfigResource($mailTemplate),

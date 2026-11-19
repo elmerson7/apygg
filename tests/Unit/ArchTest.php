@@ -207,13 +207,17 @@ test('toda clase de App\Services tiene interfaz o está en la lista de excepcion
 test('no hay propiedades estáticas mutables en App (estado compartido en Octane)', function () {
     // PHP no admite `static readonly`: cualquier propiedad estática es mutable. Usa constantes,
     // config, atributos de la petición o un binding del contenedor.
-    // Excepción justificada: Tenant guarda el tenant actual; se rehace en la fase de multiempresa.
+    // Excepciones justificadas:
+    // - Tenant guarda el tenant actual; se rehace en la fase de multiempresa.
+    // - app/Filament/: Filament exige metadatos estáticos ($model, $navigationIcon, $slug...)
+    //   que se fijan en la declaración y nunca se mutan en tiempo de ejecución.
     $permitidas = ['app/Models/Tenant.php'];
+    $carpetasPermitidas = ['app/Filament/'];
 
     $violaciones = [];
 
     foreach (archPhpFiles('app') as $file) {
-        if (in_array($file, $permitidas, true)) {
+        if (in_array($file, $permitidas, true) || str_starts_with($file, $carpetasPermitidas[0])) {
             continue;
         }
 

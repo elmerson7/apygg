@@ -10,6 +10,12 @@ use App\Traits\Searchable;
 use App\Traits\SoftDeletesWithUser;
 use Carbon\Carbon;
 use Database\Factories\UserFactory;
+use Filament\Auth\MultiFactor\App\Concerns\InteractsWithAppAuthentication;
+use Filament\Auth\MultiFactor\App\Concerns\InteractsWithAppAuthenticationRecovery;
+use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthentication;
+use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthenticationRecovery;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -40,10 +46,10 @@ use Spatie\Permission\Traits\HasRoles;
  * @property Carbon $updated_at
  * @property Carbon|null $deleted_at
  */
-class User extends Authenticatable implements JWTSubject
+class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery, JWTSubject
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, HasRoles, LogsActivity, Notifiable, Searchable, SoftDeletes, SoftDeletesWithUser;
+    use HasApiTokens, HasFactory, HasRoles, InteractsWithAppAuthentication, InteractsWithAppAuthenticationRecovery, LogsActivity, Notifiable, Searchable, SoftDeletes, SoftDeletesWithUser;
 
     /**
      * Guard de Spatie: los roles y permisos de usuario viven en el guard de la API (JWT),
@@ -160,6 +166,27 @@ class User extends Authenticatable implements JWTSubject
     public function isAdmin(): bool
     {
         return $this->hasRole('admin');
+    }
+
+    /**
+     * Acceso al back-office (Filament). Módulo opcional: ver docs/backoffice.md.
+     *
+     * Filament autentica por el guard `web` (sesión), pero los roles y permisos de este modelo
+     * son del guard `api`: `$guard_name = 'api'` hace que Spatie los resuelva siempre contra
+     * `api`, sea cual sea el guard de la petición. Por eso `can()` sirve desde la sesión web
+     * (y respeta al super admin). Se exige además que la cuenta esté activa y no bloqueada.
+     */
+    public function canAccessPanel(Panel $panel): bool
+    {
+        if ($panel->getId() !== 'backoffice') {
+            return false;
+        }
+
+        if ($this->trashed() || Blacklist::isBlocked($this->email, $this->identity_document, $this->id)) {
+            return false;
+        }
+
+        return $this->can('backoffice.access');
     }
 
     /**

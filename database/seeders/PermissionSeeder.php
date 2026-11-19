@@ -66,6 +66,9 @@ class PermissionSeeder extends Seeder
             ['name' => 'llm.manage', 'display_name' => 'Gestionar IA', 'description' => 'Permite configurar las áreas y modelos de IA'],
             ['name' => 'llm.logs', 'display_name' => 'Ver Auditoría de IA', 'description' => 'Permite consultar el consumo y la auditoría de las llamadas a IA'],
 
+            // Back-office (Filament, opcional): ver docs/backoffice.md
+            ['name' => 'backoffice.access', 'display_name' => 'Acceder al Back-office', 'description' => 'Permite entrar al panel interno (Filament); además exige MFA. Cada recurso pide sus propios permisos'],
+
             // Sistema
             ['name' => 'system.settings', 'display_name' => 'Gestionar Configuración', 'description' => 'Permite ver la sección de configuración del sistema en el menú'],
             ['name' => 'system.logs', 'display_name' => 'Ver Logs', 'description' => 'Permite ver los logs de actividad, API y seguridad'],

@@ -37,7 +37,7 @@ no va aquí.
 
 ## Stack
 
-- Laravel 13 · PHP 8.5 · FrankenPHP/Octane (**no** nginx, **no** apache)
+- Laravel 13 · PHP 8.5 · FrankenPHP/Octane (**no** nginx, **no** apache) · Filament 5 (back-office opcional)
 - PostgreSQL 18 · Redis 7 · Docker Compose
 - JWT + Sanctum · Spatie Permission 8 · Horizon · Reverb · Scout/Meilisearch
 - Pest · Pint · PHPStan (Larastan)
@@ -53,6 +53,19 @@ Detalle completo en `TECH_STACK.md`.
 - **IDs**: el `Model` base usa auto-incremental (`int`). Usa el trait `HasUuid`
   cuando el recurso deba exponer un identificador no adivinable. Ver
   `docs/id-strategy.md`.
+
+## Back-office (Filament, opcional)
+
+Panel web interno **solo para el dueño de la plataforma** (no es el panel de los clientes de un
+SaaS: ese es API + frontend propio). Módulo **quitable**: todo vive en `app/Filament/`,
+`app/Providers/Filament/BackofficePanelProvider.php`, `config/backoffice.php` y `docs/backoffice.md`.
+
+- Ruta `/backoffice` (`BACKOFFICE_PATH`; **no** `/admin`, que es de la API). `BACKOFFICE_ENABLED=false` → el panel no se registra.
+- Acceso: sesión **web** (guard `web`) + permiso `backoffice.access` (guard `api`, como todos; `User::$guard_name = 'api'` lo resuelve) + **MFA TOTP obligatorio**. Inactivos y lista negra no entran.
+- Un recurso nuevo **no duplica lógica**: autoriza con la policy del modelo (o una `PermissionBasedPolicy` si la API solo usa middleware) y **escribe llamando al servicio** (`UserService`, `RoleService`...). Nada de `$record->update()` directo si existe servicio. Errores de dominio → `Failure::guard()`.
+- Sin policy, Filament **deniega**: registra la del modelo (ver `boot()` del provider). Los recursos de solo lectura usan `IsReadOnly`. Logs: muestra con `Pretty::json()` (redacta secretos).
+- Sin estado estático ni cachés en recursos (Octane). El panel fija `authGuard('web')`: no uses `auth()->user()` sin guard donde pueda correr el guard `api`.
+- Tests: `tests/Feature/Backoffice/` (Livewire + helpers de Filament). Detalle y cómo quitarlo: `docs/backoffice.md`.
 
 ## Arquitectura
 

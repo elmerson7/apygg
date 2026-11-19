@@ -47,6 +47,18 @@ class MailTemplateConfig extends Model
     /**
      * ¿Está pausada esta plantilla?
      */
+    /**
+     * Pausar o reanudar la plantilla (lo usan la API y el back-office).
+     *
+     * @return bool El nuevo estado: true si queda activa
+     */
+    public function toggleActive(): bool
+    {
+        $this->update(['is_active' => ! $this->is_active]);
+
+        return $this->is_active;
+    }
+
     public static function isPaused(string $templateKey): bool
     {
         $config = self::query()->where('template_key', $templateKey)->first();

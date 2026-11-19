@@ -39,6 +39,7 @@
         <env name="MAIL_MAILER" force="true" value="array"/>
         <env name="QUEUE_CONNECTION" force="true" value="sync"/>
         <env name="SESSION_DRIVER" value="array" force="true"/>
+        <env name="BACKOFFICE_ENABLED" value="true" force="true"/>
         <env name="BROADCAST_CONNECTION" value="null" force="true"/>
         <env name="TELESCOPE_ENABLED" value="false" force="true"/>
         <ini name="memory_limit" value="1G"/>

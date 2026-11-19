@@ -3,6 +3,8 @@
 namespace App\Contracts;
 
 use App\Models\Role;
+use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -99,4 +101,13 @@ interface RoleServiceInterface
      * @param  string  $permissionName  Nombre del permiso
      */
     public function hasPermission(string $roleId, string $permissionName): bool;
+
+    /**
+     * Nadie concede permisos que no tiene (salvo un admin).
+     *
+     * @param  array<int, int|string>  $permissionIds
+     *
+     * @throws AuthorizationException
+     */
+    public function assertCanGrantPermissions(User $actor, array $permissionIds): void;
 }

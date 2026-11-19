@@ -58,6 +58,7 @@ Petición → Middleware → Controller → Form Request → Service → (Reposi
 | Caché | `CacheService`, comandos `cache:*` | — |
 | Backups | `BackupService`, comandos `backup:*` y `db:backup` | — |
 | Feature flags | `config/features.php`, helper `App\Helpers\Feature`, middleware `CheckFeatureFlag` | — |
+| Back-office (opcional) | Filament 5: `app/Filament/*`, `BackofficePanelProvider`, `config/backoffice.php`; reutiliza servicios y policies de la API | `/backoffice` (web, sesión + MFA) |
 | Health | `HealthController` | `/health`, `/health/live`, `/health/ready`, `/health/detailed` |
 | Documentación API | Scramble (`config/scramble.php`) | `/docs/api` |
 

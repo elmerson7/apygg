@@ -214,6 +214,6 @@ return [
         'cookie', 'key', 'credit_card', 'cvv', 'ssn',
     ],
 
-    'redact_key_fragments' => ['password', '_token', 'secret', 'api_key', 'authorization', 'cookie'],
+    'redact_key_fragments' => ['password', '_token', 'secret', 'api_key', 'authorization', 'cookie', 'recovery_codes'],
 
 ];

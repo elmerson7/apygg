@@ -18,8 +18,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Asistente de documentación con RAG sobre los Markdown del proyecto (`/docs/search`, `/docs/ask`)
 - Menú dinámico administrable (`/admin/menu`)
 - Auditoría de seguridad, lista de bloqueo y escáner de seguridad (`/admin/security/scans`, `/admin/blacklist`)
+- Back-office interno opcional con Filament 5 (`/backoffice`, panel `backoffice`): usuarios, roles y permisos, logs de actividad/API/seguridad, correo (cuentas, plantillas, envíos), ajustes, lista negra y widget de salud. Acceso por sesión web con el permiso nuevo `backoffice.access` y MFA (TOTP) obligatorio; usa los mismos servicios y policies que la API. `BACKOFFICE_ENABLED=false` lo apaga; `docs/backoffice.md` explica cómo quitarlo
+- Migración `2026_11_19_000030` (columnas cifradas del MFA por app en `users`)
+- `RoleService::assertCanGrantPermissions` y `MailTemplateConfig::toggleActive`: la lógica que estaba en un controller pasa a un sitio que comparten la API y el back-office
 
 ### Changed
+- `chillerlan/php-qrcode` baja a `^5.0` (Filament 5 lo exige; `QrCodeService` ya usaba la API v5) y `composer update -W` sube `laravel/framework` a 13.43 y dependencias de Symfony
+- `post-autoload-dump` publica los assets de Filament (`filament:upgrade`); no se versionan (`public/{css,js,fonts}/filament`)
+- `bootstrap/app.php`: las rutas del back-office y de Livewire no pasan por el render JSON de la API
+- `redact_key_fragments` incluye `recovery_codes` (códigos de recuperación del MFA)
 - RBAC migrado a `spatie/laravel-permission` 8.5 (antes propio): `Role`/`Permission` extienden los del paquete, `User` usa `HasRoles` (guard `api`), middlewares `permission:`/`role:`/`role_or_permission:` del paquete con permiso explícito y guard en cada ruta (se elimina el mapa método HTTP → acción y `CheckPermission`/`CheckRole`). Migraciones nuevas `2026_11_19_000002` y `000003` (ver `docs/permissions.md`). Teams preparado y apagado (`PERMISSION_TEAMS`, columna `tenant_id`)
 - Super admin por `Gate::after` (rol `admin`); `User::hasPermission/hasRole propios` sustituidos por `can()`/`hasPermissionTo()`/`hasRole()` de Spatie
 - Semillas limpias: `PermissionSeeder` con solo los permisos que usa el código (test que lo vigila), `RoleSeeder` (admin, manager, user), `AdminUserSeeder` desde `ADMIN_EMAIL`/`ADMIN_PASSWORD` y `DemoDataSeeder` solo local

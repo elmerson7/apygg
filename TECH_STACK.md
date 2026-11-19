@@ -28,7 +28,8 @@ Extensiones PHP instaladas en la imagen: `pcntl`, `intl`, `zip`, `opcache`, `gd`
 | `dedoc/scramble` | 0.13.43 | Documentación OpenAPI en `/docs/api` |
 | `sentry/sentry-laravel` | 4.27.0 | Captura de excepciones (`bootstrap/app.php`) |
 | `laravel/telescope` | 5.24.0 | Depuración (provider registrado en `bootstrap/providers.php`) |
-| `chillerlan/php-qrcode` | 6.0.1 | `QrCodeService` |
+| `chillerlan/php-qrcode` | 5.0.5 | `QrCodeService` (bajado de 6.x: Filament 5 exige `^5.0`; el servicio ya usaba la API v5) |
+| `filament/filament` | 5.11.4 | Back-office interno opcional (`app/Filament`, panel `backoffice`); trae Livewire 4.4.8. Ver `docs/backoffice.md` |
 
 Dependencias del `composer.json` sin uso en `app/`, `config/`, `routes/` ni `bootstrap/` (comprobado con grep):
 

@@ -80,12 +80,29 @@ return Application::configure(basePath: dirname(__DIR__))
         // Esto captura automáticamente todas las excepciones y las envía a Sentry
         Integration::handles($exceptions);
 
-        // Forzar respuestas JSON para todas las excepciones (API-only)
-        $exceptions->shouldRenderJsonWhen(function ($request, \Throwable $e) {
-            return true; // Siempre devolver JSON
+        // Back-office (Filament, módulo opcional; ver docs/backoffice.md): sus pantallas y las
+        // peticiones de Livewire son HTML/redirecciones, no API. Sin la config, nunca coincide.
+        $isBackoffice = function ($request): bool {
+            if (! config('backoffice.enabled', false)) {
+                return false;
+            }
+
+            $path = trim((string) config('backoffice.path', 'backoffice'), '/');
+
+            return $request->is($path, $path.'/*', 'livewire*');
+        };
+
+        // Forzar respuestas JSON para todas las excepciones (API-only), salvo el back-office
+        $exceptions->shouldRenderJsonWhen(function ($request, \Throwable $e) use ($isBackoffice) {
+            return ! $isBackoffice($request);
         });
 
-        $exceptions->render(function (\Throwable $e, $request) {
+        $exceptions->render(function (\Throwable $e, $request) use ($isBackoffice) {
+            // El back-office usa el render estándar de Laravel/Filament (redirige al login, páginas 403/404 HTML).
+            if ($isBackoffice($request)) {
+                return null;
+            }
+
             // Helper para registrar request/response en logs_api (incluso para excepciones)
             $logApiRequest = function (\Throwable $exception, $req) {
                 try {

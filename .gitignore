@@ -17,6 +17,10 @@ env/*.env
 /auth.json
 /node_modules
 /public/build
+# Assets de Filament (back-office): los publica `filament:upgrade` en post-autoload-dump
+/public/css/filament
+/public/js/filament
+/public/fonts/filament
 /public/hot
 /public/storage
 /storage/*.key

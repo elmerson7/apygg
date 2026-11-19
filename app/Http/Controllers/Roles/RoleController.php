@@ -7,9 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Roles\StoreRoleRequest;
 use App\Http\Requests\Roles\SyncRolePermissionsRequest;
 use App\Http\Requests\Roles\UpdateRoleRequest;
-use App\Models\Permission;
 use App\Models\Role;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -46,7 +44,7 @@ class RoleController extends Controller
         $permissionIds = $validated['permission_ids'] ?? null;
         if ($permissionIds !== null) {
             $this->authorize('assignPermission', new Role);
-            $this->authorizePermissionIds($permissionIds);
+            $this->roleService->assertCanGrantPermissions(auth()->user(), $permissionIds);
         }
 
         $role = $this->roleService->create($validated);
@@ -67,7 +65,7 @@ class RoleController extends Controller
         $permissionIds = $validated['permission_ids'] ?? null;
         if ($permissionIds !== null) {
             $this->authorize('assignPermission', $role);
-            $this->authorizePermissionIds($permissionIds);
+            $this->roleService->assertCanGrantPermissions(auth()->user(), $permissionIds);
         }
 
         $this->roleService->update($id, Arr::except($validated, ['permission_ids']));
@@ -105,32 +103,10 @@ class RoleController extends Controller
 
         $validated = $request->validated();
 
-        $this->authorizePermissionIds($validated['permissions']);
+        $this->roleService->assertCanGrantPermissions(auth()->user(), $validated['permissions']);
 
         $this->roleService->syncPermissions($id, $validated['permissions']);
 
         return $this->sendSuccess($this->roleService->getPermissions($id), 'Permisos actualizados exitosamente');
-    }
-
-    /**
-     * Nadie concede permisos que no tiene (salvo un admin).
-     *
-     * @param  array<int, int|string>  $permissionIds
-     *
-     * @throws AuthorizationException
-     */
-    private function authorizePermissionIds(array $permissionIds): void
-    {
-        $actor = auth()->user();
-
-        if ($actor->isAdmin()) {
-            return;
-        }
-
-        foreach (Permission::whereIn('id', $permissionIds)->pluck('name') as $name) {
-            if (! $actor->checkPermissionTo($name)) {
-                throw new AuthorizationException('No puedes conceder permisos que no tienes');
-            }
-        }
     }
 }

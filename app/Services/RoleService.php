@@ -6,6 +6,8 @@ use App\Contracts\RoleServiceInterface;
 use App\Exceptions\BusinessLogicException;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
@@ -305,6 +307,28 @@ class RoleService implements RoleServiceInterface
         ], 'activity');
 
         return $role->fresh(['permissions']);
+    }
+
+    /**
+     * Nadie concede permisos que no tiene (salvo un admin).
+     *
+     * Lo comparten la API (RoleController) y el back-office (Filament).
+     *
+     * @param  array<int, int|string>  $permissionIds
+     *
+     * @throws AuthorizationException
+     */
+    public function assertCanGrantPermissions(User $actor, array $permissionIds): void
+    {
+        if ($actor->isAdmin()) {
+            return;
+        }
+
+        foreach (Permission::whereIn('id', $permissionIds)->pluck('name') as $name) {
+            if (! $actor->checkPermissionTo($name)) {
+                throw new AuthorizationException('No puedes conceder permisos que no tienes');
+            }
+        }
     }
 
     /**
