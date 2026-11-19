@@ -1,167 +1,76 @@
 # Guía de Seeders
 
-Esta guía explica cómo ejecutar los seeders para poblar la base de datos con datos iniciales.
+Los seeders pueblan la base con los datos mínimos del RBAC y, solo en local, con
+datos de demostración. Todos son **idempotentes** (`firstOrCreate`): puedes
+ejecutarlos varias veces sin duplicar nada y sin pisar lo editado a mano.
 
-## 📋 Contenido de los Seeders
-
-### RoleSeeder
-Crea 6 roles base del sistema:
-- **admin**: Administrador con acceso total
-- **manager**: Gerente con permisos de gestión y supervisión
-- **user**: Usuario estándar con permisos básicos
-- **guest**: Invitado con acceso de solo lectura
-- **moderator**: Moderador con permisos de moderación de contenido
-- **editor**: Editor con permisos de edición de contenido
-
-### PermissionSeeder
-Crea 30 permisos organizados por recursos:
-- **Usuarios**: create, read, update, delete, manage-roles
-- **Roles**: create, read, update, delete, manage-permissions
-- **Permisos**: create, read, update, delete
-- **Posts**: create, read, update, update-any, delete, delete-any, moderate
-- **Comentarios**: create, read, update, delete, moderate
-- **Sistema**: settings, logs, backup, users
-
-Los permisos se asignan automáticamente a los roles según su jerarquía.
-
-### UserSeeder
-Crea 12 usuarios de prueba con diferentes roles asignados:
-
-| Usuario | Email | Roles | Email Verificado |
-|---------|-------|-------|------------------|
-| Admin User | admin@apygg.com | admin | ✅ |
-| Manager User | manager@apygg.com | manager | ✅ |
-| John Doe | john.doe@example.com | user, editor | ✅ |
-| Jane Smith | jane.smith@example.com | user, moderator | ✅ |
-| Bob Johnson | bob.johnson@example.com | user | ✅ |
-| Alice Williams | alice.williams@example.com | user | ✅ |
-| Charlie Brown | charlie.brown@example.com | user | ✅ |
-| Diana Prince | diana.prince@example.com | user | ✅ |
-| Moderator User | moderator@apygg.com | moderator | ✅ |
-| Editor User | editor@apygg.com | editor | ✅ |
-| Guest User | guest@apygg.com | guest | ❌ |
-| Test User | test@apygg.com | user (+ permisos directos) | ✅ |
-
-**⚠️ IMPORTANTE**: Todos los usuarios tienen la misma contraseña por defecto: `password`
-
-## 🚀 Cómo Ejecutar los Seeders
-
-### Opción 1: Ejecutar todos los seeders (Recomendado)
-
-Ejecuta el `DatabaseSeeder` que ejecuta todos los seeders en el orden correcto:
+Todo se ejecuta por Docker con `make` (nunca `php artisan` en el host):
 
 ```bash
-# Desde Docker (recomendado)
-make sh
-php artisan db:seed
-
-# O directamente desde Docker
-docker compose exec app php artisan db:seed
+make art cmd="db:seed"                              # DatabaseSeeder (seguro en producción)
+make art cmd="db:seed --class=DemoDataSeeder"       # demo, solo local
+make art cmd="migrate:fresh --seed"                 # ⚠️ borra todo y siembra
 ```
 
-### Opción 2: Ejecutar seeders individuales
+## Qué hace cada seeder
 
-Si necesitas ejecutar solo un seeder específico:
+| Seeder | Qué crea | Dónde corre |
+|---|---|---|
+| `PermissionSeeder` | Los permisos que usan rutas, policies, menú y controllers (`recurso.accion`, guard `api`) | todos los entornos |
+| `RoleSeeder` | `admin`, `manager`, `user` y sus permisos (llama antes a `PermissionSeeder`) | todos los entornos |
+| `AdminUserSeeder` | Primer administrador desde `.env` | todos los entornos |
+| `DemoDataSeeder` | Un usuario por rol y algunos usuarios normales, contraseña `password` | **solo local** (se niega en producción) |
+| `MenuSeeder`, `MailSystemSeeder`, `LlmAreaSeeder` | Datos de esos módulos | con `--class`, si el proyecto los usa |
 
-```bash
-# Ejecutar solo RoleSeeder
-php artisan db:seed --class=RoleSeeder
+`DatabaseSeeder` ejecuta `RoleSeeder` y `AdminUserSeeder`. **No** ejecuta el demo.
 
-# Ejecutar solo PermissionSeeder
-php artisan db:seed --class=PermissionSeeder
+### Roles base
 
-# Ejecutar solo UserSeeder
-php artisan db:seed --class=UserSeeder
+- **admin**: super admin. Pasa cualquier comprobación de permiso (ver `docs/permissions.md`);
+  además se le asignan todos los permisos para que la UI de roles los muestre.
+- **manager**: `users.read/create/update/manage-roles` y `roles.read/create/update`.
+- **user**: sin permisos de administración (es el rol por defecto de los registros,
+  `AUTH_DEFAULT_ROLE`). Su perfil y sus sesiones no piden permisos.
+
+Los seeders solo **añaden** permisos a los roles: nunca quitan los que hayas dado a mano.
+
+## Administrador inicial
+
+`AdminUserSeeder` lee de `.env` (config `auth.initial_admin`):
+
+```dotenv
+ADMIN_EMAIL=admin@tu-dominio.com
+ADMIN_PASSWORD=una-contraseña-larga-y-única
+ADMIN_NAME=Administrador        # opcional
 ```
 
-### Opción 3: Refrescar base de datos y ejecutar seeders
+- Sin `ADMIN_EMAIL`: no crea nada.
+- Sin `ADMIN_PASSWORD` **en producción**: no crea el usuario y lo avisa. No existe contraseña por defecto.
+- Sin `ADMIN_PASSWORD` fuera de producción: genera una al azar y la muestra una sola vez por consola.
+- Si el usuario ya existe, no cambia su contraseña; solo se asegura de que tenga el rol `admin`.
 
-Si quieres limpiar la base de datos y ejecutar todas las migraciones y seeders desde cero:
+## Añadir permisos o roles al proyecto
 
-```bash
-# Desde Docker
-make sh
-php artisan migrate:fresh --seed
+1. Añade el permiso a `PermissionSeeder::catalog()` (nombre `recurso.accion`, en minúsculas;
+   la acción puede llevar guion: `users.manage-roles`).
+2. Si un rol base debe tenerlo, añádelo en `RoleSeeder`.
+3. Úsalo en la ruta (`permission:recurso.accion,api`) o en la policy (`$user->can('recurso.accion')`).
+4. `PermissionCatalogTest` falla si una ruta/policy/menú usa un permiso sin sembrar, o si hay uno sembrado que el código no usa.
 
-# O directamente
-docker compose exec app php artisan migrate:fresh --seed
-```
+En un entorno que ya tiene datos, `make art cmd="db:seed --class=PermissionSeeder"` crea los
+permisos nuevos sin tocar nada más (y vacía la caché de permisos).
 
-**⚠️ ADVERTENCIA**: `migrate:fresh` elimina todas las tablas y datos existentes.
-
-## 📝 Orden de Ejecución
-
-Los seeders deben ejecutarse en este orden:
-
-1. **RoleSeeder** - Crea los roles base
-2. **PermissionSeeder** - Crea permisos y los asigna a roles (requiere roles)
-3. **UserSeeder** - Crea usuarios y los asigna a roles (requiere roles y permisos)
-
-El `DatabaseSeeder` ejecuta automáticamente los seeders en el orden correcto.
-
-## 🔐 Credenciales de Acceso
-
-### Usuario Administrador
-- **Email**: `admin@apygg.com`
-- **Password**: `password`
-- **Rol**: Administrador con todos los permisos
-
-### Otros Usuarios de Prueba
-Todos los usuarios tienen la contraseña: `password`
-
-Puedes usar cualquier usuario de la lista anterior para probar diferentes niveles de acceso según sus roles.
-
-## 🔄 Re-ejecutar Seeders
-
-Los seeders están diseñados para ser **idempotentes** (pueden ejecutarse múltiples veces sin duplicar datos):
-
-- `RoleSeeder`: Usa `firstOrCreate()` - solo crea si no existe
-- `PermissionSeeder`: Usa `firstOrCreate()` - solo crea si no existe
-- `UserSeeder`: Usa `firstOrCreate()` - solo crea si no existe
-
-Si necesitas actualizar datos existentes, puedes:
-
-1. Eliminar los datos manualmente y re-ejecutar
-2. Usar `migrate:fresh --seed` para empezar desde cero
-
-## 📊 Verificar Datos Creados
-
-Puedes verificar que los seeders funcionaron correctamente:
+## Verificar
 
 ```bash
-# Ver roles creados
-php artisan tinker
->>> App\Models\Role::count()
+make art cmd="permission:show"                      # tabla de roles y permisos (comando de Spatie)
+make art cmd="tinker"
 >>> App\Models\Role::pluck('name')
-
-# Ver permisos creados
->>> App\Models\Permission::count()
->>> App\Models\Permission::pluck('name')
-
-# Ver usuarios creados
->>> App\Models\User::count()
->>> App\Models\User::pluck('email')
-
-# Ver roles de un usuario
->>> $user = App\Models\User::where('email', 'admin@apygg.com')->first()
->>> $user->roles->pluck('name')
+>>> App\Models\User::where('email', 'admin@tu-dominio.com')->first()->getRoleNames()
 ```
 
-## 🛠️ Troubleshooting
+## Archivos relacionados
 
-### Error: "Roles no encontrados"
-Si ejecutas `PermissionSeeder` o `UserSeeder` antes de `RoleSeeder`, verás este error. Ejecuta primero `RoleSeeder` o usa `DatabaseSeeder`.
-
-### Error: "Permisos no encontrados"
-Si ejecutas `UserSeeder` antes de `PermissionSeeder`, algunos permisos directos no se asignarán. Ejecuta primero `PermissionSeeder` o usa `DatabaseSeeder`.
-
-### Datos duplicados
-Los seeders usan `firstOrCreate()` para evitar duplicados. Si necesitas recrear datos, elimina primero los existentes o usa `migrate:fresh --seed`.
-
-## 📚 Archivos Relacionados
-
-- `database/seeders/DatabaseSeeder.php` - Seeder principal
-- `database/seeders/RoleSeeder.php` - Crea roles
-- `database/seeders/PermissionSeeder.php` - Crea permisos
-- `database/seeders/UserSeeder.php` - Crea usuarios
-- `database/seeders/initial_data.sql` - SQL original (ya no necesario, pero se mantiene como referencia)
+- `database/seeders/DatabaseSeeder.php`, `PermissionSeeder.php`, `RoleSeeder.php`, `AdminUserSeeder.php`, `DemoDataSeeder.php`
+- `tests/Feature/Authorization/PermissionCatalogTest.php`
+- `docs/permissions.md`

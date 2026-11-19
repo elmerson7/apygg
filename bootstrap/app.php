@@ -62,8 +62,11 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Registrar middleware con alias para uso en rutas
         $middleware->alias([
-            'permission' => \App\Http\Middleware\CheckPermission::class,
-            'role' => \App\Http\Middleware\CheckRole::class,
+            // RBAC: middlewares de spatie/laravel-permission. Se declara siempre el permiso/rol
+            // explícito y el guard: `permission:users.read,api`. Ver docs/permissions.md.
+            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
             'auth:api-key' => \App\Http\Middleware\AuthenticateApiKey::class,
             'api-key-scope' => \App\Http\Middleware\CheckApiKeyScope::class,
             'ip.whitelist' => \App\Http\Middleware\IpWhitelistMiddleware::class,
@@ -236,6 +239,43 @@ return Application::configure(basePath: dirname(__DIR__))
                 $logException($e, $request, false);
                 
                 return ApiResponse::validation($e->errors(), 'The given data was invalid.');
+            }
+
+            // RBAC denegado (middlewares permission:/role: de Spatie): 403 con el formato del proyecto,
+            // 401 si ni siquiera hay sesión en el guard de la API.
+            if ($e instanceof \Spatie\Permission\Exceptions\UnauthorizedException) {
+                $logException($e, $request, false);
+
+                if (auth('api')->guest()) {
+                    return ApiResponse::unauthorized('No autenticado');
+                }
+
+                $required = array_merge($e->getRequiredRoles(), $e->getRequiredPermissions());
+
+                try {
+                    \App\Services\Logging\SecurityLogger::logPermissionDenied(
+                        auth('api')->user(),
+                        implode('|', $required),
+                        $request->path(),
+                        $request
+                    );
+                } catch (\Throwable $logError) {
+                    // El registro de seguridad no debe alterar la respuesta
+                }
+
+                $logApiRequest($e, $request);
+
+                return ApiResponse::rfc7807(
+                    'No tienes permiso para realizar esta acción',
+                    403,
+                    'No tienes permiso para realizar esta acción',
+                    'forbidden',
+                    $request->path(),
+                    array_filter([
+                        'required_permissions' => $e->getRequiredPermissions() ?: null,
+                        'required_roles' => $e->getRequiredRoles() ?: null,
+                    ])
+                );
             }
 
             // HttpException genéricas

@@ -2,71 +2,65 @@
 
 namespace Database\Seeders;
 
+use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Database\Seeder;
+use Spatie\Permission\PermissionRegistrar;
 
 /**
  * RoleSeeder
  *
- * Seeder para crear roles base del sistema RBAC:
- * - Admin: Acceso total al sistema
- * - Manager: Gestión y supervisión
- * - User: Usuario estándar con acceso básico
- * - Guest: Usuario invitado con acceso de solo lectura
- * - Moderator: Moderación de contenido
- * - Editor: Edición de contenido
+ * Roles base del boilerplate:
+ * - admin: super admin. Pasa cualquier comprobación de permiso (Gate::after en
+ *   AuthServiceProvider); además se le asignan todos los permisos para que la UI
+ *   de roles los muestre.
+ * - manager: gestiona usuarios y roles (sin tocar permisos de roles ni al admin).
+ * - user: rol por defecto de los registros (config auth.default_role). Sin permisos
+ *   de administración: su perfil y sus sesiones no los piden.
+ *
+ * Llama a PermissionSeeder (los roles necesitan los permisos). Idempotente: crea lo
+ * que falta y solo AÑADE permisos a los roles; nunca quita los que se hayan dado a mano.
  */
 class RoleSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
+        $this->call(PermissionSeeder::class);
+
         $roles = [
-            [
-                'name' => 'admin',
+            'admin' => [
                 'display_name' => 'Administrador',
-                'description' => 'Rol con todos los permisos del sistema',
+                'description' => 'Super admin: acceso total al sistema',
+                'permissions' => Permission::query()->pluck('name')->all(),
             ],
-            [
-                'name' => 'manager',
+            'manager' => [
                 'display_name' => 'Gerente',
-                'description' => 'Rol con permisos de gestión y supervisión',
+                'description' => 'Gestiona usuarios y roles',
+                'permissions' => [
+                    'users.read', 'users.create', 'users.update', 'users.manage-roles',
+                    'roles.read', 'roles.create', 'roles.update',
+                ],
             ],
-            [
-                'name' => 'user',
+            'user' => [
                 'display_name' => 'Usuario',
-                'description' => 'Rol básico de usuario con permisos limitados',
-            ],
-            [
-                'name' => 'guest',
-                'display_name' => 'Invitado',
-                'description' => 'Rol de solo lectura sin permisos de escritura',
-            ],
-            [
-                'name' => 'moderator',
-                'display_name' => 'Moderador',
-                'description' => 'Rol con permisos de moderación de contenido',
-            ],
-            [
-                'name' => 'editor',
-                'display_name' => 'Editor',
-                'description' => 'Rol con permisos de edición de contenido',
+                'description' => 'Usuario estándar: sin permisos de administración',
+                'permissions' => [],
             ],
         ];
 
-        // Insertar roles solo si no existen
-        foreach ($roles as $role) {
-            Role::firstOrCreate(
-                ['name' => $role['name']],
-                array_merge($role, [
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ])
+        foreach ($roles as $name => $definition) {
+            $role = Role::firstOrCreate(
+                ['name' => $name, 'guard_name' => 'api'],
+                ['display_name' => $definition['display_name'], 'description' => $definition['description']]
             );
+
+            if ($definition['permissions'] !== []) {
+                $role->givePermissionTo($definition['permissions']);
+            }
         }
 
-        $this->command->info('Roles base creados: Admin, Manager, User, Guest, Moderator, Editor');
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+        $this->command->info('Roles base: '.implode(', ', array_keys($roles)));
     }
 }

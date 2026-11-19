@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware(['auth:api', 'permission:mail.manage'])
+Route::middleware(['auth:api', 'permission:mail.manage,api'])
     ->prefix('admin/mail')
     ->group(function () {
         // Proveedores
@@ -55,7 +55,7 @@ Route::middleware(['auth:api', 'permission:mail.manage'])
     });
 
 // Historial de envíos: permiso propio, de solo lectura
-Route::middleware(['auth:api', 'permission:mail.logs'])
+Route::middleware(['auth:api', 'permission:mail.logs,api'])
     ->prefix('admin/mail')
     ->group(function () {
         Route::get('/logs', [MailLogController::class, 'index'])->name('mail.logs.index');

@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Auditoría de seguridad, lista de bloqueo y escáner de seguridad (`/admin/security/scans`, `/admin/blacklist`)
 
 ### Changed
+- RBAC migrado a `spatie/laravel-permission` 8.5 (antes propio): `Role`/`Permission` extienden los del paquete, `User` usa `HasRoles` (guard `api`), middlewares `permission:`/`role:`/`role_or_permission:` del paquete con permiso explícito y guard en cada ruta (se elimina el mapa método HTTP → acción y `CheckPermission`/`CheckRole`). Migraciones nuevas `2026_11_19_000002` y `000003` (ver `docs/permissions.md`). Teams preparado y apagado (`PERMISSION_TEAMS`, columna `tenant_id`)
+- Super admin por `Gate::after` (rol `admin`); `User::hasPermission/hasRole propios` sustituidos por `can()`/`hasPermissionTo()`/`hasRole()` de Spatie
+- Semillas limpias: `PermissionSeeder` con solo los permisos que usa el código (test que lo vigila), `RoleSeeder` (admin, manager, user), `AdminUserSeeder` desde `ADMIN_EMAIL`/`ADMIN_PASSWORD` y `DemoDataSeeder` solo local
 - `TRUSTED_PROXIES` configurable (vacío = no se confía en `X-Forwarded-*`)
 - Octane: `FlushUploadedFiles` activo y `DisconnectFromDatabases` configurable con `OCTANE_DISCONNECT_DATABASES`
 - Rutas `test/sentry/*` solo en `local` y `testing`
@@ -29,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Middlewares `SanitizeInput`, `TransformRequestMiddleware` y `TransformResponseMiddleware` (LOG-16, EST-38): quitaban HTML y saltos de línea, convertían `"no"`/`"1"`/`status=active` en booleanos, copiaban claves anidadas a la raíz y alteraban contraseñas; el de respuestas era inerte. La entrada llega tal cual (con `TrimStrings` y `ConvertEmptyStringsToNull` de Laravel)
 - `BaseFormRequest::sanitizeInput()`: duplicaba esos middlewares estándar (y recortaba contraseñas)
+- `database/seeders/initial_data.sql` (datos de otra app con contraseña "1234") y `UserSeeder`; permisos de ejemplo `posts.*`, `comments.*`, `system.backup`, `system.users` y los roles `guest`, `moderator`, `editor` que ningún código usaba
 - Código de otra app que no pertenece al boilerplate: modelos y políticas de Wallet, Gift, UserMatch y Message, controladores de chat y tienda, sus Form Requests y `routes/api/chat.php`
 - `SendPasswordResetEmailJob`, que no se usaba
 

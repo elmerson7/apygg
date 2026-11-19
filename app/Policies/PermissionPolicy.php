@@ -21,7 +21,7 @@ class PermissionPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasPermission('permissions.read');
+        return $user->can('permissions.read');
     }
 
     /**
@@ -32,7 +32,7 @@ class PermissionPolicy
      */
     public function view(User $user, Permission $permission): bool
     {
-        return $user->hasPermission('permissions.read');
+        return $user->can('permissions.read');
     }
 
     /**
@@ -43,7 +43,7 @@ class PermissionPolicy
     public function create(User $user): bool
     {
         // Solo administradores pueden crear permisos
-        $allowed = $user->isAdmin() && $user->hasPermission('permissions.create');
+        $allowed = $user->isAdmin() && $user->can('permissions.create');
 
         if ($allowed) {
             LogService::info('Intento de crear permiso autorizado', [
@@ -63,7 +63,7 @@ class PermissionPolicy
     public function update(User $user, Permission $permission): bool
     {
         // Solo administradores pueden actualizar permisos
-        $allowed = $user->isAdmin() && $user->hasPermission('permissions.update');
+        $allowed = $user->isAdmin() && $user->can('permissions.update');
 
         if ($allowed) {
             LogService::info('Intento de actualizar permiso autorizado', [
@@ -85,7 +85,7 @@ class PermissionPolicy
     public function delete(User $user, Permission $permission): bool
     {
         // Solo administradores pueden eliminar permisos
-        $allowed = $user->isAdmin() && $user->hasPermission('permissions.delete');
+        $allowed = $user->isAdmin() && $user->can('permissions.delete');
 
         if ($allowed) {
             LogService::warning('Intento de eliminar permiso autorizado', [

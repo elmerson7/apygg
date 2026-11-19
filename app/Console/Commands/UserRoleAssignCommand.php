@@ -54,7 +54,7 @@ class UserRoleAssignCommand extends Command
         }
 
         // Check if user already has this role
-        if ($user->roles()->where('id', $role->id)->exists()) {
+        if ($user->hasRole($role)) {
             $this->info("User already has the role '{$roleName}'.");
 
             return self::SUCCESS;
@@ -62,7 +62,7 @@ class UserRoleAssignCommand extends Command
 
         try {
             // Assign role
-            $user->roles()->attach($role->id);
+            $user->assignRole($role);
 
             $this->info("Role '{$roleName}' assigned successfully to user '{$user->name}' (ID: {$user->id})");
 

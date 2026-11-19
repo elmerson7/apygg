@@ -103,7 +103,7 @@ class WarmCacheCommand extends Command
             $count++;
 
             // Pre-cargar roles por nombre (solo los principales)
-            $mainRoles = ['admin', 'user', 'guest', 'manager', 'moderator', 'editor'];
+            $mainRoles = ['admin', 'manager', 'user'];
             foreach ($mainRoles as $roleName) {
                 $roleService->findByName($roleName);
                 $count++;

@@ -14,6 +14,13 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->seed([RoleSeeder::class, PermissionSeeder::class]);
+
+    // Roles de apoyo para estos casos (el seeder base solo trae admin, manager y user):
+    // guest no tiene permisos; moderator tiene system.logs, que un manager no tiene;
+    // editor es un rol cualquiera que un admin puede asignar.
+    Role::create(['name' => 'guest', 'display_name' => 'Invitado']);
+    Role::create(['name' => 'moderator', 'display_name' => 'Moderador'])->givePermissionTo('system.logs');
+    Role::create(['name' => 'editor', 'display_name' => 'Editor'])->givePermissionTo('users.read');
 });
 
 function actingAsToken(User $user): array
@@ -120,7 +127,7 @@ test('asignar roles exige users.manage-roles y no basta users.update', function 
 test('un manager no puede asignar un rol con permisos que él no tiene', function () {
     $manager = userWithRole('manager');
     $target = User::factory()->create();
-    // moderator tiene posts.moderate, que el manager no tiene
+    // moderator tiene system.logs, que el manager no tiene
     $roleId = Role::where('name', 'moderator')->value('id');
 
     $this->withHeaders(actingAsToken($manager))
@@ -193,7 +200,7 @@ test('quien tiene roles.manage-permissions no concede permisos que no tiene', fu
     $user = userWithRole('manager');
     $user->permissions()->attach(Permission::where('name', 'roles.manage-permissions')->value('id'));
     $role = Role::where('name', 'guest')->first();
-    $forbidden = Permission::where('name', 'system.backup')->value('id');
+    $forbidden = Permission::where('name', 'system.logs-delete')->value('id');
 
     $this->withHeaders(actingAsToken($user))
         ->putJson("/roles/{$role->id}/permissions", ['permissions' => [$forbidden]])
@@ -209,7 +216,7 @@ test('un admin sí puede crear un rol con permisos', function () {
         ->postJson('/roles', [
             'name' => 'nuevo-rol',
             'display_name' => 'Nuevo',
-            'permission_ids' => [Permission::where('name', 'posts.read')->value('id')],
+            'permission_ids' => [Permission::where('name', 'users.read')->value('id')],
         ])
         ->assertStatus(201);
 

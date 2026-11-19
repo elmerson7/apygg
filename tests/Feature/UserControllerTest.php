@@ -252,7 +252,7 @@ test('puede asignar roles a un usuario con permiso users.update', function () {
 
     $targetUser = User::factory()->create();
     $managerRole = Role::where('name', 'manager')->first();
-    $editorRole = Role::where('name', 'editor')->first();
+    $editorRole = Role::firstOrCreate(['name' => 'editor'], ['display_name' => 'Editor']);
 
     $response = $this->withHeader('Authorization', "Bearer {$token}")
         ->postJson("/users/{$targetUser->id}/roles", [
@@ -273,7 +273,7 @@ test('puede remover un rol de un usuario con permiso users.update', function () 
 
     $targetUser = User::factory()->create();
     $managerRole = Role::where('name', 'manager')->first();
-    $editorRole = Role::where('name', 'editor')->first();
+    $editorRole = Role::firstOrCreate(['name' => 'editor'], ['display_name' => 'Editor']);
 
     $targetUser->roles()->attach([$managerRole->id, $editorRole->id]);
 

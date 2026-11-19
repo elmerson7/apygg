@@ -95,12 +95,8 @@ class MenuService
     protected function isVisibleTo(MenuItem $item, User $user, array $roleIds): bool
     {
         if ($item->permission) {
-            try {
-                return $user->hasPermission($item->permission);
-            } catch (\Throwable) {
-                // Permiso inexistente o caché desactualizada: no mostrar.
-                return false;
-            }
+            // Un permiso inexistente simplemente no se concede (Spatie no lanza vía can()).
+            return $user->can($item->permission);
         }
 
         if ($roleIds === []) {

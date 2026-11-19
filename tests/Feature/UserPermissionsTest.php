@@ -1,7 +1,5 @@
 <?php
 
-use App\Models\Permission;
-use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
@@ -22,83 +20,80 @@ test('usuario con rol admin tiene todos los permisos', function () {
     $admin = User::factory()->admin()->create();
 
     expect($admin->isAdmin())->toBeTrue()
-        ->and($admin->hasPermission('users.create'))->toBeTrue()
-        ->and($admin->hasPermission('users.read'))->toBeTrue()
-        ->and($admin->hasPermission('users.update'))->toBeTrue()
-        ->and($admin->hasPermission('users.delete'))->toBeTrue()
-        ->and($admin->hasPermission('roles.create'))->toBeTrue();
+        ->and($admin->can('users.create'))->toBeTrue()
+        ->and($admin->can('users.read'))->toBeTrue()
+        ->and($admin->can('users.update'))->toBeTrue()
+        ->and($admin->can('users.delete'))->toBeTrue()
+        ->and($admin->can('roles.create'))->toBeTrue();
 });
 
-test('usuario con rol user tiene permisos básicos pero no lista usuarios, roles ni permisos', function () {
+test('el admin es super admin: pasa incluso un permiso que no está asignado ni existe', function () {
+    $admin = User::factory()->admin()->create();
     $user = User::factory()->create();
-    $userRole = Role::where('name', 'user')->first();
-    $user->roles()->attach($userRole->id);
 
-    expect($user->hasPermission('users.read'))->toBeFalse()
-        ->and($user->hasPermission('roles.read'))->toBeFalse()
-        ->and($user->hasPermission('permissions.read'))->toBeFalse()
-        ->and($user->hasPermission('posts.create'))->toBeTrue()
-        ->and($user->hasPermission('posts.read'))->toBeTrue()
-        ->and($user->hasPermission('users.create'))->toBeFalse()
-        ->and($user->hasPermission('users.delete'))->toBeFalse();
+    expect($admin->can('algo.que-no-existe'))->toBeTrue()
+        ->and($user->can('algo.que-no-existe'))->toBeFalse();
 });
 
-test('usuario con rol guest solo lee contenido, no usuarios ni roles', function () {
-    $guest = User::factory()->create();
-    $guestRole = Role::where('name', 'guest')->first();
-    $guest->roles()->attach($guestRole->id);
+test('usuario con rol user no tiene permisos de administración', function () {
+    $user = User::factory()->create();
+    $user->assignRole('user');
 
-    expect($guest->hasPermission('users.read'))->toBeFalse()
-        ->and($guest->hasPermission('roles.read'))->toBeFalse()
-        ->and($guest->hasPermission('posts.read'))->toBeTrue()
-        ->and($guest->hasPermission('users.create'))->toBeFalse()
-        ->and($guest->hasPermission('posts.create'))->toBeFalse();
+    expect($user->can('users.read'))->toBeFalse()
+        ->and($user->can('roles.read'))->toBeFalse()
+        ->and($user->can('permissions.read'))->toBeFalse()
+        ->and($user->can('users.create'))->toBeFalse()
+        ->and($user->can('users.delete'))->toBeFalse()
+        ->and($user->getAllPermissions())->toBeEmpty();
+});
+
+test('usuario con rol manager gestiona usuarios y roles pero no los borra', function () {
+    $manager = User::factory()->create();
+    $manager->assignRole('manager');
+
+    expect($manager->can('users.read'))->toBeTrue()
+        ->and($manager->can('roles.read'))->toBeTrue()
+        ->and($manager->can('users.create'))->toBeTrue()
+        ->and($manager->can('users.delete'))->toBeFalse()
+        ->and($manager->can('roles.delete'))->toBeFalse()
+        ->and($manager->can('roles.manage-permissions'))->toBeFalse();
 });
 
 test('usuario puede tener permisos directos además de roles', function () {
     $user = User::factory()->create();
-    $userRole = Role::where('name', 'user')->first();
-    $user->roles()->attach($userRole->id);
+    $user->assignRole('manager');
+    $user->givePermissionTo('users.delete');
 
-    // Asignar permiso directo
-    $usersCreatePermission = Permission::where('name', 'users.create')->first();
-    $user->permissions()->attach($usersCreatePermission->id);
-
-    expect($user->hasPermission('users.create'))->toBeTrue()
-        ->and($user->hasPermission('posts.create'))->toBeTrue(); // Del rol
+    expect($user->can('users.delete'))->toBeTrue() // Directo
+        ->and($user->can('users.read'))->toBeTrue() // Del rol
+        ->and($user->hasDirectPermission('users.read'))->toBeFalse();
 });
 
 test('usuario puede tener múltiples roles', function () {
     $user = User::factory()->create();
-    $userRole = Role::where('name', 'user')->first();
-    $editorRole = Role::where('name', 'editor')->first();
-
-    $user->roles()->attach([$userRole->id, $editorRole->id]);
+    $user->assignRole(['user', 'manager']);
 
     expect($user->hasRole('user'))->toBeTrue()
-        ->and($user->hasRole('editor'))->toBeTrue()
+        ->and($user->hasRole('manager'))->toBeTrue()
         ->and($user->hasAnyRole(['user', 'admin']))->toBeTrue()
         ->and($user->hasAnyRole(['moderator', 'admin']))->toBeFalse();
 });
 
 test('usuario puede verificar si tiene cualquier permiso de una lista', function () {
     $user = User::factory()->create();
-    $userRole = Role::where('name', 'user')->first();
-    $user->roles()->attach($userRole->id);
-
-    // Asignar permiso directo adicional
-    $usersCreatePermission = Permission::where('name', 'users.create')->first();
-    $user->permissions()->attach($usersCreatePermission->id);
+    $user->assignRole('user');
+    $user->givePermissionTo('users.create');
 
     expect($user->hasAnyPermission(['users.create', 'users.delete']))->toBeTrue()
         ->and($user->hasAnyPermission(['users.delete', 'roles.create']))->toBeFalse();
 });
 
 test('usuario puede verificar si tiene todos los permisos de una lista', function () {
-    $admin = User::factory()->admin()->create();
+    $manager = User::factory()->create();
+    $manager->assignRole('manager');
 
-    expect($admin->hasAllPermissions(['users.create', 'users.read', 'users.update']))->toBeTrue()
-        ->and($admin->hasAllPermissions(['users.create', 'nonexistent.permission']))->toBeFalse();
+    expect($manager->hasAllPermissions(['users.create', 'users.read', 'users.update']))->toBeTrue()
+        ->and($manager->hasAllPermissions(['users.create', 'nonexistent.permission']))->toBeFalse();
 });
 
 test('endpoint requiere permiso users.read para listar usuarios', function () {
@@ -174,8 +169,7 @@ test('usuario no puede actualizar otro usuario sin permiso users.update', functi
 
 test('usuario con permiso users.update puede actualizar otros usuarios', function () {
     $user = User::factory()->create();
-    $usersUpdatePermission = Permission::where('name', 'users.update')->first();
-    $user->permissions()->attach($usersUpdatePermission->id);
+    $user->givePermissionTo('users.update');
 
     $targetUser = User::factory()->create();
     $token = JWTAuth::fromUser($user);

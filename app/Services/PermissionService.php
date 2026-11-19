@@ -293,7 +293,7 @@ class PermissionService
     public function validateNameFormat(string $name): bool
     {
         // Formato esperado: recurso.accion (ej: users.create, posts.update)
-        return (bool) preg_match('/^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$/', $name);
+        return (bool) preg_match('/^[a-z][a-z0-9_]*\.[a-z][a-z0-9_-]*$/', $name);
     }
 
     /**

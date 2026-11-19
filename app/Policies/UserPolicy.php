@@ -20,7 +20,7 @@ class UserPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasPermission('users.read');
+        return $user->can('users.read');
     }
 
     /**
@@ -32,7 +32,7 @@ class UserPolicy
     public function view(User $user, User $model): bool
     {
         // Puede ver su propio perfil o si tiene permiso users.read
-        return $user->id === $model->id || $user->hasPermission('users.read');
+        return $user->id === $model->id || $user->can('users.read');
     }
 
     /**
@@ -42,7 +42,7 @@ class UserPolicy
      */
     public function create(User $user): bool
     {
-        $allowed = $user->hasPermission('users.create');
+        $allowed = $user->can('users.create');
 
         if ($allowed) {
             LogService::info('Intento de crear usuario autorizado', [
@@ -67,7 +67,7 @@ class UserPolicy
         if ($user->id === $model->id) {
             $allowed = true;
         } else {
-            $allowed = $user->hasPermission('users.update')
+            $allowed = $user->can('users.update')
                 && (! $model->isAdmin() || $user->isAdmin());
         }
 
@@ -88,7 +88,7 @@ class UserPolicy
      */
     public function manageRoles(User $user, User $model): bool
     {
-        return $user->hasPermission('users.manage-roles')
+        return $user->can('users.manage-roles')
             && (! $model->isAdmin() || $user->isAdmin());
     }
 
@@ -106,7 +106,7 @@ class UserPolicy
         }
 
         // Solo un admin elimina a otro admin
-        $allowed = $user->hasPermission('users.delete')
+        $allowed = $user->can('users.delete')
             && (! $model->isAdmin() || $user->isAdmin());
 
         if ($allowed) {
@@ -127,31 +127,10 @@ class UserPolicy
      */
     public function restore(User $user, User $model): bool
     {
-        $allowed = $user->hasPermission('users.restore');
+        $allowed = $user->can('users.restore');
 
         if ($allowed) {
             LogService::info('Intento de restaurar usuario autorizado', [
-                'user_id' => $user->id,
-                'target_user_id' => $model->id,
-            ], 'security');
-        }
-
-        return $allowed;
-    }
-
-    /**
-     * Determinar si el usuario puede eliminar permanentemente el usuario específico.
-     *
-     * @param  User  $user  Usuario autenticado
-     * @param  User  $model  Usuario a eliminar permanentemente
-     */
-    public function forceDelete(User $user, User $model): bool
-    {
-        // Solo administradores pueden eliminar permanentemente
-        $allowed = $user->isAdmin() && $user->hasPermission('users.forceDelete');
-
-        if ($allowed) {
-            LogService::warning('Intento de eliminación permanente de usuario autorizado', [
                 'user_id' => $user->id,
                 'target_user_id' => $model->id,
             ], 'security');

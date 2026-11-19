@@ -136,6 +136,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Administrador inicial
+    |--------------------------------------------------------------------------
+    |
+    | Lo crea AdminUserSeeder (php artisan db:seed) con el rol admin. Sin
+    | ADMIN_EMAIL no se crea; sin ADMIN_PASSWORD en producción tampoco (nunca
+    | hay una contraseña por defecto).
+    |
+    */
+
+    'initial_admin' => [
+        'email' => env('ADMIN_EMAIL'),
+        'password' => env('ADMIN_PASSWORD'),
+        'name' => env('ADMIN_NAME', 'Administrador'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Bloqueo por intentos fallidos de login
     |--------------------------------------------------------------------------
     |

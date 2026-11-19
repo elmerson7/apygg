@@ -27,7 +27,7 @@ class UserDetailResource extends BaseResource
         $currentUser = $request->user();
 
         // Determinar si el usuario actual puede ver información detallada
-        $canViewDetails = $currentUser && ($currentUser->id === $user->id || $currentUser->hasPermission('users.read'));
+        $canViewDetails = $currentUser && ($currentUser->id === $user->id || $currentUser->can('users.read'));
 
         $data = array_merge($this->getBaseFields(), [
             'name' => $user->name,

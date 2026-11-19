@@ -182,11 +182,11 @@ public function update(UpdateUserRequest $request, string $id): JsonResponse
 
 ### ❌ NO HACER
 
-- No verificar permisos manualmente con `hasPermission()` o similar
+- No verificar permisos manualmente con `can()`, `hasPermissionTo()` o similar en el controller
 
 ```php
 // ❌ Incorrecto
-if (!$user->hasPermission('users.update')) {
+if (! $user->can('users.update')) {
     return response()->json(['message' => 'No autorizado'], 403);
 }
 
@@ -702,7 +702,7 @@ class AuthController extends Controller
 
 1. Crear controladores sin extender Controller base
 2. Usar `response()->json()` directamente
-3. Verificar permisos manualmente con `hasPermission()`
+3. Verificar permisos manualmente con `can()` / `hasPermissionTo()` en el controller
 4. Incluir lógica de negocio en controladores
 5. Hacer consultas Eloquent complejas en controladores
 6. Mezclar formatos de respuesta

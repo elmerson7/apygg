@@ -2,39 +2,38 @@
 
 namespace App\Models;
 
+use App\Traits\HasIlikeSearch;
+use Database\Factories\PermissionFactory;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Permission\Models\Permission as SpatiePermission;
 
 /**
  * Permission Model
  *
- * Modelo para permisos del sistema RBAC.
- * Un permiso puede pertenecer a múltiples roles y puede ser asignado directamente a usuarios.
+ * Permiso del RBAC (nombre `recurso.accion`). Extiende el de
+ * spatie/laravel-permission y conserva las columnas propias (display_name,
+ * resource, action, description), el borrado lógico y los scopes por recurso/acción.
+ *
+ * @property string|null $display_name
+ * @property string|null $resource
+ * @property string|null $action
+ * @property string|null $description
  */
-class Permission extends Model
+class Permission extends SpatiePermission
 {
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'permissions';
+    /** @use HasFactory<PermissionFactory> */
+    use HasFactory, HasIlikeSearch, SoftDeletes;
+
+    /** Guard de la API (JWT): todos los roles y permisos viven en él. */
+    protected $guard_name = 'api';
+
+    /** @var list<string> */
+    protected $hidden = ['pivot'];
 
     /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
-    protected $fillable = [
-        'name',
-        'display_name',
-        'resource',
-        'action',
-        'description',
-    ];
-
-    /**
-     * Columnas buscables por defecto para el scope search()
+     * Columnas buscables por defecto para el scope search().
      *
      * @return array<string>
      */
@@ -44,42 +43,10 @@ class Permission extends Model
     }
 
     /**
-     * Relación muchos-a-muchos con Role
+     * Scope para filtrar permisos por recurso.
      *
-     * Un permiso puede pertenecer a múltiples roles.
-     */
-    public function roles(): BelongsToMany
-    {
-        return $this->belongsToMany(
-            Role::class,
-            'role_permission',
-            'permission_id',
-            'role_id'
-        )->withTimestamps();
-    }
-
-    /**
-     * Relación muchos-a-muchos con User (permisos directos)
-     *
-     * Un permiso puede ser asignado directamente a múltiples usuarios.
-     * Estos permisos sobrescriben los permisos heredados de roles.
-     */
-    public function users(): BelongsToMany
-    {
-        return $this->belongsToMany(
-            User::class,
-            'user_permission',
-            'permission_id',
-            'user_id'
-        )->withTimestamps();
-    }
-
-    /**
-     * Scope para filtrar permisos por recurso
-     *
-     * @param  Builder  $query
-     * @param  string  $resource  Nombre del recurso
-     * @return Builder
+     * @param  Builder<Permission>  $query
+     * @return Builder<Permission>
      */
     public function scopeForResource($query, string $resource)
     {
@@ -87,11 +54,10 @@ class Permission extends Model
     }
 
     /**
-     * Scope para filtrar permisos por acción
+     * Scope para filtrar permisos por acción.
      *
-     * @param  Builder  $query
-     * @param  string  $action  Nombre de la acción
-     * @return Builder
+     * @param  Builder<Permission>  $query
+     * @return Builder<Permission>
      */
     public function scopeForAction($query, string $action)
     {
@@ -99,12 +65,10 @@ class Permission extends Model
     }
 
     /**
-     * Scope para filtrar permisos por recurso y acción
+     * Scope para filtrar permisos por recurso y acción.
      *
-     * @param  Builder  $query
-     * @param  string  $resource  Nombre del recurso
-     * @param  string  $action  Nombre de la acción
-     * @return Builder
+     * @param  Builder<Permission>  $query
+     * @return Builder<Permission>
      */
     public function scopeForResourceAndAction($query, string $resource, string $action)
     {

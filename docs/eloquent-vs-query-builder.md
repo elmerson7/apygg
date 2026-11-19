@@ -36,7 +36,7 @@ DB::table($table)->where($column, $value)->exists();
 
 // ✅ CORRECTO - Consulta compleja/reporte (sin modelo)
 DB::table('users')
-    ->join('user_role', 'users.id', '=', 'user_role.user_id')
+    ->join('model_has_roles', 'users.id', '=', 'model_has_roles.model_id')
     ->select('users.*', 'roles.name')
     ->get();
 ```
@@ -48,8 +48,8 @@ DB::table('users')
 ```php
 // ✅ MEJOR - Query Builder desde modelo (mantiene contexto)
 User::query()
-    ->join('user_role', 'users.id', '=', 'user_role.user_id')
-    ->join('roles', 'user_role.role_id', '=', 'roles.id')
+    ->join('model_has_roles', 'users.id', '=', 'model_has_roles.model_id')
+    ->join('roles', 'model_has_roles.role_id', '=', 'roles.id')
     ->select('users.*', 'roles.name as role_name')
     ->where('users.active', true)
     ->groupBy('users.id')
@@ -57,8 +57,8 @@ User::query()
 
 // ✅ ACEPTABLE - Query Builder directo (solo si es muy complejo)
 DB::table('users')
-    ->join('user_role', 'users.id', '=', 'user_role.user_id')
-    ->join('roles', 'user_role.role_id', '=', 'roles.id')
+    ->join('model_has_roles', 'users.id', '=', 'model_has_roles.model_id')
+    ->join('roles', 'model_has_roles.role_id', '=', 'roles.id')
     ->select('users.*', 'roles.name as role_name')
     ->where('users.active', true)
     ->groupBy('users.id')
@@ -81,7 +81,7 @@ User::where('email', $email)->first();
 
 // ✅ BIEN - Consulta compleja con Query Builder desde modelo
 User::query()
-    ->join('user_role', 'users.id', '=', 'user_role.user_id')
+    ->join('model_has_roles', 'users.id', '=', 'model_has_roles.model_id')
     ->select('users.*', 'roles.name')
     ->get();
 ```
@@ -112,8 +112,8 @@ User::where('email', $email)->get();
 // ❌ MAL
 $users = DB::table('users')->get();
 foreach ($users as $user) {
-    $roles = DB::table('user_role')
-        ->where('user_id', $user->id)
+    $roles = DB::table('model_has_roles')
+        ->where('model_id', $user->id)
         ->get();
 }
 

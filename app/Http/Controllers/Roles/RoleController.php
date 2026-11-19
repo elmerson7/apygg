@@ -139,7 +139,7 @@ class RoleController extends Controller
         }
 
         foreach (Permission::whereIn('id', $permissionIds)->pluck('name') as $name) {
-            if (! $actor->hasPermission($name)) {
+            if (! $actor->checkPermissionTo($name)) {
                 throw new AuthorizationException('No puedes conceder permisos que no tienes');
             }
         }

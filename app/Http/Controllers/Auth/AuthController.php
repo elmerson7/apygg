@@ -220,19 +220,10 @@ class AuthController
             }
 
             // Recargar con relaciones
-            $user = User::with(['roles.permissions', 'permissions', 'profile'])->find($user->id);
+            $user = User::with(['roles', 'profile'])->find($user->id);
 
-            $rolePermissions = $user->roles()
-                ->with('permissions')
-                ->get()
-                ->flatMap(fn ($role) => $role->permissions)
-                ->pluck('name')
-                ->unique()
-                ->values();
-
-            $directPermissions = $user->permissions->pluck('name');
-
-            $allPermissions = $directPermissions->merge($rolePermissions)->unique()->values();
+            // Permisos efectivos: directos + los de sus roles (API de Spatie)
+            $allPermissions = $user->getAllPermissions()->pluck('name')->unique()->values();
 
             return ApiResponse::success([
                 'id' => $user->id,

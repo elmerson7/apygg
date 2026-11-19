@@ -2,113 +2,43 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Traits\HasIlikeSearch;
+use Database\Factories\RoleFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Permission\Models\Role as SpatieRole;
 
 /**
  * Role Model
  *
- * Modelo para roles del sistema RBAC.
- * Un rol puede tener múltiples permisos y puede ser asignado a múltiples usuarios.
+ * Rol del RBAC. Extiende el de spatie/laravel-permission (permisos, asignación a
+ * usuarios, caché), conservando las columnas propias (display_name, description),
+ * el borrado lógico y el scope search().
+ *
+ * Los permisos del rol se gestionan con la API de Spatie:
+ * givePermissionTo(), revokePermissionTo(), syncPermissions(), hasPermissionTo().
+ *
+ * @property string|null $display_name
+ * @property string|null $description
  */
-class Role extends Model
+class Role extends SpatieRole
 {
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'roles';
+    /** @use HasFactory<RoleFactory> */
+    use HasFactory, HasIlikeSearch, SoftDeletes;
+
+    /** Guard de la API (JWT): todos los roles y permisos viven en él. */
+    protected $guard_name = 'api';
+
+    /** @var list<string> */
+    protected $hidden = ['pivot'];
 
     /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
-    protected $fillable = [
-        'name',
-        'display_name',
-        'description',
-    ];
-
-    /**
-     * Columnas buscables por defecto para el scope search()
+     * Columnas buscables por defecto para el scope search().
      *
      * @return array<string>
      */
     protected function getSearchableColumns(): array
     {
         return ['name', 'display_name', 'description'];
-    }
-
-    /**
-     * Relación muchos-a-muchos con Permission
-     *
-     * Un rol puede tener múltiples permisos.
-     */
-    public function permissions(): BelongsToMany
-    {
-        return $this->belongsToMany(
-            Permission::class,
-            'role_permission',
-            'role_id',
-            'permission_id'
-        )->withTimestamps();
-    }
-
-    /**
-     * Relación muchos-a-muchos con User
-     *
-     * Un rol puede ser asignado a múltiples usuarios.
-     */
-    public function users(): BelongsToMany
-    {
-        return $this->belongsToMany(
-            User::class,
-            'user_role',
-            'role_id',
-            'user_id'
-        )->withTimestamps();
-    }
-
-    /**
-     * Verificar si el rol tiene un permiso específico
-     *
-     * @param  string  $permissionName  Nombre del permiso a verificar
-     */
-    public function hasPermission(string $permissionName): bool
-    {
-        return $this->permissions()
-            ->where('name', $permissionName)
-            ->exists();
-    }
-
-    /**
-     * Asignar un permiso al rol
-     *
-     * @param  string|Permission  $permission  Permiso o nombre del permiso
-     */
-    public function assignPermission($permission): void
-    {
-        if (is_string($permission)) {
-            $permission = Permission::where('name', $permission)->firstOrFail();
-        }
-
-        if (! $this->hasPermission($permission->name)) {
-            $this->permissions()->attach($permission->id);
-        }
-    }
-
-    /**
-     * Remover un permiso del rol
-     *
-     * @param  string|Permission  $permission  Permiso o nombre del permiso
-     */
-    public function removePermission($permission): void
-    {
-        if (is_string($permission)) {
-            $permission = Permission::where('name', $permission)->firstOrFail();
-        }
-
-        $this->permissions()->detach($permission->id);
     }
 }

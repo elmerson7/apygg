@@ -28,7 +28,7 @@ class UserSearchResource extends BaseResource
             'username' => $user->username,
         ];
 
-        if ($viewer && $viewer->hasPermission('users.update')) {
+        if ($viewer && $viewer->can('users.update')) {
             $data['email'] = $user->email;
         }
 

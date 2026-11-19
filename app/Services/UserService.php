@@ -99,7 +99,7 @@ class UserService
         }
 
         if (! empty($roleIds)) {
-            $user->roles()->sync($roleIds);
+            $user->syncRoles(array_map('intval', $roleIds));
         } else {
             $this->assignDefaultRole($user);
         }
@@ -127,8 +127,7 @@ class UserService
         $role = Role::where('name', $roleName)->first();
 
         if ($role) {
-            $user->roles()->syncWithoutDetaching([$role->id]);
-            $user->unsetRelation('roles');
+            $user->assignRole($role);
         }
     }
 
@@ -206,7 +205,7 @@ class UserService
         }
 
         $previousRoleIds = $user->roles()->select('roles.id')->pluck('id')->toArray();
-        $user->roles()->sync($roleIds);
+        $user->syncRoles(array_map('intval', $roleIds));
 
         foreach (array_diff($roleIds, $previousRoleIds) as $roleId) {
             if ($role = Role::find($roleId)) {
@@ -419,7 +418,7 @@ class UserService
     private function syncRolesAndFire(User $user, string $userId, array $roleIds): User
     {
         $previousRoleIds = $user->roles()->select('roles.id')->pluck('id')->toArray();
-        $user->roles()->sync($roleIds);
+        $user->syncRoles(array_map('intval', $roleIds));
         $this->clearCache($userId);
 
         foreach (array_diff($roleIds, $previousRoleIds) as $roleId) {
@@ -450,12 +449,12 @@ class UserService
             throw new \Exception('No se puede remover el último rol de un administrador');
         }
 
-        return DB::transaction(function () use ($user, $userId, $roleId, $role) {
+        return DB::transaction(function () use ($user, $userId, $role) {
             if ($role->name === 'admin') {
                 $this->ensureNotLastAdmin($user);
             }
 
-            $user->roles()->detach($roleId);
+            $user->removeRole($role);
             $this->clearCache($userId);
             event(new RoleRemoved($user, $role));
 
@@ -496,7 +495,7 @@ class UserService
     {
         $user = $this->find($userId);
         $previousPermissionIds = $user->permissions()->select('permissions.id')->pluck('id')->toArray();
-        $user->permissions()->sync($permissionIds);
+        $user->syncPermissions(array_map('intval', $permissionIds));
         $this->clearCache($userId);
 
         foreach (array_diff($permissionIds, $previousPermissionIds) as $permissionId) {
@@ -523,7 +522,7 @@ class UserService
         $user = $this->find($userId);
         $permission = Permission::findOrFail($permissionId);
 
-        $user->permissions()->detach($permissionId);
+        $user->revokePermissionTo($permission);
         $this->clearCache($userId);
         event(new PermissionRevoked($user, $permission));
 

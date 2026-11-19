@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware(['auth:api', 'permission:security.blacklist'])
+Route::middleware(['auth:api', 'permission:security.blacklist,api'])
     ->prefix('admin/blacklist')
     ->group(function () {
         Route::get('/', [BlacklistController::class, 'index'])->name('blacklist.index');
@@ -23,7 +23,7 @@ Route::middleware(['auth:api', 'permission:security.blacklist'])
         Route::delete('/{blacklist}', [BlacklistController::class, 'destroy'])->name('blacklist.destroy');
     });
 
-Route::middleware(['auth:api', 'permission:security.audit'])
+Route::middleware(['auth:api', 'permission:security.audit,api'])
     ->prefix('admin/security/scans')
     ->group(function () {
         Route::get('/', [SecurityScanController::class, 'index'])->name('security.scans.index');

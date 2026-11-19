@@ -32,7 +32,7 @@ Extensiones PHP instaladas en la imagen: `pcntl`, `intl`, `zip`, `opcache`, `gd`
 
 Dependencias del `composer.json` sin uso en `app/`, `config/`, `routes/` ni `bootstrap/` (comprobado con grep):
 
-- `spatie/laravel-permission` (7.4.2): el RBAC es propio (modelos `Role` y `Permission`).
+- `spatie/laravel-permission` (8.5.0): RBAC (roles, permisos, middlewares `permission:`/`role:`); guard `api`, teams apagado. Ver `docs/permissions.md`.
 - `spatie/laravel-query-builder` (6.4.4).
 - `setasign/fpdf` (1.9.0) y `setasign/fpdi` (2.6.8).
 - `barryvdh/laravel-snappy` (1.0.5).

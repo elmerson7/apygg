@@ -48,16 +48,18 @@ Route::middleware(['auth:api'])->group(function () {
 
 ## Permisos
 
-Los permisos controlan el acceso, no el prefijo de URL.
+Los permisos controlan el acceso, no el prefijo de URL. El nombre del permiso va
+siempre explícito y con el guard (`permission:users.read,api`); no hay mapa
+método HTTP → acción. Detalle en [permissions.md](permissions.md).
 
 ```php
 // Ejemplo: Users CRUD
 Route::middleware(['auth:api'])->group(function () {
     Route::get('/users', [UserController::class, 'index'])
-        ->middleware('permission:users.read');
+        ->middleware('permission:users.read,api');
     
     Route::post('/users', [UserController::class, 'store'])
-        ->middleware('permission:users.create');
+        ->middleware('permission:users.create,api');
 });
 ```
 
@@ -123,18 +125,18 @@ Route::middleware(['auth:api'])->prefix('user')->group(function () {
 // ============================================================================
 Route::middleware(['auth:api'])->group(function () {
     // Users
-    Route::get('/users', [UserController::class, 'index'])->middleware('permission:users.read');
-    Route::post('/users', [UserController::class, 'store'])->middleware('permission:users.create');
+    Route::get('/users', [UserController::class, 'index'])->middleware('permission:users.read,api');
+    Route::post('/users', [UserController::class, 'store'])->middleware('permission:users.create,api');
     Route::get('/users/{id}', [UserController::class, 'show']);
     Route::put('/users/{id}', [UserController::class, 'update']);
-    Route::delete('/users/{id}', [UserController::class, 'destroy'])->middleware('permission:users.delete');
+    Route::delete('/users/{id}', [UserController::class, 'destroy'])->middleware('permission:users.delete,api');
     
     // Roles
-    Route::get('/roles', [RoleController::class, 'index'])->middleware('permission:roles.read');
-    Route::post('/roles', [RoleController::class, 'store'])->middleware('permission:roles.create');
+    Route::get('/roles', [RoleController::class, 'index'])->middleware('permission:roles.read,api');
+    Route::post('/roles', [RoleController::class, 'store'])->middleware('permission:roles.create,api');
     Route::get('/roles/{id}', [RoleController::class, 'show']);
     Route::put('/roles/{id}', [RoleController::class, 'update']);
-    Route::delete('/roles/{id}', [RoleController::class, 'destroy'])->middleware('permission:roles.delete');
+    Route::delete('/roles/{id}', [RoleController::class, 'destroy'])->middleware('permission:roles.delete,api');
 });
 ```
 

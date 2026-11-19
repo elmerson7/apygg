@@ -138,7 +138,7 @@ class UserController extends Controller
         // - contraseña propia: solo por /auth/change-password (pide la actual)
         // - email: solo con users.update (no hay flujo de verificación aquí)
         $isSelf = (int) $request->user()->id === (int) $user->id;
-        $canManageUsers = $request->user()->hasPermission('users.update');
+        $canManageUsers = $request->user()->can('users.update');
 
         // Construir reglas manualmente con el $id correcto
         $rules = [

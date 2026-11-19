@@ -49,7 +49,7 @@ class RoleFactory extends Factory
             })->filter()->toArray();
 
             if (! empty($permissionIds)) {
-                $role->permissions()->attach($permissionIds);
+                $role->givePermissionTo($permissionIds);
             }
         });
     }

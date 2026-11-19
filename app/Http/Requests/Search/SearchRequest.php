@@ -52,7 +52,7 @@ class SearchRequest extends BaseFormRequest
         foreach (array_keys($this->getModelsToSearch()) as $modelKey) {
             $permission = $this->requiredPermissions[$modelKey] ?? null;
 
-            if ($permission === null || ! $user->hasPermission($permission)) {
+            if ($permission === null || ! $user->can($permission)) {
                 return false;
             }
         }

@@ -200,7 +200,7 @@ Route::middleware('auth:api')->group(function () {
 });
 
 // Con permiso explícito
-Route::middleware(['auth:api', 'permission:reports.delete'])
+Route::middleware(['auth:api', 'permission:reports.delete,api'])
     ->delete('/reports/{report}', [ReportController::class, 'destroy']);
 
 // Detrás de feature flag
@@ -216,8 +216,10 @@ Route::middleware('auth.optional')
 - **No existe el prefijo `/api/`**: las rutas cuelgan de la raíz
   (ver [api-routes-conventions.md](api-routes-conventions.md)).
 - Cada módulo tiene su archivo en `routes/api/` incluido desde `routes/api.php`.
-- Middleware disponibles: `auth:api`, `permission:`, `role:`, `auth:api-key`,
-  `api-key-scope:`, `ip.whitelist`, `feature:`, `auth.optional`.
+- Middleware disponibles: `auth:api`, `permission:`, `role:`, `role_or_permission:`
+  (spatie/laravel-permission, siempre con el permiso exacto y el guard:
+  `permission:reports.delete,api`; ver [permissions.md](permissions.md)),
+  `auth:api-key`, `api-key-scope:`, `ip.whitelist`, `feature:`, `auth.optional`.
 
 ## Migración
 

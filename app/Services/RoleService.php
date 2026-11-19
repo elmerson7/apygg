@@ -217,8 +217,8 @@ class RoleService
             : Permission::where('name', $permissionId)->firstOrFail();
 
         // Asignar permiso si no lo tiene
-        if (! $role->hasPermission($permission->name)) {
-            $role->assignPermission($permission);
+        if (! $role->hasDirectPermission($permission)) {
+            $role->givePermissionTo($permission);
 
             // Limpiar cache
             $this->clearCache($roleId);
@@ -253,7 +253,7 @@ class RoleService
             : Permission::where('name', $permissionId)->firstOrFail();
 
         // Remover permiso
-        $role->removePermission($permission);
+        $role->revokePermissionTo($permission);
 
         // Limpiar cache
         $this->clearCache($roleId);
@@ -281,21 +281,17 @@ class RoleService
     {
         $role = $this->find($roleId);
 
-        // Convertir nombres a IDs si es necesario
-        $permissionIds = array_map(function ($permissionId) {
-            if (is_numeric($permissionId) || strlen($permissionId) === 36) {
-                return $permissionId;
-            }
-            $permission = Permission::where('name', $permissionId)->first();
+        // Resolver IDs o nombres a modelos (lo que no existe se ignora)
+        $permissions = collect($permissionIds)
+            ->map(fn ($permissionId) => is_numeric($permissionId)
+                ? Permission::find((int) $permissionId)
+                : Permission::where('name', $permissionId)->first())
+            ->filter()
+            ->unique('id')
+            ->values();
 
-            return $permission ? $permission->id : null;
-        }, $permissionIds);
-
-        // Filtrar nulls
-        $permissionIds = array_filter($permissionIds);
-
-        // Sincronizar permisos
-        $role->permissions()->sync($permissionIds);
+        // Sincronizar permisos (Spatie refresca su caché)
+        $role->syncPermissions($permissions);
 
         // Limpiar cache
         $this->clearCache($roleId);
@@ -304,7 +300,7 @@ class RoleService
         LogService::info('Permisos sincronizados en rol', [
             'role_id' => $roleId,
             'role_name' => $role->name,
-            'permission_count' => count($permissionIds),
+            'permission_count' => $permissions->count(),
         ], 'activity');
 
         return $role->fresh(['permissions']);
@@ -336,7 +332,7 @@ class RoleService
     {
         $role = $this->find($roleId);
 
-        return $role->hasPermission($permissionName);
+        return $role->checkPermissionTo($permissionName);
     }
 
     /**

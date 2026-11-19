@@ -17,7 +17,7 @@ Los middleware del grupo `api` se registran en `bootstrap/app.php`, en este orde
 
 La entrada no se sanea ni se convierte de tipo en un middleware propio. Laravel ya aplica de forma global `TrimStrings` (recorta espacios, salvo `password`, `password_confirmation` y `current_password`) y `ConvertEmptyStringsToNull`. Regla: **la API guarda lo que recibe, validado con Form Requests; quien pinta HTML escapa** (Blade, plantillas de correo, el frontend). No se quitan etiquetas ni se convierten `"1"`/`"no"` en booleanos: si un campo es booleano, su Form Request lo declara (`boolean`) y lo castea el modelo. Las respuestas las forman `sendSuccess`/`sendError`/`sendPaginated` y los API Resources.
 
-Después, cada ruta aplica sus propios middleware (`auth:api`, `auth:api-key`, `permission:`, `role:`, etc.). Las excepciones se renderizan siempre como JSON desde `bootstrap/app.php`, y Sentry las captura.
+Después, cada ruta aplica sus propios middleware (`auth:api`, `auth:api-key`, `permission:`, `role:`, `role_or_permission:`, etc.). Las excepciones se renderizan siempre como JSON desde `bootstrap/app.php`, y Sentry las captura.
 
 ## Capas
 
@@ -42,7 +42,7 @@ Petición → Middleware → Controller → Form Request → Service → (Reposi
 |---|---|---|
 | Auth JWT | `AuthService`, `TokenService`, `AuthController`, `PasswordController` | `/auth/*`, `/auth/me`, `/auth/change-password` |
 | API Keys | `ApiKeyService`, `AuthenticateApiKey`, `CheckApiKeyScope` | `/api-keys` |
-| RBAC | modelos `Role` y `Permission`, `PermissionService`, `RoleService`, `CheckPermission`, `CheckRole` | `/roles`, `/permissions` |
+| RBAC | spatie/laravel-permission: modelos `Role` y `Permission` (extienden los del paquete), `PermissionService`, `RoleService`, policies, middlewares `permission:`/`role:` del paquete | `/roles`, `/permissions` |
 | Usuarios y perfil | `UserService`, `UserProfile`, `Users\UserController` | `/users`, `/user/profile`, `/user/preferences` |
 | Logging | `LogService`, `app/Services/Logging/*`, `app/Logging/` | `/admin/logs/*` |
 | Seguridad | `SecurityAuditService`, `SecurityService`, `Blacklist`, `SecurityScan` | `/admin/blacklist`, `/admin/security/scans` |
@@ -93,7 +93,7 @@ Los casos de uso llaman a `LlmGateway`, que elige el modelo según el área conf
 4. **Resource** en `app/Http/Resources/<Modulo>/`, heredando de `BaseResource`.
 5. **Controller**: en `app/Http/Controllers/<Modulo>/`. Usa `ApiController` si tiene acciones propias o `Controller` si es CRUD genérico. No sobrescribas métodos con otra firma.
 6. **Rutas**: `routes/api/<modulo>.php`, incluido con `require` desde `routes/api.php`. Sin prefijo `/api`.
-7. **Permisos**: protege las rutas con `auth:api` y `permission:`.
+7. **Permisos**: protege las rutas con `auth:api` y `permission:<recurso.accion>,api` (ver `docs/permissions.md`).
 8. **Tests**: Pest, en `tests/Unit/` o `tests/Feature/`, con nombres en español que describan la conducta. Cubre también el caso denegado.
 9. **Calidad**: `make check` (Pint y PHPStan) y `make test-filter filter=<Nombre>`.
 

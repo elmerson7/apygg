@@ -28,7 +28,7 @@ Versiones tomadas de `composer.lock` y de los Dockerfile de `docker/`:
 Cada módulo está implementado en el código. Lo que aún no está completo figura en [TASKS.md](./TASKS.md).
 
 - **Autenticación**: JWT (login, registro, refresh, recuperación y cambio de contraseña, logout) y API Keys con scopes (`auth:api-key`, `api-key-scope:`).
-- **Autorización**: RBAC propio (modelos `Role` y `Permission`, middleware `permission:` y `role:`).
+- **Autorización**: RBAC con spatie/laravel-permission (modelos `Role` y `Permission`, middleware `permission:` y `role:`; ver `docs/permissions.md`).
 - **Usuarios y perfil**: CRUD de usuarios, restauración, roles por usuario, perfil y preferencias en `/user`.
 - **Logging**: `LogService` y canales `activity`, `security`, `auth` y `sentry`; registro de API en BD.
 - **Seguridad**: `SecurityAuditService` (escaneos en `/admin/security/scans`), lista de bloqueo (`/admin/blacklist`), headers de seguridad, rate limiting adaptativo y registro de eventos.
@@ -112,7 +112,7 @@ La API no usa el prefijo `/api`. Cada módulo vive en `routes/api/<modulo>.php` 
 | Perfil del usuario | `/user` | `GET /user/profile`, `PUT /user/preferences` |
 | Administración | `/admin/...` | `GET /admin/logs/activity`, `GET /admin/mail/providers`, `GET /admin/llm/status` |
 
-Middleware con alias registrados en `bootstrap/app.php`: `auth:api-key`, `api-key-scope:`, `permission:`, `role:`, `ip.whitelist`, `feature:`, `auth.optional`. `auth:api` es el guard JWT de Laravel.
+Middleware con alias registrados en `bootstrap/app.php`: `auth:api-key`, `api-key-scope:`, `permission:`, `role:`, `role_or_permission:`, `ip.whitelist`, `feature:`, `auth.optional`. `auth:api` es el guard JWT de Laravel.
 
 ## Estructura
 

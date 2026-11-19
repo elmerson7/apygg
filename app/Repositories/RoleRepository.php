@@ -157,6 +157,6 @@ class RoleRepository implements RepositoryInterface, RoleRepositoryInterface
     {
         $role = $this->find($roleId);
 
-        return $role->hasPermission($permissionName);
+        return $role->checkPermissionTo($permissionName);
     }
 }

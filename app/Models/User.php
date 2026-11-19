@@ -12,13 +12,13 @@ use Carbon\Carbon;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
+use Spatie\Permission\Traits\HasRoles;
 
 /**
  * User Model
@@ -43,7 +43,15 @@ use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 class User extends Authenticatable implements JWTSubject
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, LogsActivity, Notifiable, Searchable, SoftDeletes, SoftDeletesWithUser;
+    use HasApiTokens, HasFactory, HasRoles, LogsActivity, Notifiable, Searchable, SoftDeletes, SoftDeletesWithUser;
+
+    /**
+     * Guard de Spatie: los roles y permisos de usuario viven en el guard de la API (JWT),
+     * sea cual sea el guard por defecto del worker.
+     *
+     * @var string
+     */
+    protected $guard_name = 'api';
 
     /**
      * Indicates if the IDs are auto-incrementing.
@@ -136,88 +144,6 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
-     * Relación muchos-a-muchos con Role
-     *
-     * Un usuario puede tener múltiples roles.
-     */
-    public function roles(): BelongsToMany
-    {
-        return $this->belongsToMany(
-            Role::class,
-            'user_role',
-            'user_id',
-            'role_id'
-        )->withTimestamps();
-    }
-
-    /**
-     * Relación muchos-a-muchos con Permission (permisos directos)
-     *
-     * Un usuario puede tener permisos asignados directamente.
-     * Estos permisos sobrescriben los permisos heredados de roles.
-     */
-    public function permissions(): BelongsToMany
-    {
-        return $this->belongsToMany(
-            Permission::class,
-            'user_permission',
-            'user_id',
-            'permission_id'
-        )->withTimestamps();
-    }
-
-    /**
-     * Verificar si el usuario tiene un permiso específico
-     * Verifica primero permisos directos, luego permisos de roles
-     *
-     * @param  string  $permissionName  Nombre del permiso a verificar
-     */
-    public function hasPermission(string $permissionName): bool
-    {
-        // Verificar permisos directos primero
-        if ($this->permissions()->where('name', $permissionName)->exists()) {
-            return true;
-        }
-
-        // Verificar permisos a través de roles
-        return $this->roles()->whereHas('permissions', function ($query) use ($permissionName) {
-            $query->where('name', $permissionName);
-        })->exists();
-    }
-
-    /**
-     * Verificar si el usuario tiene alguno de los permisos especificados
-     *
-     * @param  array<string>  $permissionNames  Array de nombres de permisos
-     */
-    public function hasAnyPermission(array $permissionNames): bool
-    {
-        foreach ($permissionNames as $permissionName) {
-            if ($this->hasPermission($permissionName)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Verificar si el usuario tiene todos los permisos especificados
-     *
-     * @param  array<string>  $permissionNames  Array de nombres de permisos
-     */
-    public function hasAllPermissions(array $permissionNames): bool
-    {
-        foreach ($permissionNames as $permissionName) {
-            if (! $this->hasPermission($permissionName)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
      * Obtener el timezone del usuario o el timezone por defecto de la aplicación
      *
      * @return string Timezone del usuario o timezone por defecto
@@ -228,27 +154,8 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
-     * Verificar si el usuario tiene un rol específico
-     *
-     * @param  string  $roleName  Nombre del rol
-     */
-    public function hasRole(string $roleName): bool
-    {
-        return $this->roles()->where('name', $roleName)->exists();
-    }
-
-    /**
-     * Verificar si el usuario tiene alguno de los roles especificados
-     *
-     * @param  array<string>  $roleNames  Array de nombres de roles
-     */
-    public function hasAnyRole(array $roleNames): bool
-    {
-        return $this->roles()->whereIn('name', $roleNames)->exists();
-    }
-
-    /**
-     * Verificar si el usuario es administrador
+     * Atajo de hasRole('admin'). El rol admin es además super admin: ver el Gate en
+     * AuthServiceProvider y docs/permissions.md.
      */
     public function isAdmin(): bool
     {
@@ -314,26 +221,6 @@ class User extends Authenticatable implements JWTSubject
     public function scopeByEmail($query, string $email)
     {
         return $query->where('email', $email);
-    }
-
-    /**
-     * Scope para filtrar usuarios por rol
-     *
-     * @param  Builder  $query
-     * @param  string|array  $roleName  Nombre del rol o array de nombres
-     * @return Builder
-     */
-    public function scopeByRole($query, string|array $roleName)
-    {
-        if (is_array($roleName)) {
-            return $query->whereHas('roles', function ($q) use ($roleName) {
-                $q->whereIn('name', $roleName);
-            });
-        }
-
-        return $query->whereHas('roles', function ($q) use ($roleName) {
-            $q->where('name', $roleName);
-        });
     }
 
     /**

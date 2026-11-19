@@ -22,7 +22,7 @@ Route::middleware('auth:api')
     ->name('menu.mine');
 
 // Configuración del catálogo
-Route::middleware(['auth:api', 'permission:menu.manage'])
+Route::middleware(['auth:api', 'permission:menu.manage,api'])
     ->prefix('admin/menu')
     ->group(function () {
         Route::get('/items', [MenuController::class, 'catalog'])->name('menu.items.index');

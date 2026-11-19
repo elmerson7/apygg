@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware(['auth:api', 'permission:llm.manage'])
+Route::middleware(['auth:api', 'permission:llm.manage,api'])
     ->prefix('admin/llm')
     ->group(function () {
         Route::get('/status', [LlmAreaController::class, 'status'])->name('llm.status');
@@ -29,7 +29,7 @@ Route::middleware(['auth:api', 'permission:llm.manage'])
         Route::post('/areas/{llmArea}/test', [LlmAreaController::class, 'test'])->name('llm.areas.test');
     });
 
-Route::middleware(['auth:api', 'permission:llm.logs'])
+Route::middleware(['auth:api', 'permission:llm.logs,api'])
     ->prefix('admin/llm')
     ->group(function () {
         Route::get('/logs', [LlmAuditLogController::class, 'index'])->name('llm.logs.index');

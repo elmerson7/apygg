@@ -21,7 +21,7 @@ class RolePolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasPermission('roles.read');
+        return $user->can('roles.read');
     }
 
     /**
@@ -32,7 +32,7 @@ class RolePolicy
      */
     public function view(User $user, Role $role): bool
     {
-        return $user->hasPermission('roles.read');
+        return $user->can('roles.read');
     }
 
     /**
@@ -42,7 +42,7 @@ class RolePolicy
      */
     public function create(User $user): bool
     {
-        $allowed = $user->hasPermission('roles.create');
+        $allowed = $user->can('roles.create');
 
         if ($allowed) {
             LogService::info('Intento de crear rol autorizado', [
@@ -66,7 +66,7 @@ class RolePolicy
             return false;
         }
 
-        $allowed = $user->hasPermission('roles.update');
+        $allowed = $user->can('roles.update');
 
         if ($allowed) {
             LogService::info('Intento de actualizar rol autorizado', [
@@ -92,7 +92,7 @@ class RolePolicy
             return false;
         }
 
-        $allowed = $user->hasPermission('roles.delete');
+        $allowed = $user->can('roles.delete');
 
         if ($allowed) {
             LogService::info('Intento de eliminar rol autorizado', [
@@ -117,7 +117,7 @@ class RolePolicy
             return false;
         }
 
-        $allowed = $user->hasPermission('roles.manage-permissions');
+        $allowed = $user->can('roles.manage-permissions');
 
         if ($allowed) {
             LogService::info('Intento de asignar permiso a rol autorizado', [
@@ -153,7 +153,7 @@ class RolePolicy
         }
 
         foreach ($role->permissions()->pluck('name') as $permissionName) {
-            if (! $user->hasPermission($permissionName)) {
+            if (! $user->checkPermissionTo($permissionName)) {
                 return false;
             }
         }

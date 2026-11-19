@@ -16,14 +16,14 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['auth:api'])->prefix('users')->group(function () {
     // Rutas CRUD básicas
     Route::get('/', [UserController::class, 'index'])
-        ->middleware('permission:users')
+        ->middleware('permission:users.read,api')
         ->name('users.index');
 
     Route::get('/{id}', [UserController::class, 'show'])
         ->name('users.show');
 
     Route::post('/', [UserController::class, 'store'])
-        ->middleware('permission:users')
+        ->middleware('permission:users.create,api')
         ->name('users.store');
 
     // Sin middleware de permiso: cada quien edita su perfil; administrar a otros
@@ -32,20 +32,20 @@ Route::middleware(['auth:api'])->prefix('users')->group(function () {
         ->name('users.update');
 
     Route::delete('/{id}', [UserController::class, 'destroy'])
-        ->middleware('permission:users')
+        ->middleware('permission:users.delete,api')
         ->name('users.destroy');
 
-    // Rutas con permisos no estándar (no siguen el mapeo HTTP → CRUD)
+    // Permisos propios de la acción
     Route::post('/{id}/restore', [UserController::class, 'restore'])
-        ->middleware('permission:users.restore')
+        ->middleware('permission:users.restore,api')
         ->name('users.restore');
 
     Route::post('/{id}/roles', [UserController::class, 'assignRoles'])
-        ->middleware('permission:users.manage-roles')
+        ->middleware('permission:users.manage-roles,api')
         ->name('users.assignRoles');
 
     Route::delete('/{id}/roles/{roleId}', [UserController::class, 'removeRole'])
-        ->middleware('permission:users.manage-roles')
+        ->middleware('permission:users.manage-roles,api')
         ->name('users.removeRole');
 
     Route::get('/{id}/activity', [UserController::class, 'getActivity'])

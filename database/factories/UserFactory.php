@@ -54,7 +54,7 @@ class UserFactory extends Factory
         return $this->afterCreating(function (User $user) {
             $adminRole = Role::where('name', 'admin')->first();
             if ($adminRole) {
-                $user->roles()->attach($adminRole->id);
+                $user->assignRole($adminRole);
             }
         });
     }
@@ -101,7 +101,7 @@ class UserFactory extends Factory
             })->filter()->toArray();
 
             if (! empty($roleIds)) {
-                $user->roles()->attach($roleIds);
+                $user->assignRole($roleIds);
             }
         });
     }
@@ -128,7 +128,7 @@ class UserFactory extends Factory
             })->filter()->toArray();
 
             if (! empty($permissionIds)) {
-                $user->permissions()->attach($permissionIds);
+                $user->givePermissionTo($permissionIds);
             }
         });
     }

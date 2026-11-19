@@ -17,6 +17,7 @@ no va aquí.
 2. `docs/CONTROLLER_CONVENTIONS.md` → estructura de controllers
 3. `docs/api-routes-conventions.md` → rutas y prefijos
 4. `docs/api-response-structure.md` + `docs/error-handling.md` → contrato de respuestas
+5. `docs/permissions.md` → roles, permisos, middlewares `permission:`/`role:`, super admin, teams
 
 ## Comandos — TODO va por Docker vía Make (NUNCA en el host)
 
@@ -38,7 +39,7 @@ no va aquí.
 
 - Laravel 13 · PHP 8.5 · FrankenPHP/Octane (**no** nginx, **no** apache)
 - PostgreSQL 18 · Redis 7 · Docker Compose
-- JWT + Sanctum · Spatie Permission · Horizon · Reverb · Scout/Meilisearch
+- JWT + Sanctum · Spatie Permission 8 · Horizon · Reverb · Scout/Meilisearch
 - Pest · Pint · PHPStan (Larastan)
 
 Detalle completo en `TECH_STACK.md`.
@@ -91,7 +92,20 @@ incluye con `require` desde `routes/api.php`.
 | Administración | `/admin` | `GET /admin/logs` |
 
 Middleware con alias disponibles: `auth:api`, `permission:`, `role:`,
-`auth:api-key`, `api-key-scope:`, `ip.whitelist`, `feature:`, `auth.optional`.
+`role_or_permission:`, `auth:api-key`, `api-key-scope:`, `ip.whitelist`,
+`feature:`, `auth.optional`.
+
+### Permisos (spatie/laravel-permission, guard `api`)
+
+- **Cada ruta declara su permiso exacto y el guard**: `->middleware('permission:users.read,api')`.
+  No existe mapa método HTTP → acción. Varios (OR): `permission:a.read|b.read,api`.
+- Nombre `recurso.accion` en minúsculas (`users.manage-roles`). Todo permiso nuevo va en
+  `PermissionSeeder::catalog()`; `PermissionCatalogTest` falla si hay uno usado sin sembrar o sembrado sin uso.
+- En código: `$user->can('x.y')` (respeta super admin), `checkPermissionTo()` (estricto), `hasRole()`,
+  `assignRole()`, `givePermissionTo()`. Nunca `DB::table` sobre las tablas de roles/permisos (no refresca la caché).
+- Super admin: el rol `admin` pasa todo vía `Gate::after` (las salvaguardas explícitas de las policies siguen mandando).
+- Denegación → 403 RFC 7807 (`UnauthorizedException` renderizada en `bootstrap/app.php`); sin token → 401.
+- Teams (multiempresa por `tenant_id`) preparado y apagado (`PERMISSION_TEAMS=false`). Detalle en `docs/permissions.md`.
 
 ## Autenticación
 
