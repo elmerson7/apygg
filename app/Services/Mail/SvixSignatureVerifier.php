@@ -2,6 +2,7 @@
 
 namespace App\Services\Mail;
 
+use App\Contracts\WebhookSignatureVerifierInterface;
 use Illuminate\Http\Request;
 
 /**
@@ -18,7 +19,7 @@ use Illuminate\Http\Request;
  *   - `svix-signature` trae una lista separada por espacios: "v1,<firma> v1,<firma>"
  *     (durante una rotación de secreto puede haber más de una).
  */
-class SvixSignatureVerifier
+class SvixSignatureVerifier implements WebhookSignatureVerifierInterface
 {
     /**
      * Ventana de tolerancia para el timestamp, en segundos. Evita que una

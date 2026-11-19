@@ -2,6 +2,7 @@
 
 namespace App\Services\Docs;
 
+use App\Contracts\DocsIndexerInterface;
 use App\Models\Docs\DocChunk;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -16,7 +17,7 @@ use Symfony\Component\Finder\Finder;
  * mitad de sección produce fragmentos sin contexto ("...y por eso hay que
  * configurarlo así") que el modelo no sabe usar.
  */
-class DocsIndexer
+class DocsIndexer implements DocsIndexerInterface
 {
     /**
      * Reindexar todas las fuentes configuradas.

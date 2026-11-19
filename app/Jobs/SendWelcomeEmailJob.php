@@ -29,7 +29,7 @@ class SendWelcomeEmailJob extends Job
     /**
      * Ejecutar el job
      */
-    protected function process(): void
+    public function process(): void
     {
         $user = User::find($this->userId);
 

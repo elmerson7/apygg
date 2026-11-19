@@ -2,9 +2,9 @@
 
 namespace Tests;
 
+use App\Contracts\HostResolverInterface;
 use App\Models\Permission;
 use App\Models\User;
-use App\Services\Webhooks\WebhookUrlGuard;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Contracts\Console\Kernel;
@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\ParallelTesting;
 use Illuminate\Testing\TestResponse;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
+use Tests\Support\FakeHostResolver;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -66,10 +67,20 @@ abstract class TestCase extends BaseTestCase
         Cache::flush();
 
         // DNS falso: los tests no dependen de la red. Los dominios resuelven a una IP pública.
-        WebhookUrlGuard::resolveUsing(fn (string $host) => ['93.184.216.34']);
+        $this->fakeDns(fn (string $host) => ['93.184.216.34']);
 
         // Seed roles y permisos base antes de cada test
         $this->seedRolesAndPermissions();
+    }
+
+    /**
+     * Sustituye el DNS real por uno falso (binding del contenedor, sin estado estático).
+     *
+     * @param  \Closure(string): array<int, string>  $resolver  host => lista de IPs
+     */
+    protected function fakeDns(\Closure $resolver): void
+    {
+        $this->app->instance(HostResolverInterface::class, new FakeHostResolver($resolver));
     }
 
     /**

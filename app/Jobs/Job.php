@@ -2,8 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Contracts\NotificationServiceInterface;
 use App\Services\LogService;
-use App\Services\NotificationService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -71,7 +71,8 @@ abstract class Job implements ShouldQueue
             ]);
 
             // Ejecutar la lógica del job (implementada por clases hijas)
-            $this->process();
+            // Con inyección de método: cada job pide por interfaz lo que necesita en process().
+            app()->call([$this, 'process']);
 
             $executionTime = round((microtime(true) - $startTime) * 1000, 2);
             $this->log('info', "Job completado exitosamente: {$jobName}", [
@@ -85,11 +86,9 @@ abstract class Job implements ShouldQueue
         }
     }
 
-    /**
-     * Método que contiene la lógica específica del job
-     * Debe ser implementado por las clases hijas
-     */
-    abstract protected function process(): void;
+    // Cada job hijo define `public function process(...): void` con la lógica específica y
+    // pide por interfaz lo que necesite (inyección de método vía `app()->call()`). No se
+    // declara abstracto: PHP no admite que el hijo añada parámetros obligatorios.
 
     /**
      * Manejar excepciones durante la ejecución del job
@@ -147,7 +146,8 @@ abstract class Job implements ShouldQueue
             $adminEmail = config('mail.admin_email', config('mail.from.address'));
 
             if ($adminEmail) {
-                NotificationService::sendEmail(
+                // failed()/notifyFailure no admiten inyección: se resuelve por interfaz.
+                app(NotificationServiceInterface::class)->sendEmail(
                     $adminEmail,
                     "Job Fallido: {$jobName}",
                     'emails.job-failed',

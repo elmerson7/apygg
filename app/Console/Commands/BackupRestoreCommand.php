@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Services\BackupService;
+use App\Contracts\BackupServiceInterface;
 use App\Services\LogService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -34,7 +34,7 @@ class BackupRestoreCommand extends Command
     /**
      * Execute the console command.
      */
-    public function handle(): int
+    public function handle(BackupServiceInterface $backups): int
     {
         $backupInput = $this->argument('backup');
         $force = $this->option('force');
@@ -78,8 +78,8 @@ class BackupRestoreCommand extends Command
 
         try {
             $this->info('Restaurando backup...');
-            $this->withProgressBar([1], function () use ($backupPath) {
-                BackupService::restoreDatabaseBackup($backupPath, false);
+            $this->withProgressBar([1], function () use ($backupPath, $backups) {
+                $backups->restoreDatabaseBackup($backupPath, false);
             });
             $this->newLine();
 

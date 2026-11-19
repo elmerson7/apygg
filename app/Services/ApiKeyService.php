@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\ApiKeyServiceInterface;
 use App\Exceptions\BusinessLogicException;
 use App\Models\ApiKey;
 use App\Models\User;
@@ -21,7 +22,7 @@ use Illuminate\Support\Str;
  * - Validación de keys
  * - Gestión de scopes
  */
-class ApiKeyService
+class ApiKeyService implements ApiKeyServiceInterface
 {
     /**
      * Cache TTL para validaciones de API Keys (en segundos)
@@ -48,7 +49,7 @@ class ApiKeyService
      * @param  string  $environment  Entorno (live o test)
      * @return array Array con la key completa y el modelo ApiKey
      *
-     * @throws \InvalidArgumentException Si los scopes no son válidos
+     * @throws BusinessLogicException Si los scopes no son válidos
      */
     public function create(User $user, string $name, array $scopes = [], ?\DateTimeInterface $expiresAt = null, string $environment = 'live'): array
     {
@@ -177,7 +178,7 @@ class ApiKeyService
         $user = $oldApiKey->user;
 
         if (! $user || ! ($user instanceof User)) {
-            throw new \RuntimeException('El usuario asociado a la API Key no existe');
+            throw BusinessLogicException::ruleViolation('El usuario asociado a la API Key no existe');
         }
 
         // Usar valores de la key antigua si no se proporcionan nuevos
@@ -363,7 +364,7 @@ class ApiKeyService
      *
      * @param  array  $scopes  Array de scopes
      *
-     * @throws \InvalidArgumentException Si algún scope no es válido
+     * @throws BusinessLogicException Si algún scope no es válido
      */
     protected function validateScopes(array $scopes): void
     {
@@ -377,12 +378,12 @@ class ApiKeyService
 
             // Validar formato resource.action
             if (! preg_match('/^[a-z0-9_-]+\.[a-z0-9_-]+$/', $scope)) {
-                throw new \InvalidArgumentException("El scope '{$scope}' no tiene un formato válido. Debe ser 'resource.action'");
+                throw BusinessLogicException::ruleViolation("El scope '{$scope}' no tiene un formato válido. Debe ser 'resource.action'");
             }
 
             // Validar contra lista de scopes disponibles si está configurada
             if (! empty($availableScopes) && ! in_array($scope, $availableScopes)) {
-                throw new \InvalidArgumentException("El scope '{$scope}' no está disponible");
+                throw BusinessLogicException::ruleViolation("El scope '{$scope}' no está disponible");
             }
         }
     }

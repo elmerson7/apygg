@@ -2,6 +2,7 @@
 
 namespace App\Services\Mail;
 
+use App\Contracts\MailAccountServiceInterface;
 use App\Models\Mail\MailAccount;
 use Illuminate\Support\Facades\DB;
 
@@ -15,7 +16,7 @@ use Illuminate\Support\Facades\DB;
  * (un seeder, un comando, un importador) podría dejar dos cuentas marcadas
  * como predeterminada y el envío elegiría una al azar.
  */
-class MailAccountService
+class MailAccountService implements MailAccountServiceInterface
 {
     /**
      * @param  array<string, mixed>  $data

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\BackupServiceInterface;
 use Aws\S3\Exception\S3Exception;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -13,7 +14,7 @@ use Illuminate\Support\Facades\Storage;
  * Servicio centralizado para operaciones de backup.
  * Maneja creación, restauración, listado y retención de backups.
  */
-class BackupService
+class BackupService implements BackupServiceInterface
 {
     /**
      * Crear backup de base de datos
@@ -22,7 +23,7 @@ class BackupService
      * @param  bool  $uploadToRemote  Subir a almacenamiento remoto
      * @return array Información del backup creado
      */
-    public static function createDatabaseBackup(bool $compress = true, bool $uploadToRemote = true): array
+    public function createDatabaseBackup(bool $compress = true, bool $uploadToRemote = true): array
     {
         $config = config('backups');
         $connection = config("database.connections.{$config['database']['connection']}");
@@ -97,7 +98,7 @@ class BackupService
         // Si falla, el backup se mantiene en storage local
         if ($uploadToRemote && $config['remote']['enabled']) {
             try {
-                $remotePath = self::uploadToRemote($finalPath, $finalFilename);
+                $remotePath = $this->uploadToRemote($finalPath, $finalFilename);
                 $backupInfo['remote_path'] = $remotePath;
                 $backupInfo['remote_uploaded'] = true;
                 Log::info('Backup subido exitosamente a almacenamiento remoto', [
@@ -136,7 +137,7 @@ class BackupService
      *
      * @throws \Exception Si falla la subida
      */
-    public static function uploadToRemote(string $localPath, string $filename): string
+    public function uploadToRemote(string $localPath, string $filename): string
     {
         $config = config('backups');
         $remotePath = rtrim($config['remote']['path'], '/').'/'.$filename;
@@ -227,7 +228,7 @@ class BackupService
      * @param  bool  $includeRemote  Incluir backups remotos
      * @return array Lista de backups
      */
-    public static function listBackups(?string $type = null, bool $includeRemote = false): array
+    public function listBackups(?string $type = null, bool $includeRemote = false): array
     {
         $config = config('backups');
         $backups = [];
@@ -239,7 +240,7 @@ class BackupService
 
             foreach ($files as $file) {
                 $filename = basename($file);
-                $backupInfo = self::getBackupInfo($file, $filename, 'local');
+                $backupInfo = $this->getBackupInfo($file, $filename, 'local');
 
                 if ($type === null || $backupInfo['type'] === $type) {
                     $backups[] = $backupInfo;
@@ -257,7 +258,7 @@ class BackupService
                 foreach ($remoteFiles as $remoteFile) {
                     $filename = basename($remoteFile);
                     if (preg_match('/^backup_.*\.(sql|sql\.gz)$/', $filename)) {
-                        $backupInfo = self::getBackupInfoFromRemote($disk, $remoteFile, $filename);
+                        $backupInfo = $this->getBackupInfoFromRemote($disk, $remoteFile, $filename);
 
                         if ($type === null || $backupInfo['type'] === $type) {
                             $backups[] = $backupInfo;
@@ -282,7 +283,7 @@ class BackupService
     /**
      * Obtener información de un backup local
      */
-    protected static function getBackupInfo(string $filePath, string $filename, string $location): array
+    protected function getBackupInfo(string $filePath, string $filename, string $location): array
     {
         $fileSize = filesize($filePath);
         $fileSizeMB = round($fileSize / 1024 / 1024, 2);
@@ -308,7 +309,7 @@ class BackupService
     /**
      * Obtener información de un backup remoto
      */
-    protected static function getBackupInfoFromRemote($disk, string $remotePath, string $filename): array
+    protected function getBackupInfoFromRemote($disk, string $remotePath, string $filename): array
     {
         $fileSize = $disk->size($remotePath);
         $fileSizeMB = round($fileSize / 1024 / 1024, 2);
@@ -338,7 +339,7 @@ class BackupService
      * @param  bool  $confirm  Confirmación requerida
      * @return bool True si se restauró exitosamente
      */
-    public static function restoreDatabaseBackup(string $backupPath, bool $confirm = true): bool
+    public function restoreDatabaseBackup(string $backupPath, bool $confirm = true): bool
     {
         if (! file_exists($backupPath) && ! Storage::disk('s3')->exists($backupPath)) {
             throw new \RuntimeException("Backup no encontrado: {$backupPath}");
@@ -463,7 +464,7 @@ class BackupService
      *
      * @return array Estadísticas de limpieza
      */
-    public static function cleanOldBackups(): array
+    public function cleanOldBackups(): array
     {
         $config = config('backups');
         $stats = [
@@ -474,7 +475,7 @@ class BackupService
             'kept_monthly' => 0,
         ];
 
-        $backups = self::listBackups(null, true);
+        $backups = $this->listBackups(null, true);
         $now = now();
 
         $dailyBackups = [];

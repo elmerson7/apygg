@@ -2,6 +2,7 @@
 
 namespace App\Services\Menu;
 
+use App\Contracts\MenuServiceInterface;
 use App\Models\MenuItem;
 use App\Models\Role;
 use App\Models\User;
@@ -19,7 +20,7 @@ use Illuminate\Database\Eloquent\Collection;
  * Importante: esto es **presentación, no autorización**. Ocultar un ítem no
  * protege el endpoint; cada ruta debe seguir exigiendo su permiso.
  */
-class MenuService
+class MenuService implements MenuServiceInterface
 {
     /**
      * Claves de los ítems visibles para un usuario.

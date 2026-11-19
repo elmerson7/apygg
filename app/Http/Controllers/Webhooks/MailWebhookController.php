@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Webhooks;
 
+use App\Contracts\MailEventStatusServiceInterface;
+use App\Contracts\WebhookSignatureVerifierInterface;
 use App\Models\Mail\MailEvent;
 use App\Models\Mail\MailLog;
-use App\Services\Mail\MailEventStatusService;
-use App\Services\Mail\SvixSignatureVerifier;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -31,8 +31,8 @@ use Illuminate\Support\Facades\Log;
 class MailWebhookController
 {
     public function __construct(
-        private readonly MailEventStatusService $statusService,
-        private readonly SvixSignatureVerifier $verifier,
+        private readonly MailEventStatusServiceInterface $statusService,
+        private readonly WebhookSignatureVerifierInterface $verifier,
     ) {}
 
     public function handle(Request $request): JsonResponse

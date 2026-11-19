@@ -1,11 +1,11 @@
 <?php
 
+use App\Contracts\MailServiceInterface;
 use App\Mail\SimpleMail;
 use App\Models\Mail\MailAccount;
 use App\Models\Mail\MailLog;
 use App\Models\Mail\MailSetting;
 use App\Models\Mail\MailTemplateConfig;
-use App\Services\MailService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 
@@ -40,7 +40,7 @@ function mensajesEntregados(): array
 test('encola un Mailable estándar por cada destinatario', function () {
     Mail::fake();
 
-    expect(MailService::send(['a@ejemplo.com', 'b@ejemplo.com'], 'Hola', 'emails.test'))->toBeTrue();
+    expect(app(MailServiceInterface::class)->send(['a@ejemplo.com', 'b@ejemplo.com'], 'Hola', 'emails.test'))->toBeTrue();
 
     Mail::assertQueued(SimpleMail::class, 2);
 });
@@ -48,13 +48,13 @@ test('encola un Mailable estándar por cada destinatario', function () {
 test('programa el envío cuando se indica retraso', function () {
     Mail::fake();
 
-    MailService::send('ana@ejemplo.com', 'Hola', 'emails.test', [], null, true, null, [], 3600);
+    app(MailServiceInterface::class)->send('ana@ejemplo.com', 'Hola', 'emails.test', [], null, true, null, [], 3600);
 
     Mail::assertQueued(SimpleMail::class, 1);
 });
 
 test('el envío síncrono registra el correo y lo marca como enviado', function () {
-    $result = MailService::send('ana@ejemplo.com', 'Hola', 'emails.test', datosVista(), 'welcome', queue: false);
+    $result = app(MailServiceInterface::class)->send('ana@ejemplo.com', 'Hola', 'emails.test', datosVista(), 'welcome', queue: false);
 
     expect($result)->toBeTrue();
 
@@ -70,7 +70,7 @@ test('el envío síncrono registra el correo y lo marca como enviado', function 
 });
 
 test('acepta destinatarios con nombre', function () {
-    MailService::send(['email' => 'ana@ejemplo.com', 'name' => 'Ana'], 'Hola', 'emails.test', datosVista(), queue: false);
+    app(MailServiceInterface::class)->send(['email' => 'ana@ejemplo.com', 'name' => 'Ana'], 'Hola', 'emails.test', datosVista(), queue: false);
 
     expect(MailLog::first()->to_name)->toBe('Ana');
 });
@@ -78,7 +78,7 @@ test('acepta destinatarios con nombre', function () {
 test('no envía nada con la pausa global activa y lo deja registrado como omitido', function () {
     MailSetting::setValue(MailSetting::KEY_GLOBAL_PAUSE, true);
 
-    expect(MailService::send('ana@ejemplo.com', 'Hola', 'emails.test', datosVista(), null, false))->toBeFalse();
+    expect(app(MailServiceInterface::class)->send('ana@ejemplo.com', 'Hola', 'emails.test', datosVista(), null, false))->toBeFalse();
 
     expect(mensajesEntregados())->toBeEmpty()
         ->and(MailLog::first()->status)->toBe(MailLog::STATUS_SKIPPED);
@@ -91,7 +91,7 @@ test('no envía si la plantilla está pausada', function () {
         'is_active' => false,
     ]);
 
-    expect(MailService::send('ana@ejemplo.com', 'Hola', 'emails.test', datosVista(), 'welcome', false))->toBeFalse();
+    expect(app(MailServiceInterface::class)->send('ana@ejemplo.com', 'Hola', 'emails.test', datosVista(), 'welcome', false))->toBeFalse();
 
     expect(mensajesEntregados())->toBeEmpty();
 });
@@ -100,8 +100,8 @@ test('respeta el límite diario', function () {
     MailSetting::setValue(MailSetting::KEY_DAILY_LIMIT, 1);
     $datos = datosVista();
 
-    expect(MailService::send('a@ejemplo.com', 'Uno', 'emails.test', $datos, null, false))->toBeTrue()
-        ->and(MailService::send('b@ejemplo.com', 'Dos', 'emails.test', $datos, null, false))->toBeFalse();
+    expect(app(MailServiceInterface::class)->send('a@ejemplo.com', 'Uno', 'emails.test', $datos, null, false))->toBeTrue()
+        ->and(app(MailServiceInterface::class)->send('b@ejemplo.com', 'Dos', 'emails.test', $datos, null, false))->toBeFalse();
 
     expect(mensajesEntregados())->toHaveCount(1);
 });
@@ -109,14 +109,14 @@ test('respeta el límite diario', function () {
 test('sin ninguna cuenta activa usa el mailer de respaldo y deja el registro sin cuenta', function () {
     $this->account->update(['is_active' => false]);
 
-    $ok = MailService::send('ana@ejemplo.com', 'Hola', 'emails.test', datosVista(), null, false);
+    $ok = app(MailServiceInterface::class)->send('ana@ejemplo.com', 'Hola', 'emails.test', datosVista(), null, false);
 
     expect($ok)->toBeTrue()
         ->and(MailLog::first()->mail_account_id)->toBeNull();
 });
 
 test('los datos de la vista no se guardan en el registro', function () {
-    MailService::send('ana@ejemplo.com', 'Reset', 'emails.test', datosVista() + [
+    app(MailServiceInterface::class)->send('ana@ejemplo.com', 'Reset', 'emails.test', datosVista() + [
         'reset_url' => 'https://ejemplo.com/reset?token=secreto',
         'password' => 'temporal123',
     ], null, false);

@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Contracts\WebhookServiceInterface;
 use App\Events\PermissionGranted;
 use App\Events\PermissionRevoked;
 use App\Events\RoleAssigned;
@@ -13,7 +14,6 @@ use App\Events\UserLoggedOut;
 use App\Events\UserRestored;
 use App\Events\UserUpdated;
 use App\Models\Webhook;
-use App\Services\WebhookService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 
@@ -26,6 +26,8 @@ use Illuminate\Queue\InteractsWithQueue;
 class WebhookListener implements ShouldQueue
 {
     use InteractsWithQueue;
+
+    public function __construct(private readonly WebhookServiceInterface $webhookService) {}
 
     /**
      * Handle the event.
@@ -48,7 +50,7 @@ class WebhookListener implements ShouldQueue
             return;
         }
 
-        $webhooks = app(WebhookService::class)->getWebhooksForEvent($eventName, $ownerId);
+        $webhooks = $this->webhookService->getWebhooksForEvent($eventName, $ownerId);
 
         if ($webhooks->isEmpty()) {
             return;
@@ -58,10 +60,9 @@ class WebhookListener implements ShouldQueue
         $payload = $this->preparePayload($event, $eventName);
 
         // Enviar webhook a cada suscriptor
-        $webhookService = app(WebhookService::class);
         foreach ($webhooks as $webhook) {
             if ($webhook->listensTo($eventName)) {
-                $webhookService->send($webhook, $eventName, $payload);
+                $this->webhookService->send($webhook, $eventName, $payload);
             }
         }
     }

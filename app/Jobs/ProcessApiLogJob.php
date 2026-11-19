@@ -30,7 +30,7 @@ class ProcessApiLogJob extends Job
     /**
      * Ejecutar el job
      */
-    protected function process(): void
+    public function process(): void
     {
         $cutoffDate = Carbon::now()->subDays($this->daysOld);
 

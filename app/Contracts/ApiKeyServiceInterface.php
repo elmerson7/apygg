@@ -5,6 +5,7 @@ namespace App\Contracts;
 use App\Models\ApiKey;
 use App\Models\User;
 use DateTimeInterface;
+use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
@@ -51,6 +52,11 @@ interface ApiKeyServiceInterface
      * @return array Array con la nueva key completa y el modelo ApiKey
      */
     public function rotate(string $keyId, ?string $newName = null, ?array $newScopes = null, string $environment = 'live'): array;
+
+    /**
+     * Autenticar la petición con su API Key (X-API-Key o Bearer): devuelve el usuario dueño.
+     */
+    public function authenticate(Request $request): ?User;
 
     /**
      * Validar una API Key

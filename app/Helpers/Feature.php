@@ -11,13 +11,6 @@ namespace App\Helpers;
 class Feature
 {
     /**
-     * Cache de features verificadas
-     *
-     * @var array<string, bool>
-     */
-    protected static array $cache = [];
-
-    /**
      * Verifica si una feature está habilitada
      *
      * @param  string  $feature  Nombre de la feature
@@ -25,28 +18,8 @@ class Feature
      */
     public static function enabled(string $feature): bool
     {
-        // Verificar cache primero
-        if (isset(static::$cache[$feature])) {
-            return static::$cache[$feature];
-        }
-
-        // Obtener configuración de la feature
-        $config = config("features.{$feature}", []);
-
-        // Si no existe la configuración, retornar false
-        if (empty($config)) {
-            static::$cache[$feature] = false;
-
-            return false;
-        }
-
-        // Obtener el valor de 'enabled' (por defecto false)
-        $enabled = $config['enabled'] ?? false;
-
-        // Guardar en cache
-        static::$cache[$feature] = (bool) $enabled;
-
-        return static::$cache[$feature];
+        // Sin caché propia (estado estático en Octane): config() ya está en memoria.
+        return (bool) config("features.{$feature}.enabled", false);
     }
 
     /**
@@ -88,14 +61,5 @@ class Feature
                 'description' => $config['description'] ?? null,
             ];
         }, $features);
-    }
-
-    /**
-     * Limpia el cache de features
-     * Útil para testing o cuando se cambian features dinámicamente
-     */
-    public static function clearCache(): void
-    {
-        static::$cache = [];
     }
 }

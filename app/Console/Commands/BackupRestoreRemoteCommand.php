@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Services\BackupService;
+use App\Contracts\BackupServiceInterface;
 use App\Services\LogService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
@@ -40,7 +40,7 @@ class BackupRestoreRemoteCommand extends Command
     /**
      * Execute the console command.
      */
-    public function handle(): int
+    public function handle(BackupServiceInterface $backupService): int
     {
         $config = config('backups');
 
@@ -125,7 +125,7 @@ class BackupRestoreRemoteCommand extends Command
             $this->info('✓ Descarga completada');
 
             $this->info('Restaurando base de datos...');
-            BackupService::restoreDatabaseBackup($tempPath, false);
+            $backupService->restoreDatabaseBackup($tempPath, false);
             $this->info('✓ Backup restaurado exitosamente');
 
             @unlink($tempPath);

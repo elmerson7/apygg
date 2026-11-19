@@ -80,7 +80,7 @@ test('lanza excepción si el email ya existe', function () {
     ];
 
     expect(fn () => $this->userService->create($userData))
-        ->toThrow(InvalidArgumentException::class, "El email '{$email}' ya está en uso");
+        ->toThrow(BusinessLogicException::class, "El email '{$email}' ya está en uso");
 });
 
 test('puede actualizar un usuario', function () {
@@ -102,7 +102,7 @@ test('lanza excepción si el email actualizado ya existe', function () {
     $user2 = User::factory()->create(['email' => 'user2@example.com']);
 
     expect(fn () => $this->userService->update($user1->id, ['email' => 'user2@example.com']))
-        ->toThrow(InvalidArgumentException::class, "El email 'user2@example.com' ya está en uso");
+        ->toThrow(BusinessLogicException::class, "El email 'user2@example.com' ya está en uso");
 });
 
 test('puede eliminar un usuario (soft delete)', function () {

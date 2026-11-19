@@ -25,8 +25,16 @@ interface UserServiceInterface
      *
      * @param  string  $userId  ID del usuario
      * @param  array  $data  Datos a actualizar
+     * @param  array|null  $roleIds  Roles a sincronizar (null = no tocarlos)
      */
-    public function update(string $userId, array $data): User;
+    public function update(string $userId, array $data, ?array $roleIds = null): User;
+
+    /**
+     * Actualizar el perfil del propio usuario (solo campos de perfil).
+     *
+     * @param  array<string, mixed>  $data  Datos ya validados
+     */
+    public function updateProfile(User $user, array $data): User;
 
     /**
      * Actualizar preferencias del usuario

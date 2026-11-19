@@ -2,10 +2,12 @@
 
 namespace App\Contracts;
 
+use Illuminate\Support\Facades\Hash;
+
 /**
  * SecurityServiceInterface
  *
- * Contrato para el servicio de operaciones de seguridad.
+ * Contrato del servicio de operaciones de seguridad (cifrado, IPs, tokens).
  */
 interface SecurityServiceInterface
 {
@@ -15,7 +17,7 @@ interface SecurityServiceInterface
      * @param  mixed  $value  Valor a encriptar
      * @return string Valor encriptado
      */
-    public static function encrypt($value): string;
+    public function encrypt($value): string;
 
     /**
      * Desencriptar datos
@@ -23,7 +25,7 @@ interface SecurityServiceInterface
      * @param  string  $encryptedValue  Valor encriptado
      * @return mixed Valor desencriptado
      */
-    public static function decrypt(string $encryptedValue);
+    public function decrypt(string $encryptedValue);
 
     /**
      * Hash de contraseña usando bcrypt
@@ -32,25 +34,23 @@ interface SecurityServiceInterface
      * @param  int  $rounds  Número de rounds (default: 10)
      * @return string Hash de contraseña
      */
-    public static function hashPassword(string $password, int $rounds = 10): string;
+    public function hashPassword(string $password, int $rounds = 10): string;
 
     /**
      * Verificar contraseña
      *
      * @param  string  $password  Contraseña en texto plano
      * @param  string  $hash  Hash almacenado
-     * @return bool True si la contraseña coincide con el hash
      */
-    public static function verifyPassword(string $password, string $hash): bool;
+    public function verifyPassword(string $password, string $hash): bool;
 
     /**
      * Verificar si IP está en whitelist
      *
      * @param  string  $ip  IP a verificar
      * @param  array|null  $whitelist  Lista de IPs permitidas (null = usar config)
-     * @return bool True si la IP está en la whitelist
      */
-    public static function isIpWhitelisted(string $ip, ?array $whitelist = null): bool;
+    public function isIpWhitelisted(string $ip, ?array $whitelist = null): bool;
 
     /**
      * Detectar comportamiento sospechoso
@@ -58,9 +58,9 @@ interface SecurityServiceInterface
      * @param  string  $ip  IP del usuario
      * @param  string  $action  Acción realizada
      * @param  array  $context  Contexto adicional
-     * @return array ['is_suspicious' => bool, 'reasons' => array, 'risk_score' => int]
+     * @return array ['is_suspicious' => bool, 'reasons' => array]
      */
-    public static function detectSuspiciousBehavior(string $ip, string $action, array $context = []): array;
+    public function detectSuspiciousBehavior(string $ip, string $action, array $context = []): array;
 
     /**
      * Generar token seguro
@@ -68,23 +68,22 @@ interface SecurityServiceInterface
      * @param  int  $length  Longitud del token
      * @return string Token generado
      */
-    public static function generateSecureToken(int $length = 64): string;
+    public function generateSecureToken(int $length = 64): string;
 
     /**
      * Generar token para reset de contraseña
      *
      * @return string Token único
      */
-    public static function generatePasswordResetToken(): string;
+    public function generatePasswordResetToken(): string;
 
     /**
      * Validar token de reset de contraseña
      *
      * @param  string  $token  Token a validar
      * @param  string  $storedToken  Token almacenado
-     * @return bool True si los tokens coinciden
      */
-    public static function validatePasswordResetToken(string $token, string $storedToken): bool;
+    public function validatePasswordResetToken(string $token, string $storedToken): bool;
 
     /**
      * Sanitizar entrada HTML
@@ -92,21 +91,17 @@ interface SecurityServiceInterface
      * @param  string  $input  Entrada a sanitizar
      * @return string Entrada sanitizada
      */
-    public static function sanitizeHtml(string $input): string;
+    public function sanitizeHtml(string $input): string;
 
     /**
      * Validar CSRF token
      *
      * @param  string  $token  Token a validar
-     * @return bool True si el token es válido
      */
-    public static function validateCsrfToken(string $token): bool;
+    public function validateCsrfToken(string $token): bool;
 
     /**
      * Registrar acción fallida
-     *
-     * @param  string  $ip  IP del usuario
-     * @param  string  $action  Acción realizada
      */
-    public static function recordFailedAction(string $ip, string $action): void;
+    public function recordFailedAction(string $ip, string $action): void;
 }

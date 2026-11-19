@@ -2,15 +2,17 @@
 
 namespace App\Services;
 
+use App\Contracts\AuthServiceInterface;
+use App\Contracts\SocialAuthServiceInterface;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Contracts\User as SocialiteUser;
 
-class SocialAuthService
+class SocialAuthService implements SocialAuthServiceInterface
 {
     public function __construct(
-        protected AuthService $authService
+        protected AuthServiceInterface $authService
     ) {}
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Services\Mail;
 
+use App\Contracts\MailSendPolicyInterface;
 use App\Models\Mail\MailLog;
 use App\Models\Mail\MailSetting;
 use App\Models\Mail\MailTemplateConfig;
@@ -14,7 +15,7 @@ use App\Models\Mail\MailTemplateConfig;
  * no al encolar: un correo que lleva una hora en cola respeta la pausa que se
  * activó mientras esperaba.
  */
-class MailSendPolicy
+class MailSendPolicy implements MailSendPolicyInterface
 {
     /**
      * Motivo por el que NO se puede enviar, o null si se puede.

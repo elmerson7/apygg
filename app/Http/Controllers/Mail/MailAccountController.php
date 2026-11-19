@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers\Mail;
 
+use App\Contracts\MailAccountServiceInterface;
+use App\Contracts\MailServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Mail\SendTestMailRequest;
 use App\Http\Requests\Mail\StoreMailAccountRequest;
 use App\Http\Requests\Mail\UpdateMailAccountRequest;
 use App\Http\Resources\Mail\MailAccountResource;
 use App\Models\Mail\MailAccount;
-use App\Services\Mail\MailAccountService;
-use App\Services\MailService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -20,7 +20,7 @@ use Illuminate\Http\Request;
  */
 class MailAccountController extends Controller
 {
-    public function __construct(private readonly MailAccountService $accounts) {}
+    public function __construct(private readonly MailAccountServiceInterface $accounts) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -79,9 +79,9 @@ class MailAccountController extends Controller
      * Se envía de forma síncrona a propósito: quien pulsa "probar" necesita
      * saber en el acto si la configuración funciona, no que se encole.
      */
-    public function test(SendTestMailRequest $request, MailAccount $mailAccount): JsonResponse
+    public function test(SendTestMailRequest $request, MailAccount $mailAccount, MailServiceInterface $mail): JsonResponse
     {
-        $sent = MailService::send(
+        $sent = $mail->send(
             to: $request->validated('email'),
             subject: 'Correo de prueba — '.config('app.name'),
             view: 'emails.test',

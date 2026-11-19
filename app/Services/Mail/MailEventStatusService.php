@@ -2,6 +2,7 @@
 
 namespace App\Services\Mail;
 
+use App\Contracts\MailEventStatusServiceInterface;
 use App\Models\Mail\MailEvent;
 use App\Models\Mail\MailLog;
 
@@ -16,7 +17,7 @@ use App\Models\Mail\MailLog;
  * actual): si un correo se reenvía, los eventos del intento anterior ya no
  * deben mover el estado.
  */
-class MailEventStatusService
+class MailEventStatusService implements MailEventStatusServiceInterface
 {
     /**
      * Mapa evento del proveedor → estado del log.

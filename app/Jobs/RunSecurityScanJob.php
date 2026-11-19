@@ -2,8 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Contracts\SecurityAuditServiceInterface;
 use App\Models\SecurityScan;
-use App\Services\SecurityAuditService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -31,7 +31,7 @@ class RunSecurityScanJob implements ShouldQueue
 
     public function __construct(private readonly int $scanId) {}
 
-    public function handle(SecurityAuditService $service): void
+    public function handle(SecurityAuditServiceInterface $service): void
     {
         $scan = SecurityScan::find($this->scanId);
 

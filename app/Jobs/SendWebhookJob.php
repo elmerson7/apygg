@@ -2,9 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Contracts\WebhookServiceInterface;
 use App\Models\Webhook;
 use App\Models\WebhookDelivery;
-use App\Services\WebhookService;
 
 /**
  * SendWebhookJob
@@ -49,7 +49,7 @@ class SendWebhookJob extends Job
     /**
      * Ejecutar el job
      */
-    protected function process(): void
+    public function process(WebhookServiceInterface $webhookService): void
     {
         $webhook = Webhook::find($this->webhookId);
         $delivery = WebhookDelivery::find($this->deliveryId);
@@ -94,7 +94,6 @@ class SendWebhookJob extends Job
         }
 
         // Procesar entrega
-        $webhookService = app(WebhookService::class);
         $success = $webhookService->processDelivery($webhook, $delivery);
 
         if (! $success && $delivery->attempts < $maxRetries) {

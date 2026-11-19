@@ -21,16 +21,14 @@ use Sentry\State\Scope;
 class LogService
 {
     /**
-     * Trace ID del request actual
-     */
-    protected static ?string $traceId = null;
-
-    /**
-     * Establecer trace ID del request
+     * Establecer trace ID del request.
+     *
+     * Se guarda en los atributos de la petición actual (no en una propiedad
+     * estática): en Octane el proceso vive entre peticiones.
      */
     public static function setTraceId(?string $traceId = null): void
     {
-        self::$traceId = $traceId ?? request()->header('X-Trace-ID') ?? (string) Str::uuid();
+        request()->attributes->set('trace_id', $traceId ?? request()->header('X-Trace-ID') ?? (string) Str::uuid());
     }
 
     /**
@@ -38,11 +36,11 @@ class LogService
      */
     public static function getTraceId(): ?string
     {
-        if (self::$traceId === null) {
+        if (! request()->attributes->has('trace_id')) {
             self::setTraceId();
         }
 
-        return self::$traceId;
+        return request()->attributes->get('trace_id');
     }
 
     /**

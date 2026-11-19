@@ -85,10 +85,7 @@ return Application::configure(basePath: dirname(__DIR__))
             return true; // Siempre devolver JSON
         });
 
-        // Establecer tiempo de inicio para ApiResponse
         $exceptions->render(function (\Throwable $e, $request) {
-            ApiResponse::setRequestStartTime();
-
             // Helper para registrar request/response en logs_api (incluso para excepciones)
             $logApiRequest = function (\Throwable $exception, $req) {
                 try {
@@ -295,6 +292,13 @@ return Application::configure(basePath: dirname(__DIR__))
                     $getErrorType($statusCode),
                     $request->path()
                 );
+            }
+
+            // JWT inválido, expirado o revocado (401). Antes cada controller lo capturaba a mano.
+            if ($e instanceof \PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException) {
+                $logException($e, $request, false);
+
+                return ApiResponse::unauthorized('Token inválido o expirado');
             }
 
             // AuthenticationException (401)

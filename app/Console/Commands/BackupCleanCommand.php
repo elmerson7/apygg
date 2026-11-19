@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Services\BackupService;
+use App\Contracts\BackupServiceInterface;
 use App\Services\LogService;
 use Illuminate\Console\Command;
 
@@ -30,7 +30,7 @@ class BackupCleanCommand extends Command
     /**
      * Execute the console command.
      */
-    public function handle(): int
+    public function handle(BackupServiceInterface $backups): int
     {
         $dryRun = $this->option('dry-run');
 
@@ -42,7 +42,7 @@ class BackupCleanCommand extends Command
         $this->info('Limpiando backups antiguos...');
 
         try {
-            $stats = BackupService::cleanOldBackups();
+            $stats = $backups->cleanOldBackups();
 
             $this->line('');
             $this->info('Limpieza completada:');

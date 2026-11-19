@@ -23,7 +23,7 @@ class ApiLogger
      *
      * @var array<string>
      */
-    protected static array $excludedPaths = [
+    protected const EXCLUDED_PATHS = [
         'health',
         'ping',
         'telescope',
@@ -35,7 +35,7 @@ class ApiLogger
      *
      * @var array<string>
      */
-    protected static array $excludedHeaders = [
+    protected const EXCLUDED_HEADERS = [
         'authorization',
         'cookie',
         'x-api-key',
@@ -144,7 +144,7 @@ class ApiLogger
         }
 
         // Verificar si el path contiene alguno de los paths excluidos
-        foreach (self::$excludedPaths as $excludedPath) {
+        foreach ([...self::EXCLUDED_PATHS, ...(array) config('logging.api.excluded_paths', [])] as $excludedPath) {
             if (Str::contains($normalizedPath, $excludedPath)) {
                 return true;
             }
@@ -178,7 +178,7 @@ class ApiLogger
 
         foreach ($headers as $key => $value) {
             $lowerKey = strtolower($key);
-            if (in_array($lowerKey, self::$excludedHeaders)) {
+            if (in_array($lowerKey, [...self::EXCLUDED_HEADERS, ...array_map('strtolower', (array) config('logging.api.excluded_headers', []))])) {
                 $sanitized[$key] = '[REDACTED]';
             } else {
                 $sanitized[$key] = is_array($value) ? $value[0] ?? $value : $value;
@@ -202,25 +202,5 @@ class ApiLogger
         }
 
         return 0;
-    }
-
-    /**
-     * Agregar rutas a la lista de excluidas
-     *
-     * @param  array<string>  $paths
-     */
-    public static function excludePaths(array $paths): void
-    {
-        self::$excludedPaths = array_merge(self::$excludedPaths, $paths);
-    }
-
-    /**
-     * Agregar headers a la lista de excluidos
-     *
-     * @param  array<string>  $headers
-     */
-    public static function excludeHeaders(array $headers): void
-    {
-        self::$excludedHeaders = array_merge(self::$excludedHeaders, $headers);
     }
 }

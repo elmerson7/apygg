@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Services\BackupService;
+use App\Contracts\BackupServiceInterface;
 use Illuminate\Console\Command;
 
 /**
@@ -32,14 +32,14 @@ class BackupListCommand extends Command
     /**
      * Execute the console command.
      */
-    public function handle(): int
+    public function handle(BackupServiceInterface $backupService): int
     {
         $type = $this->option('type');
         $includeRemote = $this->option('remote');
         $format = $this->option('format');
 
         try {
-            $backups = BackupService::listBackups($type, $includeRemote);
+            $backups = $backupService->listBackups($type, $includeRemote);
 
             if (empty($backups)) {
                 $this->info('No se encontraron backups.');

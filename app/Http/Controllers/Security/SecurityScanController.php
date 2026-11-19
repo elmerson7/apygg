@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Security;
 
+use App\Contracts\SecurityAuditServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Models\SecurityScan;
-use App\Services\SecurityAuditService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -15,7 +15,7 @@ use Illuminate\Http\Request;
  */
 class SecurityScanController extends Controller
 {
-    public function __construct(private readonly SecurityAuditService $audit) {}
+    public function __construct(private readonly SecurityAuditServiceInterface $audit) {}
 
     public function index(Request $request): JsonResponse
     {

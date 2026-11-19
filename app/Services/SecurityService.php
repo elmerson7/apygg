@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\SecurityServiceInterface;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -13,7 +14,7 @@ use Illuminate\Support\Str;
  * Servicio centralizado para operaciones de seguridad:
  * encriptación, hashing, validación de IPs, detección de comportamiento sospechoso.
  */
-class SecurityService
+class SecurityService implements SecurityServiceInterface
 {
     /**
      * Encriptar datos sensibles
@@ -21,7 +22,7 @@ class SecurityService
      * @param  mixed  $value  Valor a encriptar
      * @return string Valor encriptado
      */
-    public static function encrypt($value): string
+    public function encrypt($value): string
     {
         return Crypt::encryptString($value);
     }
@@ -32,7 +33,7 @@ class SecurityService
      * @param  string  $encryptedValue  Valor encriptado
      * @return mixed Valor desencriptado
      */
-    public static function decrypt(string $encryptedValue)
+    public function decrypt(string $encryptedValue)
     {
         try {
             return Crypt::decryptString($encryptedValue);
@@ -52,7 +53,7 @@ class SecurityService
      * @param  int  $rounds  Número de rounds (default: 10)
      * @return string Hash de contraseña
      */
-    public static function hashPassword(string $password, int $rounds = 10): string
+    public function hashPassword(string $password, int $rounds = 10): string
     {
         return Hash::make($password, ['rounds' => $rounds]);
     }
@@ -63,7 +64,7 @@ class SecurityService
      * @param  string  $password  Contraseña en texto plano
      * @param  string  $hash  Hash almacenado
      */
-    public static function verifyPassword(string $password, string $hash): bool
+    public function verifyPassword(string $password, string $hash): bool
     {
         return Hash::check($password, $hash);
     }
@@ -74,7 +75,7 @@ class SecurityService
      * @param  string  $ip  IP a verificar
      * @param  array|null  $whitelist  Lista de IPs permitidas (null = usar config)
      */
-    public static function isIpWhitelisted(string $ip, ?array $whitelist = null): bool
+    public function isIpWhitelisted(string $ip, ?array $whitelist = null): bool
     {
         $whitelist = $whitelist ?? config('security.ip_whitelist', []);
 
@@ -85,7 +86,7 @@ class SecurityService
         foreach ($whitelist as $allowedIp) {
             // Soporte para rangos CIDR
             if (str_contains($allowedIp, '/')) {
-                if (self::ipInRange($ip, $allowedIp)) {
+                if ($this->ipInRange($ip, $allowedIp)) {
                     return true;
                 }
             } elseif ($ip === $allowedIp) {
@@ -101,7 +102,7 @@ class SecurityService
      *
      * @param  string  $range  Rango CIDR (ej: 192.168.1.0/24)
      */
-    protected static function ipInRange(string $ip, string $range): bool
+    protected function ipInRange(string $ip, string $range): bool
     {
         [$subnet, $mask] = explode('/', $range);
         $ipLong = ip2long($ip);
@@ -119,7 +120,7 @@ class SecurityService
      * @param  array  $context  Contexto adicional
      * @return array ['is_suspicious' => bool, 'reasons' => array]
      */
-    public static function detectSuspiciousBehavior(string $ip, string $action, array $context = []): array
+    public function detectSuspiciousBehavior(string $ip, string $action, array $context = []): array
     {
         $reasons = [];
         $isSuspicious = false;
@@ -138,13 +139,13 @@ class SecurityService
         }
 
         // Verificar patrones sospechosos
-        if (self::hasSuspiciousPatterns($action, $context)) {
+        if ($this->hasSuspiciousPatterns($action, $context)) {
             $reasons[] = 'Suspicious patterns detected';
             $isSuspicious = true;
         }
 
         // Verificar IP en blacklist
-        if (self::isIpBlacklisted($ip)) {
+        if ($this->isIpBlacklisted($ip)) {
             $reasons[] = 'IP is blacklisted';
             $isSuspicious = true;
         }
@@ -161,14 +162,14 @@ class SecurityService
         return [
             'is_suspicious' => $isSuspicious,
             'reasons' => $reasons,
-            'risk_score' => self::calculateRiskScore($reasons),
+            'risk_score' => $this->calculateRiskScore($reasons),
         ];
     }
 
     /**
      * Detectar patrones sospechosos
      */
-    protected static function hasSuspiciousPatterns(string $action, array $context): bool
+    protected function hasSuspiciousPatterns(string $action, array $context): bool
     {
         // Detectar intentos de SQL injection
         $suspiciousPatterns = [
@@ -192,7 +193,7 @@ class SecurityService
     /**
      * Verificar si IP está en blacklist
      */
-    protected static function isIpBlacklisted(string $ip): bool
+    protected function isIpBlacklisted(string $ip): bool
     {
         $blacklist = config('security.ip_blacklist', []);
 
@@ -202,7 +203,7 @@ class SecurityService
     /**
      * Calcular score de riesgo
      */
-    protected static function calculateRiskScore(array $reasons): int
+    protected function calculateRiskScore(array $reasons): int
     {
         $score = 0;
 
@@ -227,7 +228,7 @@ class SecurityService
      * @param  int  $length  Longitud del token
      * @return string Token generado
      */
-    public static function generateSecureToken(int $length = 64): string
+    public function generateSecureToken(int $length = 64): string
     {
         return Str::random($length);
     }
@@ -237,7 +238,7 @@ class SecurityService
      *
      * @return string Token único
      */
-    public static function generatePasswordResetToken(): string
+    public function generatePasswordResetToken(): string
     {
         return hash_hmac('sha256', Str::random(40), config('app.key'));
     }
@@ -248,7 +249,7 @@ class SecurityService
      * @param  string  $token  Token a validar
      * @param  string  $storedToken  Token almacenado
      */
-    public static function validatePasswordResetToken(string $token, string $storedToken): bool
+    public function validatePasswordResetToken(string $token, string $storedToken): bool
     {
         return hash_equals($storedToken, $token);
     }
@@ -259,7 +260,7 @@ class SecurityService
      * @param  string  $input  Entrada a sanitizar
      * @return string Entrada sanitizada
      */
-    public static function sanitizeHtml(string $input): string
+    public function sanitizeHtml(string $input): string
     {
         // Remover tags HTML peligrosos
         $allowedTags = '<p><br><strong><em><u><a><ul><ol><li>';
@@ -277,7 +278,7 @@ class SecurityService
      *
      * @param  string  $token  Token a validar
      */
-    public static function validateCsrfToken(string $token): bool
+    public function validateCsrfToken(string $token): bool
     {
         $sessionToken = session()->token();
 
@@ -287,7 +288,7 @@ class SecurityService
     /**
      * Registrar acción fallida
      */
-    public static function recordFailedAction(string $ip, string $action): void
+    public function recordFailedAction(string $ip, string $action): void
     {
         $key = "security:failed_actions:{$ip}";
         $failedActions = cache()->get($key, []);

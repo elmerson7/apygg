@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\PasswordServiceInterface;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +18,7 @@ use Illuminate\Support\Str;
  * - Reset de contraseña
  * - Cambio de contraseña
  */
-class PasswordService
+class PasswordService implements PasswordServiceInterface
 {
     /**
      * Tiempo de expiración del token de reset en minutos

@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Contracts\UserServiceInterface;
 use App\Models\User;
-use App\Services\UserService;
 use Illuminate\Console\Command;
 
 /**
@@ -35,7 +35,7 @@ class UserCreateCommand extends Command
     /**
      * Execute the console command.
      */
-    public function handle(UserService $userService): int
+    public function handle(UserServiceInterface $userService): int
     {
         $name = $this->argument('name');
         $email = $this->argument('email');

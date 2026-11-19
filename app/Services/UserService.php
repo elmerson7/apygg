@@ -2,8 +2,7 @@
 
 namespace App\Services;
 
-use App\Contracts\RoleRepositoryInterface;
-use App\Contracts\UserRepositoryInterface;
+use App\Contracts\UserServiceInterface;
 use App\Events\PermissionGranted;
 use App\Events\PermissionRevoked;
 use App\Events\RoleAssigned;
@@ -28,45 +27,24 @@ use Illuminate\Support\Facades\Hash;
  * - Gestión de roles y permisos
  * - Búsqueda con filtros avanzados
  */
-class UserService
+class UserService implements UserServiceInterface
 {
     protected const CACHE_TTL = 3600;
 
     protected const CACHE_PREFIX = 'user:';
 
     /**
-     * @var UserRepositoryInterface
-     */
-    protected $userRepository;
-
-    /**
-     * @var RoleRepositoryInterface
-     */
-    protected $roleRepository;
-
-    /**
-     * Constructor
-     */
-    public function __construct(
-        UserRepositoryInterface $userRepository,
-        RoleRepositoryInterface $roleRepository
-    ) {
-        $this->userRepository = $userRepository;
-        $this->roleRepository = $roleRepository;
-    }
-
-    /**
      * Crear un nuevo usuario
      *
-     * @throws \InvalidArgumentException Si el email ya existe
+     * @throws BusinessLogicException Si el email ya existe
      */
     public function create(array $data, ?array $roleIds = null): User
     {
         // El email es único sin distinguir mayúsculas: `Admin@x.com` y `admin@x.com` son la misma cuenta.
         $data['email'] = mb_strtolower(trim($data['email']));
 
-        if ($this->userRepository->findByEmail($data['email'])) {
-            throw new \InvalidArgumentException("El email '{$data['email']}' ya está en uso");
+        if (User::where('email', $data['email'])->exists()) {
+            throw BusinessLogicException::ruleViolation("El email '{$data['email']}' ya está en uso", 'EMAIL_IN_USE');
         }
 
         if (isset($data['password'])) {
@@ -96,7 +74,7 @@ class UserService
 
         // Usuario, perfil y roles se crean juntos o no se crea nada.
         $user = DB::transaction(function () use ($data, $profileData, $roleIds) {
-            $user = $this->userRepository->create($data);
+            $user = User::create($data);
 
             // Todo usuario tiene perfil (aunque sea vacío): /user/profile lo asume.
             $user->profile()->create($profileData);
@@ -141,7 +119,7 @@ class UserService
      * Actualizar un usuario existente.
      *
      * @throws ModelNotFoundException
-     * @throws \InvalidArgumentException Si el email ya existe
+     * @throws BusinessLogicException Si el email ya existe
      */
     public function update(string $userId, array $data, ?array $roleIds = null): User
     {
@@ -152,8 +130,8 @@ class UserService
         }
 
         if (isset($data['email']) && $data['email'] !== $user->email) {
-            if ($this->userRepository->findByEmail($data['email']) && $this->userRepository->findByEmail($data['email'])->id != $userId) {
-                throw new \InvalidArgumentException("El email '{$data['email']}' ya está en uso");
+            if (User::where('email', $data['email'])->where('id', '!=', $userId)->exists()) {
+                throw BusinessLogicException::ruleViolation("El email '{$data['email']}' ya está en uso", 'EMAIL_IN_USE');
             }
         }
 
@@ -256,7 +234,7 @@ class UserService
         $existingRoles = Role::whereIn('id', $roleIds)->pluck('id')->toArray();
         $invalidRoles = array_diff($roleIds, $existingRoles);
         if (! empty($invalidRoles)) {
-            throw new \InvalidArgumentException('Los siguientes roles no existen: '.implode(', ', $invalidRoles));
+            throw BusinessLogicException::ruleViolation('Los siguientes roles no existen: '.implode(', ', $invalidRoles), 'ROLES_NOT_FOUND');
         }
 
         $previousRoleIds = $user->roles()->select('roles.id')->pluck('id')->toArray();
@@ -324,7 +302,7 @@ class UserService
         $deleted = DB::transaction(function () use ($user, $userId) {
             $this->ensureNotLastAdmin($user);
 
-            return $this->userRepository->delete($userId);
+            return User::destroy($userId) > 0;
         });
         $this->clearCache($userId);
         event(new UserDeleted($user));
@@ -355,7 +333,7 @@ class UserService
     public function find(string $userId): User
     {
         return CacheService::remember(self::CACHE_PREFIX.$userId, self::CACHE_TTL, function () use ($userId) {
-            $user = $this->userRepository->find($userId);
+            $user = User::findOrFail($userId);
             $user->load(['roles', 'permissions']);
 
             return $user;
@@ -445,7 +423,7 @@ class UserService
      * Asignar roles a un usuario
      *
      * @throws ModelNotFoundException
-     * @throws \InvalidArgumentException Si algún rol no existe
+     * @throws BusinessLogicException Si algún rol no existe
      */
     public function assignRoles(string $userId, array $roleIds): User
     {
@@ -454,7 +432,7 @@ class UserService
         $existingRoles = Role::whereIn('id', $roleIds)->pluck('id')->toArray();
         $invalidRoles = array_diff($roleIds, $existingRoles);
         if (! empty($invalidRoles)) {
-            throw new \InvalidArgumentException('Los siguientes roles no existen: '.implode(', ', $invalidRoles));
+            throw BusinessLogicException::ruleViolation('Los siguientes roles no existen: '.implode(', ', $invalidRoles), 'ROLES_NOT_FOUND');
         }
 
         return DB::transaction(function () use ($user, $userId, $roleIds) {
@@ -501,7 +479,7 @@ class UserService
         $role = Role::findOrFail($roleId);
 
         if ($user->roles()->count() === 1 && $user->hasRole('admin')) {
-            throw new \Exception('No se puede remover el último rol de un administrador');
+            throw BusinessLogicException::operationNotAllowed('No se puede remover el último rol de un administrador', 'remove_last_admin_role');
         }
 
         return DB::transaction(function () use ($user, $userId, $role) {

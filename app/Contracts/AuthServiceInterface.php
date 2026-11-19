@@ -21,6 +21,14 @@ interface AuthServiceInterface
     public function authenticate(array $credentials, ?string $ipAddress = null): ?array;
 
     /**
+     * Registrar un usuario nuevo y abrirle sesión.
+     *
+     * @param  array{name: string, email: string, password: string}  $data  Datos ya validados
+     * @return array{user: User, tokens: array}
+     */
+    public function register(array $data): array;
+
+    /**
      * Generar tokens para un usuario
      *
      * @param  User  $user  Usuario para el cual generar tokens
@@ -51,7 +59,7 @@ interface AuthServiceInterface
      * @param  string|null  $token  Token a revocar
      * @return bool True si se revocó exitosamente o ya estaba revocado
      */
-    public function revokeToken(?string $token = null): bool;
+    public function revokeToken(?string $token = null, ?string $refreshToken = null): bool;
 
     /**
      * Verificar si un identificador/IP está bloqueado por intentos fallidos

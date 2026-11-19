@@ -65,13 +65,38 @@ app/
 ├── Jobs/             → trabajos en cola
 ├── Logging/          → handlers y processors de Monolog
 ├── Models/           → modelos Eloquent (heredan de App\Models\Model)
-├── Repositories/     → acceso a datos cuando la query es compleja
 ├── Services/         → lógica de aplicación
 └── Traits/           → traits reutilizables
 ```
 
-Los servicios se inyectan **por interfaz** (`app/Contracts/`); el binding está en
-`ContractServiceProvider`.
+### Servicios: se inyectan por interfaz
+
+Cada servicio de `app/Services` con lógica de aplicación **implementa** una
+interfaz de `app/Contracts/` y se enlaza en `ContractServiceProvider`
+(`bind`: instancia nueva por resolución, sin estado entre peticiones en Octane).
+Controllers, servicios, jobs (en `process()`), listeners, comandos (en `handle()`)
+y middlewares reciben **la interfaz** por constructor o método. Nada de
+`new Servicio` ni `app(Servicio::class)`.
+
+- Las interfaces describen lo que necesita la app, no detalles internos.
+- Las reglas de negocio lanzan excepciones de dominio (`BusinessLogicException`
+  y las de `app/Exceptions`), nunca `\Exception` genérica: el handler global las
+  convierte en 4xx. Los controllers no hacen `try/catch` que solo re-empaqueta.
+- **Sin repositorios**: el servicio usa Eloquent directamente (lo estándar en
+  Laravel). Solo se crea un repositorio, con interfaz e inyección, para consultas
+  complejas reutilizadas por varios servicios.
+- **Excepciones justificadas** (sin interfaz): `LogService` y `CacheService`
+  (fachadas estáticas globales), `Services/Logging/*` (fachadas estáticas de
+  registro), `Services/LLM/*` (el gateway es un constructor fluido con estado por
+  llamada), `WebhookUrlGuard` (colaborador interno). Donde Laravel no permite
+  inyectar (accessor de un modelo, `Auth::viaRequest`, `failed()` de un job, un
+  `JsonResource`) se usa `app(Interfaz::class)`, nunca la clase concreta.
+- **Octane**: prohibidas las propiedades estáticas mutables en `App\` (usa
+  constantes, `config()`, atributos de la petición o un binding). Única excepción
+  temporal: `Tenant::$currentTenant`.
+- Lo comprueban las reglas de `tests/Unit/ArchTest.php`: los controllers solo
+  importan `App\Contracts`, cada servicio con interfaz la implementa y no hay
+  estáticos mutables.
 
 **Una sola base de controlador**: `App\Http\Controllers\Controller` (abstracta,
 como la de Laravel). Trae autorización, validación y los helpers de respuesta

@@ -8,33 +8,41 @@ use Illuminate\Database\Eloquent\Collection;
 /**
  * NotificationServiceInterface
  *
- * Contrato para el servicio de notificaciones multi-canal.
+ * Contrato del servicio de notificaciones multicanal.
  */
 interface NotificationServiceInterface
 {
     /**
-     * Enviar notificación por email
+     * Enviar notificación por email.
      *
-     * @param  string|array  $to  Email(s) destinatario(s)
-     * @param  string  $subject  Asunto
-     * @param  string  $view  Vista del email
-     * @param  array  $data  Datos para la vista
-     * @param  bool  $queue  Si debe enviarse en cola
-     * @return bool True si se envió exitosamente
+     * Delega en MailService para que el envío pase por el sistema de correo:
+     * selección de cuenta, pausa global, plantillas y registro en mail_logs.
+     * No envíes correo con Mail::send() directamente.
+     *
+     * @param  string|array<int, string|array{email: string, name?: string}>  $to
+     * @param  array<string, mixed>  $data
+     * @param  string|null  $templateKey  Clave de plantilla (permite pausarla desde el panel)
      */
-    public function sendEmail(string|array $to, string $subject, string $view, array $data = [], bool $queue = true): bool;
+    public function sendEmail(string|array $to,
+        string $subject,
+        string $view,
+        array $data = [],
+        bool $queue = true,
+        ?string $templateKey = null): bool;
 
     /**
      * Enviar notificación a base de datos
      *
-     * @param  Authenticatable  $notifiable  Usuario notificable
      * @param  string  $title  Título
      * @param  string  $message  Mensaje
      * @param  array  $data  Datos adicionales
      * @param  string|null  $type  Tipo de notificación
-     * @return bool True si se envió exitosamente
      */
-    public function sendDatabase(Authenticatable $notifiable, string $title, string $message, array $data = [], ?string $type = null): bool;
+    public function sendDatabase(Authenticatable $notifiable,
+        string $title,
+        string $message,
+        array $data = [],
+        ?string $type = null): bool;
 
     /**
      * Enviar notificación SMS (requiere servicio externo)
@@ -42,7 +50,6 @@ interface NotificationServiceInterface
      * @param  string  $phone  Número de teléfono
      * @param  string  $message  Mensaje
      * @param  bool  $queue  Si debe enviarse en cola
-     * @return bool True si se envió exitosamente
      */
     public function sendSms(string $phone, string $message, bool $queue = true): bool;
 
@@ -54,9 +61,12 @@ interface NotificationServiceInterface
      * @param  string  $message  Mensaje
      * @param  array  $data  Datos adicionales
      * @param  bool  $queue  Si debe enviarse en cola
-     * @return bool True si se envió exitosamente
      */
-    public function sendPush(string|array $tokens, string $title, string $message, array $data = [], bool $queue = true): bool;
+    public function sendPush(string|array $tokens,
+        string $title,
+        string $message,
+        array $data = [],
+        bool $queue = true): bool;
 
     /**
      * Enviar notificación multi-canal
@@ -69,14 +79,18 @@ interface NotificationServiceInterface
      * @param  bool  $queue  Si debe enviarse en cola
      * @return array Resultados por canal
      */
-    public function sendMultiChannel(array $channels, $notifiable, string $title, string $message, array $data = [], bool $queue = true): array;
+    public function sendMultiChannel(array $channels,
+        $notifiable,
+        string $title,
+        string $message,
+        array $data = [],
+        bool $queue = true): array;
 
     /**
      * Obtener historial de notificaciones
      *
      * @param  string|null  $channel  Filtrar por canal
      * @param  int  $limit  Límite de resultados
-     * @return Collection Colección de notificaciones
      */
     public function getHistory(?string $channel = null, int $limit = 50): Collection;
 }

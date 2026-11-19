@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Docs;
 
+use App\Contracts\DocsServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Docs\AskDocsRequest;
 use App\Models\Docs\DocChunk;
 use App\Models\Docs\DocConversation;
-use App\Services\Docs\DocsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -17,7 +17,7 @@ use Illuminate\Http\Request;
  */
 class DocsController extends Controller
 {
-    public function __construct(private readonly DocsService $docs) {}
+    public function __construct(private readonly DocsServiceInterface $docs) {}
 
     /**
      * Documentos indexados.

@@ -121,8 +121,8 @@ test('captura IP address del request', function () {
         ->and($log->ip_address)->toBeString();
 });
 
-test('puede agregar campos a la lista de excluidos', function () {
-    ActivityLogger::excludeFields(['remember_token', 'email_verified_at']);
+test('puede ampliar por config la lista de campos excluidos', function () {
+    config(['logging.activity.excluded_fields' => ['remember_token', 'email_verified_at']]);
 
     $user = User::factory()->create([
         'name' => 'Test',

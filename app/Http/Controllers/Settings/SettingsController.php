@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\Settings;
 
+use App\Contracts\SettingsServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\StoreSettingsRequest;
 use App\Http\Requests\Settings\UpdateSettingsRequest;
 use App\Http\Resources\Settings\SettingsResource;
 use App\Models\Settings;
-use App\Services\SettingsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -15,7 +15,7 @@ use Illuminate\Http\Request;
  * SettingsController
  *
  * Controlador para gestión de Settings.
- * La lógica de negocio vive en SettingsService.
+ * La lógica de negocio vive en SettingsServiceInterface.
  */
 class SettingsController extends Controller
 {
@@ -24,7 +24,7 @@ class SettingsController extends Controller
      */
     protected ?string $resource = SettingsResource::class;
 
-    public function __construct(protected SettingsService $settingsService) {}
+    public function __construct(protected SettingsServiceInterface $settingsService) {}
 
     /**
      * Display a listing of settings.

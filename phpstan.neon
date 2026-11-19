@@ -12,8 +12,6 @@ parameters:
     level: 5
 
     ignoreErrors:
-        # PENDIENTE: ContractServiceProvider:91 enlaza ApiKeyRepositoryInterface, que no existe
-        - '#Class App\\Contracts\\ApiKeyRepositoryInterface not found#'
         # Errores de QRCode (librería externa)
         - '#Access to undefined constant chillerlan\\QRCode\\QRCode::ECC_H#'
         - '#Access to undefined constant chillerlan\\QRCode\\QRCode::OUTPUT#'

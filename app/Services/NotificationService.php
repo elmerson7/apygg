@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Contracts\MailServiceInterface;
+use App\Contracts\NotificationServiceInterface;
 use App\Models\NotificationHistory;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Collection;
@@ -13,8 +15,10 @@ use Illuminate\Support\Facades\Log;
  *
  * Servicio centralizado para notificaciones multi-canal (email, SMS, push, database).
  */
-class NotificationService
+class NotificationService implements NotificationServiceInterface
 {
+    public function __construct(private readonly MailServiceInterface $mail) {}
+
     /**
      * Canales disponibles
      */
@@ -45,7 +49,7 @@ class NotificationService
      * @param  array<string, mixed>  $data
      * @param  string|null  $templateKey  Clave de plantilla (permite pausarla desde el panel)
      */
-    public static function sendEmail(
+    public function sendEmail(
         string|array $to,
         string $subject,
         string $view,
@@ -53,7 +57,7 @@ class NotificationService
         bool $queue = true,
         ?string $templateKey = null
     ): bool {
-        $sent = MailService::send(
+        $sent = $this->mail->send(
             to: $to,
             subject: $subject,
             view: $view,
@@ -63,7 +67,7 @@ class NotificationService
         );
 
         if ($sent) {
-            self::logNotification('mail', $to, $subject);
+            $this->logNotification('mail', $to, $subject);
         }
 
         return $sent;
@@ -77,7 +81,7 @@ class NotificationService
      * @param  array  $data  Datos adicionales
      * @param  string|null  $type  Tipo de notificación
      */
-    public static function sendDatabase(
+    public function sendDatabase(
         Authenticatable $notifiable,
         string $title,
         string $message,
@@ -110,7 +114,7 @@ class NotificationService
                 }
             });
 
-            self::logNotification('database', $notifiable->id ?? 'unknown', $title);
+            $this->logNotification('database', $notifiable->id ?? 'unknown', $title);
 
             return true;
         } catch (\Exception $e) {
@@ -129,7 +133,7 @@ class NotificationService
      * @param  string  $message  Mensaje
      * @param  bool  $queue  Si debe enviarse en cola
      */
-    public static function sendSms(string $phone, string $message, bool $queue = true): bool
+    public function sendSms(string $phone, string $message, bool $queue = true): bool
     {
         try {
             // Implementar integración con servicio SMS (Twilio, AWS SNS, etc.)
@@ -144,10 +148,10 @@ class NotificationService
                 // SmsJob::dispatch($phone, $message);
             } else {
                 // Enviar SMS inmediatamente
-                // self::sendSmsImmediate($phone, $message);
+                // $this->sendSmsImmediate($phone, $message);
             }
 
-            self::logNotification('sms', $phone, 'SMS');
+            $this->logNotification('sms', $phone, 'SMS');
 
             return true;
         } catch (\Exception $e) {
@@ -169,7 +173,7 @@ class NotificationService
      * @param  array  $data  Datos adicionales
      * @param  bool  $queue  Si debe enviarse en cola
      */
-    public static function sendPush(
+    public function sendPush(
         string|array $tokens,
         string $title,
         string $message,
@@ -187,10 +191,10 @@ class NotificationService
             if ($queue) {
                 // PushJob::dispatch($tokens, $title, $message, $data);
             } else {
-                // self::sendPushImmediate($tokens, $title, $message, $data);
+                // $this->sendPushImmediate($tokens, $title, $message, $data);
             }
 
-            self::logNotification('push', is_array($tokens) ? count($tokens).' tokens' : $tokens, $title);
+            $this->logNotification('push', is_array($tokens) ? count($tokens).' tokens' : $tokens, $title);
 
             return true;
         } catch (\Exception $e) {
@@ -213,7 +217,7 @@ class NotificationService
      * @param  bool  $queue  Si debe enviarse en cola
      * @return array Resultados por canal
      */
-    public static function sendMultiChannel(
+    public function sendMultiChannel(
         array $channels,
         $notifiable,
         string $title,
@@ -225,20 +229,20 @@ class NotificationService
 
         foreach ($channels as $channel) {
             $results[$channel] = match ($channel) {
-                'mail' => self::sendEmail(
+                'mail' => $this->sendEmail(
                     is_object($notifiable) ? $notifiable->email : $notifiable,
                     $title,
                     'emails.notification',
                     array_merge($data, ['message' => $message]),
                     $queue
                 ),
-                'database' => self::sendDatabase($notifiable, $title, $message, $data),
-                'sms' => self::sendSms(
+                'database' => $this->sendDatabase($notifiable, $title, $message, $data),
+                'sms' => $this->sendSms(
                     is_object($notifiable) ? $notifiable->phone : $notifiable,
                     $message,
                     $queue
                 ),
-                'push' => self::sendPush(
+                'push' => $this->sendPush(
                     is_object($notifiable) ? $notifiable->push_tokens : [],
                     $title,
                     $message,
@@ -255,7 +259,7 @@ class NotificationService
     /**
      * Guardar historial de notificación
      */
-    protected static function logNotification(string $channel, $recipient, string $subject): void
+    protected function logNotification(string $channel, $recipient, string $subject): void
     {
         try {
             NotificationHistory::create([
@@ -280,7 +284,7 @@ class NotificationService
      * @param  string|null  $channel  Filtrar por canal
      * @param  int  $limit  Límite de resultados
      */
-    public static function getHistory(?string $channel = null, int $limit = 50): Collection
+    public function getHistory(?string $channel = null, int $limit = 50): Collection
     {
         $query = NotificationHistory::query()
             ->orderBy('sent_at', 'desc')

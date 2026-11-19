@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\TokenServiceInterface;
 use App\Models\Blacklist;
 use App\Models\User;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
@@ -19,7 +20,7 @@ use PHPOpenSourceSaver\JWTAuth\JWTAuth as JWTAuthService;
  * - Revocación de tokens
  * - Renovación con rotación
  */
-class TokenService
+class TokenService implements TokenServiceInterface
 {
     public function __construct(
         private JWTAuthService $jwtAuth

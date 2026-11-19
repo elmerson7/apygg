@@ -2,8 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Contracts\SecurityServiceInterface;
 use App\Services\LogService;
-use App\Services\SecurityService;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -12,10 +12,12 @@ use Symfony\Component\HttpFoundation\Response;
  * IpWhitelistMiddleware
  *
  * Middleware para restringir acceso a endpoints críticos solo desde IPs permitidas.
- * Utiliza SecurityService para verificar IPs y soporta rangos CIDR.
+ * Utiliza SecurityServiceInterface para verificar IPs y soporta rangos CIDR.
  */
 class IpWhitelistMiddleware
 {
+    public function __construct(private readonly SecurityServiceInterface $security) {}
+
     /**
      * Handle an incoming request.
      */
@@ -40,7 +42,7 @@ class IpWhitelistMiddleware
         $whitelist = $this->getWhitelistForEndpoint($path);
 
         // Verificar si la IP está permitida
-        if (! SecurityService::isIpWhitelisted($ip, $whitelist)) {
+        if (! $this->security->isIpWhitelisted($ip, $whitelist)) {
             $this->logBlockedAttempt($request, $ip, 'IP no está en whitelist');
 
             return $this->buildBlockedResponse();

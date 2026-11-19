@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Contracts\MailServiceInterface;
 use App\Models\Mail\MailAccount;
-use App\Services\MailService;
 use Illuminate\Console\Command;
 
 /**
@@ -26,7 +26,7 @@ class MailTestCommand extends Command
 
     protected $description = 'Enviar un correo de prueba para verificar la configuración';
 
-    public function handle(): int
+    public function handle(MailServiceInterface $mail): int
     {
         $email = (string) $this->argument('email');
 
@@ -55,7 +55,7 @@ class MailTestCommand extends Command
             ['Modo', $this->option('queue') ? 'encolado' : 'síncrono'],
         ]);
 
-        $sent = MailService::send(
+        $sent = $mail->send(
             to: $email,
             subject: 'Correo de prueba — '.config('app.name'),
             view: 'emails.test',

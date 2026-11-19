@@ -2,28 +2,28 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Exceptions\AccountBlockedException;
-use App\Helpers\ApiResponse;
+use App\Contracts\AuthServiceInterface;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Resources\Auth\AuthResource;
 use App\Models\User;
-use App\Services\AuthService;
 use App\Services\LogService;
 use Dedoc\Scramble\Attributes\BodyParameter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
 
-class AuthController
+/**
+ * Autenticación: login, registro, logout, renovación de token y usuario en sesión.
+ *
+ * No captura excepciones: las reglas de negocio (`LoginLockedException`,
+ * `AccountBlockedException`) y los fallos de JWT llegan al handler global, que
+ * responde en RFC 7807 y registra el error.
+ */
+class AuthController extends Controller
 {
-    protected AuthService $authService;
-
-    public function __construct(AuthService $authService)
-    {
-        $this->authService = $authService;
-    }
+    public function __construct(protected AuthServiceInterface $authService) {}
 
     /**
      * Login de usuario
@@ -33,53 +33,25 @@ class AuthController
     public function login(LoginRequest $request): JsonResponse
     {
         $login = $request->input('login');
-        $password = $request->input('password');
 
-        try {
-            // Autenticar usando AuthService
-            $result = $this->authService->authenticate(['login' => $login, 'password' => $password], $request->ip());
+        $result = $this->authService->authenticate(
+            ['login' => $login, 'password' => $request->input('password')],
+            $request->ip()
+        );
 
-            if (! $result) {
-                $remainingAttempts = $this->authService->getRemainingAttempts(
-                    $login,
-                    $request->ip()
-                );
+        if (! $result) {
+            $remainingAttempts = $this->authService->getRemainingAttempts($login, $request->ip());
 
-                return ApiResponse::unauthorized(
-                    'Credenciales inválidas'.($remainingAttempts > 0 ? ". Intentos restantes: {$remainingAttempts}" : '')
-                );
-            }
-
-            $user = $result['user'];
-            $tokens = $result['tokens'];
-
-            // Retornar respuesta con tokens
-            return ApiResponse::success(
-                new AuthResource([
-                    'user' => $user,
-                    'access_token' => $tokens['access_token'],
-                    'refresh_token' => $tokens['refresh_token'],
-                    'token_type' => 'bearer',
-                    'expires_in' => $this->authService->getTokenExpiration(),
-                ]),
-                'Login exitoso'
+            return $this->sendError(
+                'Credenciales inválidas'.($remainingAttempts > 0 ? ". Intentos restantes: {$remainingAttempts}" : ''),
+                401
             );
-        } catch (AccountBlockedException $e) {
-            return ApiResponse::forbidden('No es posible iniciar sesión con esta cuenta.');
-        } catch (\Exception $e) {
-            // Manejar bloqueo por intentos fallidos
-            if (str_contains($e->getMessage(), 'Demasiados intentos')) {
-                return ApiResponse::unauthorized($e->getMessage());
-            }
-
-            LogService::error('Error en login', [
-                'login' => $login ?? null,
-                'error' => $e->getMessage(),
-                'class' => get_class($e),
-            ]);
-
-            return ApiResponse::error('Error al procesar el login', 500);
         }
+
+        return $this->sendSuccess(
+            $this->authPayload($result['user'], $result['tokens']),
+            'Login exitoso'
+        );
     }
 
     /**
@@ -87,44 +59,20 @@ class AuthController
      */
     public function register(RegisterRequest $request): JsonResponse
     {
-        try {
-            $result = $this->authService->register($request->validated());
-            $user = $result['user'];
-            $tokens = $result['tokens'];
+        $result = $this->authService->register($request->validated());
+        $user = $result['user'];
 
-            // Registrar registro exitoso
-            LogService::info('Usuario registrado', [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'ip' => $request->ip(),
-            ], 'security');
+        LogService::info('Usuario registrado', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'ip' => $request->ip(),
+        ], 'security');
 
-            // Retornar respuesta con tokens
-            return ApiResponse::created(
-                new AuthResource([
-                    'user' => $user,
-                    'access_token' => $tokens['access_token'],
-                    'refresh_token' => $tokens['refresh_token'],
-                    'token_type' => 'bearer',
-                    'expires_in' => $this->authService->getTokenExpiration(),
-                ]),
-                'Usuario registrado exitosamente'
-            );
-        } catch (JWTException $e) {
-            LogService::error('Error JWT en registro', [
-                'email' => $request->email,
-                'error' => $e->getMessage(),
-            ]);
-
-            return ApiResponse::error('Error al generar tokens de autenticación', 500);
-        } catch (\Exception $e) {
-            LogService::error('Error en registro', [
-                'email' => $request->email,
-                'error' => $e->getMessage(),
-            ]);
-
-            return ApiResponse::error('Error al procesar el registro', 500);
-        }
+        return $this->sendSuccess(
+            $this->authPayload($user, $result['tokens']),
+            'Usuario registrado exitosamente',
+            201
+        );
     }
 
     /**
@@ -132,30 +80,16 @@ class AuthController
      */
     public function logout(Request $request): JsonResponse
     {
-        try {
-            // Revoca el access token de la petición y, si el cliente lo envía,
-            // el refresh token de esa misma sesión.
-            $refreshToken = $request->input('refresh_token');
+        // Revoca el access token de la petición y, si el cliente lo envía,
+        // el refresh token de esa misma sesión.
+        $refreshToken = $request->input('refresh_token');
 
-            $this->authService->revokeToken(
-                null,
-                is_string($refreshToken) && $refreshToken !== '' ? $refreshToken : null
-            );
+        $this->authService->revokeToken(
+            null,
+            is_string($refreshToken) && $refreshToken !== '' ? $refreshToken : null
+        );
 
-            return ApiResponse::success(null, 'Logout exitoso');
-        } catch (JWTException $e) {
-            LogService::error('Error JWT en logout', [
-                'error' => $e->getMessage(),
-            ]);
-
-            return ApiResponse::error('Error al procesar el logout', 500);
-        } catch (\Exception $e) {
-            LogService::error('Error en logout', [
-                'error' => $e->getMessage(),
-            ]);
-
-            return ApiResponse::error('Error al procesar el logout', 500);
-        }
+        return $this->sendSuccess(null, 'Logout exitoso');
     }
 
     /**
@@ -168,36 +102,17 @@ class AuthController
         $refreshToken = $request->input('refresh_token');
 
         if (! $refreshToken) {
-            return ApiResponse::unauthorized('Refresh token no proporcionado');
+            return $this->sendError('Refresh token no proporcionado', 401);
         }
 
-        try {
-            // Renovar tokens usando AuthService (con rotación)
-            $result = $this->authService->refreshToken($refreshToken);
+        // Renovar tokens (con rotación). Un token inválido o expirado lanza
+        // JWTException y el handler responde 401.
+        $result = $this->authService->refreshToken($refreshToken);
 
-            return ApiResponse::success(
-                new AuthResource([
-                    'user' => $result['user'],
-                    'access_token' => $result['access_token'],
-                    'refresh_token' => $result['refresh_token'],
-                    'token_type' => 'bearer',
-                    'expires_in' => $this->authService->getTokenExpiration(),
-                ]),
-                'Token renovado exitosamente'
-            );
-        } catch (JWTException $e) {
-            LogService::error('Error al renovar token', [
-                'error' => $e->getMessage(),
-            ]);
-
-            return ApiResponse::unauthorized('Token inválido o expirado');
-        } catch (\Exception $e) {
-            LogService::error('Error al renovar token', [
-                'error' => $e->getMessage(),
-            ]);
-
-            return ApiResponse::unauthorized('Error al renovar el token');
-        }
+        return $this->sendSuccess(
+            $this->authPayload($result['user'], $result),
+            'Token renovado exitosamente'
+        );
     }
 
     /**
@@ -205,38 +120,46 @@ class AuthController
      */
     public function me(): JsonResponse
     {
-        try {
-            $user = Auth::guard('api')->user();
+        $user = Auth::guard('api')->user();
 
-            if (! $user) {
-                return ApiResponse::unauthorized('Usuario no autenticado');
-            }
-
-            // Recargar con relaciones
-            $user = User::with(['roles', 'profile'])->find($user->id);
-
-            // Permisos efectivos: directos + los de sus roles (API de Spatie)
-            $allPermissions = $user->getAllPermissions()->pluck('name')->unique()->values();
-
-            return ApiResponse::success([
-                'id' => $user->id,
-                'name' => $user->name,
-                'first_name' => $user->profile?->first_name,
-                'last_name' => $user->profile?->last_name,
-                'email' => $user->email,
-                'email_verified_at' => $user->email_verified_at ? $user->email_verified_at->toIso8601String() : null,
-                'roles' => $user->roles->pluck('name')->toArray(),
-                'permissions' => $allPermissions->toArray(),
-                'preferences' => $user->preferences,
-                'created_at' => $user->created_at->toIso8601String(),
-                'updated_at' => $user->updated_at->toIso8601String(),
-            ], 'Usuario obtenido exitosamente');
-        } catch (\Exception $e) {
-            LogService::error('Error al obtener usuario', [
-                'error' => $e->getMessage(),
-            ]);
-
-            return ApiResponse::error('Error al obtener datos del usuario', 500);
+        if (! $user) {
+            return $this->sendError('Usuario no autenticado', 401);
         }
+
+        // Recargar con relaciones
+        $user = User::with(['roles', 'profile'])->find($user->id);
+
+        // Permisos efectivos: directos + los de sus roles (API de Spatie)
+        $allPermissions = $user->getAllPermissions()->pluck('name')->unique()->values();
+
+        return $this->sendSuccess([
+            'id' => $user->id,
+            'name' => $user->name,
+            'first_name' => $user->profile?->first_name,
+            'last_name' => $user->profile?->last_name,
+            'email' => $user->email,
+            'email_verified_at' => $user->email_verified_at ? $user->email_verified_at->toIso8601String() : null,
+            'roles' => $user->roles->pluck('name')->toArray(),
+            'permissions' => $allPermissions->toArray(),
+            'preferences' => $user->preferences,
+            'created_at' => $user->created_at->toIso8601String(),
+            'updated_at' => $user->updated_at->toIso8601String(),
+        ], 'Usuario obtenido exitosamente');
+    }
+
+    /**
+     * Payload común de las respuestas con sesión (usuario + tokens).
+     *
+     * @param  array{access_token: string, refresh_token: string}  $tokens
+     */
+    private function authPayload(User $user, array $tokens): AuthResource
+    {
+        return new AuthResource([
+            'user' => $user,
+            'access_token' => $tokens['access_token'],
+            'refresh_token' => $tokens['refresh_token'],
+            'token_type' => 'bearer',
+            'expires_in' => $this->authService->getTokenExpiration(),
+        ]);
     }
 }

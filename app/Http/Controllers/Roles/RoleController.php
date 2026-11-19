@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Roles;
 
+use App\Contracts\RoleServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Roles\StoreRoleRequest;
 use App\Http\Requests\Roles\SyncRolePermissionsRequest;
 use App\Http\Requests\Roles\UpdateRoleRequest;
 use App\Models\Permission;
 use App\Models\Role;
-use App\Services\RoleService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,7 +17,7 @@ use Illuminate\Support\Arr;
 class RoleController extends Controller
 {
     public function __construct(
-        protected RoleService $roleService
+        protected RoleServiceInterface $roleService
     ) {}
 
     public function index(Request $request): JsonResponse

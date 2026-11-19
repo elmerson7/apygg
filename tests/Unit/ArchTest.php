@@ -32,10 +32,7 @@ arch('los modelos no conocen la capa HTTP')
 
 arch('los modelos no dependen de servicios')
     ->expect('App\Models')
-    ->not->toUse('App\Services')
-    // Excepción conocida a corregir: Settings encripta valores llamando a
-    // SecurityService desde un accessor. Debería hacerlo un cast.
-    ->ignoring('App\Models\Settings');
+    ->not->toUse('App\Services');
 
 arch('los controladores no consultan la BD directamente')
     ->expect('App\Http\Controllers')
@@ -68,3 +65,162 @@ arch('las reglas de validación implementan el contrato de Laravel')
     ->classes()
     ->toImplement('Illuminate\Contracts\Validation\ValidationRule')
     ->ignoring('App\Rules\StrongPassword');
+
+/*
+|--------------------------------------------------------------------------
+| Inyección por interfaz (AGENTS.md → "Arquitectura")
+|--------------------------------------------------------------------------
+*/
+
+/**
+ * Todos los .php de una carpeta (rutas relativas a la raíz del proyecto).
+ *
+ * @return array<int, string>
+ */
+function archPhpFiles(string $dir): array
+{
+    $files = [];
+    $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(base_path($dir), FilesystemIterator::SKIP_DOTS));
+
+    foreach ($iterator as $file) {
+        if ($file->getExtension() === 'php') {
+            $files[] = str_replace(base_path().'/', '', $file->getPathname());
+        }
+    }
+
+    sort($files);
+
+    return $files;
+}
+
+test('los controladores no dependen de servicios concretos: solo de App\Contracts', function () {
+    // Fachadas estáticas de uso global (sin interfaz a propósito): logging y caché.
+    $fachadas = ['App\Services\LogService', 'App\Services\CacheService'];
+
+    // Excepciones justificadas, por archivo: LlmGateway es un constructor fluido con
+    // estado por llamada (useCase()->module()->chat()), no un servicio inyectable.
+    $excepciones = [
+        'app/Http/Controllers/Llm/LlmAreaController.php' => ['App\Services\LLM\LlmGateway'],
+    ];
+
+    $violaciones = [];
+
+    foreach (archPhpFiles('app/Http/Controllers') as $file) {
+        preg_match_all('/^use (App\\\\Services\\\\[^;]+);/m', file_get_contents(base_path($file)), $matches);
+
+        foreach ($matches[1] as $import) {
+            $permitido = in_array($import, $fachadas, true)
+                || in_array($import, $excepciones[$file] ?? [], true);
+
+            if (! $permitido) {
+                $violaciones[] = "{$file} importa {$import}";
+            }
+        }
+    }
+
+    expect($violaciones)->toBe([]);
+});
+
+/**
+ * Clase concreta => interfaz que debe implementar. Añade aquí cada servicio nuevo.
+ *
+ * @return array<string, string>
+ */
+function archServiciosConInterfaz(): array
+{
+    return [
+        'App\Services\AuthService' => 'App\Contracts\AuthServiceInterface',
+        'App\Services\UserService' => 'App\Contracts\UserServiceInterface',
+        'App\Services\RoleService' => 'App\Contracts\RoleServiceInterface',
+        'App\Services\PermissionService' => 'App\Contracts\PermissionServiceInterface',
+        'App\Services\TokenService' => 'App\Contracts\TokenServiceInterface',
+        'App\Services\ApiKeyService' => 'App\Contracts\ApiKeyServiceInterface',
+        'App\Services\WebhookService' => 'App\Contracts\WebhookServiceInterface',
+        'App\Services\FileService' => 'App\Contracts\FileServiceInterface',
+        'App\Services\SettingsService' => 'App\Contracts\SettingsServiceInterface',
+        'App\Services\MailService' => 'App\Contracts\MailServiceInterface',
+        'App\Services\NotificationService' => 'App\Contracts\NotificationServiceInterface',
+        'App\Services\SecurityService' => 'App\Contracts\SecurityServiceInterface',
+        'App\Services\PasswordService' => 'App\Contracts\PasswordServiceInterface',
+        'App\Services\SocialAuthService' => 'App\Contracts\SocialAuthServiceInterface',
+        'App\Services\BackupService' => 'App\Contracts\BackupServiceInterface',
+        'App\Services\SecurityAuditService' => 'App\Contracts\SecurityAuditServiceInterface',
+        'App\Services\Menu\MenuService' => 'App\Contracts\MenuServiceInterface',
+        'App\Services\Docs\DocsService' => 'App\Contracts\DocsServiceInterface',
+        'App\Services\Docs\DocsIndexer' => 'App\Contracts\DocsIndexerInterface',
+        'App\Services\Mail\MailAccountService' => 'App\Contracts\MailAccountServiceInterface',
+        'App\Services\Mail\MailEventStatusService' => 'App\Contracts\MailEventStatusServiceInterface',
+        'App\Services\Mail\MailSendPolicy' => 'App\Contracts\MailSendPolicyInterface',
+        'App\Services\Mail\SvixSignatureVerifier' => 'App\Contracts\WebhookSignatureVerifierInterface',
+        'App\Services\Webhooks\DnsHostResolver' => 'App\Contracts\HostResolverInterface',
+    ];
+}
+
+dataset('servicios con interfaz', function () {
+    foreach (archServiciosConInterfaz() as $class => $interface) {
+        yield class_basename($class) => [$class, $interface];
+    }
+});
+
+test('cada servicio con interfaz la implementa y el contenedor la resuelve', function (string $class, string $interface) {
+    // TestCase sustituye algunas interfaces por fakes (p. ej. el DNS): se resuelve el binding real.
+    app()->forgetInstance($interface);
+
+    expect(interface_exists($interface))->toBeTrue()
+        ->and(class_implements($class))->toContain($interface)
+        ->and(app($interface))->toBeInstanceOf($class);
+})->with('servicios con interfaz');
+
+test('toda clase de App\Services tiene interfaz o está en la lista de excepciones', function () {
+    // Servicios sin interfaz, con el motivo:
+    $sinInterfaz = [
+        'App\Services\LogService' => 'fachada estática global (LogService::info...)',
+        'App\Services\CacheService' => 'fachada estática global (CacheService::remember...)',
+        'App\Services\FcmService' => 'cliente estático de FCM sin consumidores en la app',
+        'App\Services\QrCodeService' => 'utilidad sin consumidores en la app',
+        'App\Services\Webhooks\WebhookUrlGuard' => 'colaborador interno de WebhookService y SafeWebhookUrl (su única dependencia, el DNS, sí tiene interfaz)',
+    ];
+
+    // Subcarpetas enteras sin interfaz: LLM (gateway fluido con estado por llamada, con sus propios contratos),
+    // Logging (fachadas estáticas de registro) y Tools (utilidades del agente LLM).
+    $carpetasLibres = ['app/Services/LLM/', 'app/Services/Logging/', 'app/Services/Tools/'];
+
+    $conocidas = [...array_keys(archServiciosConInterfaz()), ...array_keys($sinInterfaz)];
+
+    $desconocidas = [];
+
+    foreach (archPhpFiles('app/Services') as $file) {
+        if (collect($carpetasLibres)->contains(fn ($c) => str_starts_with($file, $c))) {
+            continue;
+        }
+
+        $class = 'App\\'.str_replace(['app/', '/', '.php'], ['', '\\', ''], $file);
+
+        if (! in_array($class, $conocidas, true)) {
+            $desconocidas[] = $class;
+        }
+    }
+
+    expect($desconocidas)->toBe([]);
+});
+
+test('no hay propiedades estáticas mutables en App (estado compartido en Octane)', function () {
+    // PHP no admite `static readonly`: cualquier propiedad estática es mutable. Usa constantes,
+    // config, atributos de la petición o un binding del contenedor.
+    // Excepción justificada: Tenant guarda el tenant actual; se rehace en la fase de multiempresa.
+    $permitidas = ['app/Models/Tenant.php'];
+
+    $violaciones = [];
+
+    foreach (archPhpFiles('app') as $file) {
+        if (in_array($file, $permitidas, true)) {
+            continue;
+        }
+
+        if (preg_match('/^\s*(?:(?:public|protected|private|readonly)\s+)*static\s+(?:\??[\w\\\\|]+\s+)?\$\w+/m', file_get_contents(base_path($file)))) {
+            $violaciones[] = $file;
+        }
+    }
+
+    expect($violaciones)->toBe([]);
+});

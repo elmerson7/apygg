@@ -178,7 +178,7 @@ class RoleService
 ### Cambiar TTL por defecto
 
 ```php
-CacheService::setDefaultTtl('user', 7200); // 2 horas
+// Los TTL por defecto son constantes de CacheService::DEFAULT_TTLS; para otro valor, pásalo en cada llamada
 $ttl = CacheService::getDefaultTtl('user');
 ```
 

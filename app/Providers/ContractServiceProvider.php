@@ -2,98 +2,109 @@
 
 namespace App\Providers;
 
-use App\Contracts\ApiKeyRepositoryInterface;
 use App\Contracts\ApiKeyServiceInterface;
 use App\Contracts\AuthServiceInterface;
-use App\Contracts\CacheServiceInterface;
+use App\Contracts\BackupServiceInterface;
+use App\Contracts\DocsIndexerInterface;
+use App\Contracts\DocsServiceInterface;
 use App\Contracts\FileServiceInterface;
-use App\Contracts\LogServiceInterface;
+use App\Contracts\HostResolverInterface;
+use App\Contracts\MailAccountServiceInterface;
+use App\Contracts\MailEventStatusServiceInterface;
+use App\Contracts\MailSendPolicyInterface;
+use App\Contracts\MailServiceInterface;
+use App\Contracts\MenuServiceInterface;
 use App\Contracts\NotificationServiceInterface;
-use App\Contracts\PermissionRepositoryInterface;
+use App\Contracts\PasswordServiceInterface;
 use App\Contracts\PermissionServiceInterface;
-use App\Contracts\RoleRepositoryInterface;
 use App\Contracts\RoleServiceInterface;
+use App\Contracts\SecurityAuditServiceInterface;
 use App\Contracts\SecurityServiceInterface;
+use App\Contracts\SettingsServiceInterface;
+use App\Contracts\SocialAuthServiceInterface;
 use App\Contracts\TokenServiceInterface;
-use App\Contracts\UserRepositoryInterface;
 use App\Contracts\UserServiceInterface;
 use App\Contracts\WebhookServiceInterface;
-use App\Repositories\ApiKeyRepository;
-use App\Repositories\PermissionRepository;
-use App\Repositories\RoleRepository;
-use App\Repositories\UserRepository;
+use App\Contracts\WebhookSignatureVerifierInterface;
 use App\Services\ApiKeyService;
 use App\Services\AuthService;
-use App\Services\CacheService;
+use App\Services\BackupService;
+use App\Services\Docs\DocsIndexer;
+use App\Services\Docs\DocsService;
 use App\Services\FileService;
-use App\Services\LogService;
+use App\Services\Mail\MailAccountService;
+use App\Services\Mail\MailEventStatusService;
+use App\Services\Mail\MailSendPolicy;
+use App\Services\Mail\SvixSignatureVerifier;
+use App\Services\MailService;
+use App\Services\Menu\MenuService;
 use App\Services\NotificationService;
+use App\Services\PasswordService;
 use App\Services\PermissionService;
 use App\Services\RoleService;
+use App\Services\SecurityAuditService;
 use App\Services\SecurityService;
+use App\Services\SettingsService;
+use App\Services\SocialAuthService;
 use App\Services\TokenService;
 use App\Services\UserService;
+use App\Services\Webhooks\DnsHostResolver;
 use App\Services\WebhookService;
 use Illuminate\Support\ServiceProvider;
 
 /**
  * ContractServiceProvider
  *
- * Service provider for binding interfaces to implementations.
+ * Enlaza cada interfaz de `app/Contracts` con su implementación. Controladores,
+ * servicios, jobs, listeners, comandos y middlewares reciben la INTERFAZ por
+ * constructor o método; el contenedor la resuelve aquí.
+ *
+ * Tipo de binding (Octane: el contenedor vive entre peticiones):
+ * - `bind` (instancia nueva por resolución) para los servicios. Son baratos y
+ *   así nunca arrastran estado de una petición a la siguiente.
+ * - `singleton` solo para colaboradores sin estado y costosos de crear
+ *   (`HostResolverInterface`).
+ * - Nada con estado de petición debe ir en `singleton`: usa `scoped`.
+ *
+ * Sin interfaz (a propósito):
+ * - `LogService` y `CacheService`: fachadas estáticas de uso global (>200
+ *   llamadas, también desde middlewares y el handler de excepciones).
+ * - `LlmGateway`: constructor fluido con estado por llamada
+ *   (`useCase()->module()->chat()`); se resuelve con `bind` por clase.
+ * - `Logging\*Logger`: fachadas estáticas de registro.
  */
 class ContractServiceProvider extends ServiceProvider
 {
-    /**
-     * Register services.
-     */
     public function register(): void
     {
-        // Auth
         $this->app->bind(AuthServiceInterface::class, AuthService::class);
-
-        // User
         $this->app->bind(UserServiceInterface::class, UserService::class);
-
-        // Token
         $this->app->bind(TokenServiceInterface::class, TokenService::class);
-
-        // ApiKey
         $this->app->bind(ApiKeyServiceInterface::class, ApiKeyService::class);
-
-        // Webhook
         $this->app->bind(WebhookServiceInterface::class, WebhookService::class);
-
-        // File
         $this->app->bind(FileServiceInterface::class, FileService::class);
-
-        // Cache
-        $this->app->bind(CacheServiceInterface::class, CacheService::class);
-
-        // Log
-        $this->app->bind(LogServiceInterface::class, LogService::class);
-
-        // Notification
         $this->app->bind(NotificationServiceInterface::class, NotificationService::class);
-
-        // Security
         $this->app->bind(SecurityServiceInterface::class, SecurityService::class);
-
-        // Permission
         $this->app->bind(PermissionServiceInterface::class, PermissionService::class);
-
-        // Role
         $this->app->bind(RoleServiceInterface::class, RoleService::class);
+        $this->app->bind(SettingsServiceInterface::class, SettingsService::class);
+        $this->app->bind(PasswordServiceInterface::class, PasswordService::class);
+        $this->app->bind(SocialAuthServiceInterface::class, SocialAuthService::class);
+        $this->app->bind(MailServiceInterface::class, MailService::class);
+        $this->app->bind(BackupServiceInterface::class, BackupService::class);
+        $this->app->bind(MenuServiceInterface::class, MenuService::class);
+        $this->app->bind(DocsServiceInterface::class, DocsService::class);
+        $this->app->bind(DocsIndexerInterface::class, DocsIndexer::class);
+        $this->app->bind(MailAccountServiceInterface::class, MailAccountService::class);
+        $this->app->bind(MailEventStatusServiceInterface::class, MailEventStatusService::class);
+        $this->app->bind(MailSendPolicyInterface::class, MailSendPolicy::class);
+        $this->app->bind(WebhookSignatureVerifierInterface::class, SvixSignatureVerifier::class);
+        $this->app->bind(SecurityAuditServiceInterface::class, SecurityAuditService::class);
 
-        // Repositories
-        $this->app->bind(UserRepositoryInterface::class, UserRepository::class);
-        $this->app->bind(RoleRepositoryInterface::class, RoleRepository::class);
-        $this->app->bind(PermissionRepositoryInterface::class, PermissionRepository::class);
-        $this->app->bind(ApiKeyRepositoryInterface::class, ApiKeyRepository::class);
+        // Colaborador sin estado: el DNS real; los tests lo sustituyen con `$this->app->instance(...)`.
+        $this->app->singleton(HostResolverInterface::class, DnsHostResolver::class);
     }
 
-    /**
-     * Bootstrap services.
-     */
     public function boot(): void
     {
         //

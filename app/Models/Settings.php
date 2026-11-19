@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Services\SecurityService;
+use App\Contracts\SecurityServiceInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Log;
 
@@ -118,7 +118,8 @@ class Settings extends Model
         }
 
         try {
-            return SecurityService::decrypt($this->value);
+            // Un modelo no admite inyección: se resuelve por interfaz.
+            return app(SecurityServiceInterface::class)->decrypt($this->value);
         } catch (\Exception $e) {
             Log::warning('Failed to decrypt setting value', [
                 'setting_id' => $this->id,

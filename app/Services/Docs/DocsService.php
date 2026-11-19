@@ -2,6 +2,7 @@
 
 namespace App\Services\Docs;
 
+use App\Contracts\DocsServiceInterface;
 use App\Models\Docs\DocChunk;
 use App\Models\Docs\DocConversation;
 use App\Services\LLM\LlmGateway;
@@ -23,7 +24,7 @@ use Illuminate\Support\Facades\DB;
  * documentación que improvisa es peor que no tener asistente: da respuestas
  * plausibles y equivocadas sobre tu propio sistema.
  */
-class DocsService
+class DocsService implements DocsServiceInterface
 {
     /**
      * Buscar fragmentos relevantes.

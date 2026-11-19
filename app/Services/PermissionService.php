@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Contracts\PermissionServiceInterface;
+use App\Exceptions\BusinessLogicException;
 use App\Models\Permission;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -15,7 +17,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
  * - Validaciones
  * - Búsqueda y filtrado
  */
-class PermissionService
+class PermissionService implements PermissionServiceInterface
 {
     /**
      * Cache TTL para permisos (en segundos)
@@ -32,7 +34,7 @@ class PermissionService
      *
      * @param  array  $data  Datos del permiso ['name', 'display_name', 'resource', 'action', 'description']
      *
-     * @throws \InvalidArgumentException Si el nombre ya existe o los datos son inválidos
+     * @throws BusinessLogicException Si el nombre ya existe o los datos son inválidos
      */
     public function create(array $data): Permission
     {
@@ -41,12 +43,12 @@ class PermissionService
 
         // Validar que el nombre sea único
         if (Permission::where('name', $data['name'])->exists()) {
-            throw new \InvalidArgumentException("El permiso '{$data['name']}' ya existe");
+            throw BusinessLogicException::ruleViolation("El permiso '{$data['name']}' ya existe");
         }
 
         // Validar formato de nombre (debe ser resource.action)
         if (! $this->validateNameFormat($data['name'])) {
-            throw new \InvalidArgumentException(
+            throw BusinessLogicException::ruleViolation(
                 "El nombre del permiso debe seguir el formato 'recurso.accion' (ej: 'users.create')"
             );
         }
@@ -79,7 +81,7 @@ class PermissionService
      * @param  array  $data  Datos a actualizar
      *
      * @throws ModelNotFoundException Si el permiso no existe
-     * @throws \InvalidArgumentException Si los datos son inválidos
+     * @throws BusinessLogicException Si los datos son inválidos
      */
     public function update(int|string $permissionId, array $data): Permission
     {
@@ -89,12 +91,12 @@ class PermissionService
         if (isset($data['name']) && $data['name'] !== $permission->name) {
             // Validar que el nombre sea único
             if (Permission::where('name', $data['name'])->where('id', '!=', $permissionId)->exists()) {
-                throw new \InvalidArgumentException("El permiso '{$data['name']}' ya existe");
+                throw BusinessLogicException::ruleViolation("El permiso '{$data['name']}' ya existe");
             }
 
             // Validar formato
             if (! $this->validateNameFormat($data['name'])) {
-                throw new \InvalidArgumentException(
+                throw BusinessLogicException::ruleViolation(
                     "El nombre del permiso debe seguir el formato 'recurso.accion' (ej: 'users.create')"
                 );
             }
@@ -129,7 +131,7 @@ class PermissionService
 
         // Verificar si está asignado a roles
         if ($permission->roles()->count() > 0) {
-            throw new \Exception(
+            throw BusinessLogicException::ruleViolation(
                 "No se puede eliminar el permiso '{$permission->name}' porque está asignado a roles"
             );
         }
@@ -276,12 +278,12 @@ class PermissionService
      *
      * @param  array  $data  Datos a validar
      *
-     * @throws \InvalidArgumentException Si los datos son inválidos
+     * @throws BusinessLogicException Si los datos son inválidos
      */
     public function validatePermissionData(array $data): void
     {
         if (empty($data['name'])) {
-            throw new \InvalidArgumentException('El nombre del permiso es requerido');
+            throw BusinessLogicException::ruleViolation('El nombre del permiso es requerido');
         }
     }
 

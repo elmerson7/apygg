@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Services\BackupService;
+use App\Contracts\BackupServiceInterface;
 use App\Services\LogService;
 use Illuminate\Console\Command;
 
@@ -34,7 +34,7 @@ class BackupCreateCommand extends Command
     /**
      * Execute the console command.
      */
-    public function handle(): int
+    public function handle(BackupServiceInterface $backups): int
     {
         $this->info('Iniciando creación de backups...');
 
@@ -49,7 +49,7 @@ class BackupCreateCommand extends Command
             // Backup de base de datos
             if ($backupDatabase) {
                 $this->info('Creando backup de base de datos...');
-                $backupInfo = BackupService::createDatabaseBackup($compress, $uploadToRemote);
+                $backupInfo = $backups->createDatabaseBackup($compress, $uploadToRemote);
 
                 $this->line("  ✓ Backup creado: {$backupInfo['filename']}");
                 $this->line("  ✓ Tamaño: {$backupInfo['size_mb']} MB");

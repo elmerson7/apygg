@@ -32,7 +32,7 @@ class StoreWebhookRequest extends BaseFormRequest
 
         return [
             'name' => ['required', 'string', 'max:255', 'min:2'],
-            'url' => ['required', 'url', 'max:2048', new SafeWebhookUrl],
+            'url' => ['required', 'url', 'max:2048', app(SafeWebhookUrl::class)],
             'events' => ['sometimes', 'nullable', 'array'],
             'events.*' => ['required', 'string', Rule::in($availableEvents)],
             'status' => ['sometimes', 'string', Rule::in([

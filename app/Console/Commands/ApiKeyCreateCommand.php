@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Contracts\ApiKeyServiceInterface;
 use App\Models\User;
-use App\Services\ApiKeyService;
 use Illuminate\Console\Command;
 
 /**
@@ -35,7 +35,7 @@ class ApiKeyCreateCommand extends Command
     /**
      * Execute the console command.
      */
-    public function handle(ApiKeyService $apiKeyService): int
+    public function handle(ApiKeyServiceInterface $apiKeyService): int
     {
         $userId = $this->argument('userId');
         $name = $this->argument('name');

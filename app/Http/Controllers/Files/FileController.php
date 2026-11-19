@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers\Files;
 
+use App\Contracts\FileServiceInterface;
+use App\Exceptions\BusinessLogicException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Files\StoreFileRequest;
 use App\Http\Requests\Files\UpdateFileRequest;
 use App\Http\Resources\Files\FileResource;
 use App\Models\File;
-use App\Services\FileService;
 use App\Services\LogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -25,6 +26,8 @@ class FileController extends Controller
      * Resource para transformar respuestas
      */
     protected ?string $resource = FileResource::class;
+
+    public function __construct(private readonly FileServiceInterface $files) {}
 
     /**
      * Listar archivos con paginación y filtros
@@ -103,11 +106,11 @@ class FileController extends Controller
 
         try {
             // El disco depende de la visibilidad, no de la categoría (ver config/files.php)
-            $disk = FileService::diskFor($isPublic);
+            $disk = $this->files->diskFor($isPublic);
             $storagePath = config("files.storage_paths.{$category}", config('files.storage_paths.default'));
 
             // Valida el contenido real y guarda con nombre generado
-            $uploadResult = FileService::upload($uploadedFile, $storagePath, null, $disk, $isPublic);
+            $uploadResult = $this->files->upload($uploadedFile, $storagePath, null, $disk, $isPublic);
 
             $retentionDays = config("files.retention_policies.{$category}");
             $expiresAt = $retentionDays ? now()->addDays($retentionDays) : null;
@@ -122,18 +125,18 @@ class FileController extends Controller
                 'mime_type' => $uploadResult['mime_type'],
                 'extension' => $uploadResult['extension'],
                 'size' => $uploadResult['size'],
-                'type' => FileService::detectType($uploadResult['mime_type']),
+                'type' => $this->files->detectType($uploadResult['mime_type']),
                 'category' => $category,
                 'description' => $request->input('description'),
                 'is_public' => $isPublic,
                 'expires_at' => $expiresAt,
             ]);
-        } catch (\InvalidArgumentException $e) {
+        } catch (BusinessLogicException $e) {
             return $this->sendError($e->getMessage(), 422);
         } catch (\Throwable $e) {
             // Si el registro falló, no dejar el archivo huérfano en el disco
             if ($uploadResult !== null) {
-                FileService::delete($uploadResult['path'], $uploadResult['disk']);
+                $this->files->delete($uploadResult['path'], $uploadResult['disk']);
             }
 
             LogService::error('Error al subir archivo', [
@@ -175,7 +178,7 @@ class FileController extends Controller
         $makePublic = array_key_exists('is_public', $data) ? (bool) $data['is_public'] : null;
 
         try {
-            FileService::updateWithVisibility($file, $data, $makePublic);
+            $this->files->updateWithVisibility($file, $data, $makePublic);
         } catch (\Throwable $e) {
             LogService::error('Error al actualizar archivo', ['file_id' => $file->id, 'error' => $e->getMessage()]);
 
@@ -209,7 +212,7 @@ class FileController extends Controller
         try {
             // Primero el registro (soft delete); el archivo físico solo si eso salió bien
             $file->delete();
-            FileService::delete($file->path, $file->disk);
+            $this->files->delete($file->path, $file->disk);
         } catch (\Throwable $e) {
             LogService::error('Error al eliminar archivo', [
                 'file_id' => $file->id,
@@ -258,7 +261,7 @@ class FileController extends Controller
         }
 
         $minutes = (int) config('files.temporary_url_minutes', 15);
-        $url = $file->is_public ? $file->getUrl() : FileService::temporaryDownloadUrl($file, $minutes);
+        $url = $file->is_public ? $file->getUrl() : $this->files->temporaryDownloadUrl($file, $minutes);
 
         if ($url === null) {
             return $this->sendError('No se pudo generar la URL temporal', 500);
@@ -286,7 +289,7 @@ class FileController extends Controller
             return $this->sendError('El archivo no existe en el almacenamiento', 404);
         }
 
-        return Storage::disk($file->disk)->download($file->path, FileService::safeDownloadName($file), [
+        return Storage::disk($file->disk)->download($file->path, $this->files->safeDownloadName($file), [
             'X-Content-Type-Options' => 'nosniff',
             'Content-Security-Policy' => "default-src 'none'; sandbox",
         ]);

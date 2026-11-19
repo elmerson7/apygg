@@ -2,10 +2,15 @@
 
 namespace App\Services;
 
-use App\Contracts\UserRepositoryInterface;
+use App\Contracts\AuthServiceInterface;
+use App\Contracts\TokenServiceInterface;
+use App\Contracts\UserServiceInterface;
 use App\Events\UserLoggedIn;
 use App\Events\UserLoggedOut;
 use App\Exceptions\AccountBlockedException;
+use App\Exceptions\ApiException;
+use App\Exceptions\BusinessLogicException;
+use App\Exceptions\LoginLockedException;
 use App\Models\Blacklist;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
@@ -23,12 +28,8 @@ use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
  * - Revocación de tokens
  * - Manejo de intentos fallidos
  */
-class AuthService
+class AuthService implements AuthServiceInterface
 {
-    protected TokenService $tokenService;
-
-    protected UserRepositoryInterface $userRepository;
-
     /**
      * Número máximo de intentos fallidos antes de bloquear
      */
@@ -46,12 +47,9 @@ class AuthService
     protected int $lockoutTime = 15;
 
     public function __construct(
-        TokenService $tokenService,
-        UserRepositoryInterface $userRepository,
-        protected UserService $userService
+        protected TokenServiceInterface $tokenService,
+        protected UserServiceInterface $userService
     ) {
-        $this->tokenService = $tokenService;
-        $this->userRepository = $userRepository;
         $this->maxAttempts = (int) config('auth.login.max_attempts', 5);
         $this->maxAttemptsPerIdentity = (int) config('auth.login.max_attempts_per_identity', 10);
         $this->lockoutTime = (int) config('auth.login.lockout_minutes', 15);
@@ -64,7 +62,8 @@ class AuthService
      * @param  string|null  $ipAddress  Dirección IP del cliente
      * @return array ['user' => User, 'tokens' => array] o null si falla
      *
-     * @throws \Exception
+     * @throws LoginLockedException Si la identidad está bloqueada por intentos fallidos
+     * @throws AccountBlockedException Si la cuenta está en la lista negra
      */
     public function authenticate(array $credentials, ?string $ipAddress = null): ?array
     {
@@ -72,7 +71,7 @@ class AuthService
         $password = $credentials['password'] ?? null;
 
         if (! $login || ! $password) {
-            throw new \InvalidArgumentException('Email/username y contraseña son requeridos');
+            throw BusinessLogicException::ruleViolation('Email/username y contraseña son requeridos', 'CREDENTIALS_REQUIRED');
         }
 
         // Verificar si el usuario está bloqueado por intentos fallidos
@@ -82,7 +81,7 @@ class AuthService
                 'ip' => $ipAddress,
             ], 'security');
 
-            throw new \Exception('Demasiados intentos fallidos. Intenta nuevamente en '.$this->lockoutTime.' minutos.');
+            throw new LoginLockedException($this->lockoutTime);
         }
 
         // Buscar usuario por email o username
@@ -129,14 +128,14 @@ class AuthService
                 'ip' => $ipAddress,
             ], 'security');
 
-            throw new AccountBlockedException('Cuenta bloqueada');
+            throw new AccountBlockedException;
         }
 
         // Rehash automático si la contraseña usa un algoritmo diferente o necesita actualización
         // Esto permite migrar de bcrypt a argon2id automáticamente
         if (Hash::needsRehash($user->password)) {
             $user->password = Hash::make($password);
-            $this->userRepository->update(['password' => $user->password], $user->id);
+            $user->save();
 
             LogService::info('Contraseña rehasheada automáticamente durante login', [
                 'user_id' => $user->id,
@@ -174,7 +173,7 @@ class AuthService
                 'error' => $e->getMessage(),
             ], 'auth');
 
-            throw new \Exception('Error al generar tokens de autenticación', 0, $e);
+            throw new ApiException('Error al generar tokens de autenticación', 500, [], 'token_generation_error', null, [], $e);
         }
     }
 
@@ -256,7 +255,7 @@ class AuthService
     {
         $userId = $this->tokenService->getUserFromToken($refreshToken)?->id;
 
-        return $userId ? $this->userRepository->find($userId) : null;
+        return $userId ? User::find($userId) : null;
     }
 
     /**

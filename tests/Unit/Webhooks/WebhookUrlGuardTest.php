@@ -1,9 +1,10 @@
 <?php
 
+use App\Exceptions\BusinessLogicException;
 use App\Services\Webhooks\WebhookUrlGuard;
 
 beforeEach(function () {
-    WebhookUrlGuard::resolveUsing(fn (string $host) => match ($host) {
+    $this->fakeDns(fn (string $host) => match ($host) {
         'interno.test' => ['10.1.2.3'],
         'mixto.test' => ['93.184.216.34', '127.0.0.1'],
         'nada.test' => [],
@@ -13,7 +14,7 @@ beforeEach(function () {
 });
 
 it('rechaza las urls que apuntan a la red interna', function (string $url) {
-    expect(fn () => WebhookUrlGuard::inspect($url))->toThrow(InvalidArgumentException::class);
+    expect(fn () => app(WebhookUrlGuard::class)->inspect($url))->toThrow(BusinessLogicException::class);
 })->with([
     'loopback' => 'https://127.0.0.1/hook',
     'metadata cloud' => 'https://169.254.169.254/latest/meta-data',
@@ -37,23 +38,23 @@ it('rechaza las urls que apuntan a la red interna', function (string $url) {
 ]);
 
 it('acepta una url https que resuelve a una ip publica', function () {
-    expect(WebhookUrlGuard::inspect('https://example.com/hook'))
+    expect(app(WebhookUrlGuard::class)->inspect('https://example.com/hook'))
         ->toMatchArray(['host' => 'example.com', 'port' => 443, 'ip' => '93.184.216.34']);
 });
 
 it('acepta una ip publica literal', function () {
-    expect(WebhookUrlGuard::inspect('https://93.184.216.34:8443/hook'))
+    expect(app(WebhookUrlGuard::class)->inspect('https://93.184.216.34:8443/hook'))
         ->toMatchArray(['is_literal' => true, 'port' => 8443]);
 });
 
 it('permite http solo si la config lo habilita', function () {
     config(['webhooks.ssrf.allow_http' => true]);
 
-    expect(WebhookUrlGuard::inspect('http://example.com/hook')['port'])->toBe(80);
+    expect(app(WebhookUrlGuard::class)->inspect('http://example.com/hook')['port'])->toBe(80);
 });
 
 it('permite un host interno de confianza listado en la config', function () {
     config(['webhooks.ssrf.allowed_hosts' => ['interno.test']]);
 
-    expect(WebhookUrlGuard::inspect('https://interno.test/hook')['ip'])->toBe('10.1.2.3');
+    expect(app(WebhookUrlGuard::class)->inspect('https://interno.test/hook')['ip'])->toBe('10.1.2.3');
 });

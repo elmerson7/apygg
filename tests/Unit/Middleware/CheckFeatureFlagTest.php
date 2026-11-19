@@ -1,14 +1,8 @@
 <?php
 
-use App\Helpers\Feature;
 use App\Http\Middleware\CheckFeatureFlag;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-
-beforeEach(function () {
-    // El helper Feature cachea en memoria estática entre tests
-    (new ReflectionProperty(Feature::class, 'cache'))->setValue(null, []);
-});
 
 test('deja pasar cuando la feature está habilitada', function () {
     config()->set('features.demo_feature', ['enabled' => true]);

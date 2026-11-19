@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Services\Docs\DocsIndexer;
+use App\Contracts\DocsIndexerInterface;
 use Illuminate\Console\Command;
 
 /**
@@ -24,7 +24,7 @@ class DocsIndexCommand extends Command
 
     protected $description = 'Indexar la documentación del proyecto para el asistente';
 
-    public function handle(DocsIndexer $indexer): int
+    public function handle(DocsIndexerInterface $indexer): int
     {
         $sources = (array) config('docs-assistant.sources', []);
 

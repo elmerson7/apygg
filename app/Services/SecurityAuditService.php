@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\SecurityAuditServiceInterface;
 use App\Jobs\RunSecurityScanJob;
 use App\Models\ApiKey;
 use App\Models\Logs\ActivityLog;
@@ -32,7 +33,7 @@ use Illuminate\Support\Facades\Log;
  * Eso exige ejecutar comandos en la máquina, y un boilerplate no debe traer de
  * serie una ruta de ejecución de comandos dirigida por un LLM.
  */
-class SecurityAuditService
+class SecurityAuditService implements SecurityAuditServiceInterface
 {
     /** Ventana de análisis, en horas. */
     public const WINDOW_HOURS = 24;

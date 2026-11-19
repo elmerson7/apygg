@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\ApiKeys;
 
+use App\Contracts\ApiKeyServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ApiKeys\RotateApiKeyRequest;
 use App\Http\Requests\ApiKeys\StoreApiKeyRequest;
 use App\Http\Resources\ApiKeys\ApiKeyResource;
 use App\Models\ApiKey;
-use App\Services\ApiKeyService;
 use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
@@ -16,13 +16,13 @@ use Illuminate\Http\Request;
 /**
  * ApiKeyController
  *
- * Gestión de API Keys del usuario autenticado; la lógica vive en ApiKeyService.
+ * Gestión de API Keys del usuario autenticado; la lógica vive en ApiKeyServiceInterface.
  */
 class ApiKeyController extends Controller
 {
     protected ?string $resource = ApiKeyResource::class;
 
-    public function __construct(protected ApiKeyService $apiKeyService) {}
+    public function __construct(protected ApiKeyServiceInterface $apiKeyService) {}
 
     /**
      * Listado de las API Keys del usuario autenticado.

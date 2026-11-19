@@ -64,6 +64,11 @@ interface TokenServiceInterface
     public function getTokenClaims(?string $token = null): array;
 
     /**
+     * Revocar un refresh token concreto (solo si pertenece al usuario indicado).
+     */
+    public function revokeRefreshToken(string $refreshToken, User $user): bool;
+
+    /**
      * Revocar token (agregar a blacklist)
      *
      * @param  string|null  $token  Token a revocar (null = usar token del request)

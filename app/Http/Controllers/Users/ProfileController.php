@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Users;
 
+use App\Contracts\UserServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Users\UpdatePreferencesRequest;
 use App\Http\Requests\Users\UpdateProfileRequest;
 use App\Http\Resources\Users\ProfileResource;
-use App\Services\UserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -19,7 +19,7 @@ use Illuminate\Http\Request;
  */
 class ProfileController extends Controller
 {
-    public function __construct(protected UserService $userService) {}
+    public function __construct(protected UserServiceInterface $userService) {}
 
     /**
      * Ver el perfil propio.

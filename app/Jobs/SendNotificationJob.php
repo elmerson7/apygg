@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Services\NotificationService;
+use App\Contracts\NotificationServiceInterface;
 
 /**
  * SendNotificationJob
@@ -57,9 +57,9 @@ class SendNotificationJob extends Job
     /**
      * Ejecutar el job
      */
-    protected function process(): void
+    public function process(NotificationServiceInterface $notifications): void
     {
-        $results = NotificationService::sendMultiChannel(
+        $results = $notifications->sendMultiChannel(
             $this->channels,
             $this->notifiable,
             $this->title,

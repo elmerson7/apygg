@@ -3,10 +3,10 @@
 namespace App\Listeners\Mail;
 
 use App\Contracts\Mail\HasMailTemplate;
+use App\Contracts\MailSendPolicyInterface;
 use App\Mail\Transport\AccountsTransport;
 use App\Models\Mail\MailAccount;
 use App\Models\Mail\MailLog;
-use App\Services\Mail\MailSendPolicy;
 use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Mail\Events\MessageSent;
 use Illuminate\Support\Facades\Log;
@@ -29,7 +29,7 @@ use Symfony\Component\Mime\Email;
  */
 class MailSystemListener
 {
-    public function __construct(private readonly MailSendPolicy $policy) {}
+    public function __construct(private readonly MailSendPolicyInterface $policy) {}
 
     public function handleSending(MessageSending $event): ?bool
     {

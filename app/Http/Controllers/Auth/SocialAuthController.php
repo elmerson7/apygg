@@ -2,15 +2,18 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Helpers\ApiResponse;
+use App\Contracts\SocialAuthServiceInterface;
+use App\Exceptions\BusinessLogicException;
+use App\Http\Controllers\Controller;
 use App\Http\Resources\Auth\AuthResource;
 use App\Services\LogService;
-use App\Services\SocialAuthService;
+use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\FacebookProvider;
 use Laravel\Socialite\Two\GoogleProvider;
+use Laravel\Socialite\Two\InvalidStateException;
 
 /**
  * SocialAuthController
@@ -18,12 +21,12 @@ use Laravel\Socialite\Two\GoogleProvider;
  * Maneja autenticación social (Google, Facebook).
  * Soporta flujo web (redirect/callback) y deeplink móvil (Capacitor).
  */
-class SocialAuthController
+class SocialAuthController extends Controller
 {
     protected array $allowedProviders = ['google', 'facebook'];
 
     public function __construct(
-        protected SocialAuthService $socialAuthService
+        protected SocialAuthServiceInterface $socialAuthService
     ) {}
 
     /**
@@ -33,7 +36,7 @@ class SocialAuthController
     public function redirect(string $provider): JsonResponse
     {
         if (! in_array($provider, $this->allowedProviders)) {
-            return ApiResponse::error('Proveedor no soportado', 422);
+            return $this->sendError('Proveedor no soportado', 422);
         }
 
         /** @var GoogleProvider|FacebookProvider $driver */
@@ -44,7 +47,7 @@ class SocialAuthController
             ->redirect()
             ->getTargetUrl();
 
-        return ApiResponse::success(['url' => $url], 'URL de autorización generada');
+        return $this->sendSuccess(['url' => $url], 'URL de autorización generada');
     }
 
     /**
@@ -55,7 +58,7 @@ class SocialAuthController
     public function callback(Request $request, string $provider): JsonResponse
     {
         if (! in_array($provider, $this->allowedProviders)) {
-            return ApiResponse::error('Proveedor no soportado', 422);
+            return $this->sendError('Proveedor no soportado', 422);
         }
 
         try {
@@ -74,7 +77,7 @@ class SocialAuthController
                 'ip' => $request->ip(),
             ], 'security');
 
-            return ApiResponse::success(
+            return $this->sendSuccess(
                 new AuthResource([
                     'user' => $user,
                     'access_token' => $tokens['access_token'],
@@ -83,13 +86,11 @@ class SocialAuthController
                 ]),
                 'Login social exitoso'
             );
-        } catch (\Exception $e) {
-            LogService::error('Error en login social', [
-                'provider' => $provider,
-                'error' => $e->getMessage(),
-            ]);
+        } catch (ClientException|InvalidStateException $e) {
+            // El proveedor rechazó el código o el estado: es un dato inválido del cliente (422), no un 500.
+            LogService::warning('Error en login social', ['provider' => $provider, 'error' => $e->getMessage()], 'security');
 
-            return ApiResponse::error('Error al autenticar con '.$provider, 500);
+            throw BusinessLogicException::ruleViolation('No se pudo autenticar con '.$provider, 'SOCIAL_AUTH_FAILED');
         }
     }
 
@@ -101,7 +102,7 @@ class SocialAuthController
     public function mobileCallback(Request $request, string $provider): JsonResponse
     {
         if (! in_array($provider, $this->allowedProviders)) {
-            return ApiResponse::error('Proveedor no soportado', 422);
+            return $this->sendError('Proveedor no soportado', 422);
         }
 
         $request->validate([
@@ -127,7 +128,7 @@ class SocialAuthController
                 'ip' => $request->ip(),
             ], 'security');
 
-            return ApiResponse::success(
+            return $this->sendSuccess(
                 new AuthResource([
                     'user' => $user,
                     'access_token' => $tokens['access_token'],
@@ -136,13 +137,11 @@ class SocialAuthController
                 ]),
                 'Login social móvil exitoso'
             );
-        } catch (\Exception $e) {
-            LogService::error('Error en login social móvil', [
-                'provider' => $provider,
-                'error' => $e->getMessage(),
-            ]);
+        } catch (ClientException|InvalidStateException $e) {
+            // El proveedor rechazó el código o el estado: es un dato inválido del cliente (422), no un 500.
+            LogService::warning('Error en login social móvil', ['provider' => $provider, 'error' => $e->getMessage()], 'security');
 
-            return ApiResponse::error('Error al autenticar con '.$provider, 500);
+            throw BusinessLogicException::ruleViolation('No se pudo autenticar con '.$provider, 'SOCIAL_AUTH_FAILED');
         }
     }
 }

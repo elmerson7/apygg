@@ -2,9 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Contracts\PasswordServiceInterface;
 use App\Models\User;
 use App\Notifications\ResetPasswordNotification;
-use App\Services\PasswordService;
 
 /**
  * SendPasswordResetLinkJob
@@ -22,7 +22,7 @@ class SendPasswordResetLinkJob extends Job
         parent::__construct();
     }
 
-    protected function process(): void
+    public function process(PasswordServiceInterface $passwords): void
     {
         $user = User::where('email', $this->email)->first();
 
@@ -30,7 +30,7 @@ class SendPasswordResetLinkJob extends Job
             return;
         }
 
-        $token = app(PasswordService::class)->generateResetToken($user);
+        $token = $passwords->generateResetToken($user);
 
         $user->notify(new ResetPasswordNotification($token, $this->resetUrl));
     }

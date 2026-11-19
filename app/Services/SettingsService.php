@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Contracts\SecurityServiceInterface;
+use App\Contracts\SettingsServiceInterface;
+use App\Exceptions\BusinessLogicException;
 use App\Models\Settings;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -17,8 +20,10 @@ use Illuminate\Support\Collection;
  * - Gestión de cache
  * - Logging de auditoría
  */
-class SettingsService
+class SettingsService implements SettingsServiceInterface
 {
+    public function __construct(private readonly SecurityServiceInterface $security) {}
+
     /**
      * Cache TTL para settings (en segundos)
      */
@@ -35,7 +40,7 @@ class SettingsService
      * @param  array  $data  Datos del setting
      * @return Settings Setting creado
      *
-     * @throws \InvalidArgumentException Si el tipo o valor no son válidos
+     * @throws BusinessLogicException Si el tipo o valor no son válidos
      */
     public function create(array $data): Settings
     {
@@ -73,7 +78,7 @@ class SettingsService
      * @return Settings Setting actualizado
      *
      * @throws ModelNotFoundException Si el setting no existe
-     * @throws \InvalidArgumentException Si el tipo o valor no son válidos
+     * @throws BusinessLogicException Si el tipo o valor no son válidos
      */
     public function update(string $id, array $data): Settings
     {
@@ -276,7 +281,7 @@ class SettingsService
      */
     public function encryptValue(string $value): string
     {
-        return SecurityService::encrypt($value);
+        return $this->security->encrypt($value);
     }
 
     /**
@@ -289,7 +294,7 @@ class SettingsService
      */
     public function decryptValue(string $encryptedValue): string
     {
-        return SecurityService::decrypt($encryptedValue);
+        return $this->security->decrypt($encryptedValue);
     }
 
     /**
@@ -299,7 +304,7 @@ class SettingsService
      * @param  string  $type  Tipo esperado
      * @return bool True si es válido
      *
-     * @throws \InvalidArgumentException Si el tipo o valor no son válidos
+     * @throws BusinessLogicException Si el tipo o valor no son válidos
      */
     public function validateType(mixed $value, string $type): bool
     {
@@ -313,7 +318,7 @@ class SettingsService
         };
 
         if (! $isValid) {
-            throw new \InvalidArgumentException("El valor no coincide con el tipo '{$type}' especificado");
+            throw BusinessLogicException::ruleViolation("El valor no coincide con el tipo '{$type}' especificado");
         }
 
         return true;

@@ -32,7 +32,7 @@ class UpdateWebhookRequest extends BaseFormRequest
 
         return [
             'name' => ['sometimes', 'string', 'max:255', 'min:2'],
-            'url' => ['sometimes', 'url', 'max:2048', new SafeWebhookUrl],
+            'url' => ['sometimes', 'url', 'max:2048', app(SafeWebhookUrl::class)],
             'events' => ['sometimes', 'nullable', 'array'],
             'events.*' => ['required', 'string', Rule::in($availableEvents)],
             'status' => ['sometimes', 'string', Rule::in([

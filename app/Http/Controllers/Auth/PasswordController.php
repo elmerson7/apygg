@@ -2,65 +2,54 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Helpers\ApiResponse;
+use App\Contracts\PasswordServiceInterface;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\ChangePasswordRequest;
 use App\Http\Requests\Auth\ForgotPasswordRequest;
 use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Jobs\SendPasswordResetLinkJob;
 use App\Services\LogService;
-use App\Services\PasswordService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 
-class PasswordController
+/**
+ * Recuperación y cambio de contraseña. Los errores inesperados llegan al handler global.
+ */
+class PasswordController extends Controller
 {
-    protected PasswordService $passwordService;
-
-    public function __construct(PasswordService $passwordService)
-    {
-        $this->passwordService = $passwordService;
-    }
+    public function __construct(protected PasswordServiceInterface $passwordService) {}
 
     /**
      * Solicitar reset de contraseña
      */
     public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
     {
-        try {
-            $validated = $request->validated();
-            $email = $validated['email'];
-            $resetUrl = $validated['reset_url'] ?? null;
+        $validated = $request->validated();
+        $email = $validated['email'];
+        $resetUrl = $validated['reset_url'] ?? null;
 
-            // Límite por email (además del de IP): no se puede inundar de
-            // correos a una víctima. Se ignora en silencio para no dar pistas.
-            $key = 'forgot-password:'.sha1(mb_strtolower($email));
-            $limite = (int) config('auth.password_reset_per_email_per_hour', 3);
+        // Límite por email (además del de IP): no se puede inundar de
+        // correos a una víctima. Se ignora en silencio para no dar pistas.
+        $key = 'forgot-password:'.sha1(mb_strtolower($email));
+        $limite = (int) config('auth.password_reset_per_email_per_hour', 3);
 
-            if (RateLimiter::attempt($key, $limite, fn () => true, 3600)) {
-                // Siempre se despacha, exista o no la cuenta: la respuesta y su
-                // tiempo no revelan nada. El job busca al usuario.
-                SendPasswordResetLinkJob::dispatch($email, $resetUrl);
-            }
-
-            LogService::info('Solicitud de reset de contraseña recibida', [
-                'ip' => $request->ip(),
-                'reset_url_provided' => $resetUrl !== null,
-            ], 'security');
-
-            // Por seguridad, no revelar si el email existe o no
-            return ApiResponse::success(
-                null,
-                'Si el email existe, recibirás un enlace para restablecer tu contraseña.'
-            );
-        } catch (\Exception $e) {
-            LogService::error('Error al solicitar reset de contraseña', [
-                'email' => $request->email ?? null,
-                'error' => $e->getMessage(),
-            ], 'security');
-
-            return ApiResponse::error('Error al procesar la solicitud', 500);
+        if (RateLimiter::attempt($key, $limite, fn () => true, 3600)) {
+            // Siempre se despacha, exista o no la cuenta: la respuesta y su
+            // tiempo no revelan nada. El job busca al usuario.
+            SendPasswordResetLinkJob::dispatch($email, $resetUrl);
         }
+
+        LogService::info('Solicitud de reset de contraseña recibida', [
+            'ip' => $request->ip(),
+            'reset_url_provided' => $resetUrl !== null,
+        ], 'security');
+
+        // Por seguridad, no revelar si el email existe o no
+        return $this->sendSuccess(
+            null,
+            'Si el email existe, recibirás un enlace para restablecer tu contraseña.'
+        );
     }
 
     /**
@@ -68,36 +57,21 @@ class PasswordController
      */
     public function resetPassword(ResetPasswordRequest $request): JsonResponse
     {
-        try {
-            $validated = $request->validated();
-            $email = $validated['email'];
-            $token = $validated['token'];
-            $password = $validated['password'];
+        $validated = $request->validated();
+        $email = $validated['email'];
 
-            // Resetear contraseña usando el servicio
-            $success = $this->passwordService->resetPassword($email, $token, $password);
+        $success = $this->passwordService->resetPassword($email, $validated['token'], $validated['password']);
 
-            if (! $success) {
-                LogService::warning('Intento de reset de contraseña fallido', [
-                    'email' => $email,
-                    'ip' => $request->ip(),
-                ], 'security');
-
-                return ApiResponse::unauthorized('Token inválido o expirado');
-            }
-
-            return ApiResponse::success(
-                null,
-                'Contraseña restablecida exitosamente'
-            );
-        } catch (\Exception $e) {
-            LogService::error('Error al resetear contraseña', [
-                'email' => $request->email ?? null,
-                'error' => $e->getMessage(),
+        if (! $success) {
+            LogService::warning('Intento de reset de contraseña fallido', [
+                'email' => $email,
+                'ip' => $request->ip(),
             ], 'security');
 
-            return ApiResponse::error('Error al procesar el reset de contraseña', 500);
+            return $this->sendError('Token inválido o expirado', 401);
         }
+
+        return $this->sendSuccess(null, 'Contraseña restablecida exitosamente');
     }
 
     /**
@@ -105,35 +79,20 @@ class PasswordController
      */
     public function changePassword(ChangePasswordRequest $request): JsonResponse
     {
-        try {
-            $user = Auth::guard('api')->user();
+        $user = Auth::guard('api')->user();
 
-            if (! $user) {
-                return ApiResponse::unauthorized('Usuario no autenticado');
-            }
-
-            $validated = $request->validated();
-            $currentPassword = $validated['current_password'];
-            $newPassword = $validated['password'];
-
-            // Cambiar contraseña usando el servicio
-            $success = $this->passwordService->changePassword($user, $currentPassword, $newPassword);
-
-            if (! $success) {
-                return ApiResponse::unauthorized('La contraseña actual es incorrecta o la nueva contraseña es igual a la actual');
-            }
-
-            return ApiResponse::success(
-                null,
-                'Contraseña cambiada exitosamente'
-            );
-        } catch (\Exception $e) {
-            LogService::error('Error al cambiar contraseña', [
-                'user_id' => Auth::guard('api')->id(),
-                'error' => $e->getMessage(),
-            ], 'security');
-
-            return ApiResponse::error('Error al procesar el cambio de contraseña', 500);
+        if (! $user) {
+            return $this->sendError('Usuario no autenticado', 401);
         }
+
+        $validated = $request->validated();
+
+        $success = $this->passwordService->changePassword($user, $validated['current_password'], $validated['password']);
+
+        if (! $success) {
+            return $this->sendError('La contraseña actual es incorrecta o la nueva contraseña es igual a la actual', 401);
+        }
+
+        return $this->sendSuccess(null, 'Contraseña cambiada exitosamente');
     }
 }

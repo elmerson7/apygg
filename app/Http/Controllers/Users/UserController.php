@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Users;
 
+use App\Contracts\UserServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Users\AssignRoleRequest;
 use App\Http\Requests\Users\StoreUserRequest;
@@ -10,7 +11,6 @@ use App\Http\Resources\Users\UserDetailResource;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Role;
 use App\Models\User;
-use App\Services\UserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -18,7 +18,7 @@ use Illuminate\Http\Request;
  * UserController
  *
  * Controlador para gestión de usuarios.
- * La lógica de negocio vive en UserService.
+ * La lógica de negocio vive en UserServiceInterface.
  */
 class UserController extends Controller
 {
@@ -32,7 +32,7 @@ class UserController extends Controller
      */
     protected array $allowedRelations = ['roles', 'permissions', 'activityLogs', 'apiTokens'];
 
-    public function __construct(protected UserService $userService) {}
+    public function __construct(protected UserServiceInterface $userService) {}
 
     /**
      * Display a listing of users.

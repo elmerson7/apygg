@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Menu;
 
+use App\Contracts\MenuServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Menu\StoreMenuItemRequest;
 use App\Http\Requests\Menu\UpdateMenuItemRequest;
 use App\Http\Requests\Menu\UpdateMenuVisibilityRequest;
 use App\Http\Resources\Menu\MenuItemResource;
 use App\Models\MenuItem;
-use App\Services\Menu\MenuService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -22,7 +22,7 @@ use Illuminate\Http\Request;
  */
 class MenuController extends Controller
 {
-    public function __construct(private readonly MenuService $menu) {}
+    public function __construct(private readonly MenuServiceInterface $menu) {}
 
     /**
      * Menú del usuario autenticado, en árbol.

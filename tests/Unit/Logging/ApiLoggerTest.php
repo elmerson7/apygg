@@ -164,8 +164,8 @@ test('captura IP address y user agent', function () {
         ->and($log->user_agent)->toBe('Test Agent');
 });
 
-test('puede agregar rutas a la lista de excluidas', function () {
-    ApiLogger::excludePaths(['custom-path']);
+test('puede ampliar por config la lista de rutas excluidas', function () {
+    config(['logging.api.excluded_paths' => ['custom-path']]);
 
     $request = Request::create('/custom-path', 'GET');
     $response = new Response([], 200);
@@ -175,8 +175,8 @@ test('puede agregar rutas a la lista de excluidas', function () {
     expect($log)->toBeNull();
 });
 
-test('puede agregar headers a la lista de excluidos', function () {
-    ApiLogger::excludeHeaders(['custom-header']);
+test('puede ampliar por config la lista de headers excluidos', function () {
+    config(['logging.api.excluded_headers' => ['custom-header']]);
 
     $request = Request::create('/users', 'GET');
     $request->headers->set('Custom-Header', 'secret-value');

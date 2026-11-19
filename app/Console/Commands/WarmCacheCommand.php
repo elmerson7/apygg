@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Contracts\PermissionServiceInterface;
+use App\Contracts\RoleServiceInterface;
 use App\Enums\WebhookStatusEnum;
 use App\Models\Permission;
 use App\Models\Role;
@@ -9,12 +11,17 @@ use App\Models\User;
 use App\Models\Webhook;
 use App\Services\CacheService;
 use App\Services\LogService;
-use App\Services\PermissionService;
-use App\Services\RoleService;
 use Illuminate\Console\Command;
 
 class WarmCacheCommand extends Command
 {
+    public function __construct(
+        private readonly RoleServiceInterface $roleService,
+        private readonly PermissionServiceInterface $permissionService,
+    ) {
+        parent::__construct();
+    }
+
     /**
      * The name and signature of the console command.
      *
@@ -88,8 +95,8 @@ class WarmCacheCommand extends Command
         $count = 0;
 
         try {
-            $roleService = app(RoleService::class);
-            $permissionService = app(PermissionService::class);
+            $roleService = $this->roleService;
+            $permissionService = $this->permissionService;
 
             // Pre-cargar todos los roles usando el servicio (respeta su lógica de cache)
             $roles = Role::all();

@@ -111,6 +111,36 @@ class ReportController extends Controller
 
 Ver también [CONTROLLER_CONVENTIONS.md](CONTROLLER_CONVENTIONS.md).
 
+## Crear un servicio nuevo (interfaz + clase + binding + inyección + test)
+
+1. **Interfaz** en `app/Contracts/ReportServiceInterface.php`: solo los métodos
+   que la app necesita (no detalles internos), con tipos y docblock.
+2. **Clase** en `app/Services/ReportService.php` que la implementa. Eloquent
+   directo; reglas de negocio con `BusinessLogicException::ruleViolation(...)`
+   (422), `invalidState`/`operationNotAllowed`, o una excepción propia que
+   extienda `ApiException`. Nada de `\Exception` genérica ni estado estático.
+3. **Binding** en `ContractServiceProvider`:
+   `$this->app->bind(ReportServiceInterface::class, ReportService::class);`
+   (`bind` por defecto; `singleton` solo si no tiene estado y es costoso;
+   `scoped` si guarda estado por petición. Nunca estado de petición en un `singleton`: Octane).
+4. **Inyección** de la interfaz:
+   ```php
+   public function __construct(private readonly ReportServiceInterface $reports) {}
+   ```
+   En jobs, en `process(ReportServiceInterface $reports)`; en comandos, en
+   `handle(...)`; en middlewares y listeners, por constructor.
+5. **Registro en el arch test**: añade `ReportService => ReportServiceInterface` a
+   `archServiciosConInterfaz()` en `tests/Unit/ArchTest.php`.
+6. **Test**: unitario del servicio (`app(ReportServiceInterface::class)`) y
+   feature del endpoint, con el camino denegado. Para sustituir una dependencia
+   usa `$this->app->instance(Interfaz::class, $fake)` (ver `fakeDns()` en
+   `tests/TestCase.php`).
+
+**¿Repositorio?** Por defecto no: el servicio consulta con Eloquent (scopes en el
+modelo para filtros reutilizables). Solo si una consulta compleja la comparten
+varios servicios, crea `app/Repositories/XRepository` con su interfaz en
+`app/Contracts/`, binding en el provider e inyéctala en esos servicios.
+
 ## Form Request
 
 ```php

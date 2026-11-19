@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\RoleServiceInterface;
 use App\Exceptions\BusinessLogicException;
 use App\Models\Permission;
 use App\Models\Role;
@@ -18,7 +19,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
  * - Asignación y remoción de permisos
  * - Validaciones y cache
  */
-class RoleService
+class RoleService implements RoleServiceInterface
 {
     /**
      * Cache TTL para roles (en segundos)
@@ -41,7 +42,7 @@ class RoleService
     {
         // Validar que el nombre sea único
         if (Role::where('name', $data['name'])->exists()) {
-            throw new \InvalidArgumentException("El rol '{$data['name']}' ya existe");
+            throw BusinessLogicException::ruleViolation("El rol '{$data['name']}' ya existe");
         }
 
         $role = Role::create([
@@ -77,7 +78,7 @@ class RoleService
         // Validar que el nombre sea único (si se está cambiando)
         if (isset($data['name']) && $data['name'] !== $role->name) {
             if (Role::where('name', $data['name'])->where('id', '!=', $roleId)->exists()) {
-                throw new \InvalidArgumentException("El rol '{$data['name']}' ya existe");
+                throw BusinessLogicException::ruleViolation("El rol '{$data['name']}' ya existe");
             }
         }
 
@@ -119,7 +120,7 @@ class RoleService
 
         // Verificar si tiene usuarios asignados
         if ($role->users()->count() > 0) {
-            throw new \Exception("No se puede eliminar el rol '{$role->name}' porque tiene usuarios asignados");
+            throw BusinessLogicException::ruleViolation("No se puede eliminar el rol '{$role->name}' porque tiene usuarios asignados");
         }
 
         $roleName = $role->name;

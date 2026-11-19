@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Contracts\FileServiceInterface;
+use App\Exceptions\BusinessLogicException;
 use App\Models\File;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -16,9 +18,9 @@ use Symfony\Component\Mime\MimeTypes;
  *
  * Servicio centralizado para manejo de archivos: upload, delete, getUrl, exists.
  */
-class FileService
+class FileService implements FileServiceInterface
 {
-    protected static string $defaultDisk = 'public';
+    protected const DEFAULT_DISK = 'public';
 
     /**
      * Subir archivo
@@ -29,19 +31,19 @@ class FileService
      *
      * @return array ['path', 'url', 'filename', 'size', 'mime_type', 'extension', 'disk']
      *
-     * @throws \InvalidArgumentException si el contenido, la extensión o el tamaño no son válidos
+     * @throws BusinessLogicException si el contenido, la extensión o el tamaño no son válidos
      */
-    public static function upload(
+    public function upload(
         UploadedFile $file,
         string $path = 'uploads',
         ?string $filename = null,
         ?string $disk = null,
         bool $isPublic = true
     ): array {
-        $disk = $disk ?? self::$defaultDisk;
-        self::validateFile($file);
-        $extension = self::resolveExtension($file);
-        $filename = $filename !== null ? basename($filename) : self::generateFilename($file, $extension);
+        $disk = $disk ?? self::DEFAULT_DISK;
+        $this->validateFile($file);
+        $extension = $this->resolveExtension($file);
+        $filename = $filename !== null ? basename($filename) : $this->generateFilename($file, $extension);
         $mimeType = $file->getMimeType();
         $size = $file->getSize();
 
@@ -67,7 +69,7 @@ class FileService
         return [
             'path' => $storedPath,
             // Un archivo privado NUNCA expone URL pública.
-            'url' => $isPublic ? self::getUrl($storedPath, $disk) : null,
+            'url' => $isPublic ? $this->getUrl($storedPath, $disk) : null,
             'filename' => $filename,
             'size' => $size,
             'mime_type' => $mimeType,
@@ -79,7 +81,7 @@ class FileService
     /**
      * Disco configurado para archivos públicos o privados.
      */
-    public static function diskFor(bool $isPublic): string
+    public function diskFor(bool $isPublic): string
     {
         return $isPublic
             ? (string) config('files.disks.public', 'public')
@@ -92,7 +94,7 @@ class FileService
      *
      * @throws \RuntimeException
      */
-    public static function transfer(string $path, string $fromDisk, string $toDisk, bool $toPublic): void
+    public function transfer(string $path, string $fromDisk, string $toDisk, bool $toPublic): void
     {
         if ($fromDisk === $toDisk) {
             Storage::disk($toDisk)->setVisibility($path, $toPublic ? 'public' : 'private');
@@ -124,7 +126,7 @@ class FileService
      *
      * @throws \Throwable
      */
-    public static function updateWithVisibility(File $file, array $data, ?bool $makePublic): void
+    public function updateWithVisibility(File $file, array $data, ?bool $makePublic): void
     {
         $from = $file->disk;
         $moved = false;
@@ -132,19 +134,19 @@ class FileService
         try {
             DB::transaction(function () use ($file, $data, $makePublic, $from, &$moved) {
                 if ($makePublic !== null && $makePublic !== $file->is_public) {
-                    $to = self::diskFor($makePublic);
-                    self::transfer($file->path, $from, $to, $makePublic);
+                    $to = $this->diskFor($makePublic);
+                    $this->transfer($file->path, $from, $to, $makePublic);
                     $moved = $to !== $from;
 
                     $data['disk'] = $to;
-                    $data['url'] = $makePublic ? self::getUrl($file->path, $to) : null;
+                    $data['url'] = $makePublic ? $this->getUrl($file->path, $to) : null;
                 }
 
                 $file->update($data);
             });
         } catch (\Throwable $e) {
             if ($moved) {
-                self::transfer($file->path, self::diskFor((bool) $makePublic), $from, ! $makePublic);
+                $this->transfer($file->path, $this->diskFor((bool) $makePublic), $from, ! $makePublic);
             }
 
             throw $e;
@@ -157,7 +159,7 @@ class FileService
      * S3/MinIO: URL prefirmada del proveedor. Disco local: ruta firmada de Laravel
      * (`files.signed`), que expira y no necesita sesión.
      */
-    public static function temporaryDownloadUrl(File $file, ?int $minutes = null): ?string
+    public function temporaryDownloadUrl(File $file, ?int $minutes = null): ?string
     {
         $minutes = $minutes ?? (int) config('files.temporary_url_minutes', 15);
         $expiresAt = now()->addMinutes($minutes);
@@ -165,7 +167,7 @@ class FileService
         if (config("filesystems.disks.{$file->disk}.driver") === 's3') {
             try {
                 return Storage::disk($file->disk)->temporaryUrl($file->path, $expiresAt, [
-                    'ResponseContentDisposition' => 'attachment; filename="'.self::safeDownloadName($file).'"',
+                    'ResponseContentDisposition' => 'attachment; filename="'.$this->safeDownloadName($file).'"',
                 ]);
             } catch (\Throwable $e) {
                 LogService::error('Error al generar URL temporal', ['file_id' => $file->id, 'error' => $e->getMessage()], 'files');
@@ -180,7 +182,7 @@ class FileService
     /**
      * Nombre de descarga seguro (sin comillas ni saltos de línea ni rutas).
      */
-    public static function safeDownloadName(File $file): string
+    public function safeDownloadName(File $file): string
     {
         $name = preg_replace('/[\x00-\x1F\x7F"\\\\\/]+/', '_', basename((string) $file->name)) ?: 'archivo';
 
@@ -190,7 +192,7 @@ class FileService
     /**
      * Tipo de archivo según su MIME (image, video, audio, archive, document, other).
      */
-    public static function detectType(string $mimeType): string
+    public function detectType(string $mimeType): string
     {
         return match (true) {
             str_starts_with($mimeType, 'image/') => 'image',
@@ -207,13 +209,13 @@ class FileService
      *
      * @param  array  $options  width, height, quality, format
      */
-    public static function uploadImage(
+    public function uploadImage(
         UploadedFile $file,
         string $path = 'images',
         array $options = []
     ): array {
         if (! str_starts_with($file->getMimeType(), 'image/')) {
-            throw new \InvalidArgumentException('El archivo debe ser una imagen.');
+            throw BusinessLogicException::ruleViolation('El archivo debe ser una imagen.');
         }
 
         $width = $options['width'] ?? null;
@@ -241,9 +243,9 @@ class FileService
             }
 
             $extension = $format ?? $file->getClientOriginalExtension();
-            $filename = self::generateFilename($file, $extension);
+            $filename = $this->generateFilename($file, $extension);
             $fullPath = rtrim($path, '/').'/'.$filename;
-            $disk = self::$defaultDisk;
+            $disk = self::DEFAULT_DISK;
 
             Storage::disk($disk)->put($fullPath, $image->stream());
 
@@ -269,15 +271,15 @@ class FileService
             return $result;
         }
 
-        return self::upload($file, $path);
+        return $this->upload($file, $path);
     }
 
     /**
      * Eliminar archivo
      */
-    public static function delete(string $path, ?string $disk = null): bool
+    public function delete(string $path, ?string $disk = null): bool
     {
-        $disk = $disk ?? self::$defaultDisk;
+        $disk = $disk ?? self::DEFAULT_DISK;
 
         try {
             $deleted = Storage::disk($disk)->exists($path)
@@ -304,9 +306,9 @@ class FileService
      * Obtener URL pública del archivo.
      * Para S3/Minio construye la URL explícitamente usando buildS3Url().
      */
-    public static function getUrl(string $path, ?string $disk = null): ?string
+    public function getUrl(string $path, ?string $disk = null): ?string
     {
-        $disk = $disk ?? self::$defaultDisk;
+        $disk = $disk ?? self::DEFAULT_DISK;
 
         // El disco privado no tiene URL pública, solo URLs temporales.
         if ($disk === config('files.disks.private') && $disk !== config('files.disks.public')) {
@@ -315,7 +317,7 @@ class FileService
 
         try {
             if ($disk === 's3') {
-                return self::buildS3Url($path);
+                return $this->buildS3Url($path);
             }
 
             return Storage::disk($disk)->exists($path)
@@ -337,9 +339,9 @@ class FileService
      *
      * @param  int  $minutes  Minutos de expiración (default 720 = 12h)
      */
-    public static function getTemporaryUrl(string $path, ?string $disk = null, int $minutes = 720): ?string
+    public function getTemporaryUrl(string $path, ?string $disk = null, int $minutes = 720): ?string
     {
-        $disk = $disk ?? self::$defaultDisk;
+        $disk = $disk ?? self::DEFAULT_DISK;
 
         try {
             if (! Storage::disk($disk)->exists($path)) {
@@ -369,7 +371,7 @@ class FileService
      * Usa AWS_URL (pública) en lugar del endpoint interno.
      * Formato: {url}/{bucket}/{path}
      */
-    protected static function buildS3Url(string $path): string
+    protected function buildS3Url(string $path): string
     {
         $path = ltrim($path, '/');
         $baseUrl = rtrim(config('filesystems.disks.s3.url', ''), '/');
@@ -394,17 +396,17 @@ class FileService
     /**
      * Verificar si archivo existe
      */
-    public static function exists(string $path, ?string $disk = null): bool
+    public function exists(string $path, ?string $disk = null): bool
     {
-        return Storage::disk($disk ?? self::$defaultDisk)->exists($path);
+        return Storage::disk($disk ?? self::DEFAULT_DISK)->exists($path);
     }
 
     /**
      * Obtener tamaño del archivo en bytes
      */
-    public static function getSize(string $path, ?string $disk = null): ?int
+    public function getSize(string $path, ?string $disk = null): ?int
     {
-        $disk = $disk ?? self::$defaultDisk;
+        $disk = $disk ?? self::DEFAULT_DISK;
 
         try {
             return Storage::disk($disk)->exists($path) ? Storage::disk($disk)->size($path) : null;
@@ -416,17 +418,17 @@ class FileService
     /**
      * Obtener información del archivo
      */
-    public static function getInfo(string $path, ?string $disk = null): ?array
+    public function getInfo(string $path, ?string $disk = null): ?array
     {
-        $disk = $disk ?? self::$defaultDisk;
-        if (! self::exists($path, $disk)) {
+        $disk = $disk ?? self::DEFAULT_DISK;
+        if (! $this->exists($path, $disk)) {
             return null;
         }
 
         return [
             'path' => $path,
-            'url' => self::getUrl($path, $disk),
-            'size' => self::getSize($path, $disk),
+            'url' => $this->getUrl($path, $disk),
+            'size' => $this->getSize($path, $disk),
             'mime_type' => Storage::disk($disk)->mimeType($path),
             'last_modified' => Storage::disk($disk)->lastModified($path),
         ];
@@ -435,9 +437,9 @@ class FileService
     /**
      * Copiar archivo
      */
-    public static function copy(string $fromPath, string $toPath, ?string $disk = null): bool
+    public function copy(string $fromPath, string $toPath, ?string $disk = null): bool
     {
-        $disk = $disk ?? self::$defaultDisk;
+        $disk = $disk ?? self::DEFAULT_DISK;
 
         try {
             return Storage::disk($disk)->copy($fromPath, $toPath);
@@ -455,9 +457,9 @@ class FileService
     /**
      * Mover archivo
      */
-    public static function move(string $fromPath, string $toPath, ?string $disk = null): bool
+    public function move(string $fromPath, string $toPath, ?string $disk = null): bool
     {
-        $disk = $disk ?? self::$defaultDisk;
+        $disk = $disk ?? self::DEFAULT_DISK;
 
         try {
             return Storage::disk($disk)->move($fromPath, $toPath);
@@ -476,12 +478,12 @@ class FileService
      * Validar archivo antes de subir: el tipo se decide por el CONTENIDO (finfo), no por
      * el nombre ni por el Content-Type que declara el cliente.
      *
-     * @throws \InvalidArgumentException
+     * @throws BusinessLogicException
      */
-    protected static function validateFile(UploadedFile $file): void
+    protected function validateFile(UploadedFile $file): void
     {
         if (! $file->isValid()) {
-            throw new \InvalidArgumentException('El archivo no se subió correctamente.');
+            throw BusinessLogicException::ruleViolation('El archivo no se subió correctamente.');
         }
 
         $mime = (string) $file->getMimeType();
@@ -489,22 +491,22 @@ class FileService
 
         if (in_array($mime, config('files.blocked_mimes', []), true)
             || in_array($clientExtension, config('files.blocked_extensions', []), true)) {
-            throw new \InvalidArgumentException('Tipo de archivo no permitido.');
+            throw BusinessLogicException::ruleViolation('Tipo de archivo no permitido.');
         }
 
-        $maxSize = config('files.max_sizes.'.self::detectType($mime), config('files.max_sizes.default', 10 * 1024 * 1024));
+        $maxSize = config('files.max_sizes.'.$this->detectType($mime), config('files.max_sizes.default', 10 * 1024 * 1024));
         if ($file->getSize() > $maxSize) {
-            throw new \InvalidArgumentException('El archivo excede el tamaño máximo permitido.');
+            throw BusinessLogicException::ruleViolation('El archivo excede el tamaño máximo permitido.');
         }
 
         $allAllowedMimes = array_unique(array_merge(...array_values(config('files.allowed_mimes', []))));
         if (! in_array($mime, $allAllowedMimes, true)) {
-            throw new \InvalidArgumentException('Tipo de archivo no permitido.');
+            throw BusinessLogicException::ruleViolation('Tipo de archivo no permitido.');
         }
 
         $allAllowedExtensions = array_unique(array_merge(...array_values(config('files.allowed_extensions', []))));
         if (! in_array($clientExtension, $allAllowedExtensions, true)) {
-            throw new \InvalidArgumentException('Extensión de archivo no permitida.');
+            throw BusinessLogicException::ruleViolation('Extensión de archivo no permitida.');
         }
     }
 
@@ -512,7 +514,7 @@ class FileService
      * Extensión definitiva: la que corresponde al contenido detectado. Se respeta la del
      * cliente solo si es una de las extensiones válidas para ese contenido.
      */
-    protected static function resolveExtension(UploadedFile $file): string
+    protected function resolveExtension(UploadedFile $file): string
     {
         $mime = (string) $file->getMimeType();
         $client = strtolower($file->getClientOriginalExtension());
@@ -532,9 +534,9 @@ class FileService
     /**
      * Generar nombre único y no adivinable; no incluye nada del nombre original.
      */
-    protected static function generateFilename(UploadedFile $file, ?string $extension = null): string
+    protected function generateFilename(UploadedFile $file, ?string $extension = null): string
     {
-        $extension = $extension ?? self::resolveExtension($file);
+        $extension = $extension ?? $this->resolveExtension($file);
         $extension = preg_replace('/[^a-z0-9]/', '', strtolower($extension));
 
         return strtolower((string) Str::ulid()).($extension !== '' ? ".{$extension}" : '');

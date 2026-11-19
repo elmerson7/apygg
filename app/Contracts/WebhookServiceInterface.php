@@ -66,12 +66,4 @@ interface WebhookServiceInterface
      * @return bool True si se despachó el reintento
      */
     public function retryDelivery(WebhookDelivery $delivery): bool;
-
-    /**
-     * Calcular delay para reintento usando backoff exponencial
-     *
-     * @param  int  $attempts  Número de intento actual
-     * @return int Segundos de delay
-     */
-    public function calculateRetryDelay(int $attempts): int;
 }

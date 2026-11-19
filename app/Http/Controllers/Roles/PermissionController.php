@@ -2,18 +2,18 @@
 
 namespace App\Http\Controllers\Roles;
 
+use App\Contracts\PermissionServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Permissions\StorePermissionRequest;
 use App\Http\Requests\Permissions\UpdatePermissionRequest;
 use App\Models\Permission;
-use App\Services\PermissionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class PermissionController extends Controller
 {
     public function __construct(
-        protected PermissionService $permissionService
+        protected PermissionServiceInterface $permissionService
     ) {}
 
     public function index(Request $request): JsonResponse

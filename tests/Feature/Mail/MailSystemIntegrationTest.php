@@ -1,5 +1,6 @@
 <?php
 
+use App\Contracts\MailServiceInterface;
 use App\Mail\SimpleMail;
 use App\Models\Mail\MailAccount;
 use App\Models\Mail\MailLog;
@@ -9,7 +10,6 @@ use App\Models\Mail\MailTemplateConfig;
 use App\Models\User;
 use App\Notifications\ResetPasswordNotification;
 use App\Notifications\WelcomeNotification;
-use App\Services\MailService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
@@ -186,7 +186,7 @@ test('con Notification::fake la notificación se despacha sin tocar el sistema d
 test('con Mail::fake los Mailables se pueden afirmar sin enviarse', function () {
     Mail::fake();
 
-    MailService::send('ana@ejemplo.com', 'Hola', 'emails.test');
+    app(MailServiceInterface::class)->send('ana@ejemplo.com', 'Hola', 'emails.test');
 
     Mail::assertQueued(SimpleMail::class);
     expect(MailLog::count())->toBe(0);

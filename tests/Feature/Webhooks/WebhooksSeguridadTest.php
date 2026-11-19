@@ -7,7 +7,6 @@ use App\Models\Role;
 use App\Models\User;
 use App\Models\Webhook;
 use App\Models\WebhookDelivery;
-use App\Services\Webhooks\WebhookUrlGuard;
 use App\Services\WebhookService;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
@@ -61,7 +60,7 @@ test('un webhook solo recibe los eventos de su dueno', function () {
     $hookAna = whCrear($ana);
     $hookBeto = whCrear($beto);
 
-    (new WebhookListener)->handle(new UserLoggedIn($beto, '10.9.9.9', 'agente'));
+    app(WebhookListener::class)->handle(new UserLoggedIn($beto, '10.9.9.9', 'agente'));
 
     expect(WebhookDelivery::where('webhook_id', $hookBeto->id)->count())->toBe(1)
         ->and(WebhookDelivery::where('webhook_id', $hookAna->id)->count())->toBe(0);
@@ -72,7 +71,7 @@ test('el login de otro usuario no llega al webhook de un tercero aunque escuche 
     $espia = whUsuario();
     whCrear($espia, ['events' => ['user.logged_in']]);
 
-    (new WebhookListener)->handle(new UserLoggedIn(whUsuario(), '10.9.9.9', 'agente'));
+    app(WebhookListener::class)->handle(new UserLoggedIn(whUsuario(), '10.9.9.9', 'agente'));
 
     expect(WebhookDelivery::count())->toBe(0);
     Queue::assertNotPushed(SendWebhookJob::class);
@@ -97,7 +96,7 @@ test('crear un webhook hacia una direccion interna responde 422', function (stri
 ]);
 
 test('crear un webhook cuyo dominio resuelve a una ip privada responde 422', function () {
-    WebhookUrlGuard::resolveUsing(fn () => ['10.0.0.8']);
+    $this->fakeDns(fn () => ['10.0.0.8']);
 
     $this->withHeaders(whCabecera(whUsuario()))
         ->postJson('/webhooks', ['name' => 'Rebinding', 'url' => 'https://evil.example.com/hook'])
@@ -122,7 +121,7 @@ test('no se envia si el destino pasa a resolver a una ip interna despues del alt
     $webhook = whCrear(whUsuario());
     $delivery = whEntrega($webhook);
 
-    WebhookUrlGuard::resolveUsing(fn () => ['127.0.0.1']);
+    $this->fakeDns(fn () => ['127.0.0.1']);
 
     expect(app(WebhookService::class)->processDelivery($webhook, $delivery))->toBeFalse();
     Http::assertNothingSent();

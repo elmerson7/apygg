@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\WebhookServiceInterface;
 use App\Jobs\SendWebhookJob;
 use App\Models\Webhook;
 use App\Models\WebhookDelivery;
@@ -20,8 +21,10 @@ use Illuminate\Support\Str;
  * - Generación de firmas HMAC
  * - Manejo de reintentos
  */
-class WebhookService
+class WebhookService implements WebhookServiceInterface
 {
+    public function __construct(private readonly WebhookUrlGuard $urlGuard) {}
+
     /**
      * Enviar webhook a una URL específica
      *
@@ -70,7 +73,7 @@ class WebhookService
 
         try {
             // SSRF: se vuelve a validar y resolver el destino justo antes de enviar
-            $target = WebhookUrlGuard::inspect($webhook->url);
+            $target = $this->urlGuard->inspect($webhook->url);
 
             // Se serializa UNA vez: lo que se firma es exactamente lo que se envía
             $body = json_encode(

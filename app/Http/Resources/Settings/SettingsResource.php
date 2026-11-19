@@ -2,8 +2,8 @@
 
 namespace App\Http\Resources\Settings;
 
+use App\Contracts\SettingsServiceInterface;
 use App\Http\Resources\BaseResource;
-use App\Services\SettingsService;
 use Illuminate\Http\Request;
 
 /**
@@ -22,7 +22,7 @@ class SettingsResource extends BaseResource
     public function toArray(Request $request): array
     {
         $setting = $this->resource;
-        $settingsService = app(SettingsService::class);
+        $settingsService = app(SettingsServiceInterface::class);
 
         // Obtener valor desencriptado si está encriptado
         $value = $setting->is_encrypted

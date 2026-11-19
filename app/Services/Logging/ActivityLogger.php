@@ -21,7 +21,7 @@ class ActivityLogger
      *
      * @var array<string>
      */
-    protected static array $excludedFields = [
+    protected const EXCLUDED_FIELDS = [
         'password',
         'password_confirmation',
         'token',
@@ -117,19 +117,9 @@ class ActivityLogger
     protected static function filterSensitiveFields(array $values): array
     {
         $values = array_filter($values, function ($key) {
-            return ! in_array(strtolower((string) $key), self::$excludedFields);
+            return ! in_array(strtolower((string) $key), [...self::EXCLUDED_FIELDS, ...array_map('strtolower', (array) config('logging.activity.excluded_fields', []))]);
         }, ARRAY_FILTER_USE_KEY);
 
         return Redactor::redact($values);
-    }
-
-    /**
-     * Agregar campos a la lista de excluidos
-     *
-     * @param  array<string>  $fields
-     */
-    public static function excludeFields(array $fields): void
-    {
-        self::$excludedFields = array_merge(self::$excludedFields, $fields);
     }
 }

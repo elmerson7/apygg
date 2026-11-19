@@ -2,109 +2,123 @@
 
 namespace App\Contracts;
 
+use App\Exceptions\BusinessLogicException;
+use App\Models\File;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\URL;
 
 /**
  * FileServiceInterface
  *
- * Contrato para el servicio de gestión de archivos.
+ * Contrato del servicio de archivos (subida, URLs y operaciones sobre discos).
  */
 interface FileServiceInterface
 {
     /**
      * Subir archivo
      *
-     * @param  UploadedFile  $file  Archivo a subir
-     * @param  string  $path  Ruta de destino (relativa al disco)
-     * @param  string|null  $filename  Nombre del archivo (opcional)
-     * @param  string|null  $disk  Disco de almacenamiento (opcional)
-     * @param  bool  $isPublic  false = visibilidad privada y sin URL pública
+     * El nombre en disco se GENERA (ULID + extensión deducida del contenido); el nombre
+     * original del cliente nunca se usa como ruta (evita path traversal y colisiones).
+     * Los archivos privados se guardan con visibilidad `private` y sin URL pública.
+     *
      * @return array ['path', 'url', 'filename', 'size', 'mime_type', 'extension', 'disk']
+     *
+     * @throws BusinessLogicException si el contenido, la extensión o el tamaño no son válidos
      */
-    public function upload(UploadedFile $file, string $path = 'uploads', ?string $filename = null, ?string $disk = null, bool $isPublic = true): array;
+    public function upload(UploadedFile $file,
+        string $path = 'uploads',
+        ?string $filename = null,
+        ?string $disk = null,
+        bool $isPublic = true): array;
+
+    /**
+     * Disco configurado para archivos públicos o privados.
+     */
+    public function diskFor(bool $isPublic): string;
+
+    /**
+     * Mover un archivo entre discos (cambio de visibilidad) conservando su ruta.
+     * Copia, y solo si la copia se completó borra el original.
+     *
+     * @throws \RuntimeException
+     */
+    public function transfer(string $path, string $fromDisk, string $toDisk, bool $toPublic): void;
+
+    /**
+     * Actualiza el registro y, si cambia la visibilidad, mueve el archivo al disco público o
+     * privado. Si algo falla, el archivo vuelve a su disco original (consistencia BD/disco).
+     *
+     * @throws \Throwable
+     */
+    public function updateWithVisibility(File $file, array $data, ?bool $makePublic): void;
+
+    /**
+     * URL temporal firmada para descargar un archivo privado.
+     *
+     * S3/MinIO: URL prefirmada del proveedor. Disco local: ruta firmada de Laravel
+     * (`files.signed`), que expira y no necesita sesión.
+     */
+    public function temporaryDownloadUrl(File $file, ?int $minutes = null): ?string;
+
+    /**
+     * Nombre de descarga seguro (sin comillas ni saltos de línea ni rutas).
+     */
+    public function safeDownloadName(File $file): string;
+
+    /**
+     * Tipo de archivo según su MIME (image, video, audio, archive, document, other).
+     */
+    public function detectType(string $mimeType): string;
 
     /**
      * Subir imagen con procesamiento opcional (resize/formato)
      *
-     * @param  UploadedFile  $file  Imagen a subir
-     * @param  string  $path  Ruta de destino (relativa al disco)
-     * @param  array  $options  Opciones de procesamiento [width, height, quality, format]
-     * @return array Información del archivo subido
+     * @param  array  $options  width, height, quality, format
      */
-    public function uploadImage(UploadedFile $file, string $path = 'images', array $options = []): array;
+    public function uploadImage(UploadedFile $file,
+        string $path = 'images',
+        array $options = []): array;
 
     /**
      * Eliminar archivo
-     *
-     * @param  string  $path  Ruta del archivo (relativa al disco)
-     * @param  string|null  $disk  Disco de almacenamiento (opcional)
-     * @return bool True si se eliminó exitosamente
      */
     public function delete(string $path, ?string $disk = null): bool;
 
     /**
-     * Obtener URL pública del archivo
-     *
-     * @param  string  $path  Ruta del archivo (relativa al disco)
-     * @param  string|null  $disk  Disco de almacenamiento (opcional)
-     * @return string|null URL pública o null si no existe
+     * Obtener URL pública del archivo.
+     * Para S3/Minio construye la URL explícitamente usando buildS3Url().
      */
     public function getUrl(string $path, ?string $disk = null): ?string;
 
     /**
-     * Obtener URL temporal con expiración (para archivos privados S3/Minio)
+     * Obtener URL temporal con expiración (para archivos privados S3/Minio).
      *
-     * @param  string  $path  Ruta del archivo (relativa al disco)
-     * @param  string|null  $disk  Disco de almacenamiento (opcional)
      * @param  int  $minutes  Minutos de expiración (default 720 = 12h)
-     * @return string|null URL temporal o null si no existe
      */
     public function getTemporaryUrl(string $path, ?string $disk = null, int $minutes = 720): ?string;
 
     /**
      * Verificar si archivo existe
-     *
-     * @param  string  $path  Ruta del archivo (relativa al disco)
-     * @param  string|null  $disk  Disco de almacenamiento (opcional)
-     * @return bool True si existe
      */
     public function exists(string $path, ?string $disk = null): bool;
 
     /**
      * Obtener tamaño del archivo en bytes
-     *
-     * @param  string  $path  Ruta del archivo (relativa al disco)
-     * @param  string|null  $disk  Disco de almacenamiento (opcional)
-     * @return int|null Tamaño en bytes o null si no existe
      */
     public function getSize(string $path, ?string $disk = null): ?int;
 
     /**
      * Obtener información del archivo
-     *
-     * @param  string  $path  Ruta del archivo (relativa al disco)
-     * @param  string|null  $disk  Disco de almacenamiento (opcional)
-     * @return array|null Información del archivo [path, url, size, mime_type, last_modified] o null si no existe
      */
     public function getInfo(string $path, ?string $disk = null): ?array;
 
     /**
      * Copiar archivo
-     *
-     * @param  string  $fromPath  Ruta origen (relativa al disco)
-     * @param  string  $toPath  Ruta destino (relativa al disco)
-     * @param  string|null  $disk  Disco de almacenamiento (opcional)
-     * @return bool True si se copió exitosamente
      */
     public function copy(string $fromPath, string $toPath, ?string $disk = null): bool;
 
     /**
      * Mover archivo
-     *
-     * @param  string  $fromPath  Ruta origen (relativa al disco)
-     * @param  string  $toPath  Ruta destino (relativa al disco)
-     * @param  string|null  $disk  Disco de almacenamiento (opcional)
-     * @return bool True si se movió exitosamente
      */
     public function move(string $fromPath, string $toPath, ?string $disk = null): bool;
 }

@@ -18,32 +18,7 @@ class ApiResponse
     /**
      * Versión de la API
      */
-    private static string $apiVersion = '1.0';
-
-    /**
-     * Tiempo de inicio de la request (para calcular execution_time_ms)
-     */
-    private static ?float $requestStartTime = null;
-
-    /**
-     * Establecer tiempo de inicio de la request
-     */
-    public static function setRequestStartTime(?float $startTime = null): void
-    {
-        self::$requestStartTime = $startTime ?? microtime(true);
-    }
-
-    /**
-     * Obtener tiempo de ejecución en milisegundos
-     */
-    private static function getExecutionTime(): ?int
-    {
-        if (self::$requestStartTime === null) {
-            return null;
-        }
-
-        return (int) ((microtime(true) - self::$requestStartTime) * 1000);
-    }
+    private const API_VERSION = '1.0';
 
     /**
      * Obtener trace ID de la request actual
@@ -61,7 +36,7 @@ class ApiResponse
     private static function getMeta(?string $requestId = null): array
     {
         $meta = [
-            'version' => self::$apiVersion,
+            'version' => self::API_VERSION,
             'timestamp' => now()->toIso8601String(),
         ];
 
@@ -69,10 +44,6 @@ class ApiResponse
             $meta['request_id'] = $traceId;
         } elseif ($requestId) {
             $meta['request_id'] = $requestId;
-        }
-
-        if ($executionTime = self::getExecutionTime()) {
-            $meta['execution_time_ms'] = $executionTime;
         }
 
         return $meta;

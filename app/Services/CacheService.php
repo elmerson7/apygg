@@ -21,12 +21,12 @@ class CacheService
     /**
      * Prefijo por defecto para todas las keys
      */
-    protected static string $prefix = 'apygg';
+    protected const PREFIX = 'apygg';
 
     /**
      * TTLs por defecto (en segundos)
      */
-    protected static array $defaultTtls = [
+    protected const DEFAULT_TTLS = [
         'user' => 3600,        // 1 hora
         'entity' => 7200,      // 2 horas
         'search' => 1800,      // 30 minutos
@@ -76,7 +76,7 @@ class CacheService
     public static function set(string $key, $value, ?int $ttl = null): bool
     {
         $fullKey = self::buildKey($key);
-        $ttl = $ttl ?? self::$defaultTtls['default'];
+        $ttl = $ttl ?? self::DEFAULT_TTLS['default'];
 
         if (! empty(self::getActiveTags())) {
             return Cache::tags(self::getActiveTags())->put($fullKey, $value, $ttl);
@@ -107,7 +107,7 @@ class CacheService
     public static function remember(string $key, ?int $ttl, callable $callback)
     {
         $fullKey = self::buildKey($key);
-        $ttl = $ttl ?? self::$defaultTtls['default'];
+        $ttl = $ttl ?? self::DEFAULT_TTLS['default'];
 
         // Verificar si existe antes de remember para trackear hit/miss
         $exists = ! empty(self::getActiveTags())
@@ -159,7 +159,7 @@ class CacheService
      */
     public static function rememberUser(int|string $userId, callable $callback, ?int $ttl = null): mixed
     {
-        $ttl = $ttl ?? self::$defaultTtls['user'];
+        $ttl = $ttl ?? self::DEFAULT_TTLS['user'];
         $key = "user:{$userId}";
         $tag = "user:{$userId}";
 
@@ -180,7 +180,7 @@ class CacheService
      */
     public static function rememberEntity(string $entity, callable $callback, ?int $ttl = null): mixed
     {
-        $ttl = $ttl ?? self::$defaultTtls['entity'];
+        $ttl = $ttl ?? self::DEFAULT_TTLS['entity'];
         $key = "entity:{$entity}";
         $tag = "entity:{$entity}";
 
@@ -202,7 +202,7 @@ class CacheService
      */
     public static function rememberSearch(string $query, array $filters, callable $callback, ?int $ttl = null): mixed
     {
-        $ttl = $ttl ?? self::$defaultTtls['search'];
+        $ttl = $ttl ?? self::DEFAULT_TTLS['search'];
         $hash = md5($query.serialize($filters));
         $key = "search:{$hash}";
         $tag = 'searches';
@@ -224,7 +224,7 @@ class CacheService
     {
         $metrics = [
             'driver' => config('cache.default'),
-            'prefix' => self::$prefix,
+            'prefix' => self::PREFIX,
             'hit_rate' => 0,
             'memory_used' => '0MB',
             'keys_count' => 0,
@@ -293,7 +293,7 @@ class CacheService
      */
     public static function setMultiple(array $values, ?int $ttl = null): bool
     {
-        $ttl = $ttl ?? self::$defaultTtls['default'];
+        $ttl = $ttl ?? self::DEFAULT_TTLS['default'];
         $fullValues = [];
 
         foreach ($values as $key => $value) {
@@ -312,7 +312,7 @@ class CacheService
      */
     protected static function buildKey(string $key): string
     {
-        return self::$prefix.':'.$key;
+        return self::PREFIX.':'.$key;
     }
 
     /**
@@ -502,18 +502,10 @@ class CacheService
     }
 
     /**
-     * Configurar TTL por defecto para un tipo
-     */
-    public static function setDefaultTtl(string $type, int $ttl): void
-    {
-        self::$defaultTtls[$type] = $ttl;
-    }
-
-    /**
      * Obtener TTL por defecto para un tipo
      */
     public static function getDefaultTtl(string $type): int
     {
-        return self::$defaultTtls[$type] ?? self::$defaultTtls['default'];
+        return self::DEFAULT_TTLS[$type] ?? self::DEFAULT_TTLS['default'];
     }
 }

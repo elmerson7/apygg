@@ -2,8 +2,8 @@
 
 namespace App\Services\Webhooks;
 
-use Closure;
-use InvalidArgumentException;
+use App\Contracts\HostResolverInterface;
+use App\Exceptions\BusinessLogicException;
 
 /**
  * WebhookUrlGuard
@@ -28,40 +28,31 @@ class WebhookUrlGuard
         'fc00::/7', 'fe80::/10', 'ff00::/8',
     ];
 
-    private static ?Closure $resolver = null;
-
-    /**
-     * Sustituye la resolución DNS (tests). Recibe el host y devuelve una lista de IPs.
-     * `null` restaura la resolución real.
-     */
-    public static function resolveUsing(?Closure $resolver): void
-    {
-        self::$resolver = $resolver;
-    }
+    public function __construct(private readonly HostResolverInterface $resolver) {}
 
     /**
      * Valida la URL y devuelve los datos para conectar con seguridad.
      *
      * @return array{scheme: string, host: string, port: int, ip: string, is_literal: bool}
      *
-     * @throws InvalidArgumentException con el motivo del rechazo
+     * @throws BusinessLogicException con el motivo del rechazo (422)
      */
-    public static function inspect(string $url): array
+    public function inspect(string $url): array
     {
         $parts = parse_url($url);
 
         if ($parts === false || ! isset($parts['scheme'], $parts['host'])) {
-            throw new InvalidArgumentException('La URL no es válida.');
+            throw new BusinessLogicException('La URL no es válida.');
         }
 
         $scheme = strtolower($parts['scheme']);
         $allowed = config('webhooks.ssrf.allow_http', false) ? ['https', 'http'] : ['https'];
         if (! in_array($scheme, $allowed, true)) {
-            throw new InvalidArgumentException('La URL debe usar '.(count($allowed) > 1 ? 'http o https.' : 'https.'));
+            throw new BusinessLogicException('La URL debe usar '.(count($allowed) > 1 ? 'http o https.' : 'https.'));
         }
 
         if (isset($parts['user']) || isset($parts['pass'])) {
-            throw new InvalidArgumentException('La URL no puede incluir usuario ni contraseña.');
+            throw new BusinessLogicException('La URL no puede incluir usuario ni contraseña.');
         }
 
         $host = strtolower(trim($parts['host'], '[]'));
@@ -69,15 +60,15 @@ class WebhookUrlGuard
         $isLiteral = filter_var($host, FILTER_VALIDATE_IP) !== false;
         $trusted = in_array($host, array_map('strtolower', (array) config('webhooks.ssrf.allowed_hosts', [])), true);
 
-        $ips = $isLiteral ? [$host] : self::resolve($host);
+        $ips = $isLiteral ? [$host] : $this->resolver->resolve($host);
         if ($ips === []) {
-            throw new InvalidArgumentException('No se pudo resolver el dominio de la URL.');
+            throw new BusinessLogicException('No se pudo resolver el dominio de la URL.');
         }
 
         if (! $trusted) {
             foreach ($ips as $ip) {
                 if (self::isBlockedIp($ip)) {
-                    throw new InvalidArgumentException('La URL apunta a una dirección interna o no permitida.');
+                    throw new BusinessLogicException('La URL apunta a una dirección interna o no permitida.');
                 }
             }
         }
@@ -131,25 +122,5 @@ class WebhookUrlGuard
         $mask = (0xFF << (8 - $remainder)) & 0xFF;
 
         return (ord($binaryIp[$bytes]) & $mask) === (ord($rangeBinary[$bytes]) & $mask);
-    }
-
-    /**
-     * @return list<string>
-     */
-    private static function resolve(string $host): array
-    {
-        if (self::$resolver !== null) {
-            return array_values((array) (self::$resolver)($host));
-        }
-
-        $ips = @gethostbynamel($host) ?: [];
-
-        foreach (@dns_get_record($host, DNS_AAAA) ?: [] as $record) {
-            if (isset($record['ipv6'])) {
-                $ips[] = $record['ipv6'];
-            }
-        }
-
-        return array_values(array_unique($ips));
     }
 }

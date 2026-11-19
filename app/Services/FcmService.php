@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Log;
  */
 class FcmService
 {
-    protected static string $fcmUrl = 'https://fcm.googleapis.com/v1/projects/{project_id}/messages:send';
+    protected const FCM_URL = 'https://fcm.googleapis.com/v1/projects/{project_id}/messages:send';
 
     /**
      * Obtener access token OAuth2 para FCM HTTP v1
@@ -71,7 +71,7 @@ class FcmService
     ): bool {
         try {
             $projectId = config('services.fcm.project_id');
-            $url = str_replace('{project_id}', $projectId, self::$fcmUrl);
+            $url = str_replace('{project_id}', $projectId, self::FCM_URL);
             $accessToken = self::getAccessToken();
 
             $message = array_merge([

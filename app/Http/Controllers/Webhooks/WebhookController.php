@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Webhooks;
 
+use App\Contracts\WebhookServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Webhooks\StoreWebhookRequest;
 use App\Http\Requests\Webhooks\UpdateWebhookRequest;
@@ -9,7 +10,6 @@ use App\Http\Resources\Webhooks\WebhookDeliveryResource;
 use App\Http\Resources\Webhooks\WebhookResource;
 use App\Models\Webhook;
 use App\Models\WebhookDelivery;
-use App\Services\WebhookService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -17,7 +17,7 @@ class WebhookController extends Controller
 {
     protected ?string $resource = WebhookResource::class;
 
-    public function __construct(protected WebhookService $webhookService) {}
+    public function __construct(protected WebhookServiceInterface $webhookService) {}
 
     public function index(Request $request): JsonResponse
     {

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\MailServiceInterface;
 use App\Mail\SimpleMail;
 use App\Models\Mail\MailAccount;
 use Illuminate\Support\Facades\Log;
@@ -20,7 +21,7 @@ use Illuminate\Support\Facades\Mail;
  *
  *   MailService::send('ana@ejemplo.com', 'Hola', 'emails.test', $data, 'mi_plantilla');
  */
-class MailService
+class MailService implements MailServiceInterface
 {
     /**
      * Enviar un correo (encolado por defecto).
@@ -34,7 +35,7 @@ class MailService
      * @param  MailAccount|null  $account  Fuerza esta cuenta de envío
      * @param  array<int, array{content: string, filename: string}>  $attachments
      */
-    public static function send(
+    public function send(
         string|array $to,
         string $subject,
         string $view,
@@ -48,7 +49,7 @@ class MailService
         $accepted = false;
 
         // Un Mailable por destinatario: un registro en `mail_logs` por cada uno.
-        foreach (self::normalizeRecipients($to) as $recipient) {
+        foreach ($this->normalizeRecipients($to) as $recipient) {
             $mailable = new SimpleMail($view, $data, $subject, $templateKey, $account?->id, $attachments);
             $pending = Mail::to([['email' => $recipient['email'], 'name' => $recipient['name']]]);
 
@@ -80,7 +81,7 @@ class MailService
      * @param  string|array<mixed>  $to
      * @return array<int, array{email: string, name: string|null}>
      */
-    protected static function normalizeRecipients(string|array $to): array
+    protected function normalizeRecipients(string|array $to): array
     {
         // Un array con clave 'email' es UN destinatario, no una lista.
         $list = is_array($to) && ! array_key_exists('email', $to) ? $to : [$to];
