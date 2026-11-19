@@ -43,6 +43,11 @@ class LogsController extends Controller
             $query->where('created_at', '<=', $request->input('to'));
         }
 
+        // Multiempresa: la plataforma ve todo; `tenant_id` filtra por empresa (docs/multi-tenancy.md)
+        if ($request->filled('tenant_id')) {
+            $query->where('tenant_id', (int) $request->input('tenant_id'));
+        }
+
         $perPage = $this->perPage($request, 20);
 
         return $this->sendPaginated($query->paginate($perPage));
@@ -75,6 +80,11 @@ class LogsController extends Controller
             $query->where('created_at', '<=', $request->input('to'));
         }
 
+        // Multiempresa: la plataforma ve todo; `tenant_id` filtra por empresa (docs/multi-tenancy.md)
+        if ($request->filled('tenant_id')) {
+            $query->where('tenant_id', (int) $request->input('tenant_id'));
+        }
+
         $perPage = $this->perPage($request, 20);
 
         return $this->sendPaginated($query->paginate($perPage));
@@ -102,6 +112,11 @@ class LogsController extends Controller
         }
         if ($request->filled('to')) {
             $query->where('created_at', '<=', $request->input('to'));
+        }
+
+        // Multiempresa: la plataforma ve todo; `tenant_id` filtra por empresa (docs/multi-tenancy.md)
+        if ($request->filled('tenant_id')) {
+            $query->where('tenant_id', (int) $request->input('tenant_id'));
         }
 
         $perPage = $this->perPage($request, 20);

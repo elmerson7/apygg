@@ -18,7 +18,7 @@ Route::get('/files/{id}/signed', [FileController::class, 'signedDownload'])
     ->middleware(['signed', 'throttle:60,1'])
     ->name('files.signed');
 
-Route::middleware(['auth:api'])->prefix('files')->group(function () {
+Route::middleware(['auth:api', 'tenant'])->prefix('files')->group(function () {
     // Listar archivos
     Route::get('/', [FileController::class, 'index'])
         ->name('files.index');

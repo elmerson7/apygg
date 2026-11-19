@@ -9,7 +9,9 @@ use App\Http\Requests\Files\StoreFileRequest;
 use App\Http\Requests\Files\UpdateFileRequest;
 use App\Http\Resources\Files\FileResource;
 use App\Models\File;
+use App\Models\Tenant;
 use App\Services\LogService;
+use App\Support\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -279,13 +281,42 @@ class FileController extends Controller
      *
      * GET /files/{id}/signed
      */
-    public function signedDownload(string $id): JsonResponse|StreamedResponse
+    public function signedDownload(Request $request, string $id): JsonResponse|StreamedResponse
     {
-        return $this->streamDownload(File::findOrFail($id));
+        $context = app(TenantContext::class);
+
+        if (! $context->enabled()) {
+            return $this->streamDownload(File::findOrFail($id));
+        }
+
+        // Multiempresa: la URL firmada es la credencial y lleva el tenant DENTRO de la firma
+        // (`FileService::temporaryDownloadUrl`). Sin sesión ni X-Tenant, el contexto sale de ahí; si la
+        // petición declara otro tenant (cabecera, subdominio...), se rechaza en vez de mezclar contextos.
+        $tenant = ctype_digit((string) $request->query('tenant')) ? Tenant::query()->find((int) $request->query('tenant')) : null;
+
+        if (! $tenant instanceof Tenant || ! $tenant->isActive()) {
+            return $this->sendError('Enlace no válido', 403);
+        }
+
+        $declared = $request->header((string) config('multi-tenancy.resolution.header'));
+
+        if (is_string($declared) && trim($declared) !== '' && ! in_array(trim($declared), [(string) $tenant->getKey(), (string) $tenant->slug], true)) {
+            return $this->sendError('Enlace no válido para este tenant', 403);
+        }
+
+        return $context->run($tenant, fn () => $this->streamDownload(File::findOrFail($id)));
     }
 
     protected function streamDownload(File $file): JsonResponse|StreamedResponse
     {
+        // Defensa en profundidad (multiempresa): la clave de almacenamiento lleva el tenant del
+        // registro. Si no coincide, algo está mal en los datos y no se sirve el contenido.
+        if (app(TenantContext::class)->enabled()
+            && preg_match('#^tenants/(\d+)/#', (string) $file->path, $m) === 1
+            && (int) $m[1] !== (int) $file->getAttribute('tenant_id')) {
+            return $this->sendError('El archivo no existe en el almacenamiento', 404);
+        }
+
         if (! Storage::disk($file->disk)->exists($file->path)) {
             return $this->sendError('El archivo no existe en el almacenamiento', 404);
         }

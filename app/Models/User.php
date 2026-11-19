@@ -3,7 +3,9 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Http\Middleware\ResolveTenant;
 use App\Models\Logs\ActivityLog;
+use App\Support\Tenancy\PermissionTeams;
 use App\Traits\HasApiTokens;
 use App\Traits\LogsActivity;
 use App\Traits\Searchable;
@@ -53,6 +55,9 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
 {
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, HasRoles, InteractsWithAppAuthentication, InteractsWithAppAuthenticationRecovery, LogsActivity, Notifiable, Searchable, SoftDeletes, SoftDeletesWithUser;
+
+    /** Memo de `isPlatformAdmin()` (solo con equipos de Spatie); se invalida al soltar la relación `roles`. */
+    private ?bool $platformAdminMemo = null;
 
     /**
      * Guard de Spatie: los roles y permisos de usuario viven en el guard de la API (JWT),
@@ -140,6 +145,16 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     }
 
     /**
+     * ¿Puede entrar a ese tenant? Miembro ACTIVO, o soporte de plataforma (`tenants.access-any`,
+     * evaluado en el equipo de la plataforma si hay equipos de Spatie).
+     */
+    public function canEnterTenant(Tenant $tenant): bool
+    {
+        return $this->isActiveMemberOf($tenant)
+            || PermissionTeams::inPlatform($this, fn () => $this->checkPermissionTo(ResolveTenant::PLATFORM_PERMISSION, 'api'));
+    }
+
+    /**
      * Get the identifier that will be stored in the subject claim of the JWT.
      *
      * @return mixed
@@ -186,7 +201,30 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
      */
     public function isAdmin(): bool
     {
-        return $this->hasRole('admin');
+        // Con equipos de Spatie (multiempresa) es admin del tenant activo O admin de la plataforma.
+        return $this->hasRole('admin') || (PermissionTeams::enabled() && $this->isPlatformAdmin());
+    }
+
+    public function unsetRelation($relation)
+    {
+        if ($relation === 'roles') {
+            $this->platformAdminMemo = null;
+        }
+
+        return parent::unsetRelation($relation);
+    }
+
+    /**
+     * ¿Es admin de la PLATAFORMA (rol admin asignado en el equipo 0)? Sin equipos de Spatie
+     * coincide con `hasRole('admin')`. Ver docs/permissions.md §Teams.
+     */
+    public function isPlatformAdmin(): bool
+    {
+        if (! PermissionTeams::enabled()) {
+            return $this->hasRole('admin');
+        }
+
+        return $this->platformAdminMemo ??= PermissionTeams::inPlatform($this, fn () => $this->hasRole('admin'));
     }
 
     /**

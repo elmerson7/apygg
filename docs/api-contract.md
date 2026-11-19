@@ -23,6 +23,8 @@ cambias rutas / requests / resources  ->  make openapi  ->  make test-contract  
 Si una respuesta no cumple el contrato hay dos causas: el código se salió de lo documentado (arréglalo) o
 el contrato quedó viejo (ajusta controller/Resource y regenera). Nunca edites `openapi.json` a mano.
 
+> **Ojo:** Scramble infiere los tipos de los modelos leyendo la base de datos. Ejecuta `make openapi` con la BD migrada (lo normal dentro del contenedor `app`); con una BD vacía el spec pierde los tipos de los modelos y el test de frescura falla.
+
 ## Qué describe el documento (y cómo)
 
 - **Servidor**: `scramble.export_server_url` (`OPENAPI_SERVER_URL`, por defecto `http://localhost:8000`). Es fijo

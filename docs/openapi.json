@@ -1595,21 +1595,9 @@
                     "200": {
                         "description": "Correcto",
                         "content": {
-                            "application/octet-stream": {
+                            "application/json": {
                                 "schema": {
-                                    "type": "string",
-                                    "format": "binary"
-                                }
-                            }
-                        },
-                        "headers": {
-                            "Transfer-Encoding": {
-                                "required": true,
-                                "schema": {
-                                    "type": "string",
-                                    "enum": [
-                                        "chunked"
-                                    ]
+                                    "type": "object"
                                 }
                             }
                         }
@@ -9947,6 +9935,12 @@
                             "null"
                         ],
                         "format": "date-time"
+                    },
+                    "tenant_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
                     }
                 },
                 "required": [
@@ -9958,7 +9952,8 @@
                     "expires_at",
                     "created_at",
                     "updated_at",
-                    "deleted_at"
+                    "deleted_at",
+                    "tenant_id"
                 ],
                 "title": "ApiKey"
             },
@@ -13715,6 +13710,12 @@
                             "null"
                         ],
                         "format": "date-time"
+                    },
+                    "tenant_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
                     }
                 },
                 "required": [
@@ -13734,7 +13735,8 @@
                     "failure_count",
                     "created_at",
                     "updated_at",
-                    "deleted_at"
+                    "deleted_at",
+                    "tenant_id"
                 ],
                 "title": "Webhook"
             },

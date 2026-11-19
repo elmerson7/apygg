@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\WebhookStatusEnum;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -15,6 +16,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Webhook extends Model
 {
+    use BelongsToTenant;
+
     /**
      * The table associated with the model.
      *

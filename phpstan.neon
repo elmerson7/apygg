@@ -18,7 +18,6 @@ parameters:
         # Traits de infraestructura que el boilerplate ofrece y ningún módulo propio usa
         # todavía; se activan en el modelo que los necesite (ver docs/id-strategy.md).
         -
-            message: '#^Trait App\\Traits\\(HasUuid|BelongsToTenant) is used zero times and is not analysed\.$#'
+            message: '#^Trait App\\Traits\\HasUuid is used zero times and is not analysed\.$#'
             paths:
                 - app/Traits/HasUuid.php
-                - app/Traits/BelongsToTenant.php

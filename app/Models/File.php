@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use App\Traits\LogsActivity;
 use App\Traits\SoftDeletesWithUser;
 use Database\Factories\FileFactory;
@@ -21,7 +22,7 @@ use Illuminate\Support\Facades\Storage;
 class File extends Model
 {
     /** @use HasFactory<FileFactory> */
-    use HasFactory, LogsActivity, SoftDeletes, SoftDeletesWithUser;
+    use BelongsToTenant, HasFactory, LogsActivity, SoftDeletes, SoftDeletesWithUser;
 
     /**
      * The attributes that are mass assignable.

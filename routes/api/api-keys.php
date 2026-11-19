@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware(['auth:api'])->prefix('api-keys')->group(function () {
+Route::middleware(['auth:api', 'tenant'])->prefix('api-keys')->group(function () {
     // Rutas CRUD básicas
     Route::get('/', [ApiKeyController::class, 'index'])
         ->name('api-keys.index');

@@ -3,6 +3,7 @@
 namespace App\Models\Logs;
 
 use App\Models\User;
+use App\Traits\RecordsTenant;
 use Database\Factories\ApiLogFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -18,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ApiLog extends Model
 {
     /** @use HasFactory<ApiLogFactory> */
-    use HasFactory;
+    use HasFactory, RecordsTenant;
 
     /**
      * The table associated with the model.
@@ -50,6 +51,7 @@ class ApiLog extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'tenant_id',
         'trace_id',
         'user_id',
         'request_method',

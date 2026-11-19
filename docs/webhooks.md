@@ -4,7 +4,7 @@ Un usuario registra una URL (`POST /webhooks`) y recibe POSTs firmados cuando oc
 
 ## Qué eventos recibe cada webhook
 
-**Solo los de recursos de su dueño** (el usuario afectado por el evento). Un webhook nunca recibe logins, altas o cambios de rol de otros usuarios, aunque escuche `events = null` (todos). El ámbito se define en `WebhookListener::ownerIdFor()`: un proyecto con tenants o empresas cambia ahí la regla.
+**Solo los de recursos de su dueño** (el usuario afectado por el evento). Un webhook nunca recibe logins, altas o cambios de rol de otros usuarios, aunque escuche `events = null` (todos). El ámbito se define en `WebhookListener::ownerIdFor()`. Con multiempresa activo, además, un webhook pertenece a un tenant y solo recibe eventos ocurridos dentro de él (el job lleva el tenant); ver `docs/multi-tenancy.md`.
 
 ## SSRF
 

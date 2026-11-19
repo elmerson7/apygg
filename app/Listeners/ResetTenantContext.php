@@ -2,8 +2,10 @@
 
 namespace App\Listeners;
 
+use App\Support\Tenancy\PermissionTeamsSchema;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Contracts\Foundation\Application;
+use Spatie\Permission\PermissionRegistrar;
 
 /**
  * Listener de Octane (RequestReceived/TaskReceived/TickReceived): cinturón y tirantes. El
@@ -18,6 +20,12 @@ class ResetTenantContext
 
         if ($app->resolved(TenantContext::class)) {
             $app->make(TenantContext::class)->clear();
+        }
+
+        // El PermissionRegistrar es un singleton que sobrevive entre peticiones de Octane: su equipo
+        // de permisos debe volver a la plataforma aunque el TenantContext (scoped) aún no exista.
+        if (config('permission.teams')) {
+            $app->make(PermissionRegistrar::class)->setPermissionsTeamId(PermissionTeamsSchema::PLATFORM_TEAM);
         }
     }
 }

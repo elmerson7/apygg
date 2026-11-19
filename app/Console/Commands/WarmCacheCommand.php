@@ -7,10 +7,12 @@ use App\Contracts\RoleServiceInterface;
 use App\Enums\WebhookStatusEnum;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Webhook;
 use App\Services\CacheService;
 use App\Services\LogService;
+use App\Support\Tenancy\TenantContext;
 use Illuminate\Console\Command;
 
 class WarmCacheCommand extends Command
@@ -221,17 +223,26 @@ class WarmCacheCommand extends Command
 
         try {
             if (class_exists(Webhook::class)) {
-                $webhooks = Webhook::where('status', WebhookStatusEnum::active->value)->get();
+                // Multiempresa: la caché de cada tenant lleva su prefijo; se calienta tenant por tenant
+                $warm = function () use (&$count): void {
+                    foreach (Webhook::where('status', WebhookStatusEnum::active->value)->get() as $webhook) {
+                        CacheService::set("webhook:{$webhook->id}", [
+                            'id' => $webhook->id,
+                            'name' => $webhook->name,
+                            'url' => $webhook->url,
+                            'events' => $webhook->events,
+                            'status' => $webhook->status,
+                        ], 3600);
+                        $count++;
+                    }
+                };
 
-                foreach ($webhooks as $webhook) {
-                    CacheService::set("webhook:{$webhook->id}", [
-                        'id' => $webhook->id,
-                        'name' => $webhook->name,
-                        'url' => $webhook->url,
-                        'events' => $webhook->events,
-                        'status' => $webhook->status,
-                    ], 3600);
-                    $count++;
+                $context = app(TenantContext::class);
+
+                if ($context->enabled()) {
+                    Tenant::query()->where('status', 'active')->each(fn (Tenant $tenant) => $context->run($tenant, $warm));
+                } else {
+                    $warm();
                 }
 
                 if ($count >= 1) {

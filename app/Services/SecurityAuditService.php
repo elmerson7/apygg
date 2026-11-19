@@ -11,6 +11,7 @@ use App\Models\Logs\SecurityLog;
 use App\Models\SecurityScan;
 use App\Models\User;
 use App\Services\LLM\LlmGateway;
+use App\Support\Tenancy\TenantQuery;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -387,9 +388,12 @@ class SecurityAuditService implements SecurityAuditServiceInterface
 
         // Las claves revocadas se borran en blando, así que el modelo (con
         // SoftDeletes) ya excluye las revocadas por defecto.
-        $total = ApiKey::query()->count();
-        $neverExpire = ApiKey::query()->whereNull('expires_at')->count();
-        $expired = ApiKey::query()->whereNotNull('expires_at')->where('expires_at', '<', now())->count();
+        // Auditoría de plataforma: cuenta las claves de TODOS los tenants (solo cifras agregadas)
+        [$total, $neverExpire, $expired] = TenantQuery::withoutTenant(fn () => [
+            ApiKey::query()->count(),
+            ApiKey::query()->whereNull('expires_at')->count(),
+            ApiKey::query()->whereNotNull('expires_at')->where('expires_at', '<', now())->count(),
+        ], 'auditoría de seguridad de plataforma');
 
         $issues[] = "{$total} claves de API vigentes";
 

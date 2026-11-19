@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Contracts\FileServiceInterface;
 use App\Exceptions\BusinessLogicException;
 use App\Models\File;
+use App\Support\Tenancy\TenantContext;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -48,7 +49,7 @@ class FileService implements FileServiceInterface
         $size = $file->getSize();
 
         $storedPath = Storage::disk($disk)->putFileAs(
-            trim($path, '/'),
+            $this->tenantStoragePath($path),
             $file,
             $filename,
             ['visibility' => $isPublic ? 'public' : 'private']
@@ -76,6 +77,23 @@ class FileService implements FileServiceInterface
             'extension' => $extension,
             'disk' => $disk,
         ];
+    }
+
+    /**
+     * Ruta de almacenamiento: con multiempresa activo la clave incluye el tenant
+     * (`tenants/<id>/<ruta>`), así un tenant nunca comparte carpeta con otro y se puede
+     * purgar, medir o respaldar por empresa. Sin tenant activo o con multiempresa apagado no cambia.
+     */
+    public function tenantStoragePath(string $path): string
+    {
+        $path = trim($path, '/');
+        $context = app(TenantContext::class);
+
+        if (! $context->enabled()) {
+            return $path;
+        }
+
+        return 'tenants/'.$context->requireId(File::class, 'store').'/'.$path;
     }
 
     /**
@@ -176,7 +194,15 @@ class FileService implements FileServiceInterface
             }
         }
 
-        return URL::temporarySignedRoute('files.signed', $expiresAt, ['id' => $file->id]);
+        // La URL firmada lleva el tenant (va dentro de la firma): la descarga no tiene sesión ni
+        // cabecera X-Tenant y fija el contexto desde aquí.
+        $params = ['id' => $file->id];
+
+        if (app(TenantContext::class)->enabled()) {
+            $params['tenant'] = (int) $file->getAttribute('tenant_id');
+        }
+
+        return URL::temporarySignedRoute('files.signed', $expiresAt, $params);
     }
 
     /**
@@ -244,7 +270,7 @@ class FileService implements FileServiceInterface
 
             $extension = $format ?? $file->getClientOriginalExtension();
             $filename = $this->generateFilename($file, $extension);
-            $fullPath = rtrim($path, '/').'/'.$filename;
+            $fullPath = rtrim($this->tenantStoragePath($path), '/').'/'.$filename;
             $disk = self::DEFAULT_DISK;
 
             Storage::disk($disk)->put($fullPath, $image->stream());

@@ -279,6 +279,23 @@ no filtraba sin tenant) se sustituye por el de `docs/multi-tenancy.md`. Si tu pr
 - Re-siembra permisos: `make art cmd="db:seed --class=PermissionSeeder"` (nuevo `tenants.access-any`).
 - Variables nuevas: `MULTI_TENANCY_ENABLED`, `TENANT_RESOLUTION`, `TENANT_HEADER`, `TENANT_BASE_DOMAIN`.
 
+### 14d. Multiempresa: recursos por tenant y equipos de Spatie
+
+Solo afecta si activas `MULTI_TENANCY_ENABLED=true` (con `false` todo sigue igual). Migraciones nuevas:
+`2026_11_19_000060` (`tenant_id` NULLABLE + índice + FK en `files`, `webhooks`, `webhook_deliveries`, `api_keys`),
+`000061` (`tenant_id` con índice, sin FK, en los 3 logs) y `000062` (equipos de Spatie; solo actúa con `PERMISSION_TEAMS=true`).
+
+- Con datos existentes: `php artisan tenancy:assign-orphans <tenant>` asigna los registros sin tenant (si no,
+  quedan invisibles para los tenants).
+- Rutas `files`, `webhooks`, `api-keys` con `tenant`: los clientes mandan `X-Tenant`. Las API keys fijan su
+  tenant solas; `api-key:create` exige `--tenant=`. Una key sin tenant, de tenant suspendido o de usuario ya no
+  miembro deja de autenticar.
+- Los eventos sin tenant (login...) ya no llegan a webhooks; el job de webhooks encolado antes de actualizar
+  (sin tenant guardado) falla cerrado: vacía la cola de `webhooks` antes de activar multiempresa.
+- Spatie teams: ver `docs/permissions.md` §Teams (`tenancy:enable-teams`); reversible pero destructivo.
+- `User::isAdmin()` con teams = admin del tenant activo o de la plataforma; nuevo `User::canEnterTenant()`.
+- `CacheService`: dentro de `TenantQuery::withoutTenant()` las claves no llevan prefijo de tenant.
+
 ### 15. Verificación final
 
 ```bash

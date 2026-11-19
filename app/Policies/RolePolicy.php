@@ -61,6 +61,10 @@ class RolePolicy
      */
     public function update(User $user, Role $role): bool
     {
+        if ($role->isOutOfScope()) {
+            return false;
+        }
+
         // No se puede modificar el rol 'admin' a menos que sea admin
         if ($role->name === 'admin' && ! $user->isAdmin()) {
             return false;
@@ -87,6 +91,10 @@ class RolePolicy
      */
     public function delete(User $user, Role $role): bool
     {
+        if ($role->isOutOfScope()) {
+            return false;
+        }
+
         // No se puede eliminar el rol 'admin'
         if ($role->name === 'admin') {
             return false;
@@ -113,6 +121,11 @@ class RolePolicy
      */
     public function assignPermission(User $user, Role $role): bool
     {
+        // Multiempresa: un tenant no cambia los permisos de un rol global ni de otro tenant
+        if ($role->isOutOfScope()) {
+            return false;
+        }
+
         if ($role->name === 'admin' && ! $user->isAdmin()) {
             return false;
         }

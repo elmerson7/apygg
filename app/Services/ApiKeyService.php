@@ -5,8 +5,12 @@ namespace App\Services;
 use App\Contracts\ApiKeyServiceInterface;
 use App\Exceptions\BusinessLogicException;
 use App\Models\ApiKey;
+use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Logging\SecurityLogger;
+use App\Support\Tenancy\PermissionTeams;
+use App\Support\Tenancy\TenantContext;
+use App\Support\Tenancy\TenantQuery;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -236,6 +240,13 @@ class ApiKeyService implements ApiKeyServiceInterface
         $apiKey = $this->validate($key);
         $user = $apiKey?->user;
 
+        // Multiempresa: la key PERTENECE a un tenant y fija su contexto (sin cabecera X-Tenant).
+        // Falla cerrado: una key sin tenant, de un tenant no activo o de un usuario que ya no es
+        // miembro no autentica.
+        if ($apiKey && $user instanceof User && ! $this->bindTenant($apiKey, $user)) {
+            $user = null;
+        }
+
         if (! $apiKey || ! $user instanceof User) {
             SecurityLogger::logSuspiciousActivity(
                 'Intento de acceso con API Key inválida, revocada o expirada',
@@ -265,12 +276,45 @@ class ApiKeyService implements ApiKeyServiceInterface
     }
 
     /**
+     * Fija el TenantContext del tenant de la key. Devuelve false si la key no puede operar.
+     */
+    protected function bindTenant(ApiKey $apiKey, User $user): bool
+    {
+        $context = app(TenantContext::class);
+
+        if (! $context->enabled()) {
+            return true;
+        }
+
+        $tenant = ($tenantId = $apiKey->getAttribute('tenant_id')) !== null ? Tenant::query()->find((int) $tenantId) : null;
+
+        if (! $tenant instanceof Tenant || ! $tenant->isActive() || ! $user->canEnterTenant($tenant)) {
+            return false;
+        }
+
+        $context->set($tenant);
+        PermissionTeams::forgetUserRelations($user);
+
+        // Esta petición no pasa por el middleware `tenant` (que limpia en terminate): se limpia al terminar.
+        app()->terminating(fn () => $context->clear());
+
+        return true;
+    }
+
+    /**
      * Validar una API Key
      *
      * @param  string  $key  Key completa (con prefijo)
      * @return ApiKey|null ApiKey si es válida, null si no
      */
     public function validate(string $key): ?ApiKey
+    {
+        // La key se busca ANTES de conocer el tenant (ella lo fija): consulta de plataforma, sin
+        // filtro y con caché global (el hash de la key es único en todo el sistema).
+        return TenantQuery::withoutTenant(fn () => $this->validateKey($key), 'autenticación por API key', false);
+    }
+
+    protected function validateKey(string $key): ?ApiKey
     {
         // Una key de prueba no vale en producción
         if (! $this->testKeysAllowed() && str_starts_with($key, (string) config('api-keys.prefixes.test', 'apygg_test_'))) {
@@ -403,7 +447,8 @@ class ApiKeyService implements ApiKeyServiceInterface
     protected function clearKeyCache(string $hashedKey): void
     {
         $cacheKey = self::CACHE_PREFIX.$hashedKey;
-        CacheService::forget($cacheKey);
+        // Misma clave global con la que la guarda validate(), aunque se revoque desde un tenant.
+        app(TenantContext::class)->withoutTenant(fn () => CacheService::forget($cacheKey));
     }
 
     /**

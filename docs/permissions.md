@@ -126,30 +126,55 @@ Las migraciones originales no se tocaron. Dos nuevas llevan el esquema propio al
 Antes de desplegar en un proyecto con datos: **haz backup** (`make backup`) y revisa la sección de riesgos
 del PR. Después de migrar: `make art cmd="permission:cache-reset"`.
 
-## Teams (multiempresa): preparado, apagado
+## Teams (multiempresa): implementado, apagado por defecto
 
-`config/permission.php` ya tiene `team_foreign_key = tenant_id` y `PERMISSION_TEAMS=false`. Con teams
-apagado el esquema es el estándar y no hay columnas de más.
+Con `PERMISSION_TEAMS=true` los roles y permisos directos son **por tenant** (equipo de Spatie =
+tenant; `team_foreign_key = tenant_id`). Con él apagado (por defecto) no hay columnas de más y nada cambia.
 
-**Decisión: no se añade `tenant_id` a las pivotes ahora.** En Spatie, cuando teams está encendido,
-`model_has_roles` y `model_has_permissions` llevan `tenant_id` **NOT NULL** y como parte de la clave
-primaria; no puede ser nullable. Tenerla vacía "por si acaso" obligaría a inventar un tenant por defecto y
-a rehacer claves de todos modos. Lo que sí admite un nulo es `roles.tenant_id` (rol global vs. rol de un
-tenant) y eso lo crea la migración de activación.
+### Modelo
 
-Para activarlo en un proyecto (con el paquete ya en la versión del boilerplate):
+- **Equipo = tenant.** Una asignación (`model_has_roles`, `model_has_permissions`) lleva el `tenant_id` en el que vale:
+  ser `admin` en A no lo es en B.
+- **Equipo 0 = plataforma** (`PermissionTeamsSchema::PLATFORM_TEAM`). Es el equipo cuando no hay tenant activo
+  (login, `/users`, `/admin/*`, comandos). Un *admin de plataforma* es quien tiene el rol `admin` asignado
+  en el equipo 0 (`User::isPlatformAdmin()`); **es super admin en todos los tenants** (`User::isAdmin()` = admin
+  del tenant activo **o** admin de plataforma, así lo usa el `Gate::after`).
+- **`roles.tenant_id` NULL = rol global** (catálogo común: `admin`, `user`...), con valor = rol propio de ese tenant.
+  Spatie solo deja asignar roles globales o del equipo activo. Un rol creado sin tenant activo es global; con
+  tenant activo es de ese tenant (`Role::create`). La unicidad `(tenant_id, name, guard_name)` es
+  `NULLS NOT DISTINCT`: dos roles globales no pueden llamarse igual.
+- **Un tenant no modifica roles globales ni de otro tenant** (`RolePolicy` vía `Role::isOutOfScope()`): cambiarían
+  para todos. Solo la plataforma. `Role::visibleInScope()` lista los visibles desde el ámbito actual (no es un scope
+  global a propósito: la caché de permisos de Spatie hace `Permission::with('roles')` y un scope dependiente
+  del tenant la corrompería).
+- **`tenants.access-any`** se evalúa en el equipo de la plataforma: concedido solo dentro de A no permite entrar a B.
+- El `TenantContext` sincroniza el equipo (`set()` → tenant, `clear()` → plataforma), también en jobs
+  (`RestoreTenantForJob`), en `run()` y en el listener de Octane (`ResetTenantContext` lo reinicia por petición:
+  el `PermissionRegistrar` es un singleton y sobrevive entre peticiones). `ResolveTenant` y la API key sueltan las
+  relaciones `roles`/`permissions` cacheadas del usuario al cambiar de equipo (Spatie las cachea en el modelo).
+- Las rutas `/users` y `/roles` siguen siendo de plataforma: asignan en el equipo 0. Asignar roles dentro de un
+  tenant se hace en código con `TenantContext::run($tenant, fn () => $user->assignRole('gerente'))` o con un
+  módulo propio de administración por tenant (no incluido).
 
-1. `PERMISSION_TEAMS=true` en `.env`.
-2. `make art cmd="permission:setup-teams"` genera la migración (`add_teams_fields`) con `tenant_id`: añade
-   `roles.tenant_id` (nullable, con índice y único `tenant_id+name+guard_name`) y `tenant_id` en las dos
-   pivotes (valor por defecto 1 para lo existente: ajústalo al tenant por defecto real
-   antes de migrar) rehaciendo sus claves primarias.
-3. `make art cmd="migrate"` y `make art cmd="permission:cache-reset"`.
-4. Fijar el tenant de la petición **después** de autenticar: un middleware (tras `ResolveTenant`/`auth:api`)
-   que haga `setPermissionsTeamId($tenant->id)` (helper global de Spatie). Con Octane el listener del
-   paquete lo reinicia al acabar cada petición.
-5. Revisar los chequeos que asumen roles globales: `User::isAdmin()` y el Gate del super admin usarían
-   el rol del tenant actual; decide si el super admin es un rol global (`tenant_id` null).
+### Activarlo en un proyecto
 
-Si el proyecto activa teams desde el primer `migrate` (con `PERMISSION_TEAMS=true` ya en el `.env`),
-la migración `…000002` crea el esquema con `tenant_id` directamente.
+1. **Backup** (`make backup`).
+2. `make art cmd="tenancy:enable-teams --assign-to=<tenant>"` (misma lógica que la guía oficial de Spatie
+   «add teams fields», con las diferencias de arriba). Añade `tenant_id` nullable a `roles` y `tenant_id` NOT NULL
+   a las dos pivotes **rehaciendo sus claves primarias**; las asignaciones existentes pasan al tenant indicado
+   (sin `--assign-to`, a la plataforma) y los `admin` existentes además quedan como admin de plataforma.
+   Es idempotente. Si el proyecto migra desde cero con `PERMISSION_TEAMS=true`, la migración `…000062` hace lo
+   mismo sola (con `DEFAULT_TENANT_ID` como tenant de las asignaciones, si existe).
+3. `PERMISSION_TEAMS=true` en `.env` y `make art cmd="permission:cache-reset"`. **Reinicia Octane y Horizon
+   obligatoriamente**: Eloquent cachea por proceso las columnas de cada tabla (`$guarded`) y un worker que ya
+   cargó `roles` sin `tenant_id` lo descartaría en silencio al crear roles hasta reiniciarse.
+4. Revisa que cada usuario tenga sus roles en los tenants donde opera (sus asignaciones antiguas quedaron en
+   un solo tenant o en la plataforma).
+5. Reversible: `tenancy:enable-teams --revert` (**destructivo**: borra los roles propios de cada tenant y deja una
+   asignación por rol).
+
+Qué cubren las pruebas: `tests/Feature/Tenancy/SpatieTeamsTest.php` (aplican el esquema dentro de la transacción
+del test; el DDL de PostgreSQL es transaccional).
+
+Límites: no se probó con Octane real ni con carga concurrente; con teams activo cada comprobación de
+`isAdmin()` en un tenant hace una consulta extra (memoizada por instancia de usuario).

@@ -14,6 +14,7 @@ use App\Events\UserLoggedOut;
 use App\Events\UserRestored;
 use App\Events\UserUpdated;
 use App\Models\Webhook;
+use App\Support\Tenancy\TenantContext;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 
@@ -41,6 +42,15 @@ class WebhookListener implements ShouldQueue
 
         if (! $eventName) {
             // Evento no mapeado, ignorar
+            return;
+        }
+
+        // Multiempresa: los webhooks son de un tenant y solo reciben los eventos que ocurren DENTRO de
+        // ese tenant. El listener corre en cola con el tenant con el que se disparó el evento (Context);
+        // un evento sin tenant (login, tareas de plataforma) no se entrega a ningún webhook (falla cerrado).
+        $tenancy = app(TenantContext::class);
+
+        if ($tenancy->enabled() && $tenancy->id() === null) {
             return;
         }
 
@@ -72,8 +82,8 @@ class WebhookListener implements ShouldQueue
     /**
      * Dueño del recurso al que se refiere el evento: el usuario afectado.
      *
-     * Es el punto donde un proyecto define su propio ámbito (p. ej. el tenant o la empresa);
-     * ver docs/webhooks.md. Sin dueño identificable el evento no se entrega a nadie.
+     * Con multiempresa activo se suma el tenant del contexto (los webhooks tienen `tenant_id` y el
+     * scope filtra); aquí un proyecto puede afinar el ámbito; ver docs/webhooks.md. Sin dueño identificable el evento no se entrega a nadie.
      *
      * @param  mixed  $event
      */

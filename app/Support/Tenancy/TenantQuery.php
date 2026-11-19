@@ -23,13 +23,15 @@ final class TenantQuery
      *
      * @param  Closure(): T  $callback
      * @param  string  $reason  Para qué se hace (queda en el log)
+     * @param  bool  $audit  `false` solo para rutas calientes que ya dejan su propio rastro (autenticación
+     *                       por API key: `SecurityLogger::logApiKeyUsage`); no lo uses para nada más
      * @return T
      */
-    public static function withoutTenant(Closure $callback, string $reason = 'sin motivo'): mixed
+    public static function withoutTenant(Closure $callback, string $reason = 'sin motivo', bool $audit = true): mixed
     {
         $context = app(TenantContext::class);
 
-        if ($context->enabled()) {
+        if ($audit && $context->enabled()) {
             // Solo canal `security` (fichero): `logs_security.event_type` es un enum cerrado.
             LogService::info('tenancy.without_tenant: consulta sin filtro de tenant', [
                 'event_type' => 'tenancy.without_tenant',

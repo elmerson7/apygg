@@ -3,8 +3,12 @@
 namespace App\Jobs;
 
 use App\Contracts\WebhookServiceInterface;
+use App\Models\Tenant;
 use App\Models\Webhook;
 use App\Models\WebhookDelivery;
+use App\Support\Tenancy\Exceptions\CrossTenantViolation;
+use App\Support\Tenancy\Exceptions\MissingTenantContext;
+use App\Support\Tenancy\TenantContext;
 
 /**
  * SendWebhookJob
@@ -23,6 +27,12 @@ class SendWebhookJob extends Job
      * ID de la entrega a procesar
      */
     protected int|string $deliveryId;
+
+    /**
+     * Tenant con el que se encoló (multiempresa). Además de viajar en el `Context` de Laravel, va en
+     * el propio job: al ejecutarse se comprueba que el contexto restaurado es ESE tenant.
+     */
+    protected ?int $tenantId = null;
 
     /**
      * Un solo mecanismo de reintento: el REDESPACHO propio (con delay exponencial), porque
@@ -46,12 +56,51 @@ class SendWebhookJob extends Job
         $this->timeout = (int) config('webhooks.job_timeout', 150);
         $this->webhookId = $webhookId;
         $this->deliveryId = $deliveryId;
+        $this->tenantId = app(TenantContext::class)->id();
     }
 
     /**
      * Ejecutar el job
      */
     public function process(WebhookServiceInterface $webhookService): void
+    {
+        $this->inTenant(fn () => $this->deliver($webhookService));
+    }
+
+    /**
+     * Ejecuta el callback en el tenant del job (multiempresa). Con multiempresa apagado, tal cual.
+     * Falla cerrado: sin tenant guardado, o con un contexto restaurado distinto, no entrega nada.
+     *
+     * @template T
+     *
+     * @param  \Closure(): T  $callback
+     * @return T
+     */
+    protected function inTenant(\Closure $callback): mixed
+    {
+        $context = app(TenantContext::class);
+
+        if (! $context->enabled()) {
+            return $callback();
+        }
+
+        if ($this->tenantId === null) {
+            throw MissingTenantContext::forModel(Webhook::class, 'job');
+        }
+
+        if ($context->id() === $this->tenantId) {
+            return $callback();
+        }
+
+        // El contexto no es el del job (p. ej. ya se limpió tras un fallo): se restaura desde el job.
+        if ($context->id() !== null) {
+            throw CrossTenantViolation::foreignRecord(Webhook::class);
+        }
+
+        return $context->run(Tenant::query()->findOrFail($this->tenantId), $callback);
+    }
+
+    protected function deliver(WebhookServiceInterface $webhookService): void
     {
         $webhook = Webhook::find($this->webhookId);
         $delivery = WebhookDelivery::find($this->deliveryId);
@@ -162,10 +211,16 @@ class SendWebhookJob extends Job
     {
         parent::failed($exception);
 
-        // Marcar entrega como fallida definitivamente
-        $delivery = WebhookDelivery::find($this->deliveryId);
-        if ($delivery) {
-            $delivery->markAsFailed("Job falló definitivamente: {$exception->getMessage()}");
+        // Marcar entrega como fallida definitivamente (en el tenant del job: el contexto ya se limpió)
+        try {
+            $this->inTenant(function () use ($exception) {
+                $delivery = WebhookDelivery::find($this->deliveryId);
+                if ($delivery) {
+                    $delivery->markAsFailed("Job falló definitivamente: {$exception->getMessage()}");
+                }
+            });
+        } catch (\Throwable $e) {
+            $this->log('error', 'No se pudo marcar la entrega como fallida', ['error' => $e->getMessage()]);
         }
 
         $this->log('critical', 'Webhook falló definitivamente después de todos los reintentos', [

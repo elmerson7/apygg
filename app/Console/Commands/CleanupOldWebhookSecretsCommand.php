@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Webhook;
+use App\Support\Tenancy\TenantQuery;
 use Illuminate\Console\Command;
 
 /**
@@ -39,6 +40,12 @@ class CleanupOldWebhookSecretsCommand extends Command
 
         $this->info("Buscando webhooks con secrets antiguos (período de gracia: {$gracePeriodDays} días)...");
 
+        // Tarea de plataforma: recorre los webhooks de todos los tenants (multiempresa)
+        return TenantQuery::withoutTenant(fn () => $this->clean($gracePeriodDays, (bool) $dryRun), 'limpieza de secrets antiguos de webhooks');
+    }
+
+    private function clean(int $gracePeriodDays, bool $dryRun): int
+    {
         $webhooks = Webhook::whereNotNull('old_secret')
             ->whereNotNull('secret_rotated_at')
             ->get();

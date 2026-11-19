@@ -6,6 +6,7 @@ use App\Models\Tenant;
 use App\Support\Tenancy\Exceptions\MissingTenantContext;
 use Closure;
 use Illuminate\Support\Facades\Context;
+use Spatie\Permission\PermissionRegistrar;
 
 /**
  * Tenant activo de la petición, del job o del comando.
@@ -64,6 +65,7 @@ class TenantContext
     {
         $this->tenant = $tenant;
         Context::addHidden(self::CONTEXT_KEY, (int) $tenant->getKey());
+        $this->syncPermissionsTeam((int) $tenant->getKey());
     }
 
     public function clear(): void
@@ -71,6 +73,18 @@ class TenantContext
         $this->tenant = null;
         $this->withoutTenant = false;
         Context::forgetHidden(self::CONTEXT_KEY);
+        $this->syncPermissionsTeam(PermissionTeamsSchema::PLATFORM_TEAM);
+    }
+
+    /**
+     * Spatie teams: el equipo de permisos SIEMPRE sigue al tenant activo (y vuelve a la plataforma,
+     * equipo 0, al limpiar). Sin `permission.teams` no hace nada. Ver docs/permissions.md.
+     */
+    public function syncPermissionsTeam(int $teamId): void
+    {
+        if (config('permission.teams')) {
+            app(PermissionRegistrar::class)->setPermissionsTeamId($teamId);
+        }
     }
 
     /**

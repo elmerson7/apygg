@@ -331,12 +331,17 @@ class CacheService
     }
 
     /**
-     * Segmento de tenant para las claves (`t<id>:`). Vacío con multi-tenancy apagado o sin
-     * tenant activo: un proyecto single-tenant no cambia sus claves. Ver docs/multi-tenancy.md §Caché.
+     * Segmento de tenant para las claves (`t<id>:`). Vacío con multi-tenancy apagado, sin
+     * tenant activo o dentro de `withoutTenant()`: un proyecto single-tenant no cambia sus claves. Ver docs/multi-tenancy.md §Caché.
      */
     protected static function tenantSegment(): string
     {
         $context = app(TenantContext::class);
+
+        // Dentro de `withoutTenant()` (tareas de plataforma, validación de API key) las claves son globales.
+        if ($context->isWithoutTenant()) {
+            return '';
+        }
 
         return $context->enabled() && $context->id() !== null ? 't'.$context->id().':' : '';
     }

@@ -3,6 +3,7 @@
 namespace App\Models\Logs;
 
 use App\Models\User;
+use App\Traits\RecordsTenant;
 use Database\Factories\ActivityLogFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -19,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 class ActivityLog extends Model
 {
     /** @use HasFactory<ActivityLogFactory> */
-    use HasFactory;
+    use HasFactory, RecordsTenant;
 
     /**
      * The table associated with the model.
@@ -51,6 +52,7 @@ class ActivityLog extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'tenant_id',
         'user_id',
         'model_type',
         'model_id',

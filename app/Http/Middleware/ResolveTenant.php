@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Support\Tenancy\Exceptions\MissingTenantContext;
 use App\Support\Tenancy\Exceptions\TenantAccessDenied;
 use App\Support\Tenancy\Exceptions\TenantSuspended;
+use App\Support\Tenancy\PermissionTeams;
 use App\Support\Tenancy\TenantContext;
 use Closure;
 use Illuminate\Http\Request;
@@ -67,6 +68,8 @@ class ResolveTenant
         }
 
         $this->context->set($tenant);
+        // Spatie teams: las relaciones `roles`/`permissions` cacheadas en el usuario son del equipo anterior.
+        PermissionTeams::forgetUserRelations($user);
         $request->attributes->set('tenant', $tenant);
 
         return $next($request);
@@ -129,7 +132,6 @@ class ResolveTenant
 
     private function canAccess(User $user, Tenant $tenant): bool
     {
-        return $user->isActiveMemberOf($tenant)
-            || $user->checkPermissionTo('tenants.access-any', 'api');
+        return $user->canEnterTenant($tenant);
     }
 }

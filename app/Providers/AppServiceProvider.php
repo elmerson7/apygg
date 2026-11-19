@@ -11,6 +11,7 @@ use App\Models\Webhook;
 use App\Observers\ApiKeyObserver;
 use App\Observers\WebhookObserver;
 use App\OpenApi\ApiDocs;
+use App\Support\Tenancy\PermissionTeamsSchema;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
@@ -25,6 +26,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Telescope\Telescope;
 use Monolog\Logger;
+use Spatie\Permission\PermissionRegistrar;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -60,6 +62,11 @@ class AppServiceProvider extends ServiceProvider
         // Multiempresa: restaura el tenant del job en el worker y lo limpia al terminar (docs/multi-tenancy.md)
         foreach ([JobProcessing::class, JobProcessed::class, JobFailed::class, JobExceptionOccurred::class] as $event) {
             Event::listen($event, RestoreTenantForJob::class);
+        }
+
+        // Spatie teams: sin tenant activo el equipo de permisos es la plataforma (docs/permissions.md)
+        if (config('permission.teams')) {
+            app(PermissionRegistrar::class)->setPermissionsTeamId(PermissionTeamsSchema::PLATFORM_TEAM);
         }
 
         // Registrar listeners para eventos de autenticación
