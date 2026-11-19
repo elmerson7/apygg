@@ -9,6 +9,7 @@ Este directorio contiene los workflows de GitHub Actions para CI/CD del proyecto
 Se ejecuta automáticamente en:
 - Push a ramas `main` o `develop`
 - Pull Requests hacia `main` o `develop`
+- Manualmente (`workflow_dispatch`)
 
 #### Etapas del Pipeline:
 
@@ -17,14 +18,18 @@ Se ejecuta automáticamente en:
    - PHPStan nivel 6 (análisis estático)
 
 2. **Tests & Coverage**
-   - Tests con Pest
+   - Tests con Pest (suite por defecto) y suites `Contract` y `Concurrency`
    - Cobertura de código (mínimo 0% para empezar)
    - Servicios: PostgreSQL 18 y Redis 7
 
 3. **Security Scan**
    - Composer audit (escaneo rápido de vulnerabilidades)
 
-4. **Docker Build**
+4. **E2E (stack real)** — solo en push a `main` y a mano
+   - `make init` + `make setup` (Docker Compose, perfil dev) y `make test-e2e`
+   - Ver `docs/testing.md`, sección "Pruebas E2E"
+
+5. **Docker Build**
    - Construcción de imagen Docker
    - Verificación de que la imagen funciona
 

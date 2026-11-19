@@ -1,5 +1,6 @@
 <?php
 
+use Tests\Support\E2ETestCase;
 use Tests\TestCase;
 
 /*
@@ -14,7 +15,8 @@ use Tests\TestCase;
 |
 */
 
-uses(TestCase::class)->in('Feature', 'Unit', 'Arch', 'Contract', 'Concurrency', 'E2E', 'Integration');
+uses(TestCase::class)->in('Feature', 'Unit', 'Arch', 'Contract', 'Concurrency', 'Integration');
+uses(E2ETestCase::class)->in('E2E');
 
 /*
 |--------------------------------------------------------------------------

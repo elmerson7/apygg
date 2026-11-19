@@ -7,6 +7,8 @@ on:
     branches: [ main, develop ]
     # Evitar ejecutar CI en PRs de Dependabot automáticamente (opcional)
     # Los PRs de Dependabot seguirán ejecutando CI, pero puedes limitar workflows secundarios
+  # Manual desde la pestaña Actions: también corre el job `e2e` (stack real con Docker Compose)
+  workflow_dispatch:
 
 env:
   PHP_VERSION: '8.5'
@@ -25,13 +27,17 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ env.PHP_VERSION }}
-          extensions: pdo_pgsql, redis, gd, intl, zip, opcache
+          extensions: pdo_pgsql, redis, gd, intl, zip, opcache, bcmath, pcntl
           coverage: none
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
 
       - name: Cache Composer dependencies
         uses: actions/cache@v5
         with:
-          path: ~/.composer/cache
+          path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-composer-
@@ -80,8 +86,10 @@ jobs:
 
     env:
       APP_ENV: testing
-      APP_KEY: base64:test-key-for-ci-pipeline-only-not-for-production-use
+      APP_KEY: base64:Y2ktcGlwZWxpbmUta2V5LTMyLWJ5dGVzLWxvbmchISE=
       DB_CONNECTION: pgsql
+      # La BD del servicio ya es la de tests (apygg_test): sin esto TestCase usaría apygg_test_test
+      DB_TEST_ISOLATION: 'false'
       DB_HOST: localhost
       DB_PORT: 5432
       DB_DATABASE: apygg_test
@@ -103,13 +111,17 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ env.PHP_VERSION }}
-          extensions: pdo_pgsql, redis, gd, intl, zip, opcache
+          extensions: pdo_pgsql, redis, gd, intl, zip, opcache, bcmath, pcntl
           coverage: xdebug
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
 
       - name: Cache Composer dependencies
         uses: actions/cache@v5
         with:
-          path: ~/.composer/cache
+          path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-composer-
@@ -135,6 +147,11 @@ jobs:
         env:
           XDEBUG_MODE: coverage
 
+      # Suites a propósito (no están en la por defecto). Concurrency compromete datos en la BD
+      # de tests (procesos PHP hijos), por eso va DESPUÉS de la cobertura.
+      - name: Run Contract and Concurrency suites
+        run: ./vendor/bin/pest --ci --testsuite=Contract,Concurrency
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
@@ -158,10 +175,14 @@ jobs:
           php-version: ${{ env.PHP_VERSION }}
           extensions: pdo_pgsql, redis
 
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
       - name: Cache Composer dependencies
         uses: actions/cache@v5
         with:
-          path: ~/.composer/cache
+          path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-composer-
@@ -180,6 +201,63 @@ jobs:
       - name: Run Composer audit (incluyendo dev)
         run: composer audit
         continue-on-error: true
+
+  # Recorrido E2E por HTTP real (tests/E2E): levanta el stack del perfil dev con Docker Compose
+  # (app con Octane, Horizon, Postgres 18, Redis, Mailpit, S3/RustFS). Es lento y necesita Docker,
+  # por eso solo corre en push a main y a mano (workflow_dispatch). No bloquea `ci-success`.
+  e2e:
+    name: E2E (stack real)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: pdo_pgsql, redis, gd, intl, zip, opcache, bcmath, pcntl
+          coverage: none
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v5
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      # vendor/ se instala en el host (con caché) y el contenedor lo reutiliza: `make setup`
+      # solo tiene que comprobarlo en vez de descargar todo otra vez.
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-scripts
+
+      - name: Init project (compose.env y .env)
+        run: make init NAME=ci PORT_BASE=8700 YES=1
+
+      # El receptor de webhooks de la prueba es http y vive en la red de Compose (host `app`):
+      # sin esto WebhookUrlGuard lo rechaza. Solo para este stack efímero. Archivos en S3 local.
+      - name: Configure E2E environment
+        run: |
+          sed -i 's/^FILE_DISK_PUBLIC=.*/FILE_DISK_PUBLIC=s3/; s/^FILE_DISK_PRIVATE=.*/FILE_DISK_PRIVATE=s3_private/' .env
+          printf 'WEBHOOKS_ALLOW_HTTP=true\nWEBHOOKS_ALLOWED_HOSTS=app\n' >> .env
+
+      - name: Start the stack (make setup)
+        run: make setup
+
+      - name: Run E2E suite
+        run: make test-e2e
+
+      - name: Dump container logs on failure
+        if: failure()
+        run: docker compose --profile dev --project-name ci --env-file compose.env logs --tail=200
 
   build:
     name: Docker Build

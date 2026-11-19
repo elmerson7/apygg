@@ -1,5 +1,5 @@
 # Tests (Pest) y bases de datos de testing (targets: make/*.mk)
-# Suites (phpunit.xml): Unit, Feature, Arch (por defecto) + Contract, Concurrency, E2E (a propósito).
+# Suites (phpunit.xml): Unit, Feature, Arch (por defecto) + Contract, Concurrency, E2E, Integration (a propósito).
 # Cobertura mínima de la suite por defecto; sube junto con la cobertura real (misma cifra en .github/workflows/ci.yml).
 COVERAGE_MIN ?= 55
 
@@ -43,9 +43,20 @@ test-contract:
 test-concurrency:
 	$(DC) exec app ./vendor/bin/pest --testsuite=Concurrency
 
-# Flujos de punta a punta (suite reservada; vacía por ahora)
+# Recorrido E2E por HTTP real contra el stack levantado de ESTE proyecto (make setup).
+# Corre dentro del contenedor app: la API es http://localhost:8000 (el APP_URL del .env es la
+# vista del host; úsalo como E2E_BASE_URL si lanzas pest desde fuera). Mailpit se usa si
+# MAIL_HOST=mailpit y S3 si FILE_DISK_PRIVATE=s3_private; si no, esos pasos se omiten.
+# Ver docs/testing.md ("Pruebas E2E").
 test-e2e:
-	$(DC) exec app ./vendor/bin/pest --testsuite=E2E
+	$(DC) exec -T app sh -c '\
+		export E2E_BASE_URL=$${E2E_BASE_URL:-http://localhost:8000} E2E_APP_TITLE="$$APP_TITLE"; \
+		if [ "$$MAIL_HOST" = mailpit ]; then export E2E_MAIL_URL=$${E2E_MAIL_URL:-http://mailpit:8025}; fi; \
+		if [ "$$FILE_DISK_PRIVATE" = s3_private ]; then \
+			export E2E_S3_ENDPOINT=$${E2E_S3_ENDPOINT:-$$AWS_ENDPOINT} E2E_S3_KEY=$$AWS_ACCESS_KEY_ID \
+				E2E_S3_SECRET=$$AWS_SECRET_ACCESS_KEY E2E_S3_PRIVATE_BUCKET=$${AWS_PRIVATE_BUCKET:-$$AWS_BUCKET}; \
+		fi; \
+		exec ./vendor/bin/pest --testsuite=E2E'
 
 # Solo los tests con cambios sin commitear según Git (Pest --dirty): ciclo rápido al desarrollar
 test-changed:

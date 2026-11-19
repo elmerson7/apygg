@@ -12,7 +12,7 @@ El proyecto usa **Pest 4** sobre PHPUnit. Todo se ejecuta dentro de Docker vía
 | **Arquitectura** | `tests/Arch/` | Reglas estructurales del código, no comportamiento | `make test-arch` |
 | **Contrato** | `tests/Contract/` | La forma pública de la API (envelope, tipos, códigos) | `make test-contract` |
 | **Concurrencia** | `tests/Concurrency/` | Carreras reales con varios procesos PHP a la vez | `make test-concurrency` |
-| **E2E** | `tests/E2E/` | Flujos de punta a punta (suite reservada, vacía) | `make test-e2e` |
+| **E2E** | `tests/E2E/` | El recorrido base por HTTP real contra el stack levantado (Octane, Horizon, Mailpit, S3) | `make test-e2e` |
 | **Cobertura** | — | Qué porcentaje del código ejecutan los tests | `make test-coverage` |
 | **Mutación** | — | Si los tests **detectarían** un cambio en el código | `make test-mutate` |
 | **Paralelo** | — | La misma suite repartida en N procesos | `make test-parallel` |
@@ -29,7 +29,7 @@ El proyecto usa **Pest 4** sobre PHPUnit. Todo se ejecuta dentro de Docker vía
 | `Arch` | quieres fijar una regla estructural (qué puede usar qué) |
 | `Contract` | quieres que un cambio accidental en la forma de una respuesta falle |
 | `Concurrency` | el fallo solo aparece con peticiones simultáneas (únicos, contadores, idempotencia) |
-| `E2E` | necesitas el flujo completo contra la API levantada de verdad |
+| `E2E` | necesitas el flujo completo contra la API levantada de verdad (servidor, cola y servicios reales) |
 
 Los tests de las suites nuevas usan `Tests\TestCase` igual que Feature/Unit
 (`tests/Pest.php`). Registrar otra suite es una línea más en `<testsuites>`.
@@ -50,7 +50,7 @@ make test                              # suite por defecto: Unit + Feature + Arc
 make test-all                          # todas las suites sin servicios extra
 make test-contract                     # solo Contract
 make test-concurrency                  # solo Concurrency (procesos reales)
-make test-e2e                          # solo E2E (reservada)
+make test-e2e                          # recorrido E2E contra el stack levantado (ver más abajo)
 make test-changed                      # solo tests con cambios sin commitear (pest --dirty)
 make ci                                # como el CI: check + cobertura mínima
 make test-unit                         # solo tests/Unit
@@ -231,6 +231,74 @@ y el segundo `INSERT` daba **500** con el SQL en el título. Ahora el handler gl
 (`bootstrap/app.php`) convierte `UniqueConstraintViolationException` en **422** con
 el formato de validación y sin exponer SQL ni valor.
 
+## Pruebas E2E
+
+`tests/E2E/RecorridoBaseTest.php` habla por **HTTP real** (`Http::` de Laravel, nunca
+`$this->get()` del kernel) con un stack levantado: Octane de verdad, Horizon consumiendo
+la cola, Mailpit y S3. Es la única suite que prueba que las piezas funcionan *juntas*
+(el correo sale por la cola real, el webhook llega a un receptor real...). Es lenta
+y necesita infraestructura, por eso va aparte y **se omite** si no hay stack.
+
+Recorrido (cada paso depende del anterior: si uno falla, los siguientes se omiten):
+
+1. `GET /health/ready` = ready (BD y Redis ok) y `GET /` devuelve la ficha con el título.
+2. Registro de un usuario nuevo (email único por ejecución) → 201 con tokens; el duplicado → 422.
+3. El correo de bienvenida llega a Mailpit (espera acotada de 30 s: va por la cola `default`).
+4. Login, `/auth/me`, el refresh rota y el viejo da 401; un refresh no sirve como access.
+5. Subida de un archivo privado y descarga por `/files/{id}/download`; sin token 401; otro usuario 403/404.
+   Con S3 activo comprueba además que el objeto está en el bucket privado.
+6. Webhook `user.logged_in` hacia un receptor que abre el propio test; la entrega llega por la
+   cola `webhooks` con la firma HMAC válida (`sha256=` + HMAC(secreto, `{timestamp}.{cuerpo}`)).
+7. Logout: el access y el refresh dejan de servir.
+
+### Levantar el stack y correrlo
+
+```bash
+make init NAME=miapp        # si el proyecto aún no está inicializado
+make setup                  # perfil dev por defecto: + Mailpit y S3 (RustFS) con sus buckets
+make test-e2e
+```
+
+Para que el recorrido sea completo, el `.env` del stack necesita (cámbialo **antes** de
+`make setup`, o recrea los contenedores con `make up` después, porque `env_file` se lee al crearlos):
+
+```env
+FILE_DISK_PUBLIC=s3                  # archivos en el S3 local (si no, se comprueba solo el disco local)
+FILE_DISK_PRIVATE=s3_private
+WEBHOOKS_ALLOW_HTTP=true             # el receptor de prueba es http
+WEBHOOKS_ALLOWED_HOSTS=app           # y está en la red privada de Compose: WebhookUrlGuard lo bloquearía
+```
+
+`make init` ya apunta el correo a Mailpit (`MAIL_MAILER=smtp`, `MAIL_HOST=mailpit`). **Estas
+variables relajan el filtro SSRF: solo para el stack de pruebas, nunca en producción.**
+
+`make test-e2e` ejecuta Pest *dentro* del contenedor `app` (no hay PHP en el host), así que
+la API es `http://localhost:8000` (el `APP_URL` del `.env` es la vista del host) y los
+servicios se descubren desde el `.env` del contenedor. Variables que lee la suite
+(sin `E2E_BASE_URL` toda la suite se omite):
+
+| Variable | Qué es |
+|---|---|
+| `E2E_BASE_URL` | API bajo prueba (obligatoria; el target la fija) |
+| `E2E_MAIL_URL` | API de Mailpit (`http://mailpit:8025`); sin ella se omite el paso del correo |
+| `E2E_S3_ENDPOINT`, `E2E_S3_KEY`, `E2E_S3_SECRET`, `E2E_S3_PRIVATE_BUCKET` | S3 para comprobar el bucket privado; opcionales |
+| `E2E_WEBHOOK_RECEIVER_URL` | URL del receptor vista **desde el stack**; por defecto `http://app:9199` (el test abre el puerto 9199 en el contenedor `app`) |
+| `E2E_APP_TITLE` | si se define, la ficha de `/` debe llevar exactamente ese título |
+
+Para correrla contra una API remota o desde fuera del contenedor, define esas variables y
+lanza `./vendor/bin/pest --testsuite=E2E`; el receptor de webhooks tiene que ser alcanzable
+desde esa API (`E2E_WEBHOOK_RECEIVER_URL=http://<tu-host>:9199`).
+
+Notas:
+
+- Los endpoints de login y registro limitan a 5 por minuto y por IP; el recorrido usa 4 y
+  espera el reinicio de la ventana si recibe un 429. Si lo repites seguido, la segunda
+  ejecución puede tardar ~1 minuto más.
+- Cada ejecución crea usuarios nuevos (`e2e-<id>@example.test`) y borra el webhook y el
+  archivo; los usuarios y el correo de Mailpit quedan (`make mail-clear` vacía la bandeja).
+- En CI hay un job `e2e` opcional (manual con `workflow_dispatch` y en push a `main`) que levanta este
+  mismo stack: ver `.github/workflows/ci.yml`.
+
 ## La base de datos de tests
 
 Los tests **nunca** tocan la base de desarrollo. `TestCase::createApplication()`
@@ -303,14 +371,16 @@ añades una factory con una columna única, haz lo mismo.
 
 ## En CI
 
-```yaml
-- run: php artisan migrate --force        # sobre la BD de tests
-- run: ./vendor/bin/pest --ci --coverage --min=<COVERAGE_MIN>
-- run: ./vendor/bin/pint --test
-- run: ./vendor/bin/phpstan analyse
-```
+`.github/workflows/ci.yml`:
 
-`make check` (pint + phpstan) es obligatorio tras cualquier cambio PHP.
+| Job | Qué corre | Cuándo |
+|---|---|---|
+| `lint` | `pint --test` + `phpstan` (= `make check`) | siempre |
+| `test` | con Postgres 18 y Redis 7 como servicios: suite por defecto (Unit + Feature + Arch) con cobertura mínima (`--min`, igual a `COVERAGE_MIN` de `make/test.mk`) y después `Contract` + `Concurrency` (esta última compromete datos en la BD de tests, por eso va al final) | siempre |
+| `security` | `composer audit` | siempre |
+| `e2e` | `make init` + `make setup` (stack con Docker Compose, perfil dev) y `make test-e2e` | `workflow_dispatch` y push a `main`; no bloquea `ci-success` |
+
+Equivalente local: `make ci` (check + cobertura mínima) y `make test-all` (todas las suites sin servicios extra).
 
 ## Referencias
 
