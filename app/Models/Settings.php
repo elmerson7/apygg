@@ -25,7 +25,7 @@ class Settings extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = [
         'key',
@@ -63,9 +63,9 @@ class Settings extends Model
     /**
      * Scope para filtrar por grupo
      *
-     * @param  Builder  $query
+     * @param  Builder<static>  $query
      * @param  string  $group  Grupo a filtrar
-     * @return Builder
+     * @return Builder<static>
      */
     public function scopeByGroup($query, string $group)
     {
@@ -75,8 +75,8 @@ class Settings extends Model
     /**
      * Scope para filtrar solo settings públicos
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopePublic($query)
     {
@@ -86,8 +86,8 @@ class Settings extends Model
     /**
      * Scope para filtrar solo settings encriptados
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeEncrypted($query)
     {
@@ -97,9 +97,9 @@ class Settings extends Model
     /**
      * Scope para buscar por key exacta
      *
-     * @param  Builder  $query
+     * @param  Builder<static>  $query
      * @param  string  $key  Key a buscar
-     * @return Builder
+     * @return Builder<static>
      */
     public function scopeByKey($query, string $key)
     {

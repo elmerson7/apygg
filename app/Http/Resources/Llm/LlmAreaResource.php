@@ -3,8 +3,12 @@
 namespace App\Http\Resources\Llm;
 
 use App\Http\Resources\BaseResource;
+use App\Models\Llm\LlmArea;
 use Illuminate\Http\Request;
 
+/**
+ * @mixin LlmArea
+ */
 class LlmAreaResource extends BaseResource
 {
     public function toArray(Request $request): array

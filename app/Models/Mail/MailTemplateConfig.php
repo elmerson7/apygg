@@ -3,6 +3,7 @@
 namespace App\Models\Mail;
 
 use App\Models\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
@@ -34,11 +35,18 @@ class MailTemplateConfig extends Model
         'is_active' => 'boolean',
     ];
 
+    /**
+     * @return BelongsTo<MailAccount, $this>
+     */
     public function mailAccount(): BelongsTo
     {
         return $this->belongsTo(MailAccount::class, 'mail_account_id');
     }
 
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

@@ -23,7 +23,7 @@ class ApiKey extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = [
         'user_id',
@@ -60,6 +60,8 @@ class ApiKey extends Model
      * Relación con User
      *
      * Una API Key pertenece a un usuario.
+     *
+     * @return BelongsTo<User, $this>
      */
     public function user(): BelongsTo
     {
@@ -69,8 +71,8 @@ class ApiKey extends Model
     /**
      * Scope para filtrar keys activas (no expiradas ni eliminadas)
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeActive($query)
     {
@@ -84,8 +86,8 @@ class ApiKey extends Model
     /**
      * Scope para filtrar keys expiradas
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeExpired($query)
     {
@@ -96,8 +98,8 @@ class ApiKey extends Model
     /**
      * Scope para filtrar por usuario
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeByUser($query, int|string $userId)
     {

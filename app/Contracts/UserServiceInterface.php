@@ -2,6 +2,7 @@
 
 namespace App\Contracts;
 
+use App\Models\Logs\ActivityLog;
 use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -15,8 +16,8 @@ interface UserServiceInterface
     /**
      * Crear un nuevo usuario
      *
-     * @param  array  $data  Datos del usuario
-     * @param  array|null  $roleIds  IDs de roles a asignar (opcional)
+     * @param  array<string, mixed>  $data  Datos del usuario
+     * @param  list<int|string>|null  $roleIds  IDs de roles a asignar (opcional)
      */
     public function create(array $data, ?array $roleIds = null): User;
 
@@ -24,8 +25,8 @@ interface UserServiceInterface
      * Actualizar un usuario existente
      *
      * @param  string  $userId  ID del usuario
-     * @param  array  $data  Datos a actualizar
-     * @param  array|null  $roleIds  Roles a sincronizar (null = no tocarlos)
+     * @param  array<string, mixed>  $data  Datos a actualizar
+     * @param  list<int|string>|null  $roleIds  Roles a sincronizar (null = no tocarlos)
      */
     public function update(string $userId, array $data, ?array $roleIds = null): User;
 
@@ -40,7 +41,7 @@ interface UserServiceInterface
      * Actualizar preferencias del usuario
      *
      * @param  string  $userId  ID del usuario
-     * @param  array  $preferences  Nuevas preferencias
+     * @param  array<string, mixed>  $preferences  Nuevas preferencias
      */
     public function updatePreferences(string $userId, array $preferences): User;
 
@@ -68,7 +69,8 @@ interface UserServiceInterface
     /**
      * Listar usuarios con paginación y filtros
      *
-     * @param  array  $filters  Filtros ['search', 'per_page', 'page', 'include', 'role', 'exclude_roles']
+     * @param  array<string, mixed>  $filters  Filtros ['search', 'per_page', 'page', 'include', 'role', 'exclude_roles']
+     * @return LengthAwarePaginator<int, User>
      */
     public function list(array $filters = []): LengthAwarePaginator;
 
@@ -76,7 +78,7 @@ interface UserServiceInterface
      * Asignar roles a un usuario
      *
      * @param  string  $userId  ID del usuario
-     * @param  array  $roleIds  IDs de roles a asignar
+     * @param  list<int|string>  $roleIds  IDs de roles a asignar
      */
     public function assignRoles(string $userId, array $roleIds): User;
 
@@ -92,7 +94,7 @@ interface UserServiceInterface
      * Asignar permisos directos a un usuario
      *
      * @param  string  $userId  ID del usuario
-     * @param  array  $permissionIds  IDs de permisos a asignar
+     * @param  list<int|string>  $permissionIds  IDs de permisos a asignar
      */
     public function assignPermissions(string $userId, array $permissionIds): User;
 
@@ -109,6 +111,7 @@ interface UserServiceInterface
      *
      * @param  string  $userId  ID del usuario
      * @param  int  $perPage  Elementos por página
+     * @return LengthAwarePaginator<int, ActivityLog>
      */
     public function getActivityLogs(string $userId, int $perPage = 20): LengthAwarePaginator;
 }

@@ -33,6 +33,7 @@ class AllowedResetUrl implements ValidationRule
     {
         $origins = config('auth.password_reset_urls') ?: config('app.allowed_origins', []);
 
+        /** @var array<array-key, mixed> $origins */
         return collect($origins)
             ->filter(fn ($origin) => is_string($origin) && $origin !== '' && ! str_contains($origin, '*'))
             ->map(fn (string $origin) => strtolower(rtrim(trim($origin), '/')))

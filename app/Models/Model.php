@@ -2,18 +2,25 @@
 
 namespace App\Models;
 
+use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 /**
  * Base Model
  *
  * Clase base para todos los modelos de la aplicación.
  * Proporciona ID auto-incrementable como primary key, soft deletes y scopes comunes.
+ *
+ * @property CarbonInterface|null $deleted_at
  */
 abstract class Model extends EloquentModel
 {
+    /** @use HasFactory<Factory<static>> */
     use HasFactory, SoftDeletes;
 
     /**
@@ -47,6 +54,9 @@ abstract class Model extends EloquentModel
 
     /**
      * Scope para filtrar registros activos (no eliminados)
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeActive($query)
     {
@@ -55,14 +65,20 @@ abstract class Model extends EloquentModel
 
     /**
      * Scope para filtrar registros inactivos (eliminados)
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeInactive($query)
     {
-        return $query->onlyTrashed();
+        return $query->withoutGlobalScope(SoftDeletingScope::class)->whereNotNull($this->getQualifiedDeletedAtColumn());
     }
 
     /**
      * Scope para ordenar por más recientes
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeRecent($query, string $column = 'created_at')
     {
@@ -71,6 +87,9 @@ abstract class Model extends EloquentModel
 
     /**
      * Scope para ordenar por más antiguos
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeOldest($query, string $column = 'created_at')
     {
@@ -79,6 +98,11 @@ abstract class Model extends EloquentModel
 
     /**
      * Scope para filtrar por rango de fechas
+     *
+     * @param  Builder<static>  $query
+     * @param  \DateTimeInterface|string|null  $startDate
+     * @param  \DateTimeInterface|string|null  $endDate
+     * @return Builder<static>
      */
     public function scopeDateRange($query, string $column, $startDate = null, $endDate = null)
     {
@@ -95,6 +119,10 @@ abstract class Model extends EloquentModel
 
     /**
      * Scope para buscar por término en múltiples columnas
+     *
+     * @param  list<string>  $columns
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeSearch($query, string $term, array $columns = [])
     {
@@ -111,6 +139,8 @@ abstract class Model extends EloquentModel
 
     /**
      * Obtener columnas buscables por defecto
+     *
+     * @return list<string>
      */
     protected function getSearchableColumns(): array
     {

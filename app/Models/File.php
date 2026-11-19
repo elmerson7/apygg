@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Traits\LogsActivity;
 use App\Traits\SoftDeletesWithUser;
+use Database\Factories\FileFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,6 +20,7 @@ use Illuminate\Support\Facades\Storage;
  */
 class File extends Model
 {
+    /** @use HasFactory<FileFactory> */
     use HasFactory, LogsActivity, SoftDeletes, SoftDeletesWithUser;
 
     /**
@@ -62,6 +65,8 @@ class File extends Model
 
     /**
      * Relación con User
+     *
+     * @return BelongsTo<User, $this>
      */
     public function user(): BelongsTo
     {
@@ -70,6 +75,9 @@ class File extends Model
 
     /**
      * Scope para filtrar por tipo
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeOfType($query, string $type)
     {
@@ -78,6 +86,9 @@ class File extends Model
 
     /**
      * Scope para filtrar por categoría
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeOfCategory($query, string $category)
     {
@@ -86,6 +97,9 @@ class File extends Model
 
     /**
      * Scope para archivos públicos
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopePublic($query)
     {
@@ -94,6 +108,9 @@ class File extends Model
 
     /**
      * Scope para archivos privados
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopePrivate($query)
     {
@@ -102,6 +119,9 @@ class File extends Model
 
     /**
      * Scope para archivos expirados
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeExpired($query)
     {
@@ -111,6 +131,9 @@ class File extends Model
 
     /**
      * Scope para archivos no expirados
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeNotExpired($query)
     {
@@ -122,6 +145,9 @@ class File extends Model
 
     /**
      * Scope para archivos del usuario autenticado
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeOwnedBy($query, string $userId)
     {

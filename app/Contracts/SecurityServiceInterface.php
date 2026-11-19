@@ -48,7 +48,7 @@ interface SecurityServiceInterface
      * Verificar si IP está en whitelist
      *
      * @param  string  $ip  IP a verificar
-     * @param  array|null  $whitelist  Lista de IPs permitidas (null = usar config)
+     * @param  list<string>|null  $whitelist  Lista de IPs permitidas (null = usar config)
      */
     public function isIpWhitelisted(string $ip, ?array $whitelist = null): bool;
 
@@ -57,8 +57,8 @@ interface SecurityServiceInterface
      *
      * @param  string  $ip  IP del usuario
      * @param  string  $action  Acción realizada
-     * @param  array  $context  Contexto adicional
-     * @return array ['is_suspicious' => bool, 'reasons' => array]
+     * @param  array<string, mixed>  $context  Contexto adicional
+     * @return array<string, mixed> ['is_suspicious' => bool, 'reasons' => array]
      */
     public function detectSuspiciousBehavior(string $ip, string $action, array $context = []): array;
 

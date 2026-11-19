@@ -4,6 +4,8 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Exists;
+use Illuminate\Validation\Rules\Unique;
 
 /**
  * Base Form Request
@@ -25,6 +27,8 @@ abstract class BaseFormRequest extends FormRequest
 
     /**
      * Get the validation rules that apply to the request.
+     *
+     * @return array<string, mixed>
      */
     abstract public function rules(): array;
 
@@ -38,6 +42,8 @@ abstract class BaseFormRequest extends FormRequest
 
     /**
      * Mensajes de error comunes en español
+     *
+     * @return array<string, mixed>
      */
     protected function getCommonMessages(): array
     {
@@ -62,6 +68,8 @@ abstract class BaseFormRequest extends FormRequest
 
     /**
      * Mensajes personalizados (sobrescribir en clases hijas)
+     *
+     * @return array<string, mixed>
      */
     protected function getCustomMessages(): array
     {
@@ -78,6 +86,8 @@ abstract class BaseFormRequest extends FormRequest
 
     /**
      * Atributos comunes en español
+     *
+     * @return array<string, mixed>
      */
     protected function getCommonAttributes(): array
     {
@@ -92,6 +102,8 @@ abstract class BaseFormRequest extends FormRequest
 
     /**
      * Atributos personalizados (sobrescribir en clases hijas)
+     *
+     * @return array<string, mixed>
      */
     protected function getCustomAttributes(): array
     {
@@ -100,6 +112,8 @@ abstract class BaseFormRequest extends FormRequest
 
     /**
      * Regla de validación para UUID
+     *
+     * @return list<string>
      */
     protected function uuidRule(bool $required = true): array
     {
@@ -116,6 +130,8 @@ abstract class BaseFormRequest extends FormRequest
 
     /**
      * Regla de validación para UUID que debe existir en una tabla
+     *
+     * @return list<Exists|string>
      */
     protected function uuidExistsRule(string $table, string $column = 'id', bool $required = true): array
     {
@@ -132,6 +148,9 @@ abstract class BaseFormRequest extends FormRequest
 
     /**
      * Regla de validación para email
+     *
+     * @param  int|string|null  $ignore  ID a ignorar en la regla de unicidad
+     * @return list<Unique|string>
      */
     protected function emailRule(bool $required = true, bool $unique = false, ?string $table = null, ?string $column = 'email', $ignore = null): array
     {
@@ -156,6 +175,8 @@ abstract class BaseFormRequest extends FormRequest
 
     /**
      * Regla de validación para fecha
+     *
+     * @return list<string>
      */
     protected function dateRule(bool $required = true, string $format = 'Y-m-d'): array
     {
@@ -176,6 +197,8 @@ abstract class BaseFormRequest extends FormRequest
 
     /**
      * Regla de validación para fecha ISO 8601
+     *
+     * @return list<string>
      */
     protected function dateIsoRule(bool $required = true): array
     {
@@ -184,6 +207,8 @@ abstract class BaseFormRequest extends FormRequest
 
     /**
      * Regla de validación para contraseña fuerte
+     *
+     * @return list<string>
      */
     protected function strongPasswordRule(bool $required = true): array
     {

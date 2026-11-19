@@ -3,8 +3,12 @@
 namespace App\Http\Resources\Llm;
 
 use App\Http\Resources\BaseResource;
+use App\Models\Logs\LlmAuditLog;
 use Illuminate\Http\Request;
 
+/**
+ * @mixin LlmAuditLog
+ */
 class LlmAuditLogResource extends BaseResource
 {
     public function toArray(Request $request): array

@@ -20,10 +20,10 @@ interface ApiKeyServiceInterface
      *
      * @param  User  $user  Usuario propietario de la key
      * @param  string  $name  Nombre descriptivo
-     * @param  array  $scopes  Scopes permitidos
+     * @param  list<string>  $scopes  Scopes permitidos
      * @param  DateTimeInterface|null  $expiresAt  Fecha de expiración
      * @param  string  $environment  Entorno (live o test)
-     * @return array Array con la key completa y el modelo ApiKey
+     * @return array<string, mixed> Array con la key completa y el modelo ApiKey
      */
     public function create(User $user, string $name, array $scopes = [], ?DateTimeInterface $expiresAt = null, string $environment = 'live'): array;
 
@@ -31,7 +31,7 @@ interface ApiKeyServiceInterface
      * Actualizar una API Key
      *
      * @param  string  $keyId  ID de la key
-     * @param  array  $data  Datos a actualizar
+     * @param  array<string, mixed>  $data  Datos a actualizar
      */
     public function update(string $keyId, array $data): ApiKey;
 
@@ -47,9 +47,9 @@ interface ApiKeyServiceInterface
      *
      * @param  string  $keyId  ID de la key a rotar
      * @param  string|null  $newName  Nombre para la nueva key (opcional)
-     * @param  array|null  $newScopes  Scopes para la nueva key (opcional)
+     * @param  list<string>|null  $newScopes  Scopes para la nueva key (opcional)
      * @param  string  $environment  Entorno (live o test)
-     * @return array Array con la nueva key completa y el modelo ApiKey
+     * @return array<string, mixed> Array con la nueva key completa y el modelo ApiKey
      */
     public function rotate(string $keyId, ?string $newName = null, ?array $newScopes = null, string $environment = 'live'): array;
 
@@ -78,6 +78,7 @@ interface ApiKeyServiceInterface
      *
      * @param  User  $user  Usuario propietario
      * @param  int  $perPage  Elementos por página
+     * @return LengthAwarePaginator<int, ApiKey>
      */
     public function list(User $user, int $perPage = 20): LengthAwarePaginator;
 

@@ -12,6 +12,9 @@ class StorePermissionRequest extends BaseFormRequest
         return $this->user()->can('create', Permission::class);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function rules(): array
     {
         return [
@@ -21,6 +24,9 @@ class StorePermissionRequest extends BaseFormRequest
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function getCustomMessages(): array
     {
         return [
@@ -30,6 +36,9 @@ class StorePermissionRequest extends BaseFormRequest
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function getCustomAttributes(): array
     {
         return [

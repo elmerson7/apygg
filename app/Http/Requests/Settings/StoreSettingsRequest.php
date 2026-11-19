@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Settings;
 
 use App\Http\Requests\BaseFormRequest;
+use Illuminate\Validation\Validator;
 
 /**
  * StoreSettingsRequest
@@ -21,6 +22,8 @@ class StoreSettingsRequest extends BaseFormRequest
 
     /**
      * Get the validation rules that apply to the request.
+     *
+     * @return array<string, mixed>
      */
     public function rules(): array
     {
@@ -37,6 +40,8 @@ class StoreSettingsRequest extends BaseFormRequest
 
     /**
      * Configure the validator instance.
+     *
+     * @param  Validator  $validator
      */
     public function withValidator($validator): void
     {
@@ -63,6 +68,8 @@ class StoreSettingsRequest extends BaseFormRequest
 
     /**
      * Get custom messages for validator errors.
+     *
+     * @return array<string, mixed>
      */
     protected function getCustomMessages(): array
     {
@@ -86,6 +93,8 @@ class StoreSettingsRequest extends BaseFormRequest
 
     /**
      * Get custom attributes for validator errors.
+     *
+     * @return array<string, mixed>
      */
     protected function getCustomAttributes(): array
     {

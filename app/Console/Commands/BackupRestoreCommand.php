@@ -147,6 +147,8 @@ class BackupRestoreCommand extends Command
 
     /**
      * Obtener información del backup
+     *
+     * @return array<string, mixed>
      */
     protected function getBackupInfo(string $backupPath): array
     {

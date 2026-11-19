@@ -3,8 +3,12 @@
 namespace App\Http\Resources\Mail;
 
 use App\Http\Resources\BaseResource;
+use App\Models\Mail\MailLog;
 use Illuminate\Http\Request;
 
+/**
+ * @mixin MailLog
+ */
 class MailLogResource extends BaseResource
 {
     public function toArray(Request $request): array

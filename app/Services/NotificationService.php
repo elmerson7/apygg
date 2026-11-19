@@ -78,7 +78,7 @@ class NotificationService implements NotificationServiceInterface
      *
      * @param  string  $title  Título
      * @param  string  $message  Mensaje
-     * @param  array  $data  Datos adicionales
+     * @param  array<string, mixed>  $data  Datos adicionales
      * @param  string|null  $type  Tipo de notificación
      */
     public function sendDatabase(
@@ -91,6 +91,9 @@ class NotificationService implements NotificationServiceInterface
         try {
             $notifiable->notify(new class($title, $message, $data, $type) extends Notification
             {
+                /**
+                 * @param  array<string, mixed>  $data
+                 */
                 public function __construct(
                     public string $title,
                     public string $message,
@@ -98,12 +101,18 @@ class NotificationService implements NotificationServiceInterface
                     public ?string $type
                 ) {}
 
-                public function via($notifiable): array
+                /**
+                 * @return list<string>
+                 */
+                public function via(mixed $notifiable): array
                 {
                     return ['database'];
                 }
 
-                public function toDatabase($notifiable): array
+                /**
+                 * @return array<string, mixed>
+                 */
+                public function toDatabase(mixed $notifiable): array
                 {
                     return [
                         'title' => $this->title,
@@ -167,10 +176,10 @@ class NotificationService implements NotificationServiceInterface
     /**
      * Enviar notificación push (requiere servicio externo)
      *
-     * @param  string|array  $tokens  Token(s) del dispositivo
+     * @param  string|list<string>  $tokens  Token(s) del dispositivo
      * @param  string  $title  Título
      * @param  string  $message  Mensaje
-     * @param  array  $data  Datos adicionales
+     * @param  array<string, mixed>  $data  Datos adicionales
      * @param  bool  $queue  Si debe enviarse en cola
      */
     public function sendPush(
@@ -209,13 +218,13 @@ class NotificationService implements NotificationServiceInterface
     /**
      * Enviar notificación multi-canal
      *
-     * @param  array  $channels  Canales a usar ['mail', 'database', 'sms', 'push']
+     * @param  list<string>  $channels  Canales a usar ['mail', 'database', 'sms', 'push']
      * @param  mixed  $notifiable  Usuario o email/phone
      * @param  string  $title  Título
      * @param  string  $message  Mensaje
-     * @param  array  $data  Datos adicionales
+     * @param  array<string, mixed>  $data  Datos adicionales
      * @param  bool  $queue  Si debe enviarse en cola
-     * @return array Resultados por canal
+     * @return array<string, mixed> Resultados por canal
      */
     public function sendMultiChannel(
         array $channels,
@@ -258,6 +267,8 @@ class NotificationService implements NotificationServiceInterface
 
     /**
      * Guardar historial de notificación
+     *
+     * @param  string|array<int|string, mixed>  $recipient
      */
     protected function logNotification(string $channel, $recipient, string $subject): void
     {
@@ -283,6 +294,7 @@ class NotificationService implements NotificationServiceInterface
      *
      * @param  string|null  $channel  Filtrar por canal
      * @param  int  $limit  Límite de resultados
+     * @return Collection<int, NotificationHistory>
      */
     public function getHistory(?string $channel = null, int $limit = 50): Collection
     {

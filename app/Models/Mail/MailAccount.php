@@ -3,6 +3,7 @@
 namespace App\Models\Mail;
 
 use App\Models\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -38,26 +39,43 @@ class MailAccount extends Model
         'priority' => 'integer',
     ];
 
+    /**
+     * @return BelongsTo<MailProvider, $this>
+     */
     public function mailProvider(): BelongsTo
     {
         return $this->belongsTo(MailProvider::class, 'mail_provider_id');
     }
 
+    /**
+     * @return HasMany<MailTemplateConfig, $this>
+     */
     public function templateConfigs(): HasMany
     {
         return $this->hasMany(MailTemplateConfig::class, 'mail_account_id');
     }
 
+    /**
+     * @return HasMany<MailLog, $this>
+     */
     public function logs(): HasMany
     {
         return $this->hasMany(MailLog::class, 'mail_account_id');
     }
 
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
     }
 
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
     public function scopeDefault($query)
     {
         return $query->where('is_default', true);

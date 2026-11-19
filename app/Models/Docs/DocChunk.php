@@ -27,6 +27,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $content
  * @property string|null $content_hash
  * @property array<string, mixed>|null $metadata
+ * @property-read int|null $chunks Agregado (`count`) en los listados por documento
+ * @property-read string|null $indexed_at Agregado (`max`) en los listados por documento
  */
 class DocChunk extends Model
 {
@@ -48,11 +50,19 @@ class DocChunk extends Model
         'position' => 'integer',
     ];
 
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
     public function scopeForScope(Builder $query, string $scope): Builder
     {
         return $query->where('scope', $scope);
     }
 
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
     public function scopeForDoc(Builder $query, string $docId): Builder
     {
         return $query->where('doc_id', $docId);

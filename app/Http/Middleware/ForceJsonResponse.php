@@ -17,6 +17,7 @@ class ForceJsonResponse
     /**
      * Rutas que NO deben forzar JSON
      */
+    /** @var list<string> */
     private array $excludedPaths = [
         '/telescope',
         '/horizon',

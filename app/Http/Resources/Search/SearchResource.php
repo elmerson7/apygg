@@ -30,6 +30,9 @@ class SearchResource extends JsonResource
 
     /**
      * Crear resource desde resultados de búsqueda
+     *
+     * @param  array<string, mixed>  $meta
+     * @param  array<string, mixed>  $results
      */
     public static function fromSearchResults(
         string $query,

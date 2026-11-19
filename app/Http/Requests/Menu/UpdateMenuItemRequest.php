@@ -7,6 +7,9 @@ use Illuminate\Validation\Rule;
 
 class UpdateMenuItemRequest extends BaseFormRequest
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function rules(): array
     {
         return [

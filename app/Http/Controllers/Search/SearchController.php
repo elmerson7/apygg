@@ -7,7 +7,9 @@ use App\Http\Requests\Search\SearchRequest;
 use App\Http\Resources\Search\SearchResource;
 use App\Http\Resources\Users\UserSearchResource;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Laravel\Scout\Searchable;
 
 /**
@@ -18,6 +20,7 @@ use Laravel\Scout\Searchable;
  */
 class SearchController extends Controller
 {
+    /** @var array<class-string<Model>, class-string<JsonResource>> */
     protected array $modelResources = [
         User::class => UserSearchResource::class,
     ];
@@ -53,6 +56,7 @@ class SearchController extends Controller
     }
 
     /**
+     * @param  array<string, mixed>  $filters
      * @return array<string, mixed>
      */
     protected function searchModel(

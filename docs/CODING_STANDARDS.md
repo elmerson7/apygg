@@ -377,6 +377,52 @@ Model::preventLazyLoading(app()->isLocal());
 Así una relación no cargada falla de forma visible en desarrollo en lugar de
 degradar el rendimiento en producción de forma silenciosa.
 
+## Análisis estático (PHPStan nivel 6)
+
+`make check` ejecuta Pint y PHPStan (Larastan) a **nivel 6** sobre `app/`,
+`database/factories` y `database/seeders`. Larastan deduce las columnas de los
+modelos leyendo las migraciones (no necesita BD), así que `$user->email` ya está
+tipado sin `@property`. Para el resto:
+
+- **Arrays**: nunca `array` a secas en una firma pública. Documenta el valor:
+  `@param array<string, mixed> $data`, `@return list<string>`, `@var list<string>`
+  en propiedades. `list<>` si las claves son 0..n, `array<string, …>` si son
+  nombres. Para formas fijas usa `array{priority: string, …}` o `@phpstan-type`.
+- **Relaciones y scopes**: genéricos siempre.
+  ```php
+  /** @return HasMany<Webhook, $this> */
+  public function webhooks(): HasMany { … }
+
+  /** @param Builder<static> $query  @return Builder<static> */
+  public function scopeActive($query) { … }
+  ```
+  Los scopes (`scopeX`) no llevan tipo nativo en `$query` (el `Model` base no lo
+  tiene y cambiar la firma es error fatal): el genérico va en el PHPDoc.
+- **Modelos**: `@property` solo para lo que las migraciones no dicen (accesores,
+  columnas agregadas en un `select`, `@property-read Collection<int, Role> $roles`
+  de relaciones de traits externos como Spatie). `use HasFactory` lleva su
+  `/** @use HasFactory<XFactory> */` (en modelos sin factory, `Factory<static>`).
+- **Resources**: `@mixin \App\Models\X` en la clase para tipar `$this->columna`.
+  `BaseResource` ya declara `id`, `created_at`, `updated_at`, `deleted_at`.
+- **Callbacks de cache/transacción**: `Closure(): mixed`, no `callable` (Laravel
+  los pasa a firmas con `Closure`).
+- **`@throws`**: importa la excepción (`use Illuminate\Database\Eloquent\ModelNotFoundException;`);
+  un `@throws` sin import apunta a una clase inexistente.
+
+### Política de ignores
+
+- **Sin `excludePaths` ni baseline.** Un archivo que PHPStan no analiza es un
+  archivo sin red; si algo no se puede tipar, se reescribe.
+- **Sin ignores genéricos** (`Access to an undefined property.*`, `Method .* should return`…).
+  Solo se admite un ignore si es un falso positivo demostrable de una librería
+  externa, con comentario del motivo, `message` anclado (`#^…$#`) y `paths` exactos.
+- `reportUnmatchedIgnoredErrors: true`: un ignore que deja de coincidir rompe
+  `make check`, así que no se acumulan ignores muertos.
+- Hoy solo hay uno: los traits `HasUuid` y `BelongsToTenant` (infraestructura
+  opcional que ningún módulo propio usa todavía; PHPStan los marca como "usados cero veces").
+- Subir de nivel: `vendor/bin/phpstan analyse --level=7` mide cuántos errores
+  habría antes de cambiar `phpstan.neon`.
+
 ## Errores comunes a evitar
 
 1. **No ejecutar `php artisan` en el host** → `make art cmd="..."` (todo corre en Docker).

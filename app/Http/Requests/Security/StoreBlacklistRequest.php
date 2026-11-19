@@ -3,9 +3,13 @@
 namespace App\Http\Requests\Security;
 
 use App\Http\Requests\BaseFormRequest;
+use Closure;
 
 class StoreBlacklistRequest extends BaseFormRequest
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function rules(): array
     {
         return [
@@ -17,6 +21,9 @@ class StoreBlacklistRequest extends BaseFormRequest
         ];
     }
 
+    /**
+     * @return list<Closure>
+     */
     public function after(): array
     {
         return [

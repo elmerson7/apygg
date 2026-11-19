@@ -26,7 +26,11 @@ class Permission extends SpatiePermission
     /** @use HasFactory<PermissionFactory> */
     use HasFactory, HasIlikeSearch, SoftDeletes;
 
-    /** Guard de la API (JWT): todos los roles y permisos viven en él. */
+    /**
+     * Guard de la API (JWT): todos los roles y permisos viven en él.
+     *
+     * @var string
+     */
     protected $guard_name = 'api';
 
     /** @var list<string> */

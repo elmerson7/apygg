@@ -61,6 +61,10 @@ class CorsMiddleware
 
     /**
      * Manejar preflight request (OPTIONS)
+     *
+     * @param  list<string>  $allowedHeaders
+     * @param  list<string>  $allowedMethods
+     * @param  list<string>  $allowedOrigins
      */
     private function handlePreflight(
         ?string $origin,
@@ -90,6 +94,10 @@ class CorsMiddleware
 
     /**
      * Agregar headers CORS a la respuesta
+     *
+     * @param  list<string>  $allowedHeaders
+     * @param  list<string>  $allowedOrigins
+     * @param  list<string>  $exposedHeaders
      */
     private function addCorsHeaders(
         Response $response,
@@ -117,6 +125,8 @@ class CorsMiddleware
 
     /**
      * Verificar si el origen está permitido
+     *
+     * @param  list<string>  $allowedOrigins
      */
     private function isOriginAllowed(?string $origin, array $allowedOrigins): bool
     {

@@ -5,7 +5,6 @@ namespace App\Models\Logs;
 use App\Models\User;
 use Database\Factories\ActivityLogFactory;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  */
 class ActivityLog extends Model
 {
+    /** @use HasFactory<ActivityLogFactory> */
     use HasFactory;
 
     /**
@@ -31,7 +31,7 @@ class ActivityLog extends Model
     /**
      * Create a new factory instance for the model.
      *
-     * @return Factory<static>
+     * @return ActivityLogFactory
      */
     protected static function newFactory()
     {
@@ -48,7 +48,7 @@ class ActivityLog extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = [
         'user_id',
@@ -89,6 +89,8 @@ class ActivityLog extends Model
 
     /**
      * Relación con User (opcional, puede ser null)
+     *
+     * @return BelongsTo<User, $this>
      */
     public function user(): BelongsTo
     {
@@ -97,6 +99,8 @@ class ActivityLog extends Model
 
     /**
      * Relación polimórfica con el modelo auditado
+     *
+     * @return MorphTo<Model, $this>
      */
     public function model(): MorphTo
     {
@@ -106,8 +110,8 @@ class ActivityLog extends Model
     /**
      * Scope para filtrar por usuario
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeByUserId($query, string $userId)
     {
@@ -117,8 +121,8 @@ class ActivityLog extends Model
     /**
      * Scope para filtrar por tipo de modelo
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeByModelType($query, string $modelType)
     {
@@ -128,8 +132,8 @@ class ActivityLog extends Model
     /**
      * Scope para filtrar por modelo específico
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeByModel($query, string $modelType, string $modelId)
     {
@@ -140,8 +144,8 @@ class ActivityLog extends Model
     /**
      * Scope para filtrar por acción
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeByAction($query, string $action)
     {
@@ -151,8 +155,8 @@ class ActivityLog extends Model
     /**
      * Scope para filtrar creaciones
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeCreated($query)
     {
@@ -162,8 +166,8 @@ class ActivityLog extends Model
     /**
      * Scope para filtrar actualizaciones
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeUpdated($query)
     {
@@ -173,8 +177,8 @@ class ActivityLog extends Model
     /**
      * Scope para filtrar eliminaciones
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeDeleted($query)
     {
@@ -184,8 +188,8 @@ class ActivityLog extends Model
     /**
      * Scope para filtrar restauraciones
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeRestored($query)
     {
@@ -195,8 +199,8 @@ class ActivityLog extends Model
     /**
      * Scope para filtrar por rango de fechas
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeDateRange($query, ?string $startDate = null, ?string $endDate = null)
     {
@@ -214,8 +218,8 @@ class ActivityLog extends Model
     /**
      * Scope para ordenar por más recientes
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeRecent($query)
     {
@@ -224,6 +228,8 @@ class ActivityLog extends Model
 
     /**
      * Obtener los campos que cambiaron
+     *
+     * @return array<string, mixed>
      */
     public function getChangedFields(): array
     {

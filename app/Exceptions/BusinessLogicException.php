@@ -20,7 +20,7 @@ class BusinessLogicException extends ApiException
      *
      * @param  string  $message  Mensaje de error
      * @param  string|null  $businessCode  Código de error de negocio (opcional)
-     * @param  array  $extensions  Campos adicionales
+     * @param  array<string, mixed>  $extensions  Campos adicionales
      * @param  \Throwable|null  $previous  Excepción anterior
      */
     public function __construct(

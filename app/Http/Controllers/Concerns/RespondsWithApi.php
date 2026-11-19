@@ -27,6 +27,8 @@ trait RespondsWithApi
 
     /**
      * Respuesta exitosa (200, 201…).
+     *
+     * @param  mixed  $data
      */
     protected function sendSuccess($data = null, string $message = 'Operación exitosa', int $statusCode = 200): JsonResponse
     {
@@ -70,6 +72,7 @@ trait RespondsWithApi
      *
      * @param  array<string, mixed>  $extraMeta  Metadatos adicionales para `meta`.
      * @param  class-string<JsonResource>|false|null  $resource  Resource de los ítems (por defecto, `$this->resource`; `false` devuelve los ítems tal cual).
+     * @param  LengthAwarePaginator<int, mixed>  $paginator
      */
     protected function sendPaginated(LengthAwarePaginator $paginator, array $extraMeta = [], string|false|null $resource = null): JsonResponse
     {

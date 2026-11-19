@@ -12,9 +12,11 @@ use App\Events\UserDeleted;
 use App\Events\UserRestored;
 use App\Events\UserUpdated;
 use App\Exceptions\BusinessLogicException;
+use App\Models\Logs\ActivityLog;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -228,6 +230,8 @@ class UserService implements UserServiceInterface
 
     /**
      * Sync roles for a user, firing appropriate events for added/removed roles.
+     *
+     * @param  list<int|string>  $roleIds
      */
     protected function syncUserRoles(User $user, array $roleIds): void
     {
@@ -344,7 +348,8 @@ class UserService implements UserServiceInterface
      * Listar usuarios con paginación y filtros.
      * Carga roles, state por defecto; permissions solo si se solicita en include.
      *
-     * @param  array  $filters  ['search', 'per_page', 'page', 'include', 'role', 'exclude_roles']
+     * @param  array<string, mixed>  $filters  ['search', 'per_page', 'page', 'include', 'role', 'exclude_roles']
+     * @return LengthAwarePaginator<int, User>
      */
     public function list(array $filters = []): LengthAwarePaginator
     {
@@ -447,6 +452,8 @@ class UserService implements UserServiceInterface
 
     /**
      * Sincronizar roles y emitir los eventos de alta/baja.
+     *
+     * @param  list<int|string>  $roleIds
      */
     private function syncRolesAndFire(User $user, string $userId, array $roleIds): User
     {
@@ -569,6 +576,8 @@ class UserService implements UserServiceInterface
 
     /**
      * Obtener historial de actividad de un usuario
+     *
+     * @return LengthAwarePaginator<int, ActivityLog>
      *
      * @throws ModelNotFoundException
      */

@@ -31,6 +31,9 @@ class MailEvent extends Model
         'occurred_at' => 'datetime',
     ];
 
+    /**
+     * @return BelongsTo<MailLog, $this>
+     */
     public function mailLog(): BelongsTo
     {
         return $this->belongsTo(MailLog::class, 'mail_log_id');

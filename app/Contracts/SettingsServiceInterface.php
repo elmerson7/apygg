@@ -18,7 +18,7 @@ interface SettingsServiceInterface
     /**
      * Crear un nuevo setting
      *
-     * @param  array  $data  Datos del setting
+     * @param  array<string, mixed>  $data  Datos del setting
      * @return Settings Setting creado
      *
      * @throws BusinessLogicException Si el tipo o valor no son válidos
@@ -29,7 +29,7 @@ interface SettingsServiceInterface
      * Actualizar un setting existente
      *
      * @param  string  $id  ID del setting
-     * @param  array  $data  Datos a actualizar
+     * @param  array<string, mixed>  $data  Datos a actualizar
      * @return Settings Setting actualizado
      *
      * @throws ModelNotFoundException Si el setting no existe
@@ -78,22 +78,22 @@ interface SettingsServiceInterface
      * Obtener todos los settings de un grupo
      *
      * @param  string  $group  Grupo a buscar
-     * @return Collection Colección de settings
+     * @return Collection<int, mixed> Colección de settings
      */
     public function getByGroup(string $group): Collection;
 
     /**
      * Obtener solo settings públicos
      *
-     * @return Collection Colección de settings públicos
+     * @return Collection<int, mixed> Colección de settings públicos
      */
     public function getPublic(): Collection;
 
     /**
      * Listar settings con filtros y paginación
      *
-     * @param  array  $filters  Filtros a aplicar
-     * @return LengthAwarePaginator Resultados paginados
+     * @param  array<string, mixed>  $filters  Filtros a aplicar
+     * @return LengthAwarePaginator<int, Settings> Resultados paginados
      */
     public function list(array $filters = []): LengthAwarePaginator;
 

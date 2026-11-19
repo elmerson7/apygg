@@ -14,7 +14,7 @@ interface BackupServiceInterface
      *
      * @param  bool  $compress  Comprimir el backup
      * @param  bool  $uploadToRemote  Subir a almacenamiento remoto
-     * @return array Información del backup creado
+     * @return array<string, mixed> Información del backup creado
      */
     public function createDatabaseBackup(bool $compress = true, bool $uploadToRemote = true): array;
 
@@ -34,7 +34,7 @@ interface BackupServiceInterface
      *
      * @param  string|null  $type  Tipo de backup ('database', 'files', null para todos)
      * @param  bool  $includeRemote  Incluir backups remotos
-     * @return array Lista de backups
+     * @return list<array<string, mixed>> Lista de backups
      */
     public function listBackups(?string $type = null, bool $includeRemote = false): array;
 
@@ -50,7 +50,7 @@ interface BackupServiceInterface
     /**
      * Limpiar backups antiguos según política de retención
      *
-     * @return array Estadísticas de limpieza
+     * @return array<string, mixed> Estadísticas de limpieza
      */
     public function cleanOldBackups(): array;
 }

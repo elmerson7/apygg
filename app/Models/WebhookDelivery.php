@@ -34,7 +34,7 @@ class WebhookDelivery extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = [
         'webhook_id',
@@ -68,6 +68,8 @@ class WebhookDelivery extends Model
      * Relación con Webhook
      *
      * Una entrega pertenece a un webhook.
+     *
+     * @return BelongsTo<Webhook, $this>
      */
     public function webhook(): BelongsTo
     {
@@ -77,8 +79,8 @@ class WebhookDelivery extends Model
     /**
      * Scope para filtrar entregas pendientes
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopePending($query)
     {
@@ -88,8 +90,8 @@ class WebhookDelivery extends Model
     /**
      * Scope para filtrar entregas exitosas
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeSuccessful($query)
     {
@@ -99,8 +101,8 @@ class WebhookDelivery extends Model
     /**
      * Scope para filtrar entregas fallidas
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeFailed($query)
     {
@@ -110,8 +112,8 @@ class WebhookDelivery extends Model
     /**
      * Scope para filtrar por webhook
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeByWebhook($query, string $webhookId)
     {
@@ -121,8 +123,8 @@ class WebhookDelivery extends Model
     /**
      * Scope para filtrar por tipo de evento
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeByEventType($query, string $eventType)
     {

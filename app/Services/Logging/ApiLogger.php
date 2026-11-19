@@ -155,6 +155,9 @@ class ApiLogger
 
     /**
      * Sanitizar query parameters (eliminar sensibles)
+     *
+     * @param  array<string, mixed>  $query
+     * @return array<string, mixed>
      */
     protected static function sanitizeQuery(array $query): array
     {
@@ -163,6 +166,9 @@ class ApiLogger
 
     /**
      * Sanitizar body (eliminar campos sensibles, también anidados)
+     *
+     * @param  array<string, mixed>  $body
+     * @return array<string, mixed>
      */
     protected static function sanitizeBody(?array $body): ?array
     {
@@ -171,6 +177,9 @@ class ApiLogger
 
     /**
      * Sanitizar headers (eliminar sensibles)
+     *
+     * @param  array<string, mixed>  $headers
+     * @return array<string, mixed>
      */
     protected static function sanitizeHeaders(array $headers): array
     {

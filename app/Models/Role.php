@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\HasIlikeSearch;
 use Database\Factories\RoleFactory;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Permission\Models\Role as SpatieRole;
@@ -20,13 +21,18 @@ use Spatie\Permission\Models\Role as SpatieRole;
  *
  * @property string|null $display_name
  * @property string|null $description
+ * @property-read Collection<int, Permission> $permissions
  */
 class Role extends SpatieRole
 {
     /** @use HasFactory<RoleFactory> */
     use HasFactory, HasIlikeSearch, SoftDeletes;
 
-    /** Guard de la API (JWT): todos los roles y permisos viven en él. */
+    /**
+     * Guard de la API (JWT): todos los roles y permisos viven en él.
+     *
+     * @var string
+     */
     protected $guard_name = 'api';
 
     /** @var list<string> */

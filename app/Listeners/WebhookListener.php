@@ -31,6 +31,8 @@ class WebhookListener implements ShouldQueue
 
     /**
      * Handle the event.
+     *
+     * @param  object  $event
      */
     public function handle($event): void
     {
@@ -84,6 +86,7 @@ class WebhookListener implements ShouldQueue
      * Preparar payload desde el evento
      *
      * @param  mixed  $event
+     * @return array<string, mixed>
      */
     protected function preparePayload($event, string $eventName): array
     {

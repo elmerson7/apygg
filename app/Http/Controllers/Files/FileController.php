@@ -13,6 +13,7 @@ use App\Services\LogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * FileController
@@ -235,7 +236,7 @@ class FileController extends Controller
      *
      * GET /files/{id}/download
      */
-    public function download(Request $request, string $id)
+    public function download(Request $request, string $id): JsonResponse|StreamedResponse
     {
         $file = File::findOrFail($id);
 
@@ -278,12 +279,12 @@ class FileController extends Controller
      *
      * GET /files/{id}/signed
      */
-    public function signedDownload(string $id)
+    public function signedDownload(string $id): JsonResponse|StreamedResponse
     {
         return $this->streamDownload(File::findOrFail($id));
     }
 
-    protected function streamDownload(File $file)
+    protected function streamDownload(File $file): JsonResponse|StreamedResponse
     {
         if (! Storage::disk($file->disk)->exists($file->path)) {
             return $this->sendError('El archivo no existe en el almacenamiento', 404);

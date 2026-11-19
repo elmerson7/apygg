@@ -33,6 +33,8 @@ class UpdateUserRequest extends BaseFormRequest
      * - roles: nunca por aquí; solo con POST /users/{id}/roles (users.manage-roles)
      * - contraseña propia: solo por /auth/change-password (pide la actual)
      * - email: solo con users.update (no hay flujo de verificación aquí)
+     *
+     * @return array<string, mixed>
      */
     public function rules(): array
     {
@@ -63,6 +65,8 @@ class UpdateUserRequest extends BaseFormRequest
 
     /**
      * Get custom messages for validator errors.
+     *
+     * @return array<string, mixed>
      */
     protected function getCustomMessages(): array
     {
@@ -87,6 +91,8 @@ class UpdateUserRequest extends BaseFormRequest
 
     /**
      * Get custom attributes for validator errors.
+     *
+     * @return array<string, mixed>
      */
     protected function getCustomAttributes(): array
     {

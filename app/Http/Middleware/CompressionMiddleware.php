@@ -18,6 +18,7 @@ class CompressionMiddleware
     /**
      * Tipos MIME que deben comprimirse
      */
+    /** @var list<string> */
     private array $compressibleTypes = [
         'application/json',
         'application/javascript',
@@ -39,6 +40,7 @@ class CompressionMiddleware
     /**
      * Rutas que NO deben comprimirse
      */
+    /** @var list<string> */
     private array $excludedPaths = [
         '/telescope',
         '/horizon',

@@ -64,7 +64,7 @@ class SecurityLogger
      *
      * @param  string  $description  Descripción de la actividad sospechosa
      * @param  User|null  $user  Usuario relacionado
-     * @param  array  $details  Detalles adicionales
+     * @param  array<string, mixed>  $details  Detalles adicionales
      * @param  Request|null  $request  Request actual
      */
     public static function logSuspiciousActivity(
@@ -223,7 +223,7 @@ class SecurityLogger
      *
      * @param  string  $eventType  Tipo de evento (debe ser uno de los EVENT_*)
      * @param  User|null  $user  Usuario relacionado
-     * @param  array  $details  Detalles del evento
+     * @param  array<string, mixed>  $details  Detalles del evento
      * @param  Request|null  $request  Request actual
      */
     public static function logEvent(

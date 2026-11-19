@@ -32,7 +32,7 @@ class EditSettings extends EditRecord
         $setting = Failure::guard(function () use ($record, $data): Settings {
             Gate::authorize('update', $record);
 
-            return app(SettingsServiceInterface::class)->update((string) $record->id, $data);
+            return app(SettingsServiceInterface::class)->update((string) $record->getKey(), $data);
         });
 
         if (! $setting instanceof Settings) {

@@ -21,7 +21,7 @@ interface FileServiceInterface
      * original del cliente nunca se usa como ruta (evita path traversal y colisiones).
      * Los archivos privados se guardan con visibilidad `private` y sin URL pública.
      *
-     * @return array ['path', 'url', 'filename', 'size', 'mime_type', 'extension', 'disk']
+     * @return array<string, mixed> ['path', 'url', 'filename', 'size', 'mime_type', 'extension', 'disk']
      *
      * @throws BusinessLogicException si el contenido, la extensión o el tamaño no son válidos
      */
@@ -48,6 +48,8 @@ interface FileServiceInterface
      * Actualiza el registro y, si cambia la visibilidad, mueve el archivo al disco público o
      * privado. Si algo falla, el archivo vuelve a su disco original (consistencia BD/disco).
      *
+     * @param  array<string, mixed>  $data
+     *
      * @throws \Throwable
      */
     public function updateWithVisibility(File $file, array $data, ?bool $makePublic): void;
@@ -73,7 +75,8 @@ interface FileServiceInterface
     /**
      * Subir imagen con procesamiento opcional (resize/formato)
      *
-     * @param  array  $options  width, height, quality, format
+     * @param  array<string, mixed>  $options  width, height, quality, format
+     * @return array<string, mixed>
      */
     public function uploadImage(UploadedFile $file,
         string $path = 'images',
@@ -109,6 +112,8 @@ interface FileServiceInterface
 
     /**
      * Obtener información del archivo
+     *
+     * @return array<string, mixed>
      */
     public function getInfo(string $path, ?string $disk = null): ?array;
 

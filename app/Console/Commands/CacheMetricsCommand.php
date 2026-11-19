@@ -6,6 +6,9 @@ use App\Services\CacheService;
 use App\Services\LogService;
 use Illuminate\Console\Command;
 
+/**
+ * @phpstan-type Recommendation array{priority: string, category: string, title: string, description: string, actions?: list<string>}
+ */
 class CacheMetricsCommand extends Command
 {
     /**
@@ -74,6 +77,8 @@ class CacheMetricsCommand extends Command
 
     /**
      * Mostrar métricas en formato legible
+     *
+     * @param  array<string, mixed>  $metrics
      */
     protected function displayMetrics(array $metrics): void
     {
@@ -96,6 +101,8 @@ class CacheMetricsCommand extends Command
 
     /**
      * Alertar cuando el hit rate está bajo
+     *
+     * @param  list<Recommendation>  $recommendations
      */
     protected function alertLowHitRate(float $hitRate, float $threshold, array $recommendations): void
     {
@@ -123,6 +130,9 @@ class CacheMetricsCommand extends Command
 
     /**
      * Generar recomendaciones de optimización
+     *
+     * @param  array<string, mixed>  $metrics
+     * @return list<Recommendation>
      */
     protected function generateRecommendations(array $metrics, float $hitRate): array
     {
@@ -212,6 +222,8 @@ class CacheMetricsCommand extends Command
 
     /**
      * Mostrar recomendaciones
+     *
+     * @param  list<Recommendation>  $recommendations
      */
     protected function displayRecommendations(array $recommendations): void
     {

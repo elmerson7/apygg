@@ -13,6 +13,8 @@ class UserUpdated
 
     /**
      * Create a new event instance.
+     *
+     * @param  array<string, mixed>  $oldAttributes
      */
     public function __construct(
         public User $user,

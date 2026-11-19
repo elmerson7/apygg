@@ -33,7 +33,7 @@ class ExternalServiceException extends ApiException
      * @param  int  $statusCode  Código HTTP (default: 502)
      * @param  string|null  $serviceErrorCode  Código de error del servicio
      * @param  string|null  $serviceUrl  URL del servicio
-     * @param  array  $extensions  Campos adicionales
+     * @param  array<string, mixed>  $extensions  Campos adicionales
      * @param  \Throwable|null  $previous  Excepción anterior
      */
     public function __construct(

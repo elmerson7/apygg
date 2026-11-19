@@ -12,6 +12,9 @@ class StoreRoleRequest extends BaseFormRequest
         return $this->user()->can('create', Role::class);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function rules(): array
     {
         return [
@@ -23,6 +26,9 @@ class StoreRoleRequest extends BaseFormRequest
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function getCustomMessages(): array
     {
         return [
@@ -33,6 +39,9 @@ class StoreRoleRequest extends BaseFormRequest
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function getCustomAttributes(): array
     {
         return [

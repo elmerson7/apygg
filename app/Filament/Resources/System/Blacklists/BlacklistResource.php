@@ -16,6 +16,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
 
 /**
@@ -40,6 +41,9 @@ class BlacklistResource extends Resource
 
     protected static ?string $navigationLabel = 'Lista negra';
 
+    /**
+     * @param  Model  $record
+     */
     public static function canEdit($record): bool
     {
         return false;

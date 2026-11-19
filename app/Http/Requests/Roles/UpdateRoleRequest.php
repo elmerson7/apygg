@@ -13,6 +13,9 @@ class UpdateRoleRequest extends BaseFormRequest
         return $this->user()->can('update', Role::findOrFail($this->route('id')));
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function rules(): array
     {
         $id = $this->route('id');
@@ -26,6 +29,9 @@ class UpdateRoleRequest extends BaseFormRequest
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function getCustomMessages(): array
     {
         return [
@@ -34,6 +40,9 @@ class UpdateRoleRequest extends BaseFormRequest
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function getCustomAttributes(): array
     {
         return [

@@ -36,7 +36,7 @@ class ActivityLogger
      *
      * @param  Model  $model  Modelo afectado
      * @param  string  $action  Acción realizada (created, updated, deleted, restored)
-     * @param  array|null  $oldValues  Valores anteriores (solo para updated)
+     * @param  array<string, mixed>|null  $oldValues  Valores anteriores (solo para updated)
      * @param  string|null  $userId  ID del usuario que realizó la acción (null = usuario autenticado)
      */
     public static function log(
@@ -88,7 +88,7 @@ class ActivityLogger
     /**
      * Registrar actualización de modelo
      *
-     * @param  array|null  $oldValues  Valores anteriores
+     * @param  array<string, mixed>|null  $oldValues  Valores anteriores
      */
     public static function logUpdated(Model $model, ?array $oldValues = null, ?string $userId = null): ?ActivityLog
     {
@@ -113,6 +113,9 @@ class ActivityLogger
 
     /**
      * Filtrar campos sensibles de los valores
+     *
+     * @param  array<string, mixed>  $values
+     * @return array<string, mixed>
      */
     protected static function filterSensitiveFields(array $values): array
     {

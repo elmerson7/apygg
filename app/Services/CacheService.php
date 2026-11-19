@@ -15,6 +15,8 @@ class CacheService
 {
     /**
      * Tags activos para la operación actual
+     *
+     * @var list<string>
      */
     protected array $tags = [];
 
@@ -102,9 +104,10 @@ class CacheService
     /**
      * Obtener valor o calcularlo y guardarlo
      *
+     * @param  \Closure(): mixed  $callback
      * @return mixed
      */
-    public static function remember(string $key, ?int $ttl, callable $callback)
+    public static function remember(string $key, ?int $ttl, \Closure $callback)
     {
         $fullKey = self::buildKey($key);
         $ttl = $ttl ?? self::DEFAULT_TTLS['default'];
@@ -139,6 +142,8 @@ class CacheService
 
     /**
      * Invalidar múltiples tags
+     *
+     * @param  list<string>  $tags
      */
     public static function forgetTags(array $tags): bool
     {
@@ -156,8 +161,10 @@ class CacheService
 
     /**
      * Cache de usuario con tag automático
+     *
+     * @param  \Closure(): mixed  $callback
      */
-    public static function rememberUser(int|string $userId, callable $callback, ?int $ttl = null): mixed
+    public static function rememberUser(int|string $userId, \Closure $callback, ?int $ttl = null): mixed
     {
         $ttl = $ttl ?? self::DEFAULT_TTLS['user'];
         $key = "user:{$userId}";
@@ -177,8 +184,9 @@ class CacheService
      * Cache de entidad (roles, permissions, etc.)
      *
      * @param  string  $entity  Nombre de la entidad (ej: 'roles', 'permissions')
+     * @param  \Closure(): mixed  $callback
      */
-    public static function rememberEntity(string $entity, callable $callback, ?int $ttl = null): mixed
+    public static function rememberEntity(string $entity, \Closure $callback, ?int $ttl = null): mixed
     {
         $ttl = $ttl ?? self::DEFAULT_TTLS['entity'];
         $key = "entity:{$entity}";
@@ -198,9 +206,10 @@ class CacheService
      * Cache de búsqueda
      *
      * @param  string  $query  Término de búsqueda
-     * @param  array  $filters  Filtros adicionales
+     * @param  array<string, mixed>  $filters  Filtros adicionales
+     * @param  \Closure(): mixed  $callback
      */
-    public static function rememberSearch(string $query, array $filters, callable $callback, ?int $ttl = null): mixed
+    public static function rememberSearch(string $query, array $filters, \Closure $callback, ?int $ttl = null): mixed
     {
         $ttl = $ttl ?? self::DEFAULT_TTLS['search'];
         $hash = md5($query.serialize($filters));
@@ -219,6 +228,8 @@ class CacheService
 
     /**
      * Obtener todas las métricas del caché
+     *
+     * @return array<string, mixed>
      */
     public static function getAllMetrics(): array
     {
@@ -274,6 +285,9 @@ class CacheService
 
     /**
      * Obtener múltiples keys a la vez
+     *
+     * @param  list<string>  $keys
+     * @return array<string, mixed>
      */
     public static function getMultiple(array $keys): array
     {
@@ -289,7 +303,7 @@ class CacheService
     /**
      * Guardar múltiples valores a la vez
      *
-     * @param  array  $values  Array asociativo [key => value]
+     * @param  array<string, mixed>  $values  Array asociativo [key => value]
      */
     public static function setMultiple(array $values, ?int $ttl = null): bool
     {
@@ -317,6 +331,8 @@ class CacheService
 
     /**
      * Obtener tags activos del contexto actual
+     *
+     * @return list<string>
      */
     protected static function getActiveTags(): array
     {

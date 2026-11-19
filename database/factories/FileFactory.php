@@ -14,7 +14,7 @@ class FileFactory extends Factory
     /**
      * The name of the factory's corresponding model.
      *
-     * @var string
+     * @var class-string<File>
      */
     protected $model = File::class;
 

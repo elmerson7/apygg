@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use App\Models\ApiKey;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 /**
@@ -21,8 +22,10 @@ trait HasApiTokens
 {
     /**
      * Relación con API Keys.
+     *
+     * @return HasMany<ApiKey, $this>
      */
-    public function apiKeys()
+    public function apiKeys(): HasMany
     {
         // Intentar encontrar la clase ApiKey
         $apiKeyClass = $this->getApiKeyClass();
@@ -32,26 +35,18 @@ trait HasApiTokens
 
     /**
      * Obtener la clase ApiKey a usar.
+     *
+     * @return class-string<ApiKey>
      */
     protected function getApiKeyClass(): string
     {
-        if (class_exists(ApiKey::class)) {
-            return ApiKey::class;
-        }
-
-        // Fallback a namespace alternativo si existe
-        if (class_exists(\App\Models\Logs\ApiKey::class)) {
-            return \App\Models\Logs\ApiKey::class;
-        }
-
-        // Si no existe, lanzar excepción informativa
-        throw new \RuntimeException(
-            'ApiKey model not found. Please create App\Models\ApiKey or configure the model class.'
-        );
+        return ApiKey::class;
     }
 
     /**
      * Obtener API Keys activas (no expiradas ni eliminadas).
+     *
+     * @return HasMany<ApiKey, $this>
      */
     public function activeApiKeys()
     {
@@ -67,7 +62,7 @@ trait HasApiTokens
      * Crear un nuevo API Key.
      *
      * @param  string  $name  Nombre descriptivo del token
-     * @param  array  $scopes  Scopes/permissions del token
+     * @param  list<string>  $scopes  Scopes/permissions del token
      * @param  \DateTimeInterface|null  $expiresAt  Fecha de expiración (null = sin expiración)
      */
     public function createApiKey(string $name, array $scopes = [], ?\DateTimeInterface $expiresAt = null): Model
@@ -169,6 +164,8 @@ trait HasApiTokens
 
     /**
      * Obtener estadísticas de API Keys.
+     *
+     * @return array<string, mixed>
      */
     public function getApiKeyStats(): array
     {

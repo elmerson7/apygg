@@ -3,6 +3,7 @@
 namespace App\Models\Llm;
 
 use App\Models\Model;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * LlmArea
@@ -49,6 +50,10 @@ class LlmArea extends Model
         'sort_order' => 'integer',
     ];
 
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

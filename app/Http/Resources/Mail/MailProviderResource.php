@@ -3,8 +3,12 @@
 namespace App\Http\Resources\Mail;
 
 use App\Http\Resources\BaseResource;
+use App\Models\Mail\MailProvider;
 use Illuminate\Http\Request;
 
+/**
+ * @mixin MailProvider
+ */
 class MailProviderResource extends BaseResource
 {
     public function toArray(Request $request): array

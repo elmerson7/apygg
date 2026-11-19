@@ -3,6 +3,7 @@
 namespace App\Models\Mail;
 
 use App\Models\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -35,6 +36,8 @@ class MailProvider extends Model
 
     /**
      * Cuentas de correo que usan este proveedor.
+     *
+     * @return HasMany<MailAccount, $this>
      */
     public function accounts(): HasMany
     {
@@ -43,6 +46,9 @@ class MailProvider extends Model
 
     /**
      * Proveedores activos, ordenados por prioridad.
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeActive($query)
     {

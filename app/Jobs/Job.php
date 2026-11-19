@@ -136,6 +136,8 @@ abstract class Job implements ShouldQueue
 
     /**
      * Notificar sobre fallo del job después de todos los reintentos
+     *
+     * @param  array<string, mixed>  $context
      */
     protected function notifyFailure(Throwable $exception, array $context): void
     {
@@ -179,6 +181,7 @@ abstract class Job implements ShouldQueue
      * Log helper con contexto enriquecido
      *
      * @param  string  $level  debug, info, warning, error, critical
+     * @param  array<string, mixed>  $context
      */
     protected function log(string $level, string $message, array $context = []): void
     {

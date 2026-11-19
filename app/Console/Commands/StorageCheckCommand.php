@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -104,7 +105,7 @@ class StorageCheckCommand extends Command
      * En el resto (público, disco local) solo avisa si la URL no responde: puede
      * apuntar a localhost y no verse desde el contenedor.
      */
-    private function checkUrl($disk, string $path, string $content, bool $private, bool $strict): void
+    private function checkUrl(Filesystem $disk, string $path, string $content, bool $private, bool $strict): void
     {
         try {
             $url = $private

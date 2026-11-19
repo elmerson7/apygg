@@ -32,6 +32,8 @@ class ApiResponse
 
     /**
      * Generar metadatos estándar para respuestas
+     *
+     * @return array<string, mixed>
      */
     private static function getMeta(?string $requestId = null): array
     {
@@ -51,6 +53,8 @@ class ApiResponse
 
     /**
      * Generar headers estándar para respuestas
+     *
+     * @return array<string, mixed>
      */
     private static function getHeaders(): array
     {
@@ -71,7 +75,7 @@ class ApiResponse
      * @param  mixed  $data  Datos a retornar
      * @param  string  $message  Mensaje de éxito
      * @param  int  $statusCode  Código HTTP (default: 200)
-     * @param  array|null  $links  Links relacionados (HATEOAS)
+     * @param  array<string, mixed>|null  $links  Links relacionados (HATEOAS)
      */
     public static function success(
         $data = null,
@@ -124,7 +128,7 @@ class ApiResponse
     /**
      * Respuesta paginada
      *
-     * @param  LengthAwarePaginator  $paginator  Instancia del paginador
+     * @param  LengthAwarePaginator<int, mixed>  $paginator  Instancia del paginador
      * @param  string  $message  Mensaje de éxito
      */
     public static function paginated(LengthAwarePaginator $paginator, string $message = 'Datos obtenidos exitosamente'): JsonResponse
@@ -158,7 +162,7 @@ class ApiResponse
      *
      * @param  string  $message  Mensaje de error
      * @param  int  $statusCode  Código HTTP (default: 400)
-     * @param  array  $errors  Errores adicionales (opcional)
+     * @param  array<string, mixed>  $errors  Errores adicionales (opcional)
      * @param  string|null  $type  Tipo de error (RFC 7807)
      */
     public static function error(
@@ -188,7 +192,7 @@ class ApiResponse
     /**
      * Respuesta de error de validación (422)
      *
-     * @param  array  $errors  Errores de validación
+     * @param  array<string, mixed>  $errors  Errores de validación
      * @param  string  $message  Mensaje de error
      */
     public static function validation(array $errors, string $message = 'Error de validación'): JsonResponse
@@ -276,7 +280,7 @@ class ApiResponse
      * @param  string|null  $detail  Detalle del error
      * @param  string|null  $type  Tipo de error (URI)
      * @param  string|null  $instance  Instancia específica del error
-     * @param  array  $extensions  Campos adicionales
+     * @param  array<string, mixed>  $extensions  Campos adicionales
      */
     public static function rfc7807(
         string $title,

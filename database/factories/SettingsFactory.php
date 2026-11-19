@@ -14,7 +14,7 @@ class SettingsFactory extends Factory
     /**
      * The name of the factory's corresponding model.
      *
-     * @var string
+     * @var class-string<Settings>
      */
     protected $model = Settings::class;
 

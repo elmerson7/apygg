@@ -113,7 +113,7 @@ class UserFactory extends Factory
     /**
      * Attach roles to the user after creation.
      *
-     * @param  array|Role|string  $roles
+     * @param  list<string|Role>|Role|string  $roles
      */
     public function withRoles($roles): static
     {
@@ -140,7 +140,7 @@ class UserFactory extends Factory
     /**
      * Attach permissions to the user after creation.
      *
-     * @param  array|Permission|string  $permissions
+     * @param  list<string|Permission>|Permission|string  $permissions
      */
     public function withPermissions($permissions): static
     {

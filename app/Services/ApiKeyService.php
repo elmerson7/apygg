@@ -44,10 +44,10 @@ class ApiKeyService implements ApiKeyServiceInterface
      *
      * @param  User  $user  Usuario propietario de la key
      * @param  string  $name  Nombre descriptivo
-     * @param  array  $scopes  Scopes permitidos
+     * @param  list<string>  $scopes  Scopes permitidos
      * @param  \DateTimeInterface|null  $expiresAt  Fecha de expiración
      * @param  string  $environment  Entorno (live o test)
-     * @return array Array con la key completa y el modelo ApiKey
+     * @return array<string, mixed> Array con la key completa y el modelo ApiKey
      *
      * @throws BusinessLogicException Si los scopes no son válidos
      */
@@ -98,7 +98,7 @@ class ApiKeyService implements ApiKeyServiceInterface
      * Actualizar una API Key
      *
      * @param  string  $keyId  ID de la key
-     * @param  array  $data  Datos a actualizar
+     * @param  array<string, mixed>  $data  Datos a actualizar
      *
      * @throws ModelNotFoundException Si la key no existe
      */
@@ -161,9 +161,9 @@ class ApiKeyService implements ApiKeyServiceInterface
      *
      * @param  string  $keyId  ID de la key a rotar
      * @param  string|null  $newName  Nombre para la nueva key (opcional)
-     * @param  array|null  $newScopes  Scopes para la nueva key (opcional)
+     * @param  list<string>|null  $newScopes  Scopes para la nueva key (opcional)
      * @param  string  $environment  Entorno (live o test)
-     * @return array Array con la nueva key completa y el modelo ApiKey
+     * @return array<string, mixed> Array con la nueva key completa y el modelo ApiKey
      *
      * @throws ModelNotFoundException Si la key no existe
      */
@@ -177,7 +177,7 @@ class ApiKeyService implements ApiKeyServiceInterface
 
         $user = $oldApiKey->user;
 
-        if (! $user || ! ($user instanceof User)) {
+        if (! $user) {
             throw BusinessLogicException::ruleViolation('El usuario asociado a la API Key no existe');
         }
 
@@ -340,6 +340,7 @@ class ApiKeyService implements ApiKeyServiceInterface
      *
      * @param  User  $user  Usuario propietario
      * @param  int  $perPage  Elementos por página
+     * @return LengthAwarePaginator<int, ApiKey>
      */
     public function list(User $user, int $perPage = 20): LengthAwarePaginator
     {
@@ -362,7 +363,7 @@ class ApiKeyService implements ApiKeyServiceInterface
     /**
      * Validar formato de scopes
      *
-     * @param  array  $scopes  Array de scopes
+     * @param  list<string>  $scopes  Array de scopes
      *
      * @throws BusinessLogicException Si algún scope no es válido
      */

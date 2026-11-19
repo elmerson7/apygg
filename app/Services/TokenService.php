@@ -30,7 +30,7 @@ class TokenService implements TokenServiceInterface
      * Generar access token para un usuario
      *
      * @param  User  $user  Usuario para el cual generar el token
-     * @param  array  $customClaims  Claims personalizados adicionales
+     * @param  array<string, mixed>  $customClaims  Claims personalizados adicionales
      * @return string Token JWT
      *
      * @throws JWTException
@@ -119,8 +119,8 @@ class TokenService implements TokenServiceInterface
      * Generar access token y refresh token para un usuario
      *
      * @param  User  $user  Usuario para el cual generar los tokens
-     * @param  array  $customClaims  Claims personalizados adicionales
-     * @return array ['access_token' => string, 'refresh_token' => string]
+     * @param  array<string, mixed>  $customClaims  Claims personalizados adicionales
+     * @return array<string, mixed> ['access_token' => string, 'refresh_token' => string]
      *
      * @throws JWTException
      */
@@ -154,14 +154,14 @@ class TokenService implements TokenServiceInterface
             ], 'auth');
 
             return false;
-        } catch (TokenInvalidException $e) {
-            LogService::warning('Token inválido', [
+        } catch (TokenBlacklistedException $e) {
+            LogService::warning('Token en blacklist', [
                 'error' => $e->getMessage(),
             ], 'auth');
 
             return false;
-        } catch (TokenBlacklistedException $e) {
-            LogService::warning('Token en blacklist', [
+        } catch (TokenInvalidException $e) {
+            LogService::warning('Token inválido', [
                 'error' => $e->getMessage(),
             ], 'auth');
 
@@ -200,7 +200,7 @@ class TokenService implements TokenServiceInterface
      * Obtener claims del token
      *
      * @param  string|null  $token  Token a usar (null = usar token del request)
-     * @return array Claims del token
+     * @return array<string, mixed> Claims del token
      *
      * @throws JWTException
      */
@@ -330,7 +330,7 @@ class TokenService implements TokenServiceInterface
      * Renovar access token usando refresh token (con rotación)
      *
      * @param  string|null  $refreshToken  Refresh token a usar (null = usar token del request)
-     * @return array ['access_token' => string, 'refresh_token' => string, 'user' => User]
+     * @return array<string, mixed> ['access_token' => string, 'refresh_token' => string, 'user' => User]
      *
      * @throws JWTException
      */

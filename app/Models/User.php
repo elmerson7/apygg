@@ -17,10 +17,12 @@ use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthenticationRecovery;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
@@ -36,13 +38,15 @@ use Spatie\Permission\Traits\HasRoles;
  * @property string $password
  * @property string|null $timezone
  * @property string|null $identity_document
- * @property array|null $preferences
+ * @property array<string, mixed>|null $preferences
  * @property int $token_version
  * @property string|null $deleted_by
- * @property Carbon $email_verified_at
+ * @property Carbon|null $email_verified_at
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property Carbon|null $deleted_at
+ * @property-read Collection<int, Role> $roles
+ * @property-read Collection<int, Permission> $permissions
  */
 class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery, JWTSubject
 {
@@ -127,7 +131,7 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     /**
      * Return a key value array, containing any custom claims to be added to the JWT.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function getJWTCustomClaims()
     {
@@ -188,6 +192,8 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     /**
      * Relación con API Keys
      * Alias para apiKeys() del trait HasApiTokens
+     *
+     * @return HasMany<ApiKey, $this>
      */
     public function apiTokens(): HasMany
     {
@@ -197,12 +203,17 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     /**
      * Relación con ActivityLogs
      * Obtiene todos los logs de actividad relacionados con este usuario
+     *
+     * @return HasMany<ActivityLog, $this>
      */
     public function activityLogs(): HasMany
     {
         return $this->hasMany(ActivityLog::class, 'user_id');
     }
 
+    /**
+     * @return HasOne<UserProfile, $this>
+     */
     public function profile(): HasOne
     {
         return $this->hasOne(UserProfile::class, 'user_id');
@@ -211,8 +222,8 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     /**
      * Scope para filtrar usuarios activos (no eliminados)
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeActive($query)
     {
@@ -222,19 +233,19 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     /**
      * Scope para filtrar usuarios inactivos (eliminados)
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeInactive($query)
     {
-        return $query->onlyTrashed();
+        return $query->withoutGlobalScope(SoftDeletingScope::class)->whereNotNull($this->getQualifiedDeletedAtColumn());
     }
 
     /**
      * Scope para filtrar por email
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeByEmail($query, string $email)
     {

@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -11,6 +12,11 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *
  * Clase base para todos los Resources de la aplicación.
  * Proporciona formato estándar de respuestas y manejo de relaciones.
+ *
+ * @property int $id
+ * @property CarbonInterface|null $created_at
+ * @property CarbonInterface|null $updated_at
+ * @property CarbonInterface|null $deleted_at
  */
 abstract class BaseResource extends JsonResource
 {
@@ -28,21 +34,25 @@ abstract class BaseResource extends JsonResource
 
     /**
      * Campos que siempre se incluyen
+     *
+     * @return array<string, mixed>
      */
     protected function getBaseFields(): array
     {
         return [
             'id' => $this->id,
-            'created_at' => $this->when($this->created_at, $this->created_at?->toIso8601String()),
-            'updated_at' => $this->when($this->updated_at, $this->updated_at?->toIso8601String()),
+            'created_at' => $this->when($this->created_at !== null, $this->created_at?->toIso8601String()),
+            'updated_at' => $this->when($this->updated_at !== null, $this->updated_at?->toIso8601String()),
         ];
     }
 
     /**
      * Helper para incluir campo solo si la relación está cargada
      * Usa el método whenLoaded() del padre de JsonResource
+     *
+     * @param  mixed  $value
      */
-    protected function includeWhenLoaded(string $relation, $value = null)
+    protected function includeWhenLoaded(string $relation, $value = null): mixed
     {
         if ($value === null) {
             $value = $this->whenLoaded($relation);
@@ -53,8 +63,10 @@ abstract class BaseResource extends JsonResource
 
     /**
      * Incluir campo solo si existe
+     *
+     * @param  mixed  $value
      */
-    protected function whenExists(string $attribute, $value = null)
+    protected function whenExists(string $attribute, $value = null): mixed
     {
         if ($value === null) {
             $value = $this->{$attribute} ?? null;
@@ -73,6 +85,8 @@ abstract class BaseResource extends JsonResource
 
     /**
      * Formatear fecha a ISO 8601
+     *
+     * @param  CarbonInterface|string|null  $date
      */
     protected function formatDate($date): ?string
     {
@@ -101,6 +115,8 @@ abstract class BaseResource extends JsonResource
 
     /**
      * Obtener metadatos adicionales
+     *
+     * @return array<string, mixed>
      */
     protected function getMeta(): array
     {
@@ -118,6 +134,8 @@ abstract class BaseResource extends JsonResource
 
     /**
      * Incluir timestamps si están disponibles
+     *
+     * @return array<string, mixed>
      */
     protected function includeTimestamps(): array
     {
@@ -129,6 +147,8 @@ abstract class BaseResource extends JsonResource
 
     /**
      * Incluir soft delete timestamp si está disponible
+     *
+     * @return array<string, mixed>
      */
     protected function includeDeletedAt(): array
     {

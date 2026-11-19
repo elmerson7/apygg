@@ -17,6 +17,9 @@ class SyncRolePermissionsRequest extends BaseFormRequest
         return $this->user()->can('assignPermission', Role::findOrFail($this->route('id')));
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function rules(): array
     {
         return [

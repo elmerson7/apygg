@@ -29,7 +29,7 @@ class FileService implements FileServiceInterface
      * original del cliente nunca se usa como ruta (evita path traversal y colisiones).
      * Los archivos privados se guardan con visibilidad `private` y sin URL pública.
      *
-     * @return array ['path', 'url', 'filename', 'size', 'mime_type', 'extension', 'disk']
+     * @return array<string, mixed> ['path', 'url', 'filename', 'size', 'mime_type', 'extension', 'disk']
      *
      * @throws BusinessLogicException si el contenido, la extensión o el tamaño no son válidos
      */
@@ -207,7 +207,7 @@ class FileService implements FileServiceInterface
     /**
      * Subir imagen con procesamiento opcional (resize/formato)
      *
-     * @param  array  $options  width, height, quality, format
+     * @param  array<string, mixed>  $options  width, height, quality, format
      */
     public function uploadImage(
         UploadedFile $file,

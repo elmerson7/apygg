@@ -12,7 +12,7 @@ class RedisTestCommand extends Command
 
     protected $description = 'Test Redis connectivity and configuration';
 
-    public function handle()
+    public function handle(): int
     {
         $this->info('Testing Redis connectivity...');
         $this->newLine();

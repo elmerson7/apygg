@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
@@ -68,16 +69,26 @@ class SecurityScan extends Model
      */
     protected $hidden = ['salt'];
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function stoppedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'stopped_by');
     }
 
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
     public function scopeActive($query)
     {
         return $query->whereIn('status', self::ACTIVE_STATUSES);

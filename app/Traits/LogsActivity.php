@@ -37,6 +37,9 @@ trait LogsActivity
 
     /**
      * Registrar actividad en el log usando ActivityLogger.
+     *
+     * @param  array<string, mixed>  $oldValues
+     * @param  array<string, mixed>  $oldValues
      */
     protected function logActivity(string $action, ?array $oldValues = null): void
     {
@@ -55,6 +58,10 @@ trait LogsActivity
 
     /**
      * Filtrar campos sensibles antes de guardar en el log.
+     *
+     * @param  array<string, mixed>  $data
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed> mixed>
      */
     protected function filterSensitiveFields(array $data): array
     {
@@ -72,6 +79,8 @@ trait LogsActivity
     /**
      * Obtener lista de campos sensibles a filtrar.
      * Sobrescribir en el modelo para personalizar.
+     *
+     * @return list<string> mixed>
      */
     protected function getSensitiveFields(): array
     {
@@ -89,6 +98,8 @@ trait LogsActivity
 
     /**
      * Obtener cambios formateados para el log.
+     *
+     * @return array<string, mixed> mixed>
      */
     public function getFormattedChanges(): array
     {

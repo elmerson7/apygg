@@ -7,6 +7,9 @@ use App\Models\Mail\MailSetting;
 
 class UpdateMailSettingsRequest extends BaseFormRequest
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function rules(): array
     {
         return [

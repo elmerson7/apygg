@@ -2,6 +2,7 @@
 
 namespace App\Contracts;
 
+use App\Models\NotificationHistory;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -35,7 +36,7 @@ interface NotificationServiceInterface
      *
      * @param  string  $title  Título
      * @param  string  $message  Mensaje
-     * @param  array  $data  Datos adicionales
+     * @param  array<string, mixed>  $data  Datos adicionales
      * @param  string|null  $type  Tipo de notificación
      */
     public function sendDatabase(Authenticatable $notifiable,
@@ -56,10 +57,10 @@ interface NotificationServiceInterface
     /**
      * Enviar notificación push (requiere servicio externo)
      *
-     * @param  string|array  $tokens  Token(s) del dispositivo
+     * @param  string|list<string>  $tokens  Token(s) del dispositivo
      * @param  string  $title  Título
      * @param  string  $message  Mensaje
-     * @param  array  $data  Datos adicionales
+     * @param  array<string, mixed>  $data  Datos adicionales
      * @param  bool  $queue  Si debe enviarse en cola
      */
     public function sendPush(string|array $tokens,
@@ -71,13 +72,13 @@ interface NotificationServiceInterface
     /**
      * Enviar notificación multi-canal
      *
-     * @param  array  $channels  Canales a usar ['mail', 'database', 'sms', 'push']
+     * @param  list<string>  $channels  Canales a usar ['mail', 'database', 'sms', 'push']
      * @param  mixed  $notifiable  Usuario o email/phone
      * @param  string  $title  Título
      * @param  string  $message  Mensaje
-     * @param  array  $data  Datos adicionales
+     * @param  array<string, mixed>  $data  Datos adicionales
      * @param  bool  $queue  Si debe enviarse en cola
-     * @return array Resultados por canal
+     * @return array<string, mixed> Resultados por canal
      */
     public function sendMultiChannel(array $channels,
         $notifiable,
@@ -91,6 +92,7 @@ interface NotificationServiceInterface
      *
      * @param  string|null  $channel  Filtrar por canal
      * @param  int  $limit  Límite de resultados
+     * @return Collection<int, NotificationHistory>
      */
     public function getHistory(?string $channel = null, int $limit = 50): Collection;
 }

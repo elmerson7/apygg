@@ -3,8 +3,12 @@
 namespace App\Http\Resources\Mail;
 
 use App\Http\Resources\BaseResource;
+use App\Models\Mail\MailTemplateConfig;
 use Illuminate\Http\Request;
 
+/**
+ * @mixin MailTemplateConfig
+ */
 class MailTemplateConfigResource extends BaseResource
 {
     public function toArray(Request $request): array

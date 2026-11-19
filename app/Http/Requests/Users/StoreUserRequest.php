@@ -24,6 +24,8 @@ class StoreUserRequest extends BaseFormRequest
 
     /**
      * Get the validation rules that apply to the request.
+     *
+     * @return array<string, mixed>
      */
     public function rules(): array
     {
@@ -45,6 +47,8 @@ class StoreUserRequest extends BaseFormRequest
 
     /**
      * Get custom messages for validator errors.
+     *
+     * @return array<string, mixed>
      */
     protected function getCustomMessages(): array
     {
@@ -82,6 +86,8 @@ class StoreUserRequest extends BaseFormRequest
 
     /**
      * Get custom attributes for validator errors.
+     *
+     * @return array<string, mixed>
      */
     protected function getCustomAttributes(): array
     {

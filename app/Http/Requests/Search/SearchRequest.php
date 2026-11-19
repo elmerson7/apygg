@@ -4,6 +4,7 @@ namespace App\Http\Requests\Search;
 
 use App\Http\Requests\BaseFormRequest;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\Rule;
 
 /**
@@ -16,6 +17,8 @@ class SearchRequest extends BaseFormRequest
 {
     /**
      * Modelos disponibles para búsqueda
+     *
+     * @var array<string, class-string<Model>>
      */
     protected array $availableModels = [
         'users' => User::class,
@@ -24,6 +27,8 @@ class SearchRequest extends BaseFormRequest
     /**
      * Permiso requerido para buscar en cada modelo. Un modelo sin entrada aquí
      * no se puede buscar: añadirlo exige decidir antes quién lo ve.
+     *
+     * @var array<string, string>
      */
     protected array $requiredPermissions = [
         'users' => 'users.read',
@@ -33,6 +38,8 @@ class SearchRequest extends BaseFormRequest
      * Filtros permitidos por modelo (lista blanca). Nunca campos personales
      * (identity_document, email) ni de privilegios (is_admin, roles, role_ids):
      * servirían de oráculo para averiguar datos de otras personas.
+     *
+     * @var array<string, list<string>>
      */
     protected array $allowedFilters = [
         'users' => ['email_verified_at', 'timezone', 'created_at'],
@@ -62,6 +69,8 @@ class SearchRequest extends BaseFormRequest
 
     /**
      * Get the validation rules that apply to the request.
+     *
+     * @return array<string, mixed>
      */
     public function rules(): array
     {
@@ -97,6 +106,8 @@ class SearchRequest extends BaseFormRequest
 
     /**
      * Get custom messages for validator errors.
+     *
+     * @return array<string, mixed>
      */
     protected function getCustomMessages(): array
     {
@@ -120,6 +131,8 @@ class SearchRequest extends BaseFormRequest
 
     /**
      * Get custom attributes for validator errors.
+     *
+     * @return array<string, mixed>
      */
     protected function getCustomAttributes(): array
     {
@@ -135,6 +148,8 @@ class SearchRequest extends BaseFormRequest
 
     /**
      * Obtener modelos disponibles
+     *
+     * @return array<string, mixed>
      */
     public function getAvailableModels(): array
     {
@@ -143,6 +158,8 @@ class SearchRequest extends BaseFormRequest
 
     /**
      * Obtener modelos a buscar (o todos si no se especifican)
+     *
+     * @return array<string, mixed>
      */
     public function getModelsToSearch(): array
     {

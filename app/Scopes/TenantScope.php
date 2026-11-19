@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Scope;
  *
  * Aplica filtro automático por tenant_id en todas las queries
  * del modelo que usa el trait BelongsToTenant.
+ *
+ * @implements Scope<Model>
  */
 class TenantScope implements Scope
 {

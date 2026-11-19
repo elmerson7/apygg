@@ -36,7 +36,7 @@ class RoleService implements RoleServiceInterface
     /**
      * Crear un nuevo rol
      *
-     * @param  array  $data  Datos del rol ['name', 'display_name', 'description']
+     * @param  array<string, mixed>  $data  Datos del rol ['name', 'display_name', 'description']
      *
      * @throws QueryException Si el nombre ya existe
      */
@@ -47,6 +47,7 @@ class RoleService implements RoleServiceInterface
             throw BusinessLogicException::ruleViolation("El rol '{$data['name']}' ya existe");
         }
 
+        /** @var Role $role */
         $role = Role::create([
             'name' => $data['name'],
             'display_name' => $data['display_name'] ?? $data['name'],
@@ -69,7 +70,7 @@ class RoleService implements RoleServiceInterface
      * Actualizar un rol existente
      *
      * @param  int|string  $roleId  ID del rol
-     * @param  array  $data  Datos a actualizar
+     * @param  array<string, mixed>  $data  Datos a actualizar
      *
      * @throws ModelNotFoundException Si el rol no existe
      */
@@ -173,7 +174,8 @@ class RoleService implements RoleServiceInterface
     /**
      * Listar todos los roles con paginación
      *
-     * @param  array  $filters  Filtros ['search', 'per_page']
+     * @param  array<string, mixed>  $filters  Filtros ['search', 'per_page']
+     * @return LengthAwarePaginator<int, Role>
      */
     public function list(array $filters = []): LengthAwarePaginator
     {
@@ -276,7 +278,7 @@ class RoleService implements RoleServiceInterface
      * Sincronizar permisos de un rol (reemplaza todos los permisos)
      *
      * @param  string  $roleId  ID del rol
-     * @param  array  $permissionIds  Array de IDs o nombres de permisos
+     * @param  list<int|string>  $permissionIds  Array de IDs o nombres de permisos
      *
      * @throws ModelNotFoundException Si el rol no existe
      */
@@ -335,6 +337,7 @@ class RoleService implements RoleServiceInterface
      * Obtener permisos de un rol
      *
      * @param  string  $roleId  ID del rol
+     * @return Collection<int, Permission>
      *
      * @throws ModelNotFoundException Si el rol no existe
      */

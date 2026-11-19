@@ -18,6 +18,8 @@ class ApiException extends Exception
 
     /**
      * Errores adicionales (para validación)
+     *
+     * @var array<string, mixed>
      */
     protected array $errors;
 
@@ -33,6 +35,8 @@ class ApiException extends Exception
 
     /**
      * Campos adicionales (RFC 7807)
+     *
+     * @var array<string, mixed>
      */
     protected array $extensions;
 
@@ -41,10 +45,10 @@ class ApiException extends Exception
      *
      * @param  string  $message  Mensaje de error
      * @param  int  $statusCode  Código HTTP (default: 400)
-     * @param  array  $errors  Errores adicionales (opcional)
+     * @param  array<string, mixed>  $errors  Errores adicionales (opcional)
      * @param  string|null  $type  Tipo de error (RFC 7807)
      * @param  string|null  $instance  Instancia específica del error
-     * @param  array  $extensions  Campos adicionales
+     * @param  array<string, mixed>  $extensions  Campos adicionales
      * @param  \Throwable|null  $previous  Excepción anterior
      */
     public function __construct(
@@ -75,6 +79,8 @@ class ApiException extends Exception
 
     /**
      * Obtener errores adicionales
+     *
+     * @return array<string, mixed>
      */
     public function getErrors(): array
     {
@@ -99,6 +105,8 @@ class ApiException extends Exception
 
     /**
      * Obtener extensiones
+     *
+     * @return array<string, mixed>
      */
     public function getExtensions(): array
     {
@@ -107,6 +115,8 @@ class ApiException extends Exception
 
     /**
      * Crear excepción 400 Bad Request
+     *
+     * @param  array<string, mixed>  $errors
      */
     public static function badRequest(string $message = 'Solicitud inválida', array $errors = []): self
     {
@@ -139,6 +149,8 @@ class ApiException extends Exception
 
     /**
      * Crear excepción 409 Conflict
+     *
+     * @param  array<string, mixed>  $extensions
      */
     public static function conflict(string $message = 'Conflicto con el estado actual', array $extensions = []): self
     {
@@ -147,6 +159,8 @@ class ApiException extends Exception
 
     /**
      * Crear excepción 422 Unprocessable Entity (Validación)
+     *
+     * @param  array<string, mixed>  $errors
      */
     public static function validation(string $message = 'Error de validación', array $errors = []): self
     {

@@ -37,11 +37,17 @@ class Blacklist extends Model
         'added_by',
     ];
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function addedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'added_by');

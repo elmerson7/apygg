@@ -44,7 +44,7 @@ class ViewUser extends ViewRecord
                 Select::make('role_ids')->label('Roles')->multiple()->required()->minItems(1)->maxItems(10)
                     // Los asignables más los que ya tiene (para mostrarlos); lo demás ni se ofrece.
                     ->options(fn (User $record): array => UserForm::assignableRoles()
-                        + $record->roles->mapWithKeys(fn ($role): array => [$role->id => $role->display_name ?: $role->name])->all()),
+                        + $record->roles->mapWithKeys(fn (Role $role): array => [$role->id => $role->display_name ?: $role->name])->all()),
             ])
             ->action(function (array $data, User $record): void {
                 $done = Failure::guard(function () use ($data, $record): bool {

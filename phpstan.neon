@@ -2,56 +2,23 @@ includes:
     - vendor/larastan/larastan/extension.neon
 
 parameters:
-    reportUnmatchedIgnoredErrors: false
+    # Un ignore que ya no coincide con nada es un error: no se acumulan ignores muertos.
+    reportUnmatchedIgnoredErrors: true
     paths:
         - app
         - database/factories
         - database/seeders
 
-    # Rule level (0 is the loosest and 9 is the strictest)
-    level: 5
+    # Rule level (0 es el más laxo, 9 el más estricto). Ver docs/CODING_STANDARDS.md.
+    level: 6
 
+    # Política: sin excludePaths, sin baseline y sin ignores genéricos. Un ignore solo
+    # se admite si es un falso positivo demostrable, con ruta y mensaje exactos.
     ignoreErrors:
-        # Errores de QRCode (librería externa)
-        - '#Access to undefined constant chillerlan\\QRCode\\QRCode::ECC_H#'
-        - '#Access to undefined constant chillerlan\\QRCode\\QRCode::OUTPUT#'
-        # Errores menores
-        - '#Call to function is_string.*always evaluate to#'
-        - '#Left side of && is always true#'
-        # Errores de type en servicios
-        # Errores de @throws con ModelNotFoundException en PHPDoc
-        - '#@throws with type.*ModelNotFoundException.*not subtype of Throwable#'
-        # Errores de propiedades de factories de Laravel
-        - '#PHPDoc type string of property.*model is not covariant#'
-        # Errores de Faker en factories (propiedades dinámicas)
-        - '#Access to an undefined property Faker\\Generator\\.*#'
-        # Errores de constantes de clase no encontradas (falso positivo de Laravel)
-        # Errores de PHPDoc en factories
-        - '#PHPDoc type class-string<App\\\\Models#'
-        # Propiedades dinámicas de Eloquent (comunes en Laravel)
-        - '#Access to an undefined property.*#'
-        # Problemas de PHPDoc con fillable (compatibilidad con Laravel)
-        - '#PHPDoc type array<int, string>.*\$fillable.*list<string>#'
-        # Problemas menores de tipos en traits y servicios
-        - '#Call to an undefined method.*onlyTrashed\(\)#'
-        # Traits no usados (pueden usarse en el futuro)
-        - '#Trait.*is used zero times#'
-        # Dead catch - TokenBlacklistedException se captura específicamente antes de JWTException (correcto)
-        - '#Dead catch.*TokenBlacklistedException#'
-        # Errores de nullsafe con Carbon que phpstan no reconoce correctamente
-        - '#Ternary operator condition is always true#'
-        # Errores con return type de services (falso positivo)
-        - '#has invalid return type App\\\\Services#'
-        - '#Method .* has invalid return type#'
-        - '#Method .* should return#'
-        # Scout Builder - where() acepta 3 params (field, operator, value) en runtime
-        - '#invoked with 3 parameters, 2 required#'
-
-    excludePaths:
-        - ./*/*/FileToIgnore.php
-        # Excluir archivos con problemas conocidos de PHPStan con Laravel factories (newFactory)
-        - app/Models/Logs/ActivityLog.php
-        - app/Models/Logs/ApiLog.php
-        - app/Models/Logs/SecurityLog.php
-        # FileController: errores de contravariedad al sobrescribir métodos con FormRequest (falso positivo válido)
-        - app/Http/Controllers/Files/FileController.php
+        # Traits de infraestructura que el boilerplate ofrece y ningún módulo propio usa
+        # todavía; se activan en el modelo que los necesite (ver docs/id-strategy.md).
+        -
+            message: '#^Trait App\\Traits\\(HasUuid|BelongsToTenant) is used zero times and is not analysed\.$#'
+            paths:
+                - app/Traits/HasUuid.php
+                - app/Traits/BelongsToTenant.php

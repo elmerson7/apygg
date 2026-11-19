@@ -30,6 +30,7 @@ class UserController extends Controller
     /**
      * Relaciones que el cliente puede pedir con `?include=`
      */
+    /** @var list<string> */
     protected array $allowedRelations = ['roles', 'permissions', 'activityLogs', 'apiTokens'];
 
     public function __construct(protected UserServiceInterface $userService) {}

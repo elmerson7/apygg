@@ -31,7 +31,7 @@ class RoleFactory extends Factory
     /**
      * Attach permissions to the role after creation.
      *
-     * @param  array|Permission|string  $permissions
+     * @param  list<string|Permission>|Permission|string  $permissions
      */
     public function withPermissions($permissions): static
     {

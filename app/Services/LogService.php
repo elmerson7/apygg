@@ -45,6 +45,9 @@ class LogService
 
     /**
      * Obtener contexto enriquecido para logs
+     *
+     * @param  array<string, mixed>  $additionalContext
+     * @return array<string, mixed>
      */
     protected static function getContext(array $additionalContext = []): array
     {
@@ -63,6 +66,7 @@ class LogService
      * Log genérico con nivel especificado
      *
      * @param  string  $level  debug, info, warning, error, critical
+     * @param  array<string, mixed>  $context
      */
     public static function log(string $level, string $message, array $context = [], ?string $channel = null): void
     {
@@ -112,6 +116,8 @@ class LogService
 
     /**
      * Log de nivel debug
+     *
+     * @param  array<string, mixed>  $context
      */
     public static function debug(string $message, array $context = [], ?string $channel = null): void
     {
@@ -120,6 +126,8 @@ class LogService
 
     /**
      * Log de nivel info
+     *
+     * @param  array<string, mixed>  $context
      */
     public static function info(string $message, array $context = [], ?string $channel = null): void
     {
@@ -128,6 +136,8 @@ class LogService
 
     /**
      * Log de nivel warning
+     *
+     * @param  array<string, mixed>  $context
      */
     public static function warning(string $message, array $context = [], ?string $channel = null): void
     {
@@ -136,6 +146,8 @@ class LogService
 
     /**
      * Log de nivel error
+     *
+     * @param  array<string, mixed>  $context
      */
     public static function error(string $message, array $context = [], ?string $channel = null): void
     {
@@ -144,6 +156,8 @@ class LogService
 
     /**
      * Log de nivel critical
+     *
+     * @param  array<string, mixed>  $context
      */
     public static function critical(string $message, array $context = [], ?string $channel = null): void
     {
@@ -152,6 +166,8 @@ class LogService
 
     /**
      * Log de actividad de API
+     *
+     * @param  array<string, mixed>  $context
      */
     public static function logApi(string $method, string $endpoint, int $statusCode, array $context = []): void
     {
@@ -178,6 +194,8 @@ class LogService
 
     /**
      * Log de actividad del usuario
+     *
+     * @param  array<string, mixed>  $context
      */
     public static function logActivity(string $action, string $modelType, int|string|null $modelId = null, array $context = []): void
     {
@@ -201,6 +219,8 @@ class LogService
 
     /**
      * Log de seguridad
+     *
+     * @param  array<string, mixed>  $context
      */
     public static function logSecurity(string $eventType, string $message, array $context = []): void
     {
@@ -220,6 +240,8 @@ class LogService
 
     /**
      * Log de errores
+     *
+     * @param  array<string, mixed>  $context
      */
     public static function logError(\Throwable $exception, array $context = []): void
     {
@@ -239,6 +261,8 @@ class LogService
 
     /**
      * Guardar log en base de datos
+     *
+     * @param  array<string, mixed>  $data
      */
     protected static function saveToDatabase(string $type, array $data): void
     {
@@ -262,6 +286,9 @@ class LogService
 
     /**
      * Guardar API log en base de datos
+     *
+     * @param  array<string, mixed>  $context
+     * @param  array<string, mixed>  $data
      */
     protected static function saveApiLog(array $data, array $context): void
     {
@@ -284,6 +311,9 @@ class LogService
 
     /**
      * Guardar Activity log en base de datos
+     *
+     * @param  array<string, mixed>  $context
+     * @param  array<string, mixed>  $data
      */
     protected static function saveActivityLog(array $data, array $context): void
     {
@@ -305,6 +335,9 @@ class LogService
 
     /**
      * Guardar Security log en base de datos
+     *
+     * @param  array<string, mixed>  $context
+     * @param  array<string, mixed>  $data
      */
     protected static function saveSecurityLog(array $data, array $context): void
     {
@@ -325,6 +358,8 @@ class LogService
 
     /**
      * Enviar log a Sentry
+     *
+     * @param  array<string, mixed>  $context
      */
     protected static function logToSentry(string $level, string $message, array $context, ?\Throwable $exception = null): void
     {

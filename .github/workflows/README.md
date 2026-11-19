@@ -14,7 +14,7 @@ Se ejecuta automáticamente en:
 
 1. **Lint & Code Quality**
    - Laravel Pint (formateo y estilo de código)
-   - PHPStan nivel 5 (análisis estático)
+   - PHPStan nivel 6 (análisis estático)
 
 2. **Tests & Coverage**
    - Tests con Pest

@@ -130,6 +130,8 @@ class CorsTestCommand extends Command
 
     /**
      * Verificar si un origen está permitido
+     *
+     * @param  list<string>  $allowedOrigins
      */
     private function isOriginAllowed(string $origin, array $allowedOrigins): bool
     {

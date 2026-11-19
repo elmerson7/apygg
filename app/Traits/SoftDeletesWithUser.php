@@ -3,7 +3,10 @@
 namespace App\Traits;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -54,6 +57,8 @@ trait SoftDeletesWithUser
 
     /**
      * Obtener el usuario que eliminó el registro.
+     *
+     * @return BelongsTo<User, $this>
      */
     public function deletedBy()
     {
@@ -62,10 +67,15 @@ trait SoftDeletesWithUser
 
     /**
      * Scope para filtrar registros eliminados por un usuario específico.
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeDeletedBy($query, string $userId)
     {
-        return $query->onlyTrashed()->where('deleted_by', $userId);
+        return $query->withoutGlobalScope(SoftDeletingScope::class)
+            ->whereNotNull($this->qualifyColumn('deleted_at'))
+            ->where('deleted_by', $userId);
     }
 
     /**

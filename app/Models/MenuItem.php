@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * MenuItem Model
@@ -54,6 +56,9 @@ class MenuItem extends Model
     /**
      * Roles con visibilidad explícita sobre este ítem.
      */
+    /**
+     * @return BelongsToMany<Role, $this>
+     */
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class, 'menu_item_role', 'menu_item_id', 'role_id');
@@ -62,6 +67,9 @@ class MenuItem extends Model
     /**
      * Nota: la firma debe coincidir con la del Model base (sin tipar), o PHP
      * lanza un error fatal por estrechar la firma del padre.
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeActive($query)
     {
@@ -70,6 +78,8 @@ class MenuItem extends Model
 
     /**
      * Ítems hijos, enlazados por `parent_key`.
+     *
+     * @return HasMany<self, $this>
      */
     public function children()
     {

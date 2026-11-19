@@ -5,7 +5,6 @@ namespace App\Models\Logs;
 use App\Models\User;
 use Database\Factories\SecurityLogFactory;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class SecurityLog extends Model
 {
+    /** @use HasFactory<SecurityLogFactory> */
     use HasFactory;
 
     /**
@@ -30,7 +30,7 @@ class SecurityLog extends Model
     /**
      * Create a new factory instance for the model.
      *
-     * @return Factory<static>
+     * @return SecurityLogFactory
      */
     protected static function newFactory()
     {
@@ -47,7 +47,7 @@ class SecurityLog extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = [
         'trace_id',
@@ -92,6 +92,8 @@ class SecurityLog extends Model
 
     /**
      * Relación con User (opcional, puede ser null)
+     *
+     * @return BelongsTo<User, $this>
      */
     public function user(): BelongsTo
     {
@@ -100,6 +102,8 @@ class SecurityLog extends Model
 
     /**
      * Relación con ApiLog a través de trace_id
+     *
+     * @return BelongsTo<ApiLog, $this>
      */
     public function apiLog(): BelongsTo
     {
@@ -109,8 +113,8 @@ class SecurityLog extends Model
     /**
      * Scope para filtrar por trace_id
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeByTraceId($query, string $traceId)
     {
@@ -120,8 +124,8 @@ class SecurityLog extends Model
     /**
      * Scope para filtrar por usuario
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeByUserId($query, string $userId)
     {
@@ -131,8 +135,8 @@ class SecurityLog extends Model
     /**
      * Scope para filtrar por tipo de evento
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeByEventType($query, string $eventType)
     {
@@ -142,8 +146,8 @@ class SecurityLog extends Model
     /**
      * Scope para filtrar intentos de login fallidos
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeLoginFailures($query)
     {
@@ -153,8 +157,8 @@ class SecurityLog extends Model
     /**
      * Scope para filtrar actividades sospechosas
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeSuspiciousActivity($query)
     {
@@ -164,8 +168,8 @@ class SecurityLog extends Model
     /**
      * Scope para filtrar por IP
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeByIpAddress($query, string $ipAddress)
     {
@@ -175,8 +179,8 @@ class SecurityLog extends Model
     /**
      * Scope para filtrar por rango de fechas
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeDateRange($query, ?string $startDate = null, ?string $endDate = null)
     {
@@ -194,8 +198,8 @@ class SecurityLog extends Model
     /**
      * Scope para ordenar por más recientes
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeRecent($query)
     {

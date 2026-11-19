@@ -22,6 +22,8 @@ class StoreFileRequest extends BaseFormRequest
 
     /**
      * Get the validation rules that apply to the request.
+     *
+     * @return array<string, mixed>
      */
     public function rules(): array
     {
@@ -77,6 +79,8 @@ class StoreFileRequest extends BaseFormRequest
 
     /**
      * Obtener tipos MIME permitidos según categoría
+     *
+     * @return list<string>
      */
     protected function getAllowedMimesForCategory(string $category): array
     {

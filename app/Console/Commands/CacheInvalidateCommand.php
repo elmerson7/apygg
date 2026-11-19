@@ -100,6 +100,8 @@ class CacheInvalidateCommand extends Command
 
     /**
      * Invalidar múltiples tags
+     *
+     * @param  list<string>  $tags
      */
     protected function invalidateTags(array $tags): int
     {

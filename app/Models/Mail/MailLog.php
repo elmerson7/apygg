@@ -3,6 +3,8 @@
 namespace App\Models\Mail;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,6 +24,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class MailLog extends Model
 {
+    /** @use HasFactory<Factory<static>> */
     use HasFactory;
 
     protected $table = 'mail_logs';
@@ -83,6 +86,9 @@ class MailLog extends Model
         'updated_at' => 'datetime',
     ];
 
+    /**
+     * @return BelongsTo<MailAccount, $this>
+     */
     public function mailAccount(): BelongsTo
     {
         return $this->belongsTo(MailAccount::class, 'mail_account_id');
@@ -90,32 +96,54 @@ class MailLog extends Model
 
     /**
      * Eventos recibidos del proveedor para este envío.
+     *
+     * @return HasMany<MailEvent, $this>
      */
     public function events(): HasMany
     {
         return $this->hasMany(MailEvent::class, 'mail_log_id');
     }
 
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
     public function scopePending($query)
     {
         return $query->where('status', self::STATUS_PENDING);
     }
 
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
     public function scopeSent($query)
     {
         return $query->whereIn('status', [self::STATUS_SENT, self::STATUS_DELIVERED]);
     }
 
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
     public function scopeFailed($query)
     {
         return $query->whereIn('status', [self::STATUS_FAILED, self::STATUS_BOUNCED]);
     }
 
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
     public function scopeForDateRange($query, Carbon $from, Carbon $to)
     {
         return $query->whereBetween('created_at', [$from, $to]);
     }
 
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
     public function scopeForTemplate($query, string $templateKey)
     {
         return $query->where('template_key', $templateKey);

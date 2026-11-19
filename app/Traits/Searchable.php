@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Models\Model;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Laravel\Scout\Builder;
 use Laravel\Scout\Searchable as ScoutSearchable;
@@ -38,6 +39,8 @@ trait Searchable
     /**
      * Campos que deben ser excluidos de la búsqueda.
      * Sobrescribir en el modelo para personalizar.
+     *
+     * @return list<string>
      */
     protected function getExcludedFromSearch(): array
     {
@@ -81,6 +84,9 @@ trait Searchable
 
     /**
      * Realizar búsqueda con filtros adicionales.
+     *
+     * @param  array<string, mixed>  $filters
+     * @return Builder<static>
      */
     public static function searchWithFilters(string $query, array $filters = []): Builder
     {
@@ -98,6 +104,8 @@ trait Searchable
 
     /**
      * Realizar búsqueda con ordenamiento.
+     *
+     * @return Builder<static>
      */
     public static function searchWithSort(string $query, string $sortBy = 'created_at', string $direction = 'desc'): Builder
     {
@@ -106,6 +114,8 @@ trait Searchable
 
     /**
      * Realizar búsqueda paginada.
+     *
+     * @return LengthAwarePaginator<int, static>
      */
     public static function searchPaginated(string $query, int $perPage = 15, int $page = 1): LengthAwarePaginator
     {

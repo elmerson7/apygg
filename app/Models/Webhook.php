@@ -25,7 +25,7 @@ class Webhook extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = [
         'user_id',
@@ -102,6 +102,8 @@ class Webhook extends Model
      * Relación con User
      *
      * Un webhook puede pertenecer a un usuario (opcional).
+     *
+     * @return BelongsTo<User, $this>
      */
     public function user(): BelongsTo
     {
@@ -120,12 +122,18 @@ class Webhook extends Model
      * La relación faltaba aunque WebhookController ya hacía
      * `withCount('deliveries')`: GET /webhooks y GET /webhooks/{id} lanzaban
      * RelationNotFoundException en tiempo de ejecución.
+     *
+     * @return HasMany<WebhookDelivery, $this>
      */
     public function deliveries(): HasMany
     {
         return $this->hasMany(WebhookDelivery::class, 'webhook_id');
     }
 
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
     public function scopeActive($query)
     {
         return $query->where('status', WebhookStatusEnum::active->value);
@@ -134,8 +142,8 @@ class Webhook extends Model
     /**
      * Scope para filtrar webhooks inactivos
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeInactive($query)
     {
@@ -145,8 +153,8 @@ class Webhook extends Model
     /**
      * Scope para filtrar webhooks pausados
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopePaused($query)
     {
@@ -156,8 +164,8 @@ class Webhook extends Model
     /**
      * Scope para filtrar por usuario
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeByUser($query, string $userId)
     {
@@ -167,8 +175,8 @@ class Webhook extends Model
     /**
      * Scope para filtrar webhooks que escuchan un evento específico
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeForEvent($query, string $eventType)
     {
@@ -242,7 +250,7 @@ class Webhook extends Model
      * Mantiene el secret anterior durante un período de gracia para evitar interrupciones
      *
      * @param  int  $gracePeriodDays  Días de período de gracia (default: 7)
-     * @return array Array con el nuevo secret y fecha de expiración del secret anterior
+     * @return array<string, mixed> Array con el nuevo secret y fecha de expiración del secret anterior
      */
     public function rotateSecret(int $gracePeriodDays = 7): array
     {

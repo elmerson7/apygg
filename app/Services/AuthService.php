@@ -60,9 +60,9 @@ class AuthService implements AuthServiceInterface
     /**
      * Autenticar usuario con credenciales
      *
-     * @param  array  $credentials  Credenciales ['identity_document' => string, 'password' => string]
+     * @param  array<string, mixed>  $credentials  Credenciales ['identity_document' => string, 'password' => string]
      * @param  string|null  $ipAddress  Dirección IP del cliente
-     * @return array ['user' => User, 'tokens' => array] o null si falla
+     * @return array<string, mixed> ['user' => User, 'tokens' => array] o null si falla
      *
      * @throws LoginLockedException Si la identidad está bloqueada por intentos fallidos
      * @throws AccountBlockedException Si la cuenta está en la lista negra
@@ -190,7 +190,7 @@ class AuthService implements AuthServiceInterface
      * defecto, evento `UserCreated` con bienvenida, log y webhook) y genera los tokens.
      *
      * @param  array{name: string, email: string, password: string}  $data  Datos ya validados
-     * @return array{user: User, tokens: array}
+     * @return array<string, mixed> User, tokens: array}
      *
      * @throws JWTException
      */
@@ -212,8 +212,8 @@ class AuthService implements AuthServiceInterface
      * Generar tokens para un usuario
      *
      * @param  User  $user  Usuario para el cual generar tokens
-     * @param  array  $customClaims  Claims personalizados adicionales
-     * @return array ['access_token' => string, 'refresh_token' => string]
+     * @param  array<string, mixed>  $customClaims  Claims personalizados adicionales
+     * @return array<string, mixed> ['access_token' => string, 'refresh_token' => string]
      *
      * @throws JWTException
      */
@@ -226,7 +226,7 @@ class AuthService implements AuthServiceInterface
      * Renovar access token usando refresh token
      *
      * @param  string|null  $refreshToken  Refresh token a usar
-     * @return array ['access_token' => string, 'refresh_token' => string, 'user' => User]
+     * @return array<string, mixed> ['access_token' => string, 'refresh_token' => string, 'user' => User]
      *
      * @throws JWTException
      */

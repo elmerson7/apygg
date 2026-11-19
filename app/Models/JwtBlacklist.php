@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Carbon\CarbonInterface;
+use Database\Factories\JwtBlacklistFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,9 +14,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *
  * Modelo para tokens JWT revocados (blacklist).
  * Almacena tokens que han sido revocados y no deben ser aceptados.
+ *
+ * @property CarbonInterface|null $expires_at
  */
 class JwtBlacklist extends Model
 {
+    /** @use HasFactory<JwtBlacklistFactory> */
     use HasFactory, HasUuids, SoftDeletes;
 
     /**
@@ -27,7 +32,7 @@ class JwtBlacklist extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = [
         'jti',

@@ -3,8 +3,12 @@
 namespace App\Http\Resources\Mail;
 
 use App\Http\Resources\BaseResource;
+use App\Models\Mail\MailAccount;
 use Illuminate\Http\Request;
 
+/**
+ * @mixin MailAccount
+ */
 class MailAccountResource extends BaseResource
 {
     public function toArray(Request $request): array

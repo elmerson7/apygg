@@ -21,6 +21,9 @@ class LoginRequest extends BaseFormRequest
         }
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function rules(): array
     {
         return [
@@ -31,6 +34,8 @@ class LoginRequest extends BaseFormRequest
 
     /**
      * Get custom messages for validator errors.
+     *
+     * @return array<string, mixed>
      */
     protected function getCustomMessages(): array
     {
@@ -42,6 +47,8 @@ class LoginRequest extends BaseFormRequest
 
     /**
      * Get custom attributes for validator errors.
+     *
+     * @return array<string, mixed>
      */
     protected function getCustomAttributes(): array
     {

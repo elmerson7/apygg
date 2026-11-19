@@ -2,6 +2,7 @@
 
 namespace App\Contracts;
 
+use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -18,7 +19,7 @@ interface RoleServiceInterface
     /**
      * Crear un nuevo rol
      *
-     * @param  array  $data  Datos del rol ['name', 'display_name', 'description']
+     * @param  array<string, mixed>  $data  Datos del rol ['name', 'display_name', 'description']
      */
     public function create(array $data): Role;
 
@@ -26,7 +27,7 @@ interface RoleServiceInterface
      * Actualizar un rol existente
      *
      * @param  string  $roleId  ID del rol
-     * @param  array  $data  Datos a actualizar
+     * @param  array<string, mixed>  $data  Datos a actualizar
      */
     public function update(string $roleId, array $data): Role;
 
@@ -54,12 +55,15 @@ interface RoleServiceInterface
     /**
      * Listar todos los roles con paginación
      *
-     * @param  array  $filters  Filtros ['search', 'per_page']
+     * @param  array<string, mixed>  $filters  Filtros ['search', 'per_page']
+     * @return LengthAwarePaginator<int, Role>
      */
     public function list(array $filters = []): LengthAwarePaginator;
 
     /**
      * Obtener todos los roles sin paginación
+     *
+     * @return Collection<int, Role>
      */
     public function all(): Collection;
 
@@ -83,7 +87,7 @@ interface RoleServiceInterface
      * Sincronizar permisos de un rol (reemplaza todos los permisos)
      *
      * @param  string  $roleId  ID del rol
-     * @param  array  $permissionIds  Array de IDs o nombres de permisos
+     * @param  list<int|string>  $permissionIds  Array de IDs o nombres de permisos
      */
     public function syncPermissions(string $roleId, array $permissionIds): Role;
 
@@ -91,6 +95,7 @@ interface RoleServiceInterface
      * Obtener permisos de un rol
      *
      * @param  string  $roleId  ID del rol
+     * @return Collection<int, Permission>
      */
     public function getPermissions(string $roleId): Collection;
 

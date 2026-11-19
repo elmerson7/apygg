@@ -14,9 +14,9 @@ interface AuthServiceInterface
     /**
      * Autenticar usuario con credenciales
      *
-     * @param  array  $credentials  Credenciales ['identity_document' => string, 'password' => string]
+     * @param  array<string, mixed>  $credentials  Credenciales ['identity_document' => string, 'password' => string]
      * @param  string|null  $ipAddress  Dirección IP del cliente
-     * @return array ['user' => User, 'tokens' => array] o null si falla
+     * @return array<string, mixed> ['user' => User, 'tokens' => array] o null si falla
      */
     public function authenticate(array $credentials, ?string $ipAddress = null): ?array;
 
@@ -24,7 +24,7 @@ interface AuthServiceInterface
      * Registrar un usuario nuevo y abrirle sesión.
      *
      * @param  array{name: string, email: string, password: string}  $data  Datos ya validados
-     * @return array{user: User, tokens: array}
+     * @return array<string, mixed> User, tokens: array}
      */
     public function register(array $data): array;
 
@@ -32,8 +32,8 @@ interface AuthServiceInterface
      * Generar tokens para un usuario
      *
      * @param  User  $user  Usuario para el cual generar tokens
-     * @param  array  $customClaims  Claims personalizados adicionales
-     * @return array ['access_token' => string, 'refresh_token' => string]
+     * @param  array<string, mixed>  $customClaims  Claims personalizados adicionales
+     * @return array<string, mixed> ['access_token' => string, 'refresh_token' => string]
      */
     public function generateTokens(User $user, array $customClaims = []): array;
 
@@ -41,7 +41,7 @@ interface AuthServiceInterface
      * Renovar access token usando refresh token
      *
      * @param  string|null  $refreshToken  Refresh token a usar
-     * @return array ['access_token' => string, 'refresh_token' => string, 'user' => User]
+     * @return array<string, mixed> ['access_token' => string, 'refresh_token' => string, 'user' => User]
      */
     public function refreshToken(?string $refreshToken = null): array;
 

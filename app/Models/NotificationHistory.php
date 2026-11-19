@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model as EloquentModel;
 
@@ -21,6 +23,7 @@ use Illuminate\Database\Eloquent\Model as EloquentModel;
  */
 class NotificationHistory extends EloquentModel
 {
+    /** @use HasFactory<Factory<static>> */
     use HasFactory;
 
     protected $table = 'notification_history';
@@ -56,11 +59,19 @@ class NotificationHistory extends EloquentModel
         'updated_at' => 'datetime',
     ];
 
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
     public function scopeForChannel($query, string $channel)
     {
         return $query->where('channel', $channel);
     }
 
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
     public function scopeFailed($query)
     {
         return $query->where('status', self::STATUS_FAILED);

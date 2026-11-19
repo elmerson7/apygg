@@ -113,6 +113,8 @@ class IpWhitelistMiddleware
 
     /**
      * Obtener whitelist específica para el endpoint o usar la global
+     *
+     * @return list<string>|null
      */
     protected function getWhitelistForEndpoint(string $path): ?array
     {

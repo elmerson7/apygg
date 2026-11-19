@@ -3,8 +3,12 @@
 namespace App\Http\Resources\Mail;
 
 use App\Http\Resources\BaseResource;
+use App\Models\Mail\MailEvent;
 use Illuminate\Http\Request;
 
+/**
+ * @mixin MailEvent
+ */
 class MailEventResource extends BaseResource
 {
     public function toArray(Request $request): array

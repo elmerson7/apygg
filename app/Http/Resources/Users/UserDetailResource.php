@@ -120,6 +120,7 @@ class UserDetailResource extends BaseResource
      * Combina permisos de roles y permisos directos, eliminando duplicados
      *
      * @param  User  $user
+     * @return array<string, mixed>
      */
     protected function getEffectivePermissions($user): array
     {

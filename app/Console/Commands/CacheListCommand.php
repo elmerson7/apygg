@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Redis\Connections\Connection;
 use Illuminate\Support\Facades\Redis;
 
 /**
@@ -85,6 +86,8 @@ class CacheListCommand extends Command
 
     /**
      * Construir patrón de búsqueda
+     *
+     * @param  array<string, mixed>  $pattern
      */
     protected function buildSearchPattern(?array $pattern, ?string $tag): string
     {
@@ -111,6 +114,9 @@ class CacheListCommand extends Command
 
     /**
      * Obtener keys del cache
+     *
+     * @param  Connection  $redis
+     * @return list<string>
      */
     protected function getKeys($redis, string $pattern, int $limit): array
     {
@@ -141,6 +147,8 @@ class CacheListCommand extends Command
 
     /**
      * Mostrar estadísticas del cache
+     *
+     * @param  Connection  $redis
      */
     protected function showStats($redis, string $pattern): int
     {
@@ -190,6 +198,9 @@ class CacheListCommand extends Command
 
     /**
      * Mostrar keys con información
+     *
+     * @param  Connection  $redis
+     * @param  list<string>  $keys
      */
     protected function displayKeys($redis, array $keys, bool $showTtl, bool $showSize, bool $showValue): void
     {
@@ -228,7 +239,7 @@ class CacheListCommand extends Command
             }
 
             if ($showSize) {
-                $size = $redis->strlen($key) ?? 0;
+                $size = (int) $redis->strlen($key);
                 $row[] = $this->formatBytes($size);
             }
 
@@ -288,6 +299,8 @@ class CacheListCommand extends Command
 
     /**
      * Formatear valor
+     *
+     * @param  mixed  $value
      */
     protected function formatValue($value): string
     {

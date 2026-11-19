@@ -30,7 +30,7 @@ class WebhookService implements WebhookServiceInterface
      *
      * @param  Webhook  $webhook  Webhook a enviar
      * @param  string  $eventType  Tipo de evento (ej: 'user.created')
-     * @param  array  $payload  Datos del evento
+     * @param  array<string, mixed>  $payload  Datos del evento
      */
     public function send(Webhook $webhook, string $eventType, array $payload): WebhookDelivery
     {
@@ -151,7 +151,8 @@ class WebhookService implements WebhookServiceInterface
     /**
      * Preparar payload con metadatos adicionales
      *
-     * @param  array  $payload  Payload original
+     * @param  array<string, mixed>  $payload  Payload original
+     * @return array<string, mixed>
      */
     protected function preparePayload(array $payload, Webhook $webhook, WebhookDelivery $delivery): array
     {
@@ -216,6 +217,8 @@ class WebhookService implements WebhookServiceInterface
      *
      * Durante la ventana de rotación se envían DOS firmas (nuevo y anterior secreto) en
      * la misma cabecera, para que los receptores no se corten mientras migran.
+     *
+     * @return array<string, mixed>
      */
     protected function prepareHeaders(string $body, int $timestamp, Webhook $webhook): array
     {

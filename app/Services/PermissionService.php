@@ -32,7 +32,7 @@ class PermissionService implements PermissionServiceInterface
     /**
      * Crear un nuevo permiso
      *
-     * @param  array  $data  Datos del permiso ['name', 'display_name', 'resource', 'action', 'description']
+     * @param  array<string, mixed>  $data  Datos del permiso ['name', 'display_name', 'resource', 'action', 'description']
      *
      * @throws BusinessLogicException Si el nombre ya existe o los datos son inválidos
      */
@@ -78,7 +78,7 @@ class PermissionService implements PermissionServiceInterface
      * Actualizar un permiso existente
      *
      * @param  string  $permissionId  ID del permiso
-     * @param  array  $data  Datos a actualizar
+     * @param  array<string, mixed>  $data  Datos a actualizar
      *
      * @throws ModelNotFoundException Si el permiso no existe
      * @throws BusinessLogicException Si los datos son inválidos
@@ -184,7 +184,8 @@ class PermissionService implements PermissionServiceInterface
     /**
      * Listar todos los permisos con paginación
      *
-     * @param  array  $filters  Filtros ['search', 'resource', 'action', 'per_page']
+     * @param  array<string, mixed>  $filters  Filtros ['search', 'resource', 'action', 'per_page']
+     * @return LengthAwarePaginator<int, Permission>
      */
     public function list(array $filters = []): LengthAwarePaginator
     {
@@ -276,7 +277,7 @@ class PermissionService implements PermissionServiceInterface
     /**
      * Validar datos del permiso
      *
-     * @param  array  $data  Datos a validar
+     * @param  array<string, mixed>  $data  Datos a validar
      *
      * @throws BusinessLogicException Si los datos son inválidos
      */

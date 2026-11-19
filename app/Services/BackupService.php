@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Contracts\BackupServiceInterface;
 use Aws\S3\Exception\S3Exception;
 use Carbon\Carbon;
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -21,7 +22,7 @@ class BackupService implements BackupServiceInterface
      *
      * @param  bool  $compress  Comprimir el backup
      * @param  bool  $uploadToRemote  Subir a almacenamiento remoto
-     * @return array Información del backup creado
+     * @return array<string, mixed> Información del backup creado
      */
     public function createDatabaseBackup(bool $compress = true, bool $uploadToRemote = true): array
     {
@@ -226,7 +227,7 @@ class BackupService implements BackupServiceInterface
      *
      * @param  string|null  $type  Tipo de backup ('database', 'files', null para todos)
      * @param  bool  $includeRemote  Incluir backups remotos
-     * @return array Lista de backups
+     * @return list<array<string, mixed>> Lista de backups
      */
     public function listBackups(?string $type = null, bool $includeRemote = false): array
     {
@@ -282,6 +283,8 @@ class BackupService implements BackupServiceInterface
 
     /**
      * Obtener información de un backup local
+     *
+     * @return array<string, mixed>
      */
     protected function getBackupInfo(string $filePath, string $filename, string $location): array
     {
@@ -308,6 +311,9 @@ class BackupService implements BackupServiceInterface
 
     /**
      * Obtener información de un backup remoto
+     *
+     * @param  Filesystem  $disk
+     * @return array<string, mixed>
      */
     protected function getBackupInfoFromRemote($disk, string $remotePath, string $filename): array
     {
@@ -462,7 +468,7 @@ class BackupService implements BackupServiceInterface
     /**
      * Limpiar backups antiguos según política de retención
      *
-     * @return array Estadísticas de limpieza
+     * @return array<string, mixed> Estadísticas de limpieza
      */
     public function cleanOldBackups(): array
     {

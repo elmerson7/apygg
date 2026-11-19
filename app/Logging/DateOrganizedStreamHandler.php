@@ -17,7 +17,7 @@ class DateOrganizedStreamHandler extends StreamHandler
      * Crear handler organizado por fecha
      * Método estático para que Laravel pueda instanciarlo correctamente
      *
-     * @param  array  $config  Configuración con 'filename' y 'level'
+     * @param  array<string, mixed>  $config  Configuración con 'filename' y 'level'
      */
     public static function create(array $config): self
     {

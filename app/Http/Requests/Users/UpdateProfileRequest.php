@@ -21,6 +21,9 @@ class UpdateProfileRequest extends BaseFormRequest
         return $this->user() !== null;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function rules(): array
     {
         return [
@@ -49,6 +52,9 @@ class UpdateProfileRequest extends BaseFormRequest
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function getCustomMessages(): array
     {
         return [

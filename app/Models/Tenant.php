@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -31,6 +32,8 @@ class Tenant extends Model
 
     /**
      * Usuarios pertenecientes a este tenant
+     *
+     * @return HasMany<User, $this>
      */
     public function users(): HasMany
     {
@@ -71,6 +74,9 @@ class Tenant extends Model
 
     /**
      * Scope para tenants activos
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeActive($query)
     {
@@ -79,6 +85,9 @@ class Tenant extends Model
 
     /**
      * Buscar tenant por dominio
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeByDomain($query, string $domain)
     {
@@ -87,6 +96,9 @@ class Tenant extends Model
 
     /**
      * Buscar tenant por slug
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeBySlug($query, string $slug)
     {

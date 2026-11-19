@@ -16,7 +16,7 @@ interface PermissionServiceInterface
     /**
      * Crear un nuevo permiso
      *
-     * @param  array  $data  Datos del permiso ['name', 'display_name', 'resource', 'action', 'description']
+     * @param  array<string, mixed>  $data  Datos del permiso ['name', 'display_name', 'resource', 'action', 'description']
      */
     public function create(array $data): Permission;
 
@@ -24,7 +24,7 @@ interface PermissionServiceInterface
      * Actualizar un permiso existente
      *
      * @param  string  $permissionId  ID del permiso
-     * @param  array  $data  Datos a actualizar
+     * @param  array<string, mixed>  $data  Datos a actualizar
      */
     public function update(string $permissionId, array $data): Permission;
 
@@ -52,12 +52,15 @@ interface PermissionServiceInterface
     /**
      * Listar todos los permisos con paginación
      *
-     * @param  array  $filters  Filtros ['search', 'resource', 'action', 'per_page']
+     * @param  array<string, mixed>  $filters  Filtros ['search', 'resource', 'action', 'per_page']
+     * @return LengthAwarePaginator<int, Permission>
      */
     public function list(array $filters = []): LengthAwarePaginator;
 
     /**
      * Obtener todos los permisos sin paginación
+     *
+     * @return Collection<int, Permission>
      */
     public function all(): Collection;
 
@@ -65,6 +68,7 @@ interface PermissionServiceInterface
      * Obtener permisos por recurso
      *
      * @param  string  $resource  Nombre del recurso
+     * @return Collection<int, Permission>
      */
     public function getByResource(string $resource): Collection;
 
@@ -72,6 +76,7 @@ interface PermissionServiceInterface
      * Obtener permisos por acción
      *
      * @param  string  $action  Nombre de la acción
+     * @return Collection<int, Permission>
      */
     public function getByAction(string $action): Collection;
 
@@ -80,13 +85,14 @@ interface PermissionServiceInterface
      *
      * @param  string  $resource  Nombre del recurso
      * @param  string  $action  Nombre de la acción
+     * @return Collection<int, Permission>
      */
     public function getByResourceAndAction(string $resource, string $action): Collection;
 
     /**
      * Validar datos del permiso
      *
-     * @param  array  $data  Datos a validar
+     * @param  array<string, mixed>  $data  Datos a validar
      */
     public function validatePermissionData(array $data): void;
 

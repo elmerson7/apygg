@@ -82,8 +82,10 @@ class LlmAuditService
      * abortada y TODAS las consultas siguientes fallan hasta el rollback. Sin
      * el savepoint, un fallo al auditar (por ejemplo, la tabla aún sin migrar)
      * rompería la operación de negocio que envolvía la llamada al LLM.
+     *
+     * @param  \Closure(): mixed  $callback
      */
-    protected function inSavepoint(callable $callback): void
+    protected function inSavepoint(\Closure $callback): void
     {
         $connection = DB::connection();
 

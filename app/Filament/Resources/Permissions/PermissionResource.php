@@ -9,6 +9,7 @@ use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
 
 /**
@@ -36,11 +37,17 @@ class PermissionResource extends Resource
         return false;
     }
 
+    /**
+     * @param  Model  $record
+     */
     public static function canEdit($record): bool
     {
         return false;
     }
 
+    /**
+     * @param  Model  $record
+     */
     public static function canDelete($record): bool
     {
         return false;

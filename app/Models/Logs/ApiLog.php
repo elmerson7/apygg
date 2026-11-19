@@ -5,7 +5,6 @@ namespace App\Models\Logs;
 use App\Models\User;
 use Database\Factories\ApiLogFactory;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class ApiLog extends Model
 {
+    /** @use HasFactory<ApiLogFactory> */
     use HasFactory;
 
     /**
@@ -30,7 +30,7 @@ class ApiLog extends Model
     /**
      * Create a new factory instance for the model.
      *
-     * @return Factory<static>
+     * @return ApiLogFactory
      */
     protected static function newFactory()
     {
@@ -47,7 +47,7 @@ class ApiLog extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = [
         'trace_id',
@@ -82,6 +82,8 @@ class ApiLog extends Model
 
     /**
      * Relación con User (opcional, puede ser null)
+     *
+     * @return BelongsTo<User, $this>
      */
     public function user(): BelongsTo
     {
@@ -91,8 +93,8 @@ class ApiLog extends Model
     /**
      * Scope para filtrar por trace_id
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeByTraceId($query, string $traceId)
     {
@@ -102,8 +104,8 @@ class ApiLog extends Model
     /**
      * Scope para filtrar por usuario
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeByUserId($query, string $userId)
     {
@@ -113,8 +115,8 @@ class ApiLog extends Model
     /**
      * Scope para filtrar por método HTTP
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeByMethod($query, string $method)
     {
@@ -124,8 +126,8 @@ class ApiLog extends Model
     /**
      * Scope para filtrar por código de estado
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeByStatus($query, int $status)
     {
@@ -135,8 +137,8 @@ class ApiLog extends Model
     /**
      * Scope para filtrar por rango de fechas
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeDateRange($query, ?string $startDate = null, ?string $endDate = null)
     {
@@ -154,8 +156,8 @@ class ApiLog extends Model
     /**
      * Scope para ordenar por más recientes
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeRecent($query)
     {
@@ -165,9 +167,9 @@ class ApiLog extends Model
     /**
      * Scope para filtrar requests lentos
      *
-     * @param  Builder  $query
+     * @param  Builder<static>  $query
      * @param  int  $thresholdMs  Umbral en milisegundos
-     * @return Builder
+     * @return Builder<static>
      */
     public function scopeSlowRequests($query, int $thresholdMs = 1000)
     {
