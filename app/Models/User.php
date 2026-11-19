@@ -260,13 +260,23 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
      */
     public function toSearchableArray(): array
     {
-        $array = [
+        // Con el motor `database` de Scout (respaldo si Meilisearch no responde), las
+        // claves de este array son las COLUMNAS donde busca: solo columnas de texto.
+        if (config('scout.driver') === 'database') {
+            return [
+                'name' => $this->name,
+                'email' => $this->email,
+                'username' => $this->username,
+            ];
+        }
+
+        return [
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
             'username' => $this->username,
             'identity_document' => $this->identity_document,
-            'email_verified_at' => $this->email_verified_at ? $this->email_verified_at->timestamp : null,
+            'email_verified_at' => $this->email_verified_at?->timestamp,
             'timezone' => $this->timezone,
             'created_at' => $this->created_at->timestamp,
             'updated_at' => $this->updated_at->timestamp,
@@ -274,8 +284,6 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
             'roles' => $this->roles->pluck('name')->toArray(),
             'role_ids' => $this->roles->pluck('id')->toArray(),
         ];
-
-        return $array;
     }
 
     /**
