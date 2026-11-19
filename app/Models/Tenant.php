@@ -22,6 +22,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property TenantStatus $status
  * @property int|null $parent_id
  * @property array<string, mixed>|null $settings
+ * @property string|null $locale
+ * @property string|null $timezone
+ * @property string|null $currency
  */
 class Tenant extends Model
 {
@@ -32,6 +35,9 @@ class Tenant extends Model
         'status',
         'parent_id',
         'settings',
+        'locale',
+        'timezone',
+        'currency',
     ];
 
     protected $casts = [

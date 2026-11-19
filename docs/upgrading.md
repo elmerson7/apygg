@@ -338,6 +338,23 @@ viejo. Los contenedores/redes viejos desaparecen con `make down`. Actualiza tamb
 deploy, monitorización o cron propios que llamen a `docker exec <proyecto>_app` (ahora `<proyecto>-app`)
 y los filtros `docker ps --filter name=^<proyecto>_`.
 
+### 15b. i18n: idioma, zona horaria y moneda
+
+- Migración `2026_11_19_000140` (`make migrate`): `users.locale`, `tenants.locale/timezone/currency` y **`users.timezone`
+  pierde su `DEFAULT 'UTC'`** (NULL = hereda). Los usuarios existentes conservan su `UTC` como valor explícito; si quieres
+  que hereden, `UPDATE users SET timezone = NULL WHERE timezone = 'UTC'`.
+- Las traducciones pasan de `resources/lang/es.json` (no se usaba: era un JSON anidado) a `lang/es` y `lang/en` en PHP;
+  si tenías claves propias en el JSON, muévelas a `lang/<idioma>/`. Cada idioma nuevo exige los mismos archivos y claves
+  (`tests/Unit/LangParidadTest.php`).
+- `BaseFormRequest::getCommonMessages()/getCommonAttributes()` devuelven `[]`: los textos comunes salen ahora de
+  `lang/<idioma>/validation.php`. Si un proyecto dependía de ese texto exacto, ajústalo en `lang/`.
+- Los textos del handler global ya no son literales: `lang/*/messages.php` (`errors.*`). Con el idioma por defecto
+  `es`, el 404 sin ruta y el 422 pasan de inglés a español (`Endpoint no encontrado.`, `Los datos proporcionados no son válidos.`);
+  el `code` no cambia. Con `Accept-Language: en` salen en inglés.
+- `SetApiLocale` es middleware global; `ResolveTenant` ahora recibe `LocaleResolverInterface` (constructor).
+- Nuevo permiso `tenant-settings.manage` (`make seed` o `PermissionSeeder`; el rol `admin` lo recibe por `RoleSeeder`).
+- Docs: `docs/internationalization.md` se sustituye por `docs/i18n.md`.
+
 ### 16. Verificación final
 
 ```bash

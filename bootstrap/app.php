@@ -14,6 +14,7 @@ use App\Http\Middleware\IpWhitelistMiddleware;
 use App\Http\Middleware\LogApiRequests;
 use App\Http\Middleware\OptionalAuthMiddleware;
 use App\Http\Middleware\RateLimitLoggerMiddleware;
+use App\Http\Middleware\SetApiLocale;
 use App\Http\Middleware\ResolveClientIpMiddleware;
 use App\Http\Middleware\SecurityHeadersMiddleware;
 use App\Http\Middleware\SecurityLoggerMiddleware;
@@ -70,6 +71,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // CORS global (antes del enrutado): responde el preflight OPTIONS de cualquier
         // ruta sin necesitar una ruta comodín, y añade las cabeceras al resto.
         $middleware->prepend(CorsMiddleware::class);
+
+        // Idioma de la petición (usuario -> tenant -> Accept-Language -> instalación) y `Content-Language`.
+        // Global para que también los 404/405 sin ruta salgan en el idioma resuelto. Restaura el locale al
+        // terminar (Octane). Ver docs/i18n.md.
+        $middleware->append(SetApiLocale::class);
 
         // Middleware para API: todas las respuestas en JSON
         $middleware->api(prepend: [
@@ -263,9 +269,9 @@ return Application::configure(basePath: dirname(__DIR__))
                 $logApiRequest($e, $request);
 
                 return ApiResponse::rfc7807(
-                    'Endpoint not found.',
+                    __('messages.errors.endpoint_not_found'),
                     404,
-                    'The requested endpoint does not exist.',
+                    __('messages.errors.endpoint_not_found_detail'),
                     'not_found',
                     $request->path(),
                     ['path' => $request->path()]
@@ -276,7 +282,7 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($e instanceof ValidationException) {
                 $logException($e, $request, false);
 
-                return ApiResponse::validation($e->errors(), 'The given data was invalid.');
+                return ApiResponse::validation($e->errors(), __('messages.errors.validation'));
             }
 
             // Violación de restricción única: la validación `unique` no cierra la carrera entre
@@ -288,8 +294,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 $field = preg_match('/Key \(([a-z0-9_, ]+)\)=/i', $e->getMessage(), $m) ? trim(explode(',', $m[1])[0]) : 'resource';
 
                 return ApiResponse::validation(
-                    [$field => ['Ya existe un registro con este valor.']],
-                    'The given data was invalid.',
+                    [$field => [__('messages.errors.duplicate')]],
+                    __('messages.errors.validation'),
                     ErrorCode::Duplicate
                 );
             }
@@ -300,7 +306,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 $logException($e, $request, false);
 
                 if (auth('api')->guest()) {
-                    return ApiResponse::unauthorized('No autenticado');
+                    return ApiResponse::unauthorized(__('messages.errors.unauthenticated'));
                 }
 
                 $required = array_merge($e->getRequiredRoles(), $e->getRequiredPermissions());
@@ -319,9 +325,9 @@ return Application::configure(basePath: dirname(__DIR__))
                 $logApiRequest($e, $request);
 
                 return ApiResponse::rfc7807(
-                    'No tienes permiso para realizar esta acción',
+                    __('messages.errors.forbidden'),
                     403,
-                    'No tienes permiso para realizar esta acción',
+                    __('messages.errors.forbidden'),
                     'forbidden',
                     $request->path(),
                     array_filter([
@@ -341,9 +347,9 @@ return Application::configure(basePath: dirname(__DIR__))
                 $logApiRequest($e, $request);
 
                 return ApiResponse::rfc7807(
-                    $e->getMessage() ?: 'An error occurred',
+                    $e->getMessage() ?: __('messages.errors.generic'),
                     $statusCode,
-                    $e->getMessage() ?: 'An error occurred',
+                    $e->getMessage() ?: __('messages.errors.generic'),
                     $getErrorType($statusCode),
                     $request->path()
                 );
@@ -354,7 +360,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 $logException($e, $request, false);
 
                 return ApiResponse::unauthorized(
-                    'Token inválido o expirado',
+                    __('messages.errors.token_invalid'),
                     $e instanceof TokenExpiredException
                         ? ErrorCode::TokenExpired
                         : ErrorCode::TokenInvalid
@@ -365,14 +371,14 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($e instanceof AuthenticationException) {
                 $logException($e, $request, false);
 
-                return ApiResponse::unauthorized('No autenticado');
+                return ApiResponse::unauthorized(__('messages.errors.unauthenticated'));
             }
 
             // AuthorizationException (403)
             if ($e instanceof AuthorizationException) {
                 $logException($e, $request, false);
 
-                return ApiResponse::forbidden('No autorizado');
+                return ApiResponse::forbidden(__('messages.errors.unauthorized'));
             }
 
             // ============================================
@@ -385,7 +391,7 @@ return Application::configure(basePath: dirname(__DIR__))
             // Respuesta RFC 7807 para errores críticos
             $message = config('app.debug')
                 ? $e->getMessage()
-                : 'An internal server error occurred.';
+                : __('messages.errors.server_error');
 
             return ApiResponse::rfc7807(
                 $message,

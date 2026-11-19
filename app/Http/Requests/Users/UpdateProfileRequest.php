@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Users;
 
+use App\Contracts\LocaleResolverInterface;
 use App\Http\Requests\BaseFormRequest;
 use Illuminate\Validation\Rule;
 
@@ -31,7 +32,8 @@ class UpdateProfileRequest extends BaseFormRequest
             'first_name' => ['sometimes', 'nullable', 'string', 'max:100'],
             'last_name' => ['sometimes', 'nullable', 'string', 'max:100'],
             'username' => ['sometimes', 'string', 'min:3', 'max:50', Rule::unique('users', 'username')->ignore($this->user()->id)],
-            'timezone' => ['sometimes', 'nullable', 'string', 'timezone'],
+            'timezone' => ['sometimes', 'nullable', 'string', 'timezone:all'],
+            'locale' => ['sometimes', 'nullable', 'string', Rule::in(app(LocaleResolverInterface::class)->supportedLocales())],
             'phone' => ['sometimes', 'nullable', 'string', 'max:50'],
             'bio' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'date_of_birth' => ['sometimes', 'nullable', 'date', 'before:today'],

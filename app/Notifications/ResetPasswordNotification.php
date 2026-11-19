@@ -60,13 +60,13 @@ class ResetPasswordNotification extends Notification implements HasMailTemplate,
         $resetUrl = $this->buildResetUrl($notifiable->email);
 
         return (new MailMessage)
-            ->subject('Restablecer Contraseña')
-            ->greeting('Hola '.$notifiable->name.',')
-            ->line('Recibiste este email porque solicitaste restablecer tu contraseña.')
-            ->action('Restablecer Contraseña', $resetUrl)
-            ->line('Este enlace expirará en 60 minutos.')
-            ->line('Si no solicitaste este cambio, ignora este email.')
-            ->salutation('Saludos, '.config('app.name'));
+            ->subject(__('messages.mail.password_reset.subject'))
+            ->greeting(__('messages.mail.password_reset.greeting', ['name' => $notifiable->name]))
+            ->line(__('messages.mail.password_reset.intro'))
+            ->action(__('messages.mail.password_reset.action'), $resetUrl)
+            ->line(__('messages.mail.password_reset.expires'))
+            ->line(__('messages.mail.password_reset.ignore'))
+            ->salutation(__('messages.mail.password_reset.salutation', ['app' => config('app.name')]));
     }
 
     /**

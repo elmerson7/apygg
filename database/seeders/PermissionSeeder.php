@@ -69,6 +69,8 @@ class PermissionSeeder extends Seeder
             // Multiempresa (docs/multi-tenancy.md)
             ['name' => 'tenants.access-any', 'display_name' => 'Acceder a Cualquier Tenant', 'description' => 'Permite entrar en cualquier tenant activo sin ser miembro (soporte de plataforma)'],
 
+            ['name' => 'tenant-settings.manage', 'display_name' => 'Gestionar Ajustes del Tenant', 'description' => 'Permite cambiar los ajustes de la empresa activa (idioma, zona horaria y moneda por defecto)'],
+
             // Back-office (Filament, opcional): ver docs/backoffice.md
             ['name' => 'backoffice.access', 'display_name' => 'Acceder al Back-office', 'description' => 'Permite entrar al panel interno (Filament); además exige MFA. Cada recurso pide sus propios permisos'],
 

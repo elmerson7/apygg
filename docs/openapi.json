@@ -3364,6 +3364,450 @@
                 ]
             }
         },
+        "/user/locale": {
+            "get": {
+                "operationId": "user.locale.show",
+                "tags": [
+                    "Locale"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "stored": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "locale": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "timezone": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "locale",
+                                                        "timezone"
+                                                    ]
+                                                },
+                                                "effective": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "locale": {
+                                                            "type": "string"
+                                                        },
+                                                        "timezone": {
+                                                            "type": "string"
+                                                        },
+                                                        "currency": {
+                                                            "type": "string"
+                                                        },
+                                                        "supported_locales": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "locale",
+                                                        "timezone",
+                                                        "currency",
+                                                        "supported_locales"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "stored",
+                                                "effective"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "operationId": "user.locale.update",
+                "tags": [
+                    "Locale"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateUserLocaleRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "stored": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "locale": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "timezone": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "locale",
+                                                        "timezone"
+                                                    ]
+                                                },
+                                                "effective": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "locale": {
+                                                            "type": "string"
+                                                        },
+                                                        "timezone": {
+                                                            "type": "string"
+                                                        },
+                                                        "currency": {
+                                                            "type": "string"
+                                                        },
+                                                        "supported_locales": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "locale",
+                                                        "timezone",
+                                                        "currency",
+                                                        "supported_locales"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "stored",
+                                                "effective"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationFailed"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/tenant/locale": {
+            "get": {
+                "operationId": "tenant.locale.show",
+                "tags": [
+                    "Locale"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "stored": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "locale": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "timezone": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "currency": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "locale",
+                                                        "timezone",
+                                                        "currency"
+                                                    ]
+                                                },
+                                                "effective": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "locale": {
+                                                            "type": "string"
+                                                        },
+                                                        "timezone": {
+                                                            "type": "string"
+                                                        },
+                                                        "currency": {
+                                                            "type": "string"
+                                                        },
+                                                        "supported_locales": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "locale",
+                                                        "timezone",
+                                                        "currency",
+                                                        "supported_locales"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "stored",
+                                                "effective"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "operationId": "tenant.locale.update",
+                "tags": [
+                    "Locale"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateTenantLocaleRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "stored": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "locale": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "timezone": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "currency": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "locale",
+                                                        "timezone",
+                                                        "currency"
+                                                    ]
+                                                },
+                                                "effective": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "locale": {
+                                                            "type": "string"
+                                                        },
+                                                        "timezone": {
+                                                            "type": "string"
+                                                        },
+                                                        "currency": {
+                                                            "type": "string"
+                                                        },
+                                                        "supported_locales": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "locale",
+                                                        "timezone",
+                                                        "currency",
+                                                        "supported_locales"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "stored",
+                                                "effective"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationFailed"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/admin/logs/activity": {
             "get": {
                 "operationId": "logs.activity",
@@ -11311,6 +11755,12 @@
                             "null"
                         ]
                     },
+                    "locale": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
                     "phone": {
                         "type": [
                             "string",
@@ -11393,6 +11843,7 @@
                     "username",
                     "email",
                     "timezone",
+                    "locale",
                     "phone",
                     "avatar",
                     "bio",
@@ -12915,6 +13366,17 @@
                             "null"
                         ]
                     },
+                    "locale": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "es",
+                            "en",
+                            null
+                        ]
+                    },
                     "phone": {
                         "type": [
                             "string",
@@ -13082,6 +13544,130 @@
                 },
                 "title": "UpdateSettingsRequest"
             },
+            "UpdateTenantLocaleRequest": {
+                "type": "object",
+                "description": "Idioma, zona horaria y moneda por defecto del tenant (PUT /tenant/locale). `null` = heredar.",
+                "properties": {
+                    "locale": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "es",
+                            "en",
+                            null
+                        ]
+                    },
+                    "timezone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "currency": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "BIF",
+                            "CLP",
+                            "DJF",
+                            "GNF",
+                            "ISK",
+                            "JPY",
+                            "KMF",
+                            "KRW",
+                            "PYG",
+                            "RWF",
+                            "UGX",
+                            "VND",
+                            "VUV",
+                            "XAF",
+                            "XOF",
+                            "XPF",
+                            "BHD",
+                            "IQD",
+                            "JOD",
+                            "KWD",
+                            "LYD",
+                            "OMR",
+                            "TND",
+                            "AED",
+                            "ARS",
+                            "AUD",
+                            "BOB",
+                            "BRL",
+                            "CAD",
+                            "CHF",
+                            "CNY",
+                            "COP",
+                            "CRC",
+                            "CZK",
+                            "DKK",
+                            "DOP",
+                            "EUR",
+                            "GBP",
+                            "GTQ",
+                            "HKD",
+                            "HNL",
+                            "HUF",
+                            "IDR",
+                            "ILS",
+                            "INR",
+                            "MXN",
+                            "MYR",
+                            "NIO",
+                            "NOK",
+                            "NZD",
+                            "PAB",
+                            "PEN",
+                            "PHP",
+                            "PLN",
+                            "RON",
+                            "RUB",
+                            "SAR",
+                            "SEK",
+                            "SGD",
+                            "THB",
+                            "TRY",
+                            "TWD",
+                            "UAH",
+                            "USD",
+                            "UYU",
+                            "VES",
+                            "ZAR",
+                            null
+                        ]
+                    }
+                },
+                "title": "UpdateTenantLocaleRequest"
+            },
+            "UpdateUserLocaleRequest": {
+                "type": "object",
+                "description": "Idioma y zona horaria propios (PUT /user/locale). `null` = heredar del tenant/instalación.",
+                "properties": {
+                    "locale": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "es",
+                            "en",
+                            null
+                        ]
+                    },
+                    "timezone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "title": "UpdateUserLocaleRequest"
+            },
             "UpdateUserRequest": {
                 "type": "object",
                 "description": "UpdateUserRequest\n\nForm Request para validación de actualización de usuarios.\nLos campos permitidos dependen de quién edita (ver `rules()`).\nIncluye sanitización automática heredada de BaseFormRequest.",
@@ -13245,6 +13831,12 @@
                     },
                     "token_version": {
                         "type": "integer"
+                    },
+                    "locale": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     }
                 },
                 "required": [
@@ -13260,7 +13852,8 @@
                     "updated_at",
                     "deleted_at",
                     "deleted_by",
-                    "token_version"
+                    "token_version",
+                    "locale"
                 ],
                 "title": "User"
             },

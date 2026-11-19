@@ -63,6 +63,9 @@ require __DIR__.'/api/settings.php';
 // Usuario autenticado (/user)
 require __DIR__.'/api/user.php';
 
+// Idioma, zona horaria y moneda (/user/locale, /tenant/locale)
+require __DIR__.'/api/i18n.php';
+
 // Gestión de usuarios
 require __DIR__.'/api/users.php';
 

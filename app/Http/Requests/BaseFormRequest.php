@@ -41,29 +41,13 @@ abstract class BaseFormRequest extends FormRequest
     }
 
     /**
-     * Mensajes de error comunes en español
+     * Mensajes comunes: salen de `lang/<idioma>/validation.php` (idioma resuelto por petición).
      *
      * @return array<string, mixed>
      */
     protected function getCommonMessages(): array
     {
-        return [
-            'required' => 'El campo :attribute es obligatorio.',
-            'email' => 'El campo :attribute debe ser un correo electrónico válido.',
-            'unique' => 'El valor del campo :attribute ya está en uso.',
-            'exists' => 'El valor seleccionado para :attribute no es válido.',
-            'min' => 'El campo :attribute debe tener al menos :min caracteres.',
-            'max' => 'El campo :attribute no puede tener más de :max caracteres.',
-            'numeric' => 'El campo :attribute debe ser un número.',
-            'integer' => 'El campo :attribute debe ser un número entero.',
-            'string' => 'El campo :attribute debe ser una cadena de texto.',
-            'array' => 'El campo :attribute debe ser un array.',
-            'date' => 'El campo :attribute debe ser una fecha válida.',
-            'date_format' => 'El campo :attribute debe tener el formato :format.',
-            'uuid' => 'El campo :attribute debe ser un UUID válido.',
-            'confirmed' => 'La confirmación del campo :attribute no coincide.',
-            'password' => 'La contraseña es incorrecta.',
-        ];
+        return [];
     }
 
     /**
@@ -85,19 +69,13 @@ abstract class BaseFormRequest extends FormRequest
     }
 
     /**
-     * Atributos comunes en español
+     * Nombres de atributo comunes: salen de `lang/<idioma>/validation.php` (`attributes`).
      *
      * @return array<string, mixed>
      */
     protected function getCommonAttributes(): array
     {
-        return [
-            'email' => 'correo electrónico',
-            'password' => 'contraseña',
-            'name' => 'nombre',
-            'created_at' => 'fecha de creación',
-            'updated_at' => 'fecha de actualización',
-        ];
+        return [];
     }
 
     /**

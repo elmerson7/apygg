@@ -9,6 +9,8 @@ use App\Contracts\DocsIndexerInterface;
 use App\Contracts\DocsServiceInterface;
 use App\Contracts\FileServiceInterface;
 use App\Contracts\HostResolverInterface;
+use App\Contracts\LocaleResolverInterface;
+use App\Contracts\LocaleSettingsServiceInterface;
 use App\Contracts\MailAccountServiceInterface;
 use App\Contracts\MailEventStatusServiceInterface;
 use App\Contracts\MailSendPolicyInterface;
@@ -32,6 +34,8 @@ use App\Services\BackupService;
 use App\Services\Docs\DocsIndexer;
 use App\Services\Docs\DocsService;
 use App\Services\FileService;
+use App\Services\I18n\LocaleResolver;
+use App\Services\I18n\LocaleSettingsService;
 use App\Services\Mail\MailAccountService;
 use App\Services\Mail\MailEventStatusService;
 use App\Services\Mail\MailSendPolicy;
@@ -101,6 +105,9 @@ class ContractServiceProvider extends ServiceProvider
         $this->app->bind(WebhookSignatureVerifierInterface::class, SvixSignatureVerifier::class);
         $this->app->bind(SecurityAuditServiceInterface::class, SecurityAuditService::class);
         $this->app->bind(SequenceInterface::class, Sequence::class);
+
+        $this->app->bind(LocaleResolverInterface::class, LocaleResolver::class);
+        $this->app->bind(LocaleSettingsServiceInterface::class, LocaleSettingsService::class);
 
         // Colaborador sin estado: el DNS real; los tests lo sustituyen con `$this->app->instance(...)`.
         $this->app->singleton(HostResolverInterface::class, DnsHostResolver::class);

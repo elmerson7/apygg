@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Contracts\LocaleResolverInterface;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\Tenancy\Exceptions\MissingTenantContext;
@@ -11,6 +12,7 @@ use App\Support\Tenancy\PermissionTeams;
 use App\Support\Tenancy\TenantContext;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -30,7 +32,10 @@ class ResolveTenant
     /** Permiso de plataforma: entrar a cualquier tenant activo sin ser miembro (soporte). */
     public const PLATFORM_PERMISSION = 'tenants.access-any';
 
-    public function __construct(private readonly TenantContext $context) {}
+    public function __construct(
+        private readonly TenantContext $context,
+        private readonly LocaleResolverInterface $locale,
+    ) {}
 
     public function handle(Request $request, Closure $next, string $mode = 'required'): Response
     {
@@ -71,6 +76,8 @@ class ResolveTenant
         // Spatie teams: las relaciones `roles`/`permissions` cacheadas en el usuario son del equipo anterior.
         PermissionTeams::forgetUserRelations($user);
         $request->attributes->set('tenant', $tenant);
+        // El idioma del tenant entra en la cadena (usuario -> tenant -> cabecera): se reaplica; SetApiLocale lo restaura.
+        App::setLocale($this->locale->locale());
 
         return $next($request);
     }

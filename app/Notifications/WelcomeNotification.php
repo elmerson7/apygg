@@ -44,13 +44,15 @@ class WelcomeNotification extends Notification implements HasMailTemplate, Shoul
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $app = (string) config('app.name');
+
         return (new MailMessage)
-            ->subject('Bienvenido a '.config('app.name'))
-            ->greeting('¡Hola '.$notifiable->name.'!')
-            ->line('Te damos la bienvenida a '.config('app.name').'.')
-            ->line('Tu cuenta ha sido creada exitosamente y ya puedes comenzar a usar nuestros servicios.')
-            ->line('Si tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos.')
-            ->salutation('Saludos, el equipo de '.config('app.name'));
+            ->subject(__('messages.mail.welcome.subject', ['app' => $app]))
+            ->greeting(__('messages.mail.welcome.greeting', ['name' => $notifiable->name]))
+            ->line(__('messages.mail.welcome.intro', ['app' => $app]))
+            ->line(__('messages.mail.welcome.body'))
+            ->line(__('messages.mail.welcome.help'))
+            ->salutation(__('messages.mail.welcome.salutation', ['app' => $app]));
     }
 
     /**

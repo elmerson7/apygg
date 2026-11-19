@@ -32,6 +32,7 @@ class ProfileResource extends BaseResource
             'username' => $user->username,
             'email' => $user->email,
             'timezone' => $user->timezone,
+            'locale' => $user->locale,
             'phone' => $profile?->phone,
             'avatar' => $profile?->avatar,
             'bio' => $profile?->bio,

@@ -195,7 +195,7 @@ class UserService implements UserServiceInterface
     {
         $oldAttributes = $user->getAttributes();
 
-        $accountData = array_intersect_key($data, array_flip(['name', 'username', 'timezone']));
+        $accountData = array_intersect_key($data, array_flip(['name', 'username', 'timezone', 'locale']));
         $profileData = array_intersect_key($data, array_flip([
             'first_name', 'last_name', 'phone', 'bio', 'date_of_birth', 'gender',
             'address', 'city', 'state', 'country', 'postal_code', 'social_links',

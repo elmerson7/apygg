@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Contracts\LocaleResolverInterface;
 use App\Http\Middleware\ResolveTenant;
 use App\Models\Logs\ActivityLog;
 use App\Support\Tenancy\PermissionTeams;
@@ -18,6 +19,7 @@ use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthentication;
 use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthenticationRecovery;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -40,6 +42,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property string|null $username
  * @property string $password
  * @property string|null $timezone
+ * @property string|null $locale
  * @property string|null $identity_document
  * @property array<string, mixed>|null $preferences
  * @property int $token_version
@@ -51,7 +54,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property-read Collection<int, Role> $roles
  * @property-read Collection<int, Permission> $permissions
  */
-class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery, JWTSubject
+class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery, HasLocalePreference, JWTSubject
 {
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, HasRoles, InteractsWithAppAuthentication, InteractsWithAppAuthenticationRecovery, LogsActivity, Notifiable, Searchable, SoftDeletes, SoftDeletesWithUser;
@@ -94,6 +97,7 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         'username',
         'password',
         'timezone',
+        'locale',
         'identity_document',
         'deleted_by',
         'preferences',
@@ -192,7 +196,16 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
      */
     public function getTimezone(): string
     {
-        return $this->timezone ?? config('app.timezone', 'UTC');
+        return app(LocaleResolverInterface::class)->timezoneFor($this);
+    }
+
+    /**
+     * Idioma del destinatario para correos y notificaciones (también en cola): el suyo, el del
+     * tenant activo o el de la instalación; nunca el de quien dispara el job.
+     */
+    public function preferredLocale(): string
+    {
+        return app(LocaleResolverInterface::class)->localeFor($this);
     }
 
     /**
