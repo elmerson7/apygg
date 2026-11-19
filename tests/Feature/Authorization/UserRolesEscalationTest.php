@@ -287,3 +287,55 @@ test('no se puede borrar ni renombrar el rol admin', function () {
 
     expect(Role::where('name', 'admin')->exists())->toBeTrue();
 });
+
+// ---------- Crear usuarios con roles ----------
+
+test('un manager no puede crear un usuario con el rol admin', function () {
+    $manager = userWithRole('manager');
+
+    $this->withHeaders(actingAsToken($manager))
+        ->postJson('/users', [
+            'first_name' => 'Nuevo',
+            'last_name' => 'Admin',
+            'username' => 'nuevoadmin',
+            'email' => 'nuevo-admin@example.com',
+            'password' => 'Secreta123!',
+            'identity_document' => '12345678',
+            'role_ids' => [Role::where('name', 'admin')->value('id')],
+        ])
+        ->assertForbidden();
+
+    expect(User::where('email', 'nuevo-admin@example.com')->exists())->toBeFalse();
+});
+
+test('un manager no puede crear un usuario con un rol que tiene permisos que él no tiene', function () {
+    $manager = userWithRole('manager');
+
+    $this->withHeaders(actingAsToken($manager))
+        ->postJson('/users', [
+            'first_name' => 'Nuevo',
+            'last_name' => 'Moderador',
+            'username' => 'nuevomoderador',
+            'email' => 'nuevo-moderador@example.com',
+            'password' => 'Secreta123!',
+            'identity_document' => '12345679',
+            'role_ids' => [Role::where('name', 'moderator')->value('id')],
+        ])
+        ->assertForbidden();
+});
+
+test('un manager puede crear un usuario con un rol cuyos permisos tiene', function () {
+    $manager = userWithRole('manager');
+
+    $this->withHeaders(actingAsToken($manager))
+        ->postJson('/users', [
+            'first_name' => 'Nuevo',
+            'last_name' => 'Editor',
+            'username' => 'nuevoeditor',
+            'email' => 'nuevo-editor@example.com',
+            'password' => 'Secreta123!',
+            'identity_document' => '12345680',
+            'role_ids' => [Role::where('name', 'editor')->value('id')],
+        ])
+        ->assertCreated();
+});

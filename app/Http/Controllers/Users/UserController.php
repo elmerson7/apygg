@@ -83,8 +83,14 @@ class UserController extends Controller
     public function store(StoreUserRequest $request): JsonResponse
     {
         $validated = $request->validated();
-        $roleIds = $validated['role_ids'] ?? [];
+        $roleIds = array_map('intval', $validated['role_ids'] ?? []);
         unset($validated['role_ids']);
+
+        // Mismo control que al asignar roles: nadie crea un usuario con un rol
+        // que no podría asignarle (p. ej. un manager no crea admins).
+        foreach (Role::whereIn('id', $roleIds)->get() as $role) {
+            $this->authorize('assign', $role);
+        }
 
         $user = $this->userService->create($validated, $roleIds);
 
