@@ -296,6 +296,25 @@ Solo afecta si activas `MULTI_TENANCY_ENABLED=true` (con `false` todo sigue igua
 - `User::isAdmin()` con teams = admin del tenant activo o de la plataforma; nuevo `User::canEnterTenant()`.
 - `CacheService`: dentro de `TenantQuery::withoutTenant()` las claves no llevan prefijo de tenant.
 
+### 14e. Actualizar la imagen por seguridad (PHP / FrankenPHP)
+
+La imagen de la app fija la versión exacta en `docker/app/Dockerfile`
+(`dunglas/frankenphp:<franken>-php<php>-bookworm`). Desde PHP 8.5.12 hay
+correcciones de dos vulnerabilidades críticas de ejecución remota sin
+autenticación (CVE-2026-109618 y CVE-2026-109619): una imagen con PHP 8.5.3
+(la antigua `1.11-php8.5-bookworm`) es vulnerable. Pasos:
+
+1. Cambia el `FROM` a la última etiqueta fijada (hoy `1.13.6-php8.5.13-bookworm`;
+   consulta las etiquetas en Docker Hub, `dunglas/frankenphp`).
+2. `make build` (reconstruye la imagen sin tocar datos) y `make up` para
+   reiniciar los contenedores con la imagen nueva.
+3. Comprueba: `make sh` y luego `php -v` y `php -m` (pcov, redis, intl,
+   pdo_pgsql, gd, zip, bcmath, pcntl, opcache).
+4. `make check` y `make test`.
+
+Repite esto con cada parche de seguridad de PHP; no uses etiquetas flotantes
+(`php8.5`) en producción.
+
 ### 15. Verificación final
 
 ```bash

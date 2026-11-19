@@ -9,7 +9,7 @@ Versiones de `composer.lock`, `package.json` y los Dockerfile de `docker/`. Si c
 | PHP | 8.5 | `composer.json` (`^8.5`), `docker/app/Dockerfile` |
 | Laravel | 13.31.0 | `composer.lock` |
 | Laravel Octane | 2.19.1 | `composer.lock` |
-| FrankenPHP | 1.11 (`dunglas/frankenphp:1.11-php8.5-bookworm`) | `docker/app/Dockerfile` |
+| FrankenPHP | 1.13.6 con PHP 8.5.13 (`dunglas/frankenphp:1.13.6-php8.5.13-bookworm`, etiqueta fijada) | `docker/app/Dockerfile` |
 
 Extensiones PHP instaladas en la imagen: `pcntl`, `intl`, `zip`, `opcache`, `gd`, `pdo_pgsql`, `bcmath`, entre otras (`docker/app/Dockerfile`).
 

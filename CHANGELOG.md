@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- Imagen base actualizada a `dunglas/frankenphp:1.13.6-php8.5.13-bookworm` (antes `1.11-php8.5-bookworm`: PHP 8.5.3, FrankenPHP 1.11.3). PHP 8.5.12 corrige dos vulnerabilidades críticas de ejecución remota sin autenticación (CVE-2026-109618 y CVE-2026-109619); 8.5.13 es la última 8.5.x. La etiqueta queda fijada a versión exacta para builds reproducibles. Proyectos derivados: ver `docs/upgrading.md` ("Actualizar la imagen por seguridad")
+
 ### Changed
 - `Tenant`: `is_active` pasa a `status` (string), desaparecen `Tenant::setCurrent/resolveCurrent/clearCurrent/hasCurrent` (usa `TenantContext`), `Tenant::users()` es many-to-many vía `tenant_user`; `ResolveTenant` se reescribe (alias `tenant`)
 
