@@ -130,7 +130,7 @@ También puedes usar el script de prueba manual:
 
 ```javascript
 // Request simple
-fetch('https://api.example.com/api/users', {
+fetch('https://api.example.com/users', {
     method: 'GET',
     headers: {
         'Content-Type': 'application/json',
@@ -147,7 +147,7 @@ fetch('https://api.example.com/api/users', {
 Para métodos como PUT, DELETE, PATCH, el navegador envía primero un request OPTIONS (preflight):
 
 ```javascript
-fetch('https://api.example.com/api/users/1', {
+fetch('https://api.example.com/users/1', {
     method: 'PUT',
     headers: {
         'Content-Type': 'application/json',
@@ -253,7 +253,7 @@ curl -H "Origin: http://localhost:3000" \
      -H "Access-Control-Request-Method: GET" \
      -H "Access-Control-Request-Headers: Content-Type" \
      -X OPTIONS \
-     http://localhost:8000/api/test
+     http://localhost:8000/health
 ```
 
 ### Probar desde navegador
@@ -261,7 +261,7 @@ curl -H "Origin: http://localhost:3000" \
 Abre la consola del navegador y ejecuta:
 
 ```javascript
-fetch('http://localhost:8000/api/test', {
+fetch('http://localhost:8000/health', {
     method: 'GET',
     headers: {
         'Content-Type': 'application/json',

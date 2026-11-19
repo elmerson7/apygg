@@ -1,52 +1,50 @@
 # TASKS — Estado real del boilerplate APYGG
 
-Revisado contra el código el 2026-11-19. Lo marcado como hecho está comprobado en el código o en las rutas.
+Revisado contra el código el 2026-11-19. Lo marcado como hecho está comprobado en el código, las rutas o los tests.
 
 ## Hecho
 
-- **Auth JWT**: login, registro, refresh, recuperación y reset de contraseña, logout, `me` y cambio de contraseña (`routes/api/auth.php`).
-- **API Keys**: alta, listado, revocación y rotación; scopes con `api-key-scope:` (`routes/api/api-keys.php`).
-- **RBAC propio**: modelos `Role` y `Permission`, tablas pivote, middleware `permission:` y `role:`. Spatie está en `composer.json` pero no se usa.
-- **Usuarios y perfil**: CRUD, restauración, roles por usuario, actividad; perfil y preferencias en `/user`.
-- **Roles y permisos**: CRUD de roles, permisos agrupados y asignación de permisos a roles.
-- **Webhooks salientes**: CRUD, entregas, reintentos y rotación de secreto (`SendWebhookJob`).
-- **Webhook de correo entrante**: `/webhooks/mail` con verificación de firma Svix.
-- **Archivos**: subida, listado, descarga, actualización y borrado (`FileService`, discos `local`, `public` y `s3`).
-- **Settings**: CRUD y consulta por clave (`routes/api/settings.php`).
-- **Notificaciones push**: `FcmService` y `DeviceToken`.
-- **Correo**: multi-cuenta y multi-proveedor, plantillas, registro de envíos y pausa global (`/admin/mail`).
-- **Gateway LLM**: áreas configurables en BD, respaldos y auditoría (`/admin/llm`).
-- **Asistente RAG**: indexado de Markdown (`docs:index`) y búsqueda y preguntas (`/docs/*`).
-- **Menú dinámico**: CRUD y visibilidad (`/admin/menu`).
-- **Seguridad**: auditoría con escaneos (`/admin/security/scans`), lista de bloqueo (`/admin/blacklist`), headers, rate limiting adaptativo y registro de eventos.
-- **Logging**: `LogService`, canales `activity`, `security`, `auth`, `sentry`, y registro de peticiones API.
-- **Health**: `/health`, `/health/live`, `/health/ready` y `/health/detailed`.
-- **Documentación de API**: Scramble en `/docs/api`.
-- **Caché**: `CacheService` y comandos `cache:list`, `cache:invalidate`, `cache:metrics`, `cache:warm`.
-- **Backups de BD**: crear, listar, limpiar, restaurar y restaurar desde remoto (comandos `backup:*`, `db:backup`).
-- **Búsqueda**: Scout con Meilisearch (`/search`) y sincronización de índices.
-- **Infraestructura**: Docker Compose con `app`, `reverb`, `horizon`, `scheduler`, `postgres` y `redis`; `pgbouncer` (perfil `prod`) y `meilisearch` (perfil `search`) como opcionales.
-- **CI**: job de lint (Pint y PHPStan) y job de tests (Pest con cobertura), `composer audit`, `cd.yml`, SonarCloud y Dependabot.
-- **Tests**: 286 pruebas Pest en verde (Unit, Feature y Arch), `pint` y `phpstan` (nivel 5) limpios.
-- **Makefile**: partido en `make/*.mk` por tema.
+### Módulos
+
+- **Auth JWT**: login, registro, refresh, recuperación y reset de contraseña, logout, `me` y cambio de contraseña (`routes/api/auth.php`). Versión de token por usuario (`token_version`), refresh que no sirve como access, bloqueo por IP e identidad.
+- **API Keys**: alta, listado, revocación y rotación; guard `api-key`; sin scopes no hay acceso.
+- **RBAC con spatie/laravel-permission 8.5**: guard `api`, rutas con `permission:x.y,api`, super admin por `Gate::after`, `PermissionCatalogTest`, teams preparado y apagado.
+- **Usuarios y perfil**: CRUD, restauración, roles por usuario con jerarquía, perfil y preferencias en `/user`.
+- **Webhooks salientes**: CRUD, entregas, reintentos, firma `timestamp.cuerpo`, protección SSRF (solo https, sin redes privadas).
+- **Webhook de correo entrante**: `/webhooks/mail` con firma Svix.
+- **Archivos**: tipo por contenido, discos público y privado, URLs firmadas (`docs/files.md`).
+- **Correo**: un solo camino (Mailable/Notification en cola) con cuentas en BD, plantillas, pausa, límites y registro (`/admin/mail`).
+- **Gateway LLM** (`/admin/llm`), **asistente RAG** (`/docs/*`), **menú dinámico** (`/admin/menu`), **settings**.
+- **Seguridad**: auditoría con escaneos, lista de bloqueo, headers, rate limiting adaptativo, registro de eventos. Un solo registro de seguridad por login/logout (`LogAuthenticationEvents` sobre los eventos de Laravel).
+- **Back-office Filament 5 (opcional)**: `/backoffice`, MFA TOTP obligatorio (`docs/backoffice.md`).
+- **Logging, health, caché, backups de BD, búsqueda (Scout + Meilisearch), Reverb, Horizon, Scramble** (`/docs/api`).
+- **Infraestructura**: Docker Compose (`app`, `reverb`, `horizon`, `scheduler`, `postgres`, `redis`; `pgbouncer` y `meilisearch` opcionales), CI (lint, tests, `composer audit`), Makefile en `make/*.mk`.
+
+### Arquitectura y calidad
+
+- Servicios inyectados por interfaz, sin repositorios ni DTOs, sin estado estático mutable (Octane); `ArchTest` lo vigila.
+- Una sola base de controller; Form Requests tipados; respuestas con `sendSuccess`/`sendError`/`sendPaginated`.
+- Sin saneado global de entrada.
+- Columnas JSON en `jsonb` (migración `2026_11_19_000040`, `JsonbColumnsTest`).
+- Código muerto retirado en la ola de limpieza (2026-11-19): DTOs, Enums, Events/Broadcasting, Helpers sin uso, Rules sin uso, tres Jobs, `FcmService`, `QrCodeService`, `DeviceTokenController`, login social con su paquete (Socialite) y `Exceptions/Handler`.
+- Documentación puesta al día contra el código y `docs/upgrading.md` con los pasos para proyectos derivados.
+- Tests Pest (Unit, Feature, Arch) en verde; `pint` y `phpstan` limpios.
 
 ## Pendiente
 
-### Crítico
-
-- [ ] **Multi-tenancy a medias.** Existen el modelo `Tenant`, la migración `create_tenants_table`, el trait `BelongsToTenant`, `TenantScope` y el middleware `ResolveTenant`. El middleware no está registrado en `bootstrap/app.php`, ninguna tabla tiene columna `tenant_id` y `config/multi-tenancy.php` viene con `enabled = false`. Decidir si se completa o se retira.
-- [ ] **Login social sin rutas.** `SocialAuthController` y `SocialAuthService` existen, pero no hay rutas, `config/services.php` no tiene Google ni GitHub, y no hay migración para `social_accounts`.
-- [ ] **Backup de archivos.** `BackupCreateCommand` lo marca como TODO y solo avisa de que no está implementado.
-- [ ] **Sin suscripciones ni cobros.** No hay pasarela de pagos, ni `Cashier` ni modelos de suscripción.
-
 ### Importante
 
-- [ ] **Repositorios sin usar.** Existen siete repositorios con sus interfaces, pero solo `AuthService` y `UserService` los usan. El resto de servicios accede a Eloquent directamente.
-- [ ] **DTOs parciales.** Hay seis DTOs. Los servicios que no los reciben siguen con arrays.
-- [ ] **Feature flags sin uso.** `config/features.php` define `advanced_search`, `export_users` y `two_factor_auth`, pero ningún código los consulta. El middleware `feature:` no se usa en ninguna ruta.
-- [ ] **Dependencias sin uso.** `setasign/fpdf`, `setasign/fpdi`, `barryvdh/laravel-snappy` y `spatie/laravel-query-builder` no aparecen en el código. Decidir si se quitan.
-- [ ] **Cobertura.** El objetivo del 80% en código crítico no está medido.
+- [ ] **Multiempresa.** Existen `Tenant`, `create_tenants_table`, `BelongsToTenant`, `TenantScope`, el middleware `ResolveTenant` (sin registrar) y `PERMISSION_TEAMS=false`. Ninguna tabla tiene `tenant_id` y `config/multi-tenancy.php` viene apagado. Decidir si se completa (fase de multiempresa) o se retira todo junto. `Tenant::$currentTenant` es la única excepción a la regla de estáticos.
+- [ ] **Suscripciones y cobros.** No hay pasarela de pagos, ni Cashier ni modelos de suscripción. Decisión de cada proyecto; no entra en el boilerplate salvo que se decida lo contrario.
+- [ ] **Mailpit y MinIO en Compose.** `docs/minio-configuration.md` y el disco `s3_private` existen, pero el Compose no trae servicios `mailpit` ni `minio` para desarrollo local (`.env.example` usa `MAIL_MAILER=log`). Añadirlos como perfiles opcionales.
+- [ ] **`make init`.** Un único comando que cree `compose.env` y `.env`, levante los servicios, genere `APP_KEY` y el secreto JWT, migre y siembre. Hoy son varios pasos manuales (ver README, "Instalación").
+- [ ] **Backup de archivos.** `BackupCreateCommand` lo marca como TODO.
+- [ ] **Mover archivos privados antiguos** al disco privado en proyectos que vengan de una versión previa (no hay comando; ver `docs/upgrading.md`).
+- [ ] **Cobertura.** El objetivo del 80 % en código crítico no está medido (`make test-coverage`).
 
 ### Menor
 
-- [ ] `AGENTS.md` describe Sanctum como método alternativo, pero Sanctum no está en `composer.json`. Corregir `AGENTS.md` o instalar el paquete (`AGENTS.md` no se tocó en esta revisión).
+- [ ] **Feature flags sin uso.** `config/features.php` define `advanced_search`, `export_users` y `two_factor_auth`, pero ninguna ruta usa el middleware `feature:`.
+- [ ] **Dependencias sin uso.** `setasign/fpdf`, `setasign/fpdi`, `barryvdh/laravel-snappy` y `spatie/laravel-query-builder` no aparecen en `app/`. Decidir si se quitan. `chillerlan/php-qrcode` se queda: lo exige Filament para el QR del MFA.
+- [ ] **Tabla `device_tokens`** sin modelo ni rutas (se dejó para no borrar datos de proyectos derivados). Retirarla con una migración si no se va a usar push.
+- [ ] **Failed login.** `LogAuthenticationEvents::handleFailed` existe, pero la API no dispara el evento `Failed` de Laravel (los fallos se registran con `LogService` y el bloqueo); valorar dispararlo desde `AuthService`.

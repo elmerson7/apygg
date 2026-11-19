@@ -48,7 +48,7 @@ Cada módulo está implementado en el código. Lo que aún no está completo fig
 - **Back-office interno (opcional)**: panel Filament para el dueño de la plataforma (usuarios, roles, logs, correo, ajustes, lista negra) con MFA obligatorio, en `/backoffice`; se apaga con `BACKOFFICE_ENABLED=false` y se puede quitar (ver `docs/backoffice.md`).
 - **Documentación de API**: Scramble en `/docs/api`.
 
-Autenticación social (Socialite) tiene controlador y servicio, pero no tiene rutas. Ver TASKS.md.
+No incluidos a propósito: login social, notificaciones push y suscripciones/cobros (decisión de cada proyecto). Ver TASKS.md.
 
 ## Requisitos
 
@@ -120,18 +120,15 @@ Middleware con alias registrados en `bootstrap/app.php`: `api-key-scope:`, `perm
 ```
 app/
 ├── Console/Commands/   # comandos artisan
-├── Contracts/          # interfaces de servicios y repositorios
-├── DTOs/               # objetos de transferencia
-├── Enums/              # enumeraciones
+├── Contracts/          # interfaces de servicios
 ├── Events/ Listeners/  # eventos y listeners
 ├── Exceptions/
-├── Helpers/            # ApiResponse, Feature, DateHelper, etc.
+├── Helpers/            # ApiResponse, Feature, Redactor, etc.
 ├── Http/               # Controllers, Middleware, Requests, Resources
 ├── Jobs/
 ├── Logging/            # handlers y processors de Monolog
 ├── Mail/               # Mailables
 ├── Models/             # Eloquent (Logs/, Mail/, Docs/, Llm/)
-├── Repositories/
 ├── Services/           # lógica de aplicación (Docs/, LLM/, Logging/, Mail/, Menu/, Tools/)
 └── Traits/
 config/                 # configuración por archivo
@@ -148,6 +145,7 @@ tests/                  # Unit/ (incluye Arch) y Feature/
 - [ARCHITECTURE.md](./ARCHITECTURE.md): capas, módulos y flujos.
 - [TECH_STACK.md](./TECH_STACK.md): stack completo y versiones.
 - [TASKS.md](./TASKS.md): estado actual y pendientes.
+- [docs/upgrading.md](./docs/upgrading.md): notas de actualización para proyectos derivados (qué rompe y qué hacer).
 - [CONTRIBUTING.md](./CONTRIBUTING.md): cómo contribuir.
 - [CHANGELOG.md](./CHANGELOG.md): cambios por versión.
 - [docs/](./docs/): documentación por tema (caché, backups, correo, LLM, WebSockets, etc.).

@@ -90,7 +90,7 @@ Disparado cuando un usuario inicia sesión exitosamente.
 - `?string $userAgent` - User agent del cliente
 
 **Listeners asociados:**
-- `LogAuthEvents::handleUserLoggedIn()` - Registra el login en el log de autenticación
+- `WebhookListener` (webhook `user.logged_in`). El registro de seguridad del login NO sale de este evento: lo hace `LogAuthenticationEvents` al recibir el `Illuminate\Auth\Events\Login` que `AuthService` dispara justo antes, así hay un único registro por login.
 
 ---
 
@@ -105,7 +105,7 @@ Disparado cuando un usuario cierra sesión (token revocado).
 - `?string $ipAddress` - Dirección IP del cliente
 
 **Listeners asociados:**
-- `LogAuthEvents::handleUserLoggedOut()` - Registra el logout en el log de autenticación
+- `WebhookListener` (webhook `user.logged_out`). El registro de seguridad lo hace `LogAuthenticationEvents` con `Illuminate\Auth\Events\Logout`.
 
 ---
 
@@ -193,18 +193,18 @@ Registra actividades de usuarios en el sistema de logging.
 
 ---
 
-### `LogAuthEvents`
-Registra eventos de autenticación en el sistema de logging.
+### `LogAuthenticationEvents`
+Único responsable del registro de seguridad de autenticación (suscriptor registrado en `AppServiceProvider`).
 
-**Eventos que escucha:**
-- `UserLoggedIn` → `handleUserLoggedIn()`
-- `UserLoggedOut` → `handleUserLoggedOut()`
+**Eventos que escucha (los estándar de Laravel):**
+- `Login` → `AuthLogger::logLoginSuccess()`
+- `Failed` → `AuthLogger::logLoginFailure()`
+- `Logout` → `AuthLogger::logTokenRevoked()`
+- `PasswordReset` → `AuthLogger::logPasswordChanged()`
 
-**Funcionalidad:**
-- Utiliza `AuthLogger` para registrar eventos de autenticación
-- Captura IP y User Agent para auditoría de seguridad
+`AuthService` dispara `Login` y `Logout` (guard `api`) además de los eventos de dominio `UserLoggedIn`/`UserLoggedOut`; el login web del back-office los dispara Laravel solo. Un suceso, un registro.
 
-**Ejecución:** Asíncrona (cola)
+**Ejecución:** síncrona (los fallos de registro no rompen la petición).
 
 ---
 
@@ -470,7 +470,8 @@ $result = $authService->authenticate([
 ], $request->ip());
 
 // Automáticamente se dispara:
-// - UserLoggedIn → LogAuthEvents
+// - Login (Laravel) → LogAuthenticationEvents (un registro de seguridad)
+// - UserLoggedIn → WebhookListener
 ```
 
 ---

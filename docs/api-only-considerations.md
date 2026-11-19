@@ -50,8 +50,8 @@ Es la tabla que Laravel usa para:
 **¿Se usa en API-only?**
 
 ✅ **SÍ**, si implementas:
-- Endpoint `POST /api/auth/forgot-password` (envía email con token)
-- Endpoint `POST /api/auth/reset-password` (valida token y cambia contraseña)
+- Endpoint `POST /auth/forgot-password` (envía email con token)
+- Endpoint `POST /auth/reset-password` (valida token y cambia contraseña)
 
 **Flujo típico**:
 1. Usuario solicita reset → se crea registro en `password_reset_tokens`
@@ -75,9 +75,9 @@ Es la tabla que Laravel usa para:
 
 **Ejemplo Stateless (JWT)**:
 ```
-Request 1: POST /api/login → Response: { token: "abc123" }
-Request 2: GET /api/users → Headers: { Authorization: Bearer abc123 }
-Request 3: GET /api/posts → Headers: { Authorization: Bearer abc123 }
+Request 1: POST /auth/login → Response: { token: "abc123" }
+Request 2: GET /users → Headers: { Authorization: Bearer abc123 }
+Request 3: GET /posts → Headers: { Authorization: Bearer abc123 }
 ```
 El servidor NO recuerda que hiciste login, solo valida el token en cada request.
 

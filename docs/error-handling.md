@@ -7,12 +7,7 @@
 {
   "success": true,
   "message": "Usuario actualizado exitosamente",
-  "data": { ... },
-  "meta": {
-    "version": "1.0",
-    "timestamp": "2026-05-24T00:00:00+00:00",
-    "request_id": "uuid"
-  }
+  "data": { ... }
 }
 ```
 
@@ -31,15 +26,20 @@
 }
 ```
 
-### System Error (500)
+### System Error (500, RFC 7807)
 ```json
 {
-  "success": false,
-  "message": "Error interno del servidor.",
   "type": "internal_server_error",
-  "meta": { ... }
+  "title": "An internal server error occurred.",
+  "status": 500,
+  "instance": "users",
+  "meta": { "version": "1.0", "timestamp": "...", "request_id": "uuid" }
 }
 ```
+
+Con `APP_DEBUG=true`, `title` y `detail` llevan el mensaje real y se añaden
+`exception`, `file`, `line` y `trace`. Detalle de todas las formas de
+respuesta en [api-response-structure.md](api-response-structure.md).
 
 ## Frontend Rules
 

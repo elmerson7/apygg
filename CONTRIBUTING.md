@@ -75,8 +75,6 @@ make test
 app/
 ├── Console/          # Comandos Artisan
 ├── Contracts/        # Interfaces
-├── DTOs/             # Data Transfer Objects
-├── Enums/            # Enumeraciones
 ├── Events/           # Eventos
 ├── Exceptions/       # Excepciones personalizadas
 ├── Helpers/          # Funciones auxiliares
@@ -92,7 +90,6 @@ app/
 ├── Observers/        # Observers de modelos
 ├── Policies/         # Policies de autorización
 ├── Providers/        # Service Providers
-├── Repositories/     # Repositories (patrón Repository)
 ├── Rules/            # Reglas de validación
 ├── Services/         # Servicios de lógica de negocio
 └── Traits/           # Traits reutilizables
@@ -106,9 +103,6 @@ app/
 | Models | `SingularName` | `User` |
 | Migrations | `create_table_name_table` | `create_users_table` |
 | Services | `SingularNameService` | `UserService` |
-| Repositories | `SingularNameRepository` | `UserRepository` |
-| DTOs | `ActionNameDTO` | `CreateUserDTO` |
-| Enums | `TypeNameEnum` | `UserStatusEnum` |
 | Requests | `ActionNameRequest` | `StoreUserRequest` |
 | Resources | `SingularNameResource` | `UserResource` |
 
@@ -211,7 +205,7 @@ git commit -m "fix(apikeys): prevent duplicate key generation"
 git commit -m "docs(readme): update installation steps"
 
 # Refactorización
-git commit -m "refactor(services): extract validation to DTOs"
+git commit -m "refactor(services): extract validation to Form Requests"
 
 # Breaking change
 git commit -m "feat(api)!: change response format to JSON:API

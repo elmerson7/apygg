@@ -1,205 +1,143 @@
 # Respuestas API
 
-## Estructura General
+Hay **tres formas** de respuesta, según quién las produce. Los textos de mensaje
+de ejemplo son los del código real; los de errores del framework salen en
+inglés porque así los fija `bootstrap/app.php`.
 
-Todas las respuestas siguen un formato consistente:
+## 1. Éxito y errores de controller (`sendSuccess` / `sendError` / `sendPaginated`)
 
-```json
-{
-  "success": true|false,
-  "message": "Mensaje legible",
-  "meta": {
-    "version": "1.0",
-    "timestamp": "2026-05-22T16:40:46+00:00",
-    "request_id": "uuid",
-    "execution_time_ms": 2
-  },
-  "data": { ... }          // solo en éxito (200-201)
-  "errors": { ... }        // solo en error
-  "type": "tipo_error"     // solo en error (RFC 7807)
-}
-```
-
----
-
-## Tipos de Respuesta
-
-### Éxito (200-201)
-
-**Estructura estándar — TODAS las respuestas exitosas siguen este formato:**
+Vienen de `RespondsWithApi` (base `Controller`). **No llevan `meta`** salvo en
+listados paginados, donde `meta` es la paginación.
 
 ```json
-{
-  "success": true,
-  "data": [ ... ]      // array para listas, objeto para单个
-}
+{ "success": true, "message": "Operación exitosa", "data": { "id": 1 } }
 ```
 
-**Con paginación:**
+```json
+{ "success": false, "message": "Credenciales inválidas. Intentos restantes: 4" }
+```
+
+`sendError` añade `"errors": { ... }` solo si se le pasan.
+
+**Paginado** (`sendPaginated`, sin `message`):
 
 ```json
 {
   "success": true,
   "data": [ ... ],
-  "meta": {
-    "current_page": 1,
-    "per_page": 20,
-    "total": 9,
-    "last_page": 1,
-    "from": 1,
-    "to": 9
-  },
-  "links": {
-    "first": "...",
-    "last": "...",
-    "prev": null,
-    "next": null
-  }
+  "meta": { "current_page": 1, "per_page": 15, "total": 9, "last_page": 1, "from": 1, "to": 9 },
+  "links": { "first": "...", "last": "...", "prev": null, "next": null }
 }
 ```
 
-**Sin paginación (recurso individual):**
-
-```json
-{
-  "success": true,
-  "data": { "id": 1, "name": "Ejemplo" }
-}
-```
-
-**Regla fija:** el contenido del recurso SIEMPRE va dentro de `data`. Nunca se devuelven propiedades sueltas al mismo nivel que `success`/`data`.
+**Regla fija:** el contenido del recurso SIEMPRE va dentro de `data`. Nunca se
+devuelven propiedades sueltas al mismo nivel que `success`/`data`.
 
 | Código | Uso |
 |--------|-----|
 | 200 | GET, PUT, PATCH, DELETE exitoso |
 | 201 | POST (creación) |
 
----
+## 2. Errores del handler global (`bootstrap/app.php`)
 
-### Error de Validación (422)
+Toda excepción no capturada la convierte el handler. Llevan `meta` con
+`version`, `timestamp` y `request_id` (el `X-Trace-ID`/`X-Request-ID` si llegó).
+
+### Validación (422)
 
 ```json
 {
   "success": false,
   "message": "The given data was invalid.",
-  "meta": {
-    "version": "1.0",
-    "timestamp": "2026-05-22T16:40:46+00:00",
-    "request_id": "uuid",
-    "execution_time_ms": 2
-  },
+  "meta": { "version": "1.0", "timestamp": "2026-05-22T16:40:46+00:00", "request_id": "uuid" },
   "type": "validation_error",
-  "errors": {
-    "login": ["El email o username es obligatorio."],
-    "password": ["La contraseña debe tener al menos 8 caracteres."]
-  }
+  "errors": { "login": ["El email o username es obligatorio."] }
 }
 ```
 
-**Causas comunes:**
-- Datos faltantes o inválidos
-- Email con formato incorrecto
-- Contraseña muy corta
+(Los mensajes de cada campo salen en el idioma de la aplicación.)
 
----
+### No autenticado (401): token faltante, expirado, inválido o revocado
 
-### No Autenticado (401)
+```json
+{ "success": false, "message": "No autenticado", "meta": { ... }, "type": "unauthorized" }
+```
+
+Un JWT inválido responde `"Token inválido o expirado"` con el mismo formato.
+
+### No autorizado (403)
+
+Falta de permiso en `permission:`/`role:` (Spatie):
 
 ```json
 {
-  "success": false,
-  "message": "No autenticado",
-  "meta": { ... },
-  "type": "unauthorized"
+  "type": "forbidden",
+  "title": "No tienes permiso para realizar esta acción",
+  "status": 403,
+  "detail": "No tienes permiso para realizar esta acción",
+  "instance": "users",
+  "required_permissions": ["users.read"],
+  "meta": { ... }
 }
 ```
 
-**Causas comunes:**
-- Token JWT faltante
-- Token expirado
-- Token inválido
+Una policy que deniega (`AuthorizationException`) responde
+`{ "success": false, "message": "No autorizado", "meta": {...}, "type": "forbidden" }`.
 
----
+### RFC 7807 (404, 422 de negocio, 5xx y excepciones de API)
 
-### No Autorizado (403)
+Estructura `type`, `title`, `status`, `detail`, `instance` (+ extensiones) y `meta`:
 
 ```json
 {
-  "success": false,
-  "message": "No autorizado",
-  "meta": { ... },
-  "type": "forbidden"
-}
-```
-
-**Causas comunes:**
-- Usuario autenticado pero sin permisos
-- Rol insuficiente
-
----
-
-### No Encontrado (404)
-
-```json
-{
-  "success": false,
-  "message": "Endpoint not found.",
-  "meta": { ... },
   "type": "not_found",
-  "errors": {
-    "path": "/api/users/999"
-  }
+  "title": "Endpoint not found.",
+  "status": 404,
+  "detail": "The requested endpoint does not exist.",
+  "instance": "users/999",
+  "path": "users/999",
+  "meta": { ... }
 }
 ```
 
----
+- `BusinessLogicException` → 422, `type: "business_logic_error"`.
+- `ExternalServiceException` → su código, `type: "external_service_error"`.
+- Error interno → 500, `type: "internal_server_error"`, título
+  `An internal server error occurred.`; con `APP_DEBUG=true` incluye
+  `exception`, `file`, `line` y `trace`.
 
-### Rate Limit Exceeded (429)
+### Rate limit (429)
 
 ```json
-{
-  "success": false,
-  "message": "Too many requests",
-  "meta": { ... },
-  "type": "rate_limit_exceeded"
-}
+{ "success": false, "message": "...", "type": "rate_limit_exceeded", "meta": { ... } }
 ```
 
----
+con cabecera `Retry-After` cuando se conoce.
 
-### Error del Servidor (500)
+## 3. `App\Helpers\ApiResponse` (middlewares y handler)
 
-```json
-{
-  "success": false,
-  "message": "An internal server error occurred.",
-  "meta": { ... },
-  "type": "internal_server_error"
-}
-```
-
-En entorno `APP_DEBUG=true`, incluye detalles del error.
+`success`, `created`, `paginated`, `error`, `validation`, `notFound`,
+`unauthorized`, `forbidden`, `rateLimited`, `serverError` y `rfc7807`. Aquí sí
+va `meta` (`version`, `timestamp`, `request_id`). **Los controllers no lo usan**:
+usan los métodos de la base.
 
 ---
 
 ## Ejemplos por Endpoint
 
-### Login
+### Login (`POST /auth/login`)
 
 **Request:**
 ```json
-{
-  "login": "elmerson",       // o email: "elmerson@test.com"
-  "password": "1234"
-}
+{ "login": "elmerson", "password": "1234" }
 ```
+`login` es el email o el username.
 
 **Éxito (200):**
 ```json
 {
   "success": true,
   "message": "Login exitoso",
-  "meta": { ... },
   "data": {
     "user": { "id": 1, "name": "Elmer Merino", "email": "elmer@apygg.com" },
     "access_token": "eyJ...",
@@ -212,34 +150,18 @@ En entorno `APP_DEBUG=true`, incluye detalles del error.
 
 **Error (401):**
 ```json
-{
-  "success": false,
-  "message": "Credenciales inválidas. Intentos restantes: 4",
-  "meta": { ... },
-  "type": "unauthorized"
-}
+{ "success": false, "message": "Credenciales inválidas. Intentos restantes: 4" }
 ```
 
----
+La cuenta bloqueada por intentos o en lista negra responde por el handler
+(RFC 7807).
 
-### Registro
+### Registro (`POST /auth/register`)
 
-**Request:**
-```json
-{
-  "name": "Juan Perez",
-  "email": "juan@test.com",
-  "password": "password123"
-}
-```
+Éxito (201): mismo `data` que el login, con
+`"message": "Usuario registrado exitosamente"`. Error 422: validación.
 
-**Éxito (201):** Mismo que login
-
-**Error (422):** Validación de campos
-
----
-
-### Listado de usuarios (GET /users)
+### Listado de usuarios (`GET /users`)
 
 ```json
 {
@@ -247,41 +169,21 @@ En entorno `APP_DEBUG=true`, incluye detalles del error.
   "data": [
     {
       "id": 9,
-      "created_at": "2026-05-24T01:54:21+00:00",
-      "updated_at": "2026-05-24T01:54:21+00:00",
       "name": "Carlos Mendoza",
-      "first_name": "Carlos",
-      "last_name": "Mendoza",
       "username": "73988785",
-      "email": "admin@rebagliati.edu.pe",
-      "email_verified_at": null,
-      "identity_document": "123423423",
-      "roles": [
-        {
-          "id": 2,
-          "name": "ejecutivo-cuentas",
-          "display_name": "Ejecutivo de Cuentas"
-        }
-      ]
+      "email": "carlos@example.com",
+      "roles": [ { "id": 2, "name": "manager", "display_name": "Manager" } ]
     }
   ],
-  "meta": {
-    "current_page": 1,
-    "per_page": 20,
-    "total": 9,
-    "last_page": 1,
-    "from": 1,
-    "to": 9
-  }
+  "meta": { "current_page": 1, "per_page": 15, "total": 9, "last_page": 1, "from": 1, "to": 9 },
+  "links": { "first": "...", "last": "...", "prev": null, "next": null }
 }
 ```
 
 **Notas:**
-- `roles` siempre es un array, aunque esté vacío (`[]`)
-- Cada rol tiene `id` (int), `name` (string), `display_name` (string)
-- El usuario siempre tiene al menos 1 rol
-- `first_name` y `last_name` vienen del perfil (`user_profiles`)
-- `created_at` y `updated_at` en formato ISO 8601
+- `roles` siempre es un array, aunque esté vacío (`[]`).
+- `created_at` y `updated_at` en formato ISO 8601.
+- La lista exacta de campos la define `UserResource`.
 
 ---
 
@@ -291,7 +193,6 @@ En entorno `APP_DEBUG=true`, incluye detalles del error.
 |--------|--------|-------------|
 | 200 | OK | GET, PUT, PATCH, DELETE exitoso |
 | 201 | Created | POST - recurso creado |
-| 204 | No Content | DELETE exitoso (sin body) |
 | 400 | Bad Request | Solicitud malformada |
 | 401 | Unauthorized | No autenticado |
 | 403 | Forbidden | No autorizado |

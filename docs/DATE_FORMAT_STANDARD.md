@@ -114,26 +114,18 @@ de errores 500 en endpoints de listado.
 
 ---
 
-## 5. DateHelper
+## 5. Formateo fuera de la API
 
-`App\Helpers\DateHelper` centraliza el formateo para todo lo que no sea la
-serialización estándar de Resources:
+Para correos, PDFs o exportaciones (donde el destinatario es una persona) usa
+Carbon directamente; no hay helper propio:
 
 ```php
-DateHelper::toIso8601($date);               // 2026-01-15T14:30:00+00:00
-DateHelper::toShort($date);                 // 2026-01-15
-DateHelper::toShortWithTime($date);         // 2026-01-15 14:30
-DateHelper::format($date);                  // 2026-01-15 14:30:00
-DateHelper::toSpanish($date, true);         // 15 de enero de 2026, 14:30
-DateHelper::convertTimezone($date, 'America/Lima');
-DateHelper::diffForHumans($date);           // hace 3 horas
-DateHelper::parse('15/01/2026');            // Carbon, tolerante a formatos
-DateHelper::validateFormat($str, 'Y-m-d');  // bool
+$date?->setTimezone($user->getTimezone())->format('Y-m-d H:i');  // 2026-01-15 14:30
+$date?->locale('es')->translatedFormat('j \d\e F \d\e Y');     // 15 de enero de 2026
+$date?->diffForHumans();                                         // hace 3 horas
 ```
 
-Todos los métodos aceptan `null` y devuelven `null`, por lo que son seguros en
-Resources. Usa `format()` / `toShortWithTime()` para exportaciones, informes o
-correos legibles por personas — no para el JSON de la API.
+Usa siempre `?->` con fechas nullable. Estos formatos no van en el JSON de la API.
 
 ---
 
@@ -161,4 +153,3 @@ make check
 
 - [api-response-structure.md](api-response-structure.md) → contrato completo de respuestas
 - `app/Http/Resources/BaseResource.php`
-- `app/Helpers/DateHelper.php`

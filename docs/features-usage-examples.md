@@ -259,7 +259,7 @@ class UserControllerTest extends TestCase
         Feature::clearCache();
         config(['features.advanced_search.enabled' => false]);
         
-        $response = $this->getJson('/api/users?search=test');
+        $response = $this->getJson('/users?search=test');
         
         $response->assertOk();
         // Verificar que no se aplican filtros avanzados
@@ -271,7 +271,7 @@ class UserControllerTest extends TestCase
         Feature::clearCache();
         config(['features.advanced_search.enabled' => true]);
         
-        $response = $this->getJson('/api/users?search=test');
+        $response = $this->getJson('/users?search=test');
         
         $response->assertOk();
         // Verificar que se aplican filtros avanzados

@@ -36,8 +36,6 @@ use Spatie\Permission\Traits\HasRoles;
  * @property string $password
  * @property string|null $timezone
  * @property string|null $identity_document
- * @property string|null $provider
- * @property string|null $provider_id
  * @property array|null $preferences
  * @property int $token_version
  * @property string|null $deleted_by
@@ -88,8 +86,6 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         'timezone',
         'identity_document',
         'deleted_by',
-        'provider',
-        'provider_id',
         'preferences',
     ];
 
@@ -205,11 +201,6 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     public function activityLogs(): HasMany
     {
         return $this->hasMany(ActivityLog::class, 'user_id');
-    }
-
-    public function deviceTokens(): HasMany
-    {
-        return $this->hasMany(DeviceToken::class, 'user_id');
     }
 
     public function profile(): HasOne

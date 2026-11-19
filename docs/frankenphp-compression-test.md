@@ -18,7 +18,7 @@ El endpoint `/health` devuelve ~158 bytes, que es menor al mínimo de 1KB. Esto 
 
 ```bash
 # Endpoint que devuelve datos grandes (debe mostrar Content-Encoding)
-curl -H "Accept-Encoding: gzip" -I "http://localhost:8010/api/users?per_page=50"
+curl -H "Accept-Encoding: gzip" -I "http://localhost:8010/users?per_page=50"
 
 # Debe mostrar:
 # Content-Encoding: gzip

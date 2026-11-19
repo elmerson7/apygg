@@ -255,7 +255,7 @@ docker compose logs app | grep caddy
 
 ```bash
 # Verificar headers de compresión
-curl -H "Accept-Encoding: gzip" -I http://localhost:8010/api/health
+curl -H "Accept-Encoding: gzip" -I http://localhost:8010/health
 
 # Debe mostrar: Content-Encoding: gzip
 ```

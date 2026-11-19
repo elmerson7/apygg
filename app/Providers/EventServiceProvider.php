@@ -14,7 +14,6 @@ use App\Events\UserRestored;
 use App\Events\UserUpdated;
 use App\Listeners\InvalidatePermissionsCache;
 use App\Listeners\InvalidateUserCache;
-use App\Listeners\LogAuthEvents;
 use App\Listeners\LogUserActivity;
 use App\Listeners\SendWelcomeEmail;
 use App\Listeners\WebhookListener;
@@ -53,11 +52,9 @@ class EventServiceProvider extends ServiceProvider
             WebhookListener::class,
         ],
         UserLoggedIn::class => [
-            [LogAuthEvents::class, 'handleUserLoggedIn'],
             WebhookListener::class,
         ],
         UserLoggedOut::class => [
-            [LogAuthEvents::class, 'handleUserLoggedOut'],
             WebhookListener::class,
         ],
 

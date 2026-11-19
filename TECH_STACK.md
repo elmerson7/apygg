@@ -24,16 +24,15 @@ Extensiones PHP instaladas en la imagen: `pcntl`, `intl`, `zip`, `opcache`, `gd`
 | `meilisearch/meilisearch-php` | 1.17.0 | Cliente de Meilisearch |
 | `league/flysystem-aws-s3-v3` | 3.35.3 | Disco `s3` de `config/filesystems.php` |
 | `resend/resend-laravel` | 1.4.0 | Proveedor de correo (`config/mail.php`) |
-| `laravel/socialite` | 5.31.0 | Login social: código presente, sin rutas |
 | `dedoc/scramble` | 0.13.43 | Documentación OpenAPI en `/docs/api` |
 | `sentry/sentry-laravel` | 4.27.0 | Captura de excepciones (`bootstrap/app.php`) |
 | `laravel/telescope` | 5.24.0 | Depuración (provider registrado en `bootstrap/providers.php`) |
-| `chillerlan/php-qrcode` | 5.0.5 | `QrCodeService` (bajado de 6.x: Filament 5 exige `^5.0`; el servicio ya usaba la API v5) |
+| `chillerlan/php-qrcode` | 5.0.5 | QR del MFA TOTP del back-office (Filament 5 exige `^5.0`) |
+| `spatie/laravel-permission` | 8.5.0 | RBAC (roles, permisos, middlewares `permission:`/`role:`); guard `api`, teams apagado. Ver `docs/permissions.md` |
 | `filament/filament` | 5.11.4 | Back-office interno opcional (`app/Filament`, panel `backoffice`); trae Livewire 4.4.8. Ver `docs/backoffice.md` |
 
 Dependencias del `composer.json` sin uso en `app/`, `config/`, `routes/` ni `bootstrap/` (comprobado con grep):
 
-- `spatie/laravel-permission` (8.5.0): RBAC (roles, permisos, middlewares `permission:`/`role:`); guard `api`, teams apagado. Ver `docs/permissions.md`.
 - `spatie/laravel-query-builder` (6.4.4).
 - `setasign/fpdf` (1.9.0) y `setasign/fpdi` (2.6.8).
 - `barryvdh/laravel-snappy` (1.0.5).

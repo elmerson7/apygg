@@ -2,6 +2,7 @@
 
 use App\Jobs\SendPasswordResetLinkJob;
 use App\Models\Blacklist;
+use App\Models\Logs\SecurityLog;
 use App\Models\User;
 use App\Notifications\ResetPasswordNotification;
 use App\Services\PasswordService;
@@ -340,4 +341,22 @@ test('registro, cambio y reset aplican la misma política de contraseñas', func
         'email' => $user->email, 'token' => $token,
         'password' => 'aaaaaaaa', 'password_confirmation' => 'aaaaaaaa',
     ])->assertStatus(422)->assertJsonValidationErrors('password');
+});
+
+// ───────────── Registro de seguridad: un suceso, un registro ─────────────
+
+test('un login deja exactamente un registro de login y un logout uno de revocación', function () {
+    $user = User::factory()->create();
+
+    $tokens = iniciarSesion($user);
+
+    expect(SecurityLog::where('user_id', $user->id)
+        ->where('event_type', SecurityLog::EVENT_LOGIN_SUCCESS)->count())->toBe(1);
+
+    $this->withToken($tokens['access'])
+        ->postJson('/auth/logout', ['refresh_token' => $tokens['refresh']])
+        ->assertOk();
+
+    expect(SecurityLog::where('user_id', $user->id)
+        ->where('event_type', SecurityLog::EVENT_TOKEN_REVOKED)->count())->toBe(1);
 });

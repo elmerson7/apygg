@@ -39,7 +39,7 @@ no va aquí.
 
 - Laravel 13 · PHP 8.5 · FrankenPHP/Octane (**no** nginx, **no** apache) · Filament 5 (back-office opcional)
 - PostgreSQL 18 · Redis 7 · Docker Compose
-- JWT + Sanctum · Spatie Permission 8 · Horizon · Reverb · Scout/Meilisearch
+- JWT · Spatie Permission 8 · Horizon · Reverb · Scout/Meilisearch
 - Pest · Pint · PHPStan (Larastan)
 
 Detalle completo en `TECH_STACK.md`.
@@ -72,7 +72,7 @@ SaaS: ese es API + frontend propio). Módulo **quitable**: todo vive en `app/Fil
 ```
 app/
 ├── Console/Commands/ → comandos artisan
-├── Contracts/        → interfaces de servicios y repositorios
+├── Contracts/        → interfaces de servicios
 ├── Events/           → eventos del sistema
 ├── Http/             → controllers, middleware, requests, resources
 ├── Jobs/             → trabajos en cola
@@ -151,7 +151,7 @@ Middleware con alias disponibles: `auth:api`, `permission:`, `role:`,
 ## Autenticación
 
 - **JWT** (`php-open-source-saver/jwt-auth`) → método principal de la API
-- **Sanctum** → tokens alternativos
+- Sanctum **no** está instalado: no hay tokens personales de Sanctum, solo JWT y API Keys
 - **API Keys** (guard `api-key`: `auth:api-key` + `api-key-scope:`; sin scopes = sin acceso) → integraciones máquina a máquina. Ver `docs/api-keys.md`, `docs/files.md` y `docs/webhooks.md`
 - Rutas protegidas con `auth:api`; autenticación opcional con `auth.optional`
   (deja el usuario en `$request->attributes->get('auth_user')`)
@@ -159,7 +159,8 @@ Middleware con alias disponibles: `auth:api`, `permission:`, `role:`,
 ## Base de datos
 
 - PostgreSQL exclusivamente: nada de sintaxis MySQL (`jsonb`, `ILIKE`, etc.)
-- Migraciones en `database/migrations/`
+- Migraciones en `database/migrations/`. Columnas JSON siempre `$table->jsonb()` (nunca `json`); `JsonbColumnsTest` lo vigila. No reescribas migraciones ya aplicadas: crea una nueva.
+- Los cambios que rompen proyectos derivados se anotan en `docs/upgrading.md`.
 - `make schema-dump` → exporta el DDL a `database/schema.sql`
 - `make backup` / `make restore-backup` / `make restore-remote` → ver `docs/backups-system.md`
 

@@ -22,7 +22,7 @@ Después, cada ruta aplica sus propios middleware (`auth:api`, `auth:api-key`, `
 ## Capas
 
 ```
-Petición → Middleware → Controller → Form Request → Service → (Repository) → Model
+Petición → Middleware → Controller → Form Request → Service → Model
                                          ↓
                                      Resource → Respuesta
 ```
@@ -31,10 +31,8 @@ Petición → Middleware → Controller → Form Request → Service → (Reposi
 - **Form Requests**: heredan de `BaseFormRequest`.
 - **Resources**: heredan de `BaseResource`.
 - **Services** (`app/Services`): lógica de aplicación. Se inyectan por interfaz en `app/Contracts`, con los bindings en `ContractServiceProvider`.
-- **Repositories** (`app/Repositories`): existen para usuarios, roles, permisos, API keys, webhooks y archivos, con sus interfaces en `app/Contracts`. Hoy solo `AuthService` y `UserService` los usan; el resto de servicios accede a Eloquent directamente.
+- **Sin repositorios ni DTOs**: el servicio usa Eloquent directamente y recibe arrays validados por el Form Request. Solo se crearía un repositorio para consultas complejas compartidas por varios servicios.
 - **Models** (`app/Models`): heredan de `App\Models\Model` (`HasFactory` y `SoftDeletes`). La búsqueda con Scout usa el trait `Searchable`, y el UUID es opcional con el trait `HasUuid`.
-- **DTOs** (`app/DTOs`): seis clases (login, registro, crear/actualizar usuario, crear API key, crear webhook). No todos los servicios los usan.
-- **Enums** (`app/Enums`): roles, estados de usuario, scopes de API key, eventos y estados de webhook, tipos de archivo.
 
 ## Módulos
 
@@ -51,9 +49,8 @@ Petición → Middleware → Controller → Form Request → Service → (Reposi
 | Gateway LLM | `app/Services/LLM` (`LlmGateway`, `LlmAgent`, `LlmAuditService`, proveedores OpenAI, DeepSeek y Null), `LlmArea` | `/admin/llm/*` |
 | Asistente RAG | `app/Services/Docs` (`DocsIndexer`, `DocsService`), `DocChunk`, `DocConversation` | `/docs/*` |
 | Menú dinámico | `MenuService`, `MenuItem` | `/admin/menu/*` |
-| Archivos | `FileService`, `FileRepository`, discos de `config/filesystems.php` | `/files/*` |
+| Archivos | `FileService`, discos de `config/filesystems.php` | `/files/*` |
 | Búsqueda | Scout con Meilisearch, `SearchController`, trait `Searchable` | `/search` |
-| Notificaciones push | `FcmService`, `DeviceToken`, `DeviceTokenController` | — |
 | WebSockets | Reverb, `BroadcastAuthController`, `routes/channels.php` | `/broadcasting/auth` |
 | Caché | `CacheService`, comandos `cache:*` | — |
 | Backups | `BackupService`, comandos `backup:*` y `db:backup` | — |
@@ -62,13 +59,13 @@ Petición → Middleware → Controller → Form Request → Service → (Reposi
 | Health | `HealthController` | `/health`, `/health/live`, `/health/ready`, `/health/detailed` |
 | Documentación API | Scramble (`config/scramble.php`) | `/docs/api` |
 
-Socialite tiene `SocialAuthController` y `SocialAuthService`, pero no hay rutas que los usen.
+Fuera del boilerplate a propósito: login social (Socialite), notificaciones push (FCM) y suscripciones/cobros. Son decisiones de cada proyecto.
 
 ## Flujos
 
 ### Autenticación
 
-`AuthController` valida con un Form Request y delega en `AuthService`. `AuthService` usa `TokenService` para emitir y renovar el JWT, y `UserRepository` para buscar al usuario. Las API Keys entran por `auth:api-key` y se validan con `api-key-scope:`.
+`AuthController` valida con un Form Request y delega en `AuthService`. `AuthService` usa `TokenService` para emitir y renovar el JWT, y consulta al usuario con Eloquent. Los eventos de login/logout de Laravel (`Login`/`Logout`) los escucha `LogAuthenticationEvents`, que deja un único registro de seguridad por suceso; `UserLoggedIn`/`UserLoggedOut` son eventos de dominio solo para webhooks. Las API Keys entran por `auth:api-key` y se validan con `api-key-scope:`.
 
 ### Webhooks salientes
 
@@ -104,6 +101,6 @@ Cada área tiene su archivo en `config/` (por ejemplo `auth.php`, `jwt.php`, `ca
 
 ## Decisiones
 
-- **Repositorios y DTOs**: se usan en parte del código. El plan original pedía usarlos en todos los servicios; eso sigue pendiente (ver TASKS.md).
-- **Base de datos**: PostgreSQL exclusivamente (`jsonb`, `tsvector`, UUID).
+- **Sin repositorios ni DTOs** (decisión: lo estándar en Laravel es Eloquent en el servicio).
+- **Base de datos**: PostgreSQL exclusivamente (`jsonb`, `tsvector`). Columnas JSON siempre `jsonb`; el ID por defecto es entero y `HasUuid` es opcional.
 - **Rutas sin `/api`**: el prefijo se omite a propósito. Ver la tabla de prefijos en [README.md](./README.md#rutas).

@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Auditoría de seguridad, lista de bloqueo y escáner de seguridad (`/admin/security/scans`, `/admin/blacklist`)
 - Back-office interno opcional con Filament 5 (`/backoffice`, panel `backoffice`): usuarios, roles y permisos, logs de actividad/API/seguridad, correo (cuentas, plantillas, envíos), ajustes, lista negra y widget de salud. Acceso por sesión web con el permiso nuevo `backoffice.access` y MFA (TOTP) obligatorio; usa los mismos servicios y policies que la API. `BACKOFFICE_ENABLED=false` lo apaga; `docs/backoffice.md` explica cómo quitarlo
 - Migración `2026_11_19_000030` (columnas cifradas del MFA por app en `users`)
+- Migración `2026_11_19_000040`: las columnas `json` pasan a `jsonb`; regla: migraciones nuevas con `jsonb` (`JsonbColumnsTest`)
+- `docs/upgrading.md`: notas de actualización de 1.0.0 a la versión actual
 - `RoleService::assertCanGrantPermissions` y `MailTemplateConfig::toggleActive`: la lógica que estaba en un controller pasa a un sitio que comparten la API y el back-office
 
 ### Changed
@@ -37,6 +39,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Makefile partido en `make/*.mk` por tema; el `Makefile` raíz solo define variables e incluye esos archivos
 
 ### Removed
+- Código muerto: `app/DTOs`, `app/Enums`, `app/Events/Broadcasting`, helpers `StringHelper`/`DateHelper`/`SecurityHelper`, jobs `ProcessActivityLogJob`/`ProcessApiLogJob`/`SendNotificationJob`, ocho reglas de validación sin uso, `FcmService`, `QrCodeService`, `DeviceTokenController`/`DeviceToken`, `App\Exceptions\Handler`
+- Login social: `SocialAuthController`, `SocialAuthService` y el paquete `laravel/socialite` (no tenía rutas, config ni tabla)
+- `LogAuthEvents`: duplicaba el registro de login/logout; ahora `AuthService` dispara `Login`/`Logout` de Laravel y `LogAuthenticationEvents` deja un único registro
 - Middlewares `SanitizeInput`, `TransformRequestMiddleware` y `TransformResponseMiddleware` (LOG-16, EST-38): quitaban HTML y saltos de línea, convertían `"no"`/`"1"`/`status=active` en booleanos, copiaban claves anidadas a la raíz y alteraban contraseñas; el de respuestas era inerte. La entrada llega tal cual (con `TrimStrings` y `ConvertEmptyStringsToNull` de Laravel)
 - `BaseFormRequest::sanitizeInput()`: duplicaba esos middlewares estándar (y recortaba contraseñas)
 - `database/seeders/initial_data.sql` (datos de otra app con contraseña "1234") y `UserSeeder`; permisos de ejemplo `posts.*`, `comments.*`, `system.backup`, `system.users` y los roles `guest`, `moderator`, `editor` que ningún código usaba

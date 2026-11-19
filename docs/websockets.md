@@ -52,7 +52,7 @@ broadcast(new MiEventoBroadcast($data));
 - `private-user.{userId}` - Privado (requiere JWT)
 - `presence-online` - Presencia (requiere JWT)
 
-**Eventos existentes**: `UserCreatedBroadcast`, `NotificationBroadcast`
+**Eventos**: el boilerplate no trae eventos de broadcast; crea los tuyos (ver ejemplo arriba).
 
 ---
 
@@ -99,10 +99,7 @@ echo.join('presence-online')
     .leaving((user) => {...});
 ```
 
-**Prueba rápida desde Tinker**:
-```php
-broadcast(new App\Events\Broadcasting\TestMessageBroadcast('Hola!'));
-```
+**Prueba rápida desde Tinker**: con tu propio evento `ShouldBroadcast`, `broadcast(new MiEventoBroadcast($data));`.
 
 **Variables de entorno**:
 ```env

@@ -317,26 +317,19 @@ En `bootstrap/app.php`:
 
 - **Timezone por defecto**: UTC (configurado en `config/app.php`)
 - **Timezone por usuario**: Campo `timezone` en tabla `users` (nullable, default: 'UTC')
-- **DateHelper**: Helper completo con métodos de formateo y conversión de timezones
+- **Carbon**: formateo y conversión de timezones con la API estándar de Laravel (`User::getTimezone()` da la zona del usuario)
 
-### Uso del DateHelper
-
-El `DateHelper` proporciona métodos para trabajar con fechas y timezones:
+### Uso de Carbon con la zona del usuario
 
 ```php
-use App\Helpers\DateHelper;
+// Formatear con el timezone del usuario
+$date->copy()->setTimezone($user->getTimezone())->format('Y-m-d H:i:s');
 
-// Formatear fecha con timezone específico
-DateHelper::format($date, 'Y-m-d H:i:s', 'America/Mexico_City');
+// Formatear en español
+$date->copy()->setTimezone('America/Mexico_City')->locale('es')->translatedFormat('j \d\e F \d\e Y, H:i');
 
-// Convertir entre timezones
-$dateInTimezone = DateHelper::convertTimezone($date, 'Europe/Madrid');
-
-// Formatear en español con timezone
-DateHelper::toSpanish($date, true, 'America/Mexico_City');
-
-// Obtener fecha actual en timezone específico
-$now = DateHelper::now('America/Mexico_City');
+// Fecha actual en otra zona
+$now = now('America/Mexico_City');
 ```
 
 ### Preferencia de Timezone por Usuario
@@ -351,7 +344,7 @@ $user = User::find($id);
 $timezone = $user->getTimezone(); // Retorna timezone del usuario o UTC por defecto
 
 // Usar en formateo de fechas
-DateHelper::format($date, 'Y-m-d H:i:s', $user->getTimezone());
+$date->copy()->setTimezone($user->getTimezone())->format('Y-m-d H:i:s');
 ```
 
 #### Establecer Timezone del Usuario
@@ -413,7 +406,7 @@ Registrar en `bootstrap/app.php`:
 
 1. **Almacenar en UTC**: Siempre almacena fechas en UTC en la base de datos
 2. **Convertir al mostrar**: Convierte al timezone del usuario solo al mostrar
-3. **Usar DateHelper**: Usa `DateHelper` para todas las operaciones de fecha/timezone
+3. **Usar Carbon**: `setTimezone()` y `translatedFormat()` para las operaciones de fecha/timezone
 4. **Validar timezones**: Valida que el timezone proporcionado sea válido antes de guardarlo
 
 ```php

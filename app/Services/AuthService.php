@@ -13,6 +13,8 @@ use App\Exceptions\BusinessLogicException;
 use App\Exceptions\LoginLockedException;
 use App\Models\Blacklist;
 use App\Models\User;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
@@ -156,7 +158,11 @@ class AuthService implements AuthServiceInterface
                 'ip' => $ipAddress,
             ], 'security');
 
-            // Disparar evento UserLoggedIn
+            // Evento estándar de Laravel: lo escucha LogAuthenticationEvents
+            // (único registro de seguridad del login).
+            event(new Login('api', $user, false));
+
+            // Evento de dominio: solo alimenta los webhooks (user.logged_in).
             event(new UserLoggedIn(
                 $user,
                 $ipAddress,
@@ -287,7 +293,8 @@ class AuthService implements AuthServiceInterface
                         'user_id' => $user->id,
                     ], 'security');
 
-                    // Disparar evento UserLoggedOut solo si tenemos usuario
+                    // Evento estándar de Laravel (registro de seguridad) y de dominio (webhooks)
+                    event(new Logout('api', $user));
                     event(new UserLoggedOut(
                         $user,
                         request()->ip()

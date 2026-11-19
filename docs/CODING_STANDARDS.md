@@ -208,7 +208,7 @@ class ReportService implements ReportServiceInterface
 **Reglas:**
 - Un service por módulo, con su interfaz en `app/Contracts/`.
 - `DB::transaction` en toda operación de escritura con más de un paso.
-- Devuelve modelos o DTOs, nunca `JsonResponse`.
+- Devuelve modelos, colecciones o arrays, nunca `JsonResponse`.
 
 ## Rutas
 
@@ -274,8 +274,10 @@ return new class extends Migration
 ```
 
 **Reglas:**
-- **PostgreSQL exclusivamente**: `jsonb` en lugar de `json`, `ILIKE` en lugar de
-  `LIKE` para búsquedas insensibles, nada de sintaxis MySQL.
+- **PostgreSQL exclusivamente**: `$table->jsonb()` en lugar de `json()` (un test
+  falla si queda una columna `json`), `ILIKE` en lugar de `LIKE` para búsquedas
+  insensibles, nada de sintaxis MySQL. Una migración ya aplicada no se reescribe:
+  crea otra (ver `2026_11_19_000040_convert_json_columns_to_jsonb`).
 - `constrained()` con `cascadeOnDelete()` o `restrictOnDelete()` explícito.
 - `softDeletes()` si el modelo hereda del `Model` base.
 - Índices en las columnas por las que se filtra u ordena.

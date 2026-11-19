@@ -142,7 +142,6 @@ function archServiciosConInterfaz(): array
         'App\Services\NotificationService' => 'App\Contracts\NotificationServiceInterface',
         'App\Services\SecurityService' => 'App\Contracts\SecurityServiceInterface',
         'App\Services\PasswordService' => 'App\Contracts\PasswordServiceInterface',
-        'App\Services\SocialAuthService' => 'App\Contracts\SocialAuthServiceInterface',
         'App\Services\BackupService' => 'App\Contracts\BackupServiceInterface',
         'App\Services\SecurityAuditService' => 'App\Contracts\SecurityAuditServiceInterface',
         'App\Services\Menu\MenuService' => 'App\Contracts\MenuServiceInterface',
@@ -176,8 +175,6 @@ test('toda clase de App\Services tiene interfaz o está en la lista de excepcion
     $sinInterfaz = [
         'App\Services\LogService' => 'fachada estática global (LogService::info...)',
         'App\Services\CacheService' => 'fachada estática global (CacheService::remember...)',
-        'App\Services\FcmService' => 'cliente estático de FCM sin consumidores en la app',
-        'App\Services\QrCodeService' => 'utilidad sin consumidores en la app',
         'App\Services\Webhooks\WebhookUrlGuard' => 'colaborador interno de WebhookService y SafeWebhookUrl (su única dependencia, el DNS, sí tiene interfaz)',
     ];
 
