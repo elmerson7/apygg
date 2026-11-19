@@ -134,6 +134,12 @@ Guía completa: `docs/testing.md`.
 - `App\Helpers\ApiResponse` sí se usa en middlewares, handlers y en el propio
   Controller base — ahí es la capa correcta.
 
+## Entrada de datos — no se sanea en middleware
+
+- La API guarda lo que recibe, validado con Form Requests; quien pinta HTML escapa (Blade, correos, frontend).
+- ❌ No quitar etiquetas, colapsar espacios ni convertir tipos (`"1"`, `"no"`) a ciegas en middleware o Form Request.
+- `TrimStrings` y `ConvertEmptyStringsToNull` (globales de Laravel) bastan; las contraseñas no se recortan.
+
 ## Manejo de errores
 
 - Confía en el handler global de `bootstrap/app.php` (produce RFC 7807).

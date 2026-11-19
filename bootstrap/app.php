@@ -40,10 +40,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\TraceIdMiddleware::class, // Generar e inyectar Trace ID
             \App\Http\Middleware\SecurityHeadersMiddleware::class, // Headers de seguridad HTTP
             \App\Http\Middleware\AdaptiveRateLimitingMiddleware::class, // Rate limiting adaptativo por tipo de endpoint
-            \App\Http\Middleware\SanitizeInput::class, // Limpieza de inputs (XSS, HTML, etc.)
-            \App\Http\Middleware\TransformRequestMiddleware::class, // Normalización de requests
             \App\Http\Middleware\ForceJsonResponse::class,
-            \App\Http\Middleware\TransformResponseMiddleware::class, // Transformación de respuestas
             \App\Http\Middleware\CompressionMiddleware::class, // Compresión HTTP (gzip/zstd) cuando no se usa Caddy
             \App\Http\Middleware\LogApiRequests::class, // Registrar requests/responses
             \App\Http\Middleware\SecurityLoggerMiddleware::class, // Registrar eventos de seguridad y detectar patrones anómalos

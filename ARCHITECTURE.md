@@ -11,10 +11,11 @@ Los middleware del grupo `api` se registran en `bootstrap/app.php`, en este orde
 3. `TraceIdMiddleware`: trace ID de la petición.
 4. `SecurityHeadersMiddleware`: headers de seguridad HTTP.
 5. `AdaptiveRateLimitingMiddleware`: rate limiting según el tipo de endpoint.
-6. `SanitizeInput` y `TransformRequestMiddleware`: limpieza y normalización de la entrada.
-7. `ForceJsonResponse` y `TransformResponseMiddleware`: respuestas JSON.
-8. `CompressionMiddleware`: compresión (cuando no la hace Caddy).
-9. `LogApiRequests`, `SecurityLoggerMiddleware`, `RateLimitLoggerMiddleware`: registro de peticiones, eventos de seguridad y bloqueos.
+6. `ForceJsonResponse`: respuestas siempre JSON.
+7. `CompressionMiddleware`: compresión (cuando no la hace Caddy).
+8. `LogApiRequests`, `SecurityLoggerMiddleware`, `RateLimitLoggerMiddleware`: registro de peticiones, eventos de seguridad y bloqueos.
+
+La entrada no se sanea ni se convierte de tipo en un middleware propio. Laravel ya aplica de forma global `TrimStrings` (recorta espacios, salvo `password`, `password_confirmation` y `current_password`) y `ConvertEmptyStringsToNull`. Regla: **la API guarda lo que recibe, validado con Form Requests; quien pinta HTML escapa** (Blade, plantillas de correo, el frontend). No se quitan etiquetas ni se convierten `"1"`/`"no"` en booleanos: si un campo es booleano, su Form Request lo declara (`boolean`) y lo castea el modelo. Las respuestas las forman `sendSuccess`/`sendError`/`sendPaginated` y los API Resources.
 
 Después, cada ruta aplica sus propios middleware (`auth:api`, `auth:api-key`, `permission:`, `role:`, etc.). Las excepciones se renderizan siempre como JSON desde `bootstrap/app.php`, y Sentry las captura.
 

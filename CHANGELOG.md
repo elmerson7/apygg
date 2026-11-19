@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Makefile partido en `make/*.mk` por tema; el `Makefile` raíz solo define variables e incluye esos archivos
 
 ### Removed
+- Middlewares `SanitizeInput`, `TransformRequestMiddleware` y `TransformResponseMiddleware` (LOG-16, EST-38): quitaban HTML y saltos de línea, convertían `"no"`/`"1"`/`status=active` en booleanos, copiaban claves anidadas a la raíz y alteraban contraseñas; el de respuestas era inerte. La entrada llega tal cual (con `TrimStrings` y `ConvertEmptyStringsToNull` de Laravel)
+- `BaseFormRequest::sanitizeInput()`: duplicaba esos middlewares estándar (y recortaba contraseñas)
 - Código de otra app que no pertenece al boilerplate: modelos y políticas de Wallet, Gift, UserMatch y Message, controladores de chat y tienda, sus Form Requests y `routes/api/chat.php`
 - `SendPasswordResetEmailJob`, que no se usaba
 

@@ -9,7 +9,9 @@ use Illuminate\Validation\Rule;
  * Base Form Request
  *
  * Clase base para todos los Form Requests de la aplicación.
- * Proporciona validaciones comunes y sanitización automática.
+ * Proporciona validaciones y mensajes comunes. El recorte de espacios y la
+ * conversión de cadenas vacías a null los hace el framework (TrimStrings y
+ * ConvertEmptyStringsToNull); aquí no se modifica la entrada.
  */
 abstract class BaseFormRequest extends FormRequest
 {
@@ -25,36 +27,6 @@ abstract class BaseFormRequest extends FormRequest
      * Get the validation rules that apply to the request.
      */
     abstract public function rules(): array;
-
-    /**
-     * Prepare the data for validation.
-     */
-    protected function prepareForValidation(): void
-    {
-        $this->sanitizeInput();
-    }
-
-    /**
-     * Sanitizar inputs automáticamente
-     */
-    protected function sanitizeInput(): void
-    {
-        $input = $this->all();
-
-        foreach ($input as $key => $value) {
-            if (is_string($value)) {
-                // Trim espacios en blanco
-                $input[$key] = trim($value);
-
-                // Convertir strings vacíos a null
-                if ($input[$key] === '') {
-                    $input[$key] = null;
-                }
-            }
-        }
-
-        $this->merge($input);
-    }
 
     /**
      * Get custom messages for validator errors.
