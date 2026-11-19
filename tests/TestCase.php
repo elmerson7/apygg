@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\ParallelTesting;
 use Illuminate\Testing\TestResponse;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 use Tests\Support\FakeHostResolver;
+use Tests\Support\OpenApiValidator;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -189,5 +190,19 @@ abstract class TestCase extends BaseTestCase
             ->assertJson([
                 'status' => 401,
             ]);
+    }
+
+    /**
+     * Afirma que la respuesta cumple el contrato `docs/openapi.json` (status documentado, envelope,
+     * tipos y campos obligatorios). Por defecto toma método y plantilla de ruta de la última petición;
+     * se pueden forzar para respuestas sin ruta (404 de ruta inexistente).
+     *
+     * @param  TestResponse  $response
+     */
+    protected function assertMatchesOpenApi($response, ?string $method = null, ?string $route = null): void
+    {
+        $problems = OpenApiValidator::problems($response, $method, $route);
+
+        $this->assertSame([], $problems, "La respuesta no cumple docs/openapi.json:\n- ".implode("\n- ", $problems));
     }
 }

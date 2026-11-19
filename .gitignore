@@ -35,3 +35,6 @@ Thumbs.db
 **/caddy
 frankenphp
 frankenphp-worker.php
+
+# Tipos TS generados desde docs/openapi.json (make types): se generan en cada front, no se versionan aquí
+/docs/api-types.d.ts

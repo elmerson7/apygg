@@ -10,7 +10,7 @@ El proyecto usa **Pest 4** sobre PHPUnit. Todo se ejecuta dentro de Docker vía
 | **Unitarios** | `tests/Unit/` | Una clase aislada: servicios, modelos, helpers | `make test-unit` |
 | **Integración (Feature)** | `tests/Feature/` | Un endpoint de punta a punta: ruta, middleware, validación, BD | `make test-feature` |
 | **Arquitectura** | `tests/Arch/` | Reglas estructurales del código, no comportamiento | `make test-arch` |
-| **Contrato** | `tests/Contract/` | La forma pública de la API (envelope, tipos, códigos) | `make test-contract` |
+| **Contrato** | `tests/Contract/` | Respuestas reales validadas contra `docs/openapi.json` con `assertMatchesOpenApi()` (ver `docs/api-contract.md`) | `make test-contract` |
 | **Concurrencia** | `tests/Concurrency/` | Carreras reales con varios procesos PHP a la vez | `make test-concurrency` |
 | **E2E** | `tests/E2E/` | El recorrido base por HTTP real contra el stack levantado (Octane, Horizon, Mailpit, S3) | `make test-e2e` |
 | **Cobertura** | — | Qué porcentaje del código ejecutan los tests | `make test-coverage` |

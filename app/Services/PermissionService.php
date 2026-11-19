@@ -189,7 +189,7 @@ class PermissionService implements PermissionServiceInterface
      */
     public function list(array $filters = []): LengthAwarePaginator
     {
-        $perPage = $filters['per_page'] ?? 20;
+        $perPage = min(max(1, (int) ($filters['per_page'] ?? 20)), 500);
         $search = $filters['search'] ?? null;
         $resource = $filters['resource'] ?? null;
         $action = $filters['action'] ?? null;

@@ -91,7 +91,7 @@ class DocsController extends Controller
         $conversations = DocConversation::query()
             ->where('user_id', $request->user()->id)
             ->orderByDesc('updated_at')
-            ->paginate($request->integer('per_page', 15));
+            ->paginate($this->perPage($request, 15));
 
         return $this->sendPaginated($conversations);
     }

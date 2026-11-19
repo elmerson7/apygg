@@ -10,7 +10,7 @@ use App\Models\ApiKey;
 use App\Models\Webhook;
 use App\Observers\ApiKeyObserver;
 use App\Observers\WebhookObserver;
-use Dedoc\Scramble\Scramble;
+use App\OpenApi\ApiDocs;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
@@ -19,7 +19,6 @@ use Illuminate\Queue\Events\JobExceptionOccurred;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Queue\Events\JobProcessing;
-use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
@@ -86,41 +85,8 @@ class AppServiceProvider extends ServiceProvider
             return $user && $user->isAdmin();
         });
 
-        // Configurar Scramble para detectar todas las rutas de la API
-        // Las rutas están en la raíz (sin prefijo /api), por lo que necesitamos un resolver personalizado
-        Scramble::afterOpenApiGenerated(function ($openApi) {
-            // Esta función se ejecuta después de generar el OpenAPI
-            // Podemos modificar el documento aquí si es necesario
-        });
-
-        // Configurar resolver de rutas personalizado para Scramble
-        // Incluye todas las rutas de la API excepto las de documentación, health checks básicos y herramientas de desarrollo
-        Scramble::routes(function (Route $route) {
-            $uri = $route->uri();
-
-            // Excluir rutas de documentación de Scramble
-            if (str_starts_with($uri, 'docs')) {
-                return false;
-            }
-
-            // Excluir rutas de herramientas de desarrollo (Telescope, Horizon)
-            if (str_starts_with($uri, 'telescope') || str_starts_with($uri, 'horizon')) {
-                return false;
-            }
-
-            // Excluir health checks básicos (solo incluir /health/detailed si está autenticado)
-            if ($uri === 'health' || $uri === 'health/live' || $uri === 'health/ready') {
-                return false;
-            }
-
-            // Excluir rutas de prueba/test
-            if (str_starts_with($uri, 'test')) {
-                return false;
-            }
-
-            // Incluir todas las demás rutas (auth, users, api-keys, health/detailed, etc.)
-            return true;
-        });
+        // Documento OpenAPI (Scramble): rutas incluidas, seguridad, envelope y errores. Ver docs/api-contract.md.
+        ApiDocs::register();
 
         // Fallback automático de Meilisearch: si el driver es meilisearch pero
         // el contenedor no está corriendo (make up sin SEARCH=true), baja a database

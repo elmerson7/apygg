@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Webhooks;
 
+use App\Models\WebhookDelivery;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -9,6 +10,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * WebhookDeliveryResource
  *
  * Resource para transformar modelos WebhookDelivery en respuestas API.
+ *
+ * @mixin WebhookDelivery
  */
 class WebhookDeliveryResource extends JsonResource
 {

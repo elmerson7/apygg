@@ -22,7 +22,7 @@ class MailProviderController extends Controller
         $providers = MailProvider::query()
             ->withCount('accounts')
             ->orderBy('sort_order')
-            ->paginate($request->integer('per_page', 15));
+            ->paginate($this->perPage($request, 15));
 
         return $this->sendPaginated($providers);
     }

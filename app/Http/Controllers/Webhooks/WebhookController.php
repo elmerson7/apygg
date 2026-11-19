@@ -47,13 +47,11 @@ class WebhookController extends Controller
         $webhook = Webhook::create(array_merge($validated, ['user_id' => $request->user()->id]));
 
         // El secreto se muestra SOLO ahora (y al rotarlo): después no se puede volver a consultar
-        return $this->sendSuccess(array_merge(
-            (new WebhookResource($webhook))->resolve($request),
-            [
-                'secret' => $webhook->secret,
-                'warning' => 'Guarda este secret de forma segura. No se volverá a mostrar.',
-            ]
-        ), 'Webhook creado exitosamente', 201);
+        return $this->sendSuccess([
+            ...(new WebhookResource($webhook))->resolve($request),
+            'secret' => $webhook->secret,
+            'warning' => 'Guarda este secret de forma segura. No se volverá a mostrar.',
+        ], 'Webhook creado exitosamente', 201);
     }
 
     public function show(Request $request, string $id): JsonResponse

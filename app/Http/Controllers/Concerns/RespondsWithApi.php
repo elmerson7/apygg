@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Concerns;
 
 use App\Enums\ErrorCode;
+use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -39,14 +41,29 @@ trait RespondsWithApi
         ];
 
         if ($data !== null) {
-            // Un array o un Resource ya vienen armados (p. ej. `['api_key' => new XResource(..), 'key' => ..]`):
-            // solo se envuelven modelos.
-            $response['data'] = $this->resource && ! is_array($data) && ! $data instanceof JsonResource && class_exists($this->resource)
-                ? new $this->resource($data)
-                : $data;
+            $response['data'] = $this->wrapData($data);
         }
 
         return response()->json($response, $statusCode);
+    }
+
+    /**
+     * Envuelve en el Resource del controller un modelo suelto.
+     *
+     * Un array o un Resource ya vienen armados (p. ej. `['api_key' => new XResource(..), 'key' => ..]`):
+     * solo se envuelven modelos. Para OpenAPI (Scramble) el tipo de salida es el de entrada: el
+     * documento describe el `data` que el controller pasó, no esta indirección.
+     *
+     * @template TData
+     *
+     * @param  TData  $data
+     * @return TData
+     */
+    private function wrapData(mixed $data): mixed
+    {
+        return $this->resource && ! is_array($data) && ! $data instanceof JsonResource && class_exists($this->resource)
+            ? new $this->resource($data)
+            : $data;
     }
 
     /**
@@ -82,12 +99,7 @@ trait RespondsWithApi
      */
     protected function sendPaginated(LengthAwarePaginator $paginator, array $extraMeta = [], string|false|null $resource = null): JsonResponse
     {
-        $data = $paginator->items();
-        $resource ??= $this->resource;
-
-        if ($resource !== false && $resource && class_exists($resource)) {
-            $data = $resource::collection($data);
-        }
+        $data = $this->pageItems($paginator->items(), $resource);
 
         return response()->json([
             'success' => true,
@@ -107,6 +119,52 @@ trait RespondsWithApi
                 'next' => $paginator->nextPageUrl(),
             ],
         ]);
+    }
+
+    /**
+     * Respuesta paginada por cursor (`cursorPaginate()`): para listados grandes o de append continuo
+     * (feeds, logs), donde un `COUNT(*)` por página es caro y las páginas no deben saltar si entran filas.
+     *
+     * Misma forma que `sendPaginated` sin los totales (no se calculan): `meta` lleva `per_page`,
+     * `has_more`, `next_cursor` y `prev_cursor` (opacos; se devuelven tal cual en `?cursor=`).
+     * Es opt-in por endpoint; ver docs/api-contract.md.
+     *
+     * @param  array<string, mixed>  $extraMeta  Metadatos adicionales para `meta`.
+     * @param  class-string<JsonResource>|false|null  $resource  Igual que en `sendPaginated`.
+     * @param  CursorPaginator<int, mixed>  $paginator
+     */
+    protected function sendCursorPaginated(CursorPaginator $paginator, array $extraMeta = [], string|false|null $resource = null): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'data' => $this->pageItems($paginator->items(), $resource),
+            'meta' => array_merge([
+                'per_page' => $paginator->perPage(),
+                'has_more' => $paginator->hasMorePages(),
+                'next_cursor' => $paginator->nextCursor()?->encode(),
+                'prev_cursor' => $paginator->previousCursor()?->encode(),
+            ], $extraMeta),
+            'links' => [
+                'next' => $paginator->nextPageUrl(),
+                'prev' => $paginator->previousPageUrl(),
+            ],
+        ]);
+    }
+
+    /**
+     * Los ítems de una página, envueltos en el Resource (el del argumento o el del controller).
+     *
+     * @param  array<int, mixed>  $items
+     * @param  class-string<JsonResource>|false|null  $resource
+     * @return array<int, mixed>|AnonymousResourceCollection
+     */
+    private function pageItems(array $items, string|false|null $resource): array|AnonymousResourceCollection
+    {
+        $resource ??= $this->resource;
+
+        return $resource !== false && $resource && class_exists($resource)
+            ? $resource::collection($items)
+            : $items;
     }
 
     /**

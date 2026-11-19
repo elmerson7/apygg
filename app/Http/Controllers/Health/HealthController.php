@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Health;
 
 use App\Http\Controllers\Controller;
+use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -16,6 +17,7 @@ class HealthController extends Controller
     /**
      * Liveness probe — solo verifica que la app responde
      */
+    #[Response(200, 'La aplicación responde', type: 'array{status: "alive", timestamp: string}')]
     public function live(): JsonResponse
     {
         return response()->json([
@@ -27,6 +29,8 @@ class HealthController extends Controller
     /**
      * Readiness probe — verifica servicios críticos: DB y Redis
      */
+    #[Response(200, 'DB y Redis responden', type: 'array{status: "ready", timestamp: string, services: array<string, array{status: string, latency_ms?: float, message?: string}>}')]
+    #[Response(503, 'Algún servicio crítico no responde', type: 'array{status: "unhealthy", timestamp: string, services: array<string, array{status: string, latency_ms?: float, message?: string}>}')]
     public function ready(): JsonResponse
     {
         $services = [];
@@ -65,6 +69,8 @@ class HealthController extends Controller
     /**
      * Alias de ready() para compatibilidad con /health
      */
+    #[Response(200, 'DB y Redis responden', type: 'array{status: "ready", timestamp: string, services: array<string, array{status: string, latency_ms?: float, message?: string}>}')]
+    #[Response(503, 'Algún servicio crítico no responde', type: 'array{status: "unhealthy", timestamp: string, services: array<string, array{status: string, latency_ms?: float, message?: string}>}')]
     public function check(Request $request): JsonResponse
     {
         return $this->ready();
@@ -74,6 +80,8 @@ class HealthController extends Controller
      * Health check detallado (requiere auth:api)
      * Verifica DB, Redis, Meilisearch y Horizon
      */
+    #[Response(200, 'Servicios sanos o degradados (Meilisearch/Horizon opcionales)', type: 'array{status: "healthy"|"degraded", version: string, timestamp: string, environment: string, services: array<string, array{status: string, latency_ms?: float, message?: string, connection?: string, read_write?: bool, status_from_api?: string, workers_active?: int}>}')]
+    #[Response(503, 'DB o Redis no responden', type: 'array{status: "unhealthy", version: string, timestamp: string, environment: string, services: array<string, array{status: string, latency_ms?: float, message?: string, connection?: string, read_write?: bool, status_from_api?: string, workers_active?: int}>}')]
     public function detailed(): JsonResponse
     {
         $services = [];

@@ -4,6 +4,7 @@ namespace App\Http\Resources\Settings;
 
 use App\Contracts\SettingsServiceInterface;
 use App\Http\Resources\BaseResource;
+use App\Models\Settings;
 use Illuminate\Http\Request;
 
 /**
@@ -11,6 +12,8 @@ use Illuminate\Http\Request;
  *
  * Resource para transformación de datos de Settings.
  * Desencripta automáticamente valores encriptados al mostrar.
+ *
+ * @mixin Settings
  */
 class SettingsResource extends BaseResource
 {
@@ -43,6 +46,7 @@ class SettingsResource extends BaseResource
             'value' => $typedValue,
             'type' => $setting->type,
             'group' => $setting->group,
+            /** @var string|null */
             'description' => $setting->description,
             'is_public' => $setting->is_public,
             'is_encrypted' => $setting->is_encrypted,

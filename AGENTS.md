@@ -17,6 +17,7 @@ no va aquí.
 2. `docs/CONTROLLER_CONVENTIONS.md` → estructura de controllers
 3. `docs/api-routes-conventions.md` → rutas y prefijos
 4. `docs/api-response-structure.md` + `docs/error-handling.md` → contrato de respuestas
+5. `docs/api-contract.md` → contrato OpenAPI (`docs/openapi.json`), tests de contrato y tipos para los fronts
 5. `docs/permissions.md` → roles, permisos, middlewares `permission:`/`role:`, super admin, teams
 
 ## Proyecto nuevo y entorno local
@@ -48,6 +49,12 @@ no va aquí.
 - Arrays en firmas: siempre con tipo de valor (`array<string, mixed>`, `list<int>`);
   relaciones y scopes con genéricos (`HasMany<Webhook, $this>`, `Builder<static>`).
 - `make install-hooks` instala los git hooks que ejecutan esto en cada commit.
+
+## Contrato OpenAPI
+
+Tras cambiar rutas, Form Requests o la forma de una respuesta: `make openapi` (regenera
+`docs/openapi.json`, que se commitea) y `make test-contract`. Un test de la suite por defecto falla si
+el archivo está desactualizado. Detalle en `docs/api-contract.md`.
 
 ## Stack
 

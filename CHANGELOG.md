@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Tenant`: `is_active` pasa a `status` (string), desaparecen `Tenant::setCurrent/resolveCurrent/clearCurrent/hasCurrent` (usa `TenantContext`), `Tenant::users()` es many-to-many vía `tenant_user`; `ResolveTenant` se reescribe (alias `tenant`)
 
 ### Added
+- Contrato OpenAPI 3.1: `make openapi` / `php artisan openapi:export` genera `docs/openapi.json` (versionado, formato estable; `--check` y un test de la suite por defecto fallan si está desactualizado). Scramble documenta ahora el envelope de éxito y de listados, los errores con `ApiError` (`code` + `request_id`), la seguridad Bearer JWT / API Key por operación y `page`/`per_page`, mediante extensiones (`app/OpenApi`) y no anotaciones por controller. Quedan fuera del documento backoffice, Livewire, Horizon, Telescope y rutas de diagnóstico
+- Suite `Contract` real: `assertMatchesOpenApi($response)` valida respuestas reales (health, auth, usuarios, settings, webhooks, 401/403/404/422) contra `docs/openapi.json` con `opis/json-schema` (dev)
+- `make types`: tipos TypeScript para los fronts con `openapi-typescript` (`docs/api-types.d.ts`, no versionado); `docs/api-contract.md` con el flujo, el consumo desde Next.js/Expo y la paginación
+- `RespondsWithApi::sendCursorPaginated()`: paginación por cursor opt-in (sin cambiar endpoints existentes)
 - Errores con `code` estable y `request_id`: enum `App\Enums\ErrorCode`, `ApiException::errorCode()` para códigos de proyecto, `code`/`request_id` en todas las respuestas de error (handler RFC 7807, `ApiResponse`, `sendError`, validación, 429, JWT, middlewares) y cabecera `X-Request-ID` en todas las respuestas (se respeta la entrante si es válida). Cambio aditivo: no cambia status ni quita campos. `TraceIdMiddleware` pasa a ser global (cubre también 404/405 sin ruta)
 - Arranque de proyecto nuevo: `make init NAME=<slug>` (compose.env y .env con puertos, contraseñas y claves propios; renombra composer/package; `origin` -> `upstream`), `make setup`, `make doctor`, `make fresh`, `make upgrade-check`, `make wt-env` (entorno por worktree) y `docs/new-project.md`. `make validate` ahora comprueba puertos repetidos, `REDIS_PASSWORD` vacío y puertos de BD/Redis/S3/Mailpit abiertos al exterior
 - `APP_TITLE` / `config('app.title')`: nombre visible de la API (ficha de `/` y título de `/docs/api`)
@@ -33,6 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RoleService::assertCanGrantPermissions` y `MailTemplateConfig::toggleActive`: la lógica que estaba en un controller pasa a un sitio que comparten la API y el back-office
 
 ### Changed
+- `config/scramble.php`: `api_path` vacío (con `null` Scramble recortaba `api` y publicaba `/api-keys` como `/-keys`); `/health*`, `/docs/*` del asistente y las rutas con `\` inicial en su FQCN ahora sí salen en el documento
+- `per_page` de los listados de correo, LLM, docs, escaneos y lista negra se acota a 1..100 (antes sin tope) y el de roles/permisos también (100 y 500)
 - Todas las imágenes de Compose con versión fija (PgBouncer ya no usa `latest`)
 - `chillerlan/php-qrcode` baja a `^5.0` (Filament 5 lo exige; `QrCodeService` ya usaba la API v5) y `composer update -W` sube `laravel/framework` a 13.43 y dependencias de Symfony
 - `post-autoload-dump` publica los assets de Filament (`filament:upgrade`); no se versionan (`public/{css,js,fonts}/filament`)

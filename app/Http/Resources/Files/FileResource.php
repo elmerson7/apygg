@@ -3,12 +3,15 @@
 namespace App\Http\Resources\Files;
 
 use App\Http\Resources\BaseResource;
+use App\Models\File;
 use Illuminate\Http\Request;
 
 /**
  * FileResource
  *
  * Resource para transformación de datos de archivos.
+ *
+ * @mixin File
  */
 class FileResource extends BaseResource
 {

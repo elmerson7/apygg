@@ -23,7 +23,7 @@ class LlmAreaController extends Controller
     {
         $areas = LlmArea::query()
             ->orderBy('sort_order')
-            ->paginate($request->integer('per_page', 25));
+            ->paginate($this->perPage($request, 25));
 
         return $this->sendPaginated($areas);
     }

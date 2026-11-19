@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Users;
 
 use App\Http\Resources\BaseResource;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 /**
@@ -11,6 +12,8 @@ use Illuminate\Http\Request;
  * Resource para transformación básica de datos de usuario.
  * Oculta información sensible y permite inclusión condicional de relaciones.
  * Usado para listados y respuestas básicas.
+ *
+ * @mixin User
  */
 class UserResource extends BaseResource
 {
@@ -27,11 +30,14 @@ class UserResource extends BaseResource
             'name' => $user->name,
             'first_name' => $user->profile?->first_name,
             'last_name' => $user->profile?->last_name,
+            /** @var string|null */
             'username' => $user->username,
             'email' => $user->email,
             'email_verified_at' => $this->formatDate($user->email_verified_at),
+            /** @var string|null */
             'identity_document' => $user->identity_document,
 
+            /** @var list<array{id: int, name: string, display_name: string|null}> */
             'roles' => $user->roles->map(function ($role) {
                 return [
                     'id' => $role->id,
@@ -40,6 +46,7 @@ class UserResource extends BaseResource
                 ];
             }),
 
+            /** @var list<array{id: int, name: string, display_name: string|null}> */
             'permissions' => $this->whenLoaded('permissions', function () use ($user) {
                 return $user->permissions->map(function ($permission) {
                     return [

@@ -67,7 +67,8 @@ class SettingsController extends Controller
         $this->authorize('create', Settings::class);
 
         $validated = $request->validated();
-        $setting = $this->settingsService->create($validated);
+        // `refresh()`: trae los defaults de la BD (is_public, is_encrypted) que el modelo recién creado no tiene.
+        $setting = $this->settingsService->create($validated)->refresh();
 
         return $this->sendSuccess($setting, 'Setting creado exitosamente', 201);
     }

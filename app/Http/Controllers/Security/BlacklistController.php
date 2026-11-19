@@ -26,7 +26,7 @@ class BlacklistController extends Controller
                     ->orWhere('name', 'ILIKE', $search));
             })
             ->orderByDesc('created_at')
-            ->paginate($request->integer('per_page', 25));
+            ->paginate($this->perPage($request, 25));
 
         return $this->sendPaginated($entries);
     }

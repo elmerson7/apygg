@@ -28,7 +28,7 @@ class MailAccountController extends Controller
             ->with('mailProvider')
             ->withCount('templateConfigs')
             ->orderBy('priority')
-            ->paginate($request->integer('per_page', 15));
+            ->paginate($this->perPage($request, 15));
 
         return $this->sendPaginated($accounts);
     }

@@ -139,8 +139,11 @@ class AuthController extends Controller
             'last_name' => $user->profile?->last_name,
             'email' => $user->email,
             'email_verified_at' => $user->email_verified_at ? $user->email_verified_at->toIso8601String() : null,
+            /** @var list<string> */
             'roles' => $user->roles->pluck('name')->toArray(),
+            /** @var list<string> */
             'permissions' => $allPermissions->toArray(),
+            /** @var array<string, mixed>|null */
             'preferences' => $user->preferences,
             'created_at' => $user->created_at->toIso8601String(),
             'updated_at' => $user->updated_at->toIso8601String(),

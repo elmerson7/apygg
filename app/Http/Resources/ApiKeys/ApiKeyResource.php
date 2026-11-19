@@ -3,6 +3,7 @@
 namespace App\Http\Resources\ApiKeys;
 
 use App\Http\Resources\BaseResource;
+use App\Models\ApiKey;
 use Illuminate\Http\Request;
 
 /**
@@ -11,6 +12,8 @@ use Illuminate\Http\Request;
  * Resource para transformación de datos de API Key.
  * NUNCA incluye el campo 'key' (hash) en respuestas normales.
  * Solo se incluye la key completa en la respuesta de creación.
+ *
+ * @mixin ApiKey
  */
 class ApiKeyResource extends BaseResource
 {

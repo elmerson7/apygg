@@ -13,6 +13,8 @@ use Illuminate\Http\Request;
  * Incluye permisos efectivos (combinando permisos de roles y permisos directos),
  * tokens API y más información detallada.
  * Usado para vistas detalladas de usuario.
+ *
+ * @mixin User
  */
 class UserDetailResource extends BaseResource
 {
@@ -33,9 +35,11 @@ class UserDetailResource extends BaseResource
             'name' => $user->name,
             'email' => $user->email,
             'email_verified_at' => $this->formatDate($user->email_verified_at),
+            /** @var string|null */
             'identity_document' => $user->identity_document,
 
             // Roles siempre visibles (información básica)
+            /** @var list<array{id: int, name: string, display_name: string|null, description: string|null}> */
             'roles' => $this->whenLoaded('roles', function () use ($user) {
                 return $user->roles->map(function ($role) {
                     return [
@@ -48,6 +52,7 @@ class UserDetailResource extends BaseResource
             }),
 
             // Permisos directos asignados al usuario (solo si puede ver detalles)
+            /** @var list<array{id: int, name: string, display_name: string|null, resource: string|null, action: string|null, description: string|null}> */
             'direct_permissions' => $this->when(
                 $canViewDetails && $user->relationLoaded('permissions'),
                 function () use ($user) {
@@ -65,6 +70,7 @@ class UserDetailResource extends BaseResource
             ),
 
             // Permisos efectivos (combinando permisos de roles + permisos directos)
+            /** @var list<array<string, mixed>> */
             'effective_permissions' => $this->when(
                 $canViewDetails && ($user->relationLoaded('roles') || $user->relationLoaded('permissions')),
                 function () use ($user) {
@@ -73,6 +79,7 @@ class UserDetailResource extends BaseResource
             ),
 
             // API Tokens (solo para el propio usuario o admin)
+            /** @var list<array{id: int, name: string, last_used_at: string|null, expires_at: string|null, created_at: string|null}> */
             'api_tokens' => $this->when(
                 $canViewDetails && $user->relationLoaded('apiTokens'),
                 function () use ($user) {
@@ -89,6 +96,7 @@ class UserDetailResource extends BaseResource
             ),
 
             // Historial de actividad (solo si se solicita explícitamente con eager loading)
+            /** @var list<array{id: int, action: string, model_type: string|null, model_id: int|string|null, description: string|null, created_at: string|null}> */
             'activity_logs' => $this->whenLoaded('activityLogs', function () use ($user) {
                 return $user->activityLogs->map(function ($log) {
                     return [
@@ -103,6 +111,7 @@ class UserDetailResource extends BaseResource
             }),
 
             // Información adicional solo para el propio usuario o admin
+            /** @var bool */
             'is_admin' => $this->when($canViewDetails, fn () => $user->isAdmin()),
             'last_login_at' => $this->when($canViewDetails, fn () => $this->formatDate($user->last_login_at ?? null)),
 

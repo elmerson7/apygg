@@ -23,7 +23,7 @@ class MailTemplateController extends Controller
         $templates = MailTemplateConfig::query()
             ->with('mailAccount')
             ->orderBy('template_name')
-            ->paginate($request->integer('per_page', 50));
+            ->paginate($this->perPage($request, 50));
 
         return $this->sendPaginated($templates);
     }

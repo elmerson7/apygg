@@ -179,7 +179,7 @@ class RoleService implements RoleServiceInterface
      */
     public function list(array $filters = []): LengthAwarePaginator
     {
-        $perPage = $filters['per_page'] ?? 15;
+        $perPage = min(max(1, (int) ($filters['per_page'] ?? 15)), 100);
         $search = $filters['search'] ?? null;
 
         $query = Role::with('permissions');

@@ -4,10 +4,11 @@ use Dedoc\Scramble\Http\Middleware\RestrictedDocsAccess;
 
 return [
     /*
-     * Your API path. By default, all routes starting with this path will be added to the docs.
-     * If you need to change this behavior, you can add your custom routes resolver using `Scramble::routes()`.
+     * Prefijo de la API. Vacío: las rutas cuelgan de la raíz (no existe /api). No lo pongas a `null`:
+     * Scramble lo toma como `api` y recorta ese prefijo de las rutas (`/api-keys` saldría como `/-keys`).
+     * Qué rutas entran al documento lo decide App\OpenApi\ApiDocs::includesRoute().
      */
-    'api_path' => null,
+    'api_path' => '',
 
     /*
      * Your API domain. By default, app domain is used. This is also a part of the default API routes
@@ -18,7 +19,14 @@ return [
     /*
      * The path where your OpenAPI specification will be exported.
      */
-    'export_path' => 'api.json',
+    'export_path' => 'docs/openapi.json',
+
+    /*
+     * URL del servidor que lleva el documento versionado (`make openapi`). Fija a propósito: no es
+     * APP_URL, que cambia entre dev, CI y contenedores y ensuciaría el diff. Los clientes generados
+     * reciben su base URL por configuración, no de aquí. La UI viva (/docs/api) sí usa `servers`.
+     */
+    'export_server_url' => env('OPENAPI_SERVER_URL', 'http://localhost:8000'),
 
     'info' => [
         /*
@@ -29,7 +37,19 @@ return [
         /*
          * Description rendered on the home page of the API documentation (`/docs/api`).
          */
-        'description' => 'API Boilerplate APYGG - Laravel 12 production-ready con autenticación JWT, sistema RBAC, logging completo y arquitectura modular.',
+        'description' => <<<'MD'
+            API REST de APYGG. Cada respuesta usa un envelope estable (detalle en `docs/api-response-structure.md`).
+
+            **Éxito**: `{ "success": true, "message": "...", "data": ... }`. Los listados paginados devuelven
+            `data` (array), `meta` (`current_page`, `per_page`, `total`, `last_page`, `from`, `to`) y `links`;
+            se piden con `?page=` y `?per_page=` (con máximo por endpoint).
+
+            **Errores**: toda respuesta 4xx/5xx lleva `code` (estable, ramifica por él, no por `message`) y
+            `request_id` (igual que la cabecera `X-Request-ID`). La validación (422) añade `errors` por campo.
+
+            **Autenticación**: JWT (`Authorization: Bearer`) obtenido en `POST /auth/login`, o API Key
+            (`X-API-Key`) en las rutas de integración. Las rutas sin candado son públicas.
+            MD,
     ],
 
     /*

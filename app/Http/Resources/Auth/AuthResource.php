@@ -10,7 +10,7 @@ class AuthResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @return array<string, mixed>
+     * @return array{user: array{id: int, name: string, email: string, email_verified_at: string|null}, access_token: string, token_type: string, expires_in: int, refresh_token?: string}
      */
     public function toArray(Request $request): array
     {
@@ -18,6 +18,7 @@ class AuthResource extends JsonResource
 
         $data = [
             'user' => [
+                /** @var int */
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
@@ -25,6 +26,7 @@ class AuthResource extends JsonResource
             ],
             'access_token' => $this->resource['access_token'],
             'token_type' => $this->resource['token_type'] ?? 'bearer',
+            /** @var int */
             'expires_in' => $this->resource['expires_in'] ?? config('jwt.ttl') * 60,
         ];
 

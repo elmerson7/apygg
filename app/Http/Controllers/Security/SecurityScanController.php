@@ -22,7 +22,7 @@ class SecurityScanController extends Controller
         $scans = SecurityScan::query()
             ->with('creator:id,name')
             ->orderByDesc('created_at')
-            ->paginate($request->integer('per_page', 15));
+            ->paginate($this->perPage($request, 15));
 
         return $this->sendPaginated($scans);
     }
