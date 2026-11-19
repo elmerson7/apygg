@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware(['auth:api'])->prefix('settings')->group(function () {
+Route::middleware(['auth:api', 'permission:system.settings,api'])->prefix('settings')->group(function () {
     // CRUD básico
     Route::get('/', [SettingsController::class, 'index'])
         ->name('settings.index');

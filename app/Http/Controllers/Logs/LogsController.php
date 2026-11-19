@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Logs;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Logs\ListLogsRequest;
 use App\Models\Logs\ActivityLog;
 use App\Models\Logs\ApiLog;
 use App\Models\Logs\SecurityLog;
@@ -22,7 +23,7 @@ class LogsController extends Controller
      * GET /admin/logs/activity
      * Lista activity logs con filtros.
      */
-    public function activity(Request $request): JsonResponse
+    public function activity(ListLogsRequest $request): JsonResponse
     {
         $query = ActivityLog::query()->latest();
 
@@ -51,7 +52,7 @@ class LogsController extends Controller
      * GET /admin/logs/api
      * Lista api logs con filtros.
      */
-    public function api(Request $request): JsonResponse
+    public function api(ListLogsRequest $request): JsonResponse
     {
         $query = ApiLog::query()->latest();
 
@@ -59,13 +60,13 @@ class LogsController extends Controller
             $query->where('user_id', $request->input('user_id'));
         }
         if ($request->filled('method')) {
-            $query->where('method', strtoupper($request->input('method')));
+            $query->where('request_method', strtoupper((string) $request->input('method')));
         }
         if ($request->filled('status_code')) {
-            $query->where('status_code', $request->input('status_code'));
+            $query->where('response_status', (int) $request->input('status_code'));
         }
         if ($request->filled('endpoint')) {
-            $query->where('endpoint', 'like', '%'.$request->input('endpoint').'%');
+            $query->where('request_path', 'like', '%'.$request->input('endpoint').'%');
         }
         if ($request->filled('from')) {
             $query->where('created_at', '>=', $request->input('from'));
@@ -83,7 +84,7 @@ class LogsController extends Controller
      * GET /admin/logs/security
      * Lista security logs con filtros.
      */
-    public function security(Request $request): JsonResponse
+    public function security(ListLogsRequest $request): JsonResponse
     {
         $query = SecurityLog::query()->latest();
 

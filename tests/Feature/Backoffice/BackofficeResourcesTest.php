@@ -73,11 +73,21 @@ test('un log de seguridad y uno de actividad tampoco muestran secretos', functio
 
     $this->actingAs(backofficeUser('admin'));
 
-    Livewire::test(ListSecurityLogs::class)->mountTableAction('view', $seguridad)->call('$refresh')
-        ->assertSee('login')->assertDontSee('clave-en-claro');
+    Livewire::test(ListSecurityLogs::class)->assertCanSeeTableRecords([$seguridad]);
+    Livewire::test(ListActivityLogs::class)->assertCanSeeTableRecords([$actividad]);
 
-    Livewire::test(ListActivityLogs::class)->mountTableAction('view', $actividad)->call('$refresh')
-        ->assertDontSee('vieja-clave')->assertDontSee('TOTPSECRETO');
+    // Lo que muestra la ficha: el estado de cada entrada JSON del infolist, ya redactado
+    // (igual que el test del log de la API; no depende de que el modal llegue a pintarse).
+    $estado = function ($registro, string $campo): string {
+        $entrada = Pretty::entry($campo, $campo);
+        Schema::make()->record($registro)->components([$entrada])->getComponents();
+
+        return (string) $entrada->getState();
+    };
+
+    expect($estado($seguridad, 'details'))->toContain('login')->not->toContain('clave-en-claro')
+        ->and($estado($actividad, 'old_values'))->not->toContain('vieja-clave')
+        ->and($estado($actividad, 'new_values'))->not->toContain('TOTPSECRETO');
 });
 
 test('los logs son de solo lectura y piden system.logs', function () {
