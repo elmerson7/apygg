@@ -263,6 +263,17 @@ Guía completa: `docs/testing.md`.
   (`app/Logging/FiltersDeprecationWarnings.php`, configurable en
   `config/logging.php` → `deprecation_filter`).
 
+## Normas
+
+Una norma por documento; esos archivos son la fuente de verdad de cada tema:
+
+- [`docs/modules.md`](docs/modules.md) → anatomía de un módulo, checklist «añadir un módulo» y qué es núcleo u opcional.
+- [`docs/octane.md`](docs/octane.md) → código seguro con Octane/FrankenPHP (estado, bindings, guards, caché de permisos).
+- [`docs/queues-and-jobs.md`](docs/queues-and-jobs.md) → colas, base `Job`, reintentos, idempotencia, `afterCommit`.
+- [`docs/integrations.md`](docs/integrations.md) → integraciones externas con versión simulada y webhooks entrantes (pagos, WhatsApp, SMS, push…).
+- [`docs/migrations.md`](docs/migrations.md) → migraciones inmutables, expandir/contraer, `jsonb`, estados, pruebas.
+- [`docs/money.md`](docs/money.md) → dinero en unidades menores + moneda (norma para la fase de suscripciones).
+
 ## Al añadir algo al boilerplate
 
 1. ¿Sirve a cualquier proyecto que parta de esta base? Si no, no va aquí.

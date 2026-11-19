@@ -1,0 +1,138 @@
+# Migraciones
+
+PostgreSQL 18 exclusivamente. Plantilla y reglas básicas: `docs/CODING_STANDARDS.md` →
+«Migración». Aquí, las normas de fondo.
+
+## 1. Nunca edites una migración ya publicada
+
+Una migración que ya corrió en algún entorno (producción, el entorno de otro compañero, un
+proyecto derivado) **no se toca**. Laravel no la vuelve a ejecutar: tu cambio solo llega a las
+bases nuevas, y cada entorno queda con un esquema distinto. Crea una migración nueva.
+
+**El caso real (commit `a13b86f`).** Tras la versión 1.0.0, ese commit cambió la clave primaria
+de `uuid` a autoincremental **editando en sitio** las migraciones `2024_01_01_000001…000015`
+(y las de `files`, `webhook_deliveries` y `tenants` en el mismo cambio de IDs); commits posteriores (`136ea00`, `7b1b252`, `6bdc0d6`)
+añadieron `username`, `identity_document` y `preferences` a `create_users_table` del mismo modo.
+Resultado: no hay migración de conversión; una BD creada con 1.0.0 (IDs uuid) no se puede
+actualizar con `migrate`, y los proyectos derivados tienen que rehacer la base. Está anotado
+en `docs/upgrading.md` → «0. Antes de merge». Es un coste que no se debe repetir.
+
+**Cómo se hace bien:** `2026_11_19_000040_convert_json_columns_to_jsonb` convierte las columnas
+`json` antiguas **sin reescribir** las migraciones que las crearon; `2026_11_19_000001_add_token_version_to_users_table`
+añade una columna a `users` en una migración propia.
+
+Excepción: una migración que **aún no se ha mergeado** a `main` ni desplegado en ningún sitio
+puede editarse libremente en su rama. Una vez en `main`, es inmutable.
+
+Todo cambio que rompa proyectos derivados se anota en `docs/upgrading.md`.
+
+## 2. Desplegar sin parada: expandir y contraer
+
+Durante un despliegue conviven código viejo y nuevo con la misma BD (workers de Octane y de
+Horizon se reinician de uno en uno). Cada migración debe ser compatible con el código anterior.
+
+| Cambio | Cómo, en varias entregas |
+|---|---|
+| Añadir columna | 1) migración que añade la columna **nullable** o con `default`; 2) código que la escribe y la lee |
+| Hacerla obligatoria | 3) rellenar los datos antiguos; 4) migración posterior con `NOT NULL` |
+| Renombrar columna | Añadir la nueva → escribir en ambas → copiar datos → leer de la nueva → quitar la vieja en una entrega posterior |
+| Eliminar columna/tabla | 1) el código deja de usarla y se despliega; 2) **después** la migración que la borra |
+| Cambiar tipo | Columna nueva + copia + cambio de lectura + borrado (ver punto 6 si reescribe la tabla) |
+
+Un `NOT NULL` sin `default` sobre una tabla con filas, o un `dropColumn` en la misma entrega que
+el código que deja de usarla, rompe a los workers que aún corren el código viejo.
+
+Índices en tablas grandes: `CREATE INDEX CONCURRENTLY` (fuera de transacción:
+`public $withinTransaction = false;` en la migración) para no bloquear escrituras. Una migración
+que **reescribe** una tabla grande (`ALTER COLUMN ... TYPE`, como la de `jsonb`) va en ventana
+de mantenimiento y se avisa en su docblock, como hace la `convert_json_columns_to_jsonb`.
+
+## 3. `jsonb`, siempre
+
+`$table->jsonb('metadata')`, nunca `json()`. `tests/Feature/JsonbColumnsTest.php` falla si
+queda una columna `json` en la BD. Las migraciones originales (`api_logs`, `webhooks`…) siguen
+declarando `json()` en su archivo, pero la `…000040_convert_json_columns_to_jsonb` las convierte.
+Para búsquedas dentro del JSON usa operadores de jsonb y, si se filtra, un índice GIN.
+
+## 4. Estados: `string` (y enum PHP), no `enum()` de la BD
+
+Lo que hace el repo hoy es mixto:
+
+- Las migraciones antiguas usan `$table->enum('status', [...])` (`webhooks`,
+  `webhook_deliveries`): añadir un valor exige una migración que altere la restricción.
+- Las nuevas usan `$table->string('status')->default('pending')` (`mail_logs`, `mail_events`)
+  y la lista de valores vive en el código: constantes del modelo (`MailLog::STATUS_FAILED`,
+  `WebhookDelivery::STATUS_PENDING`) o un `enum` PHP de `App\Enums` (`WebhookStatusEnum`,
+  validado con `Rule::in([...->value])` en los Form Requests).
+
+**Norma para lo nuevo:** columna `string`, valores definidos en un `enum` PHP de `app/Enums/`
+(`enum EstadoX: string`), cast del modelo a ese enum y `Rule::enum()` en el Form Request. Añadir
+un estado = tocar el enum, sin migración. Además se **recomienda** una restricción `CHECK` en la
+BD para que ningún script salte la validación:
+
+```php
+DB::statement("ALTER TABLE pedidos ADD CONSTRAINT pedidos_status_check CHECK (status IN ('pending','paid','cancelled'))");
+```
+
+(Hoy ninguna migración del repo usa `CHECK`; es una norma nueva, no una práctica existente.
+Cuando se añada un estado, la migración amplía el `CHECK`.) Nunca guardes el estado como
+entero «mágico» ni como booleanos múltiples (`is_paid`, `is_sent`…).
+
+## 5. Índices y claves
+
+- Índice en toda columna por la que se filtra u ordena, y compuesto en el orden de la consulta:
+  `index(['mail_account_id', 'status'])`, `index(['webhook_id', 'status'])`.
+- Unicidad en la BD, no solo en la validación: `unique()` (ej. `mail_events.provider_event_id`,
+  base de la idempotencia). Es lo único que resiste a las carreras.
+- `foreignId()->constrained()` con `cascadeOnDelete()`, `restrictOnDelete()` o `nullOnDelete()`
+  **explícito** (ver `security_scans`, `user_profiles`).
+- `softDeletes()` si el modelo hereda de `App\Models\Model`; un único índice `unique` con
+  soft delete necesita pensar en filas borradas (índice parcial `WHERE deleted_at IS NULL`).
+
+## 6. Reversibles: `down()` siempre
+
+Las 35 migraciones del repo tienen `down()`. Debe deshacer exactamente lo que hizo `up()`
+(`dropColumn`, `dropIfExists`, o la conversión inversa como en `convert_json_columns_to_jsonb`).
+Si una migración **no se puede** revertir sin perder datos (borrado de columna), dilo en el
+docblock y haz que `down()` recree la estructura aunque no pueda recuperar los datos. Hazla
+idempotente cuando sea barato (`Schema::hasColumn` antes de tocar).
+
+## 7. Datos frente a esquema
+
+- Una migración de **esquema** no toca datos de negocio; una de **datos** (rellenar, convertir)
+  va en **su propia migración**, separada, para poder reintentarla y revertirla.
+- Los **datos de referencia** (roles, permisos, plantillas) van en seeders idempotentes
+  (`PermissionSeeder` usa `firstOrCreate`; `PermissionCatalogTest` comprueba que correr los
+  seeders dos veces no duplica), no en migraciones.
+- En una migración, usa `DB::table()` o SQL, **no modelos Eloquent**: el modelo de mañana puede
+  cambiar o no existir y la migración vieja dejaría de correr (y los eventos/observers del
+  modelo dispararían efectos secundarios).
+- Tablas grandes: procesa por lotes (`chunkById`) y no en una sola sentencia.
+- Si cambias roles o permisos, vacía la caché de Spatie
+  (`app(PermissionRegistrar::class)->forgetCachedPermissions()`, como hace la migración
+  `…000002_adapt_rbac_tables_for_spatie_permission`).
+
+## 8. Cómo probar una migración
+
+- Entorno de pruebas: BD aislada `<DB>_test`; tras añadir migraciones corre
+  `make testdb-migrate` (`docs/testing-database.md`). Si quedan desfasadas, los tests fallan con
+  columnas inexistentes.
+- **Ida y vuelta** en local: `make art cmd="migrate"`, `make art cmd="migrate:rollback --step=1"`,
+  `make art cmd="migrate"`. Debe funcionar sin errores y dejar el mismo esquema
+  (`make schema-dump` y compara `database/schema.sql`).
+- **Migración de datos:** prepara el estado «antes» con filas representativas (incluye nulos,
+  vacíos y valores límite), ejecuta la migración y comprueba el «después». Hazlo en un test que
+  inserte con `DB::table()` el estado antiguo, ejecute la migración y consulte:
+
+  ```php
+  $migration = require database_path('migrations/2026_xx_xx_000001_convertir_estados.php');
+  DB::table('pedidos')->insert(['status' => 'old_value', /* ... */]);
+  $migration->up();
+  expect(DB::table('pedidos')->value('status'))->toBe('new_value');
+  $migration->down();   // y comprueba la vuelta
+  ```
+
+  (Esquema orientativo; `JsonbColumnsTest` es el ejemplo de test de esquema del repo.) En una
+  copia de datos reales (`make restore-backup` en local), mide el tiempo antes de producción.
+- Prueba también que es **idempotente** si la escribiste así (`convert_json_columns_to_jsonb`
+  se salta lo que ya está convertido).
