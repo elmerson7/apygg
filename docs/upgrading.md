@@ -26,6 +26,13 @@ punto de partida compara: `git diff <tu-commit-base> HEAD -- database/migrations
   `make art cmd="migrate:fresh --seed"`.
 - **Sanctum no existe.** Nunca estuvo instalado; si lo usabas, es tuyo.
 
+### Ajustes, feature flags y límites (ola 4.2-B)
+
+- `Feature::enabled()` y el middleware `feature:` ahora pasan por `FeatureFlagServiceInterface` (BD + caché + overrides). Con tablas vacías el resultado es el de `config/features.php`, igual que antes. `CheckFeatureFlag` recibe la interfaz por constructor: si lo instancias a mano, pásasela.
+- Migraciones `2026_11_19_000120` (flags y overrides) y `000121` (`tenants.plan`, `tenant_limit_overrides`): `make art cmd="migrate"` y `make art cmd="db:seed --class=PermissionSeeder"` (permisos nuevos).
+- `ApiKeyService` recibe `PlanLimitsInterface`. Los límites están **apagados** (`PLAN_LIMITS_ENABLED=false`): sin activarlos nada cambia.
+- El CRUD `/settings` valida y normaliza las keys declaradas en `config/settings.php`; la caché de `SettingsService` ya no lleva prefijo de tenant (son ajustes de plataforma).
+
 ### 1. Dependencias
 
 ```bash

@@ -2,31 +2,31 @@
 
 namespace App\Helpers;
 
+use App\Contracts\FeatureFlagServiceInterface;
+
 /**
  * Feature Flag Helper
  *
- * Permite verificar si una feature está habilitada o no.
- * Utiliza cache automático para mejorar el rendimiento.
+ * Fachada estática de comodidad sobre `FeatureFlagServiceInterface` (flags en BD con override por
+ * tenant/usuario y despliegue porcentual; ver docs/settings-and-flags.md). Donde se pueda inyectar
+ * (controllers, servicios, jobs), inyecta la interfaz; el helper es para código que no lo permite
+ * (vistas, `config`, closures de rutas). No guarda estado propio (Octane).
  */
 class Feature
 {
     /**
-     * Verifica si una feature está habilitada
+     * Verifica si una feature está habilitada para el tenant del contexto y el usuario autenticado
      *
      * @param  string  $feature  Nombre de la feature
-     * @return bool True si está habilitada, false en caso contrario
+     * @return bool True si está habilitada, false en caso contrario (o si no existe)
      */
     public static function enabled(string $feature): bool
     {
-        // Sin caché propia (estado estático en Octane): config() ya está en memoria.
-        return (bool) config("features.{$feature}.enabled", false);
+        return app(FeatureFlagServiceInterface::class)->enabled($feature);
     }
 
     /**
      * Verifica si una feature está deshabilitada
-     *
-     * @param  string  $feature  Nombre de la feature
-     * @return bool True si está deshabilitada, false en caso contrario
      */
     public static function disabled(string $feature): bool
     {
@@ -47,19 +47,12 @@ class Feature
     }
 
     /**
-     * Obtiene todas las features disponibles
+     * Obtiene todas las features declaradas, evaluadas para el contexto actual
      *
      * @return array<string, array{enabled: bool, description: string|null}>
      */
     public static function all(): array
     {
-        $features = config('features', []);
-
-        return array_map(function ($config) {
-            return [
-                'enabled' => $config['enabled'] ?? false,
-                'description' => $config['description'] ?? null,
-            ];
-        }, $features);
+        return app(FeatureFlagServiceInterface::class)->all();
     }
 }

@@ -1,13 +1,17 @@
 <?php
 
+use App\Contracts\FeatureFlagServiceInterface;
 use App\Http\Middleware\CheckFeatureFlag;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+
+uses(RefreshDatabase::class);
 
 test('deja pasar cuando la feature está habilitada', function () {
     config()->set('features.demo_feature', ['enabled' => true]);
 
-    $response = (new CheckFeatureFlag)->handle(
+    $response = (new CheckFeatureFlag(app(FeatureFlagServiceInterface::class)))->handle(
         Request::create('/demo', 'GET'),
         fn () => new Response('ok'),
         'demo_feature'
@@ -19,7 +23,7 @@ test('deja pasar cuando la feature está habilitada', function () {
 test('responde 403 cuando la feature está deshabilitada', function () {
     config()->set('features.demo_feature', ['enabled' => false]);
 
-    $response = (new CheckFeatureFlag)->handle(
+    $response = (new CheckFeatureFlag(app(FeatureFlagServiceInterface::class)))->handle(
         Request::create('/demo', 'GET'),
         fn () => new Response('ok'),
         'demo_feature'
@@ -35,7 +39,7 @@ test('responde 403 cuando la feature está deshabilitada', function () {
 });
 
 test('responde 403 cuando la feature no existe', function () {
-    $response = (new CheckFeatureFlag)->handle(
+    $response = (new CheckFeatureFlag(app(FeatureFlagServiceInterface::class)))->handle(
         Request::create('/demo', 'GET'),
         fn () => new Response('ok'),
         'feature_inexistente'

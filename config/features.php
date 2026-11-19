@@ -13,9 +13,14 @@ return [
     | Estructura:
     | - enabled: boolean - Indica si la feature está activada
     | - description: string - Descripción de la feature
+    | - rollout_percentage: int 0-100 (opcional, por defecto 100) - despliegue gradual
+    | - rollout_by: 'user'|'tenant' (opcional, por defecto 'user') - sujeto del hash
+    |
+    | Son los valores POR DEFECTO: la tabla `feature_flags` (y los overrides por tenant/usuario)
+    | los sobrescriben sin deploy. Ver docs/settings-and-flags.md.
     |
     | Uso:
-    |   if (Feature::enabled('feature_name')) {
+    |   if (Feature::enabled('feature_name')) {   // o FeatureFlagServiceInterface::enabled()
     |       // código de la feature
     |   }
     |

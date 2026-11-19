@@ -5,7 +5,10 @@ namespace App\Services;
 use App\Contracts\SecurityServiceInterface;
 use App\Contracts\SettingsServiceInterface;
 use App\Exceptions\BusinessLogicException;
+use App\Exceptions\SettingException;
 use App\Models\Settings;
+use App\Support\Settings\SettingDefinition;
+use App\Support\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -44,6 +47,8 @@ class SettingsService implements SettingsServiceInterface
      */
     public function create(array $data): Settings
     {
+        $data = $this->applyDefinition($data['key'] ?? null, $data);
+
         // Validar tipo si se proporciona
         if (isset($data['type']) && isset($data['value'])) {
             $this->validateType($data['value'], $data['type']);
@@ -83,6 +88,8 @@ class SettingsService implements SettingsServiceInterface
     public function update(string $id, array $data): Settings
     {
         $setting = Settings::findOrFail($id);
+
+        $data = $this->applyDefinition($data['key'] ?? $setting->key, $data);
 
         // Guardar valores anteriores para auditoría
         $oldValues = $setting->only(['key', 'value', 'type', 'group', 'is_public', 'is_encrypted']);
@@ -188,9 +195,11 @@ class SettingsService implements SettingsServiceInterface
     {
         $cacheKey = self::CACHE_PREFIX.$key;
 
-        return CacheService::remember($cacheKey, self::CACHE_TTL, function () use ($key) {
-            return Settings::byKey($key)->first();
-        });
+        // Los settings son de PLATAFORMA: su caché no lleva prefijo de tenant (si no, una escritura
+        // de plataforma no invalidaría la copia de cada tenant).
+        return app(TenantContext::class)->withoutTenant(
+            fn () => CacheService::remember($cacheKey, self::CACHE_TTL, fn () => Settings::byKey($key)->first())
+        );
     }
 
     /**
@@ -331,6 +340,38 @@ class SettingsService implements SettingsServiceInterface
      */
     public function clearCache(string $key): void
     {
-        CacheService::forget(self::CACHE_PREFIX.$key);
+        app(TenantContext::class)->withoutTenant(fn () => CacheService::forget(self::CACHE_PREFIX.$key));
+    }
+
+    /**
+     * Si la key está declarada en `config/settings.php`, el valor se valida y normaliza con su
+     * definición (tipo, rango, enum) y se fuerza el tipo de almacenamiento: una sola fuente de verdad
+     * para el CRUD genérico y para el registro tipado (docs/settings-and-flags.md).
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     *
+     * @throws SettingException
+     */
+    private function applyDefinition(mixed $key, array $data): array
+    {
+        $definition = is_string($key) ? SettingDefinition::find($key) : null;
+
+        if ($definition === null) {
+            return $data;
+        }
+
+        if (! $definition->platform) {
+            throw SettingException::notEditable($definition->key, 'plataforma');
+        }
+
+        if (array_key_exists('value', $data) && $data['value'] !== null) {
+            $data['value'] = $definition->encode($definition->normalize($definition->fromStorageInput($data['value'])));
+        }
+
+        $data['type'] = $definition->storageType();
+        $data['is_encrypted'] = false;
+
+        return $data;
     }
 }

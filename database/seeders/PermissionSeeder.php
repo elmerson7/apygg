@@ -73,6 +73,11 @@ class PermissionSeeder extends Seeder
             ['name' => 'tenant-members.read', 'display_name' => 'Ver Miembros del Tenant', 'description' => 'Permite listar los miembros de la empresa activa'],
             ['name' => 'tenant-members.manage', 'display_name' => 'Gestionar Miembros del Tenant', 'description' => 'Permite cambiar el rol, suspender, reactivar y quitar miembros de la empresa activa'],
             ['name' => 'tenant-invitations.manage', 'display_name' => 'Gestionar Invitaciones del Tenant', 'description' => 'Permite listar, crear, reenviar y revocar invitaciones a la empresa activa'],
+            // Ajustes, flags y límites (docs/settings-and-flags.md)
+            ['name' => 'tenant-settings.read', 'display_name' => 'Ver Ajustes del Tenant', 'description' => 'Permite ver los ajustes, features y límites del tenant activo'],
+            ['name' => 'feature-flags.read', 'display_name' => 'Ver Feature Flags', 'description' => 'Permite ver las feature flags de plataforma y sus overrides'],
+            ['name' => 'feature-flags.manage', 'display_name' => 'Gestionar Feature Flags', 'description' => 'Permite activar flags, fijar porcentajes y overrides por tenant/usuario'],
+            ['name' => 'plan-limits.manage', 'display_name' => 'Gestionar Planes y Límites', 'description' => 'Permite asignar el plan y sobrescribir límites de un tenant'],
 
             // Back-office (Filament, opcional): ver docs/backoffice.md
             ['name' => 'backoffice.access', 'display_name' => 'Acceder al Back-office', 'description' => 'Permite entrar al panel interno (Filament); además exige MFA. Cada recurso pide sus propios permisos'],

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Settings\SettingsController;
+use App\Http\Controllers\Settings\SettingsRegistryController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,6 +17,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth:api', 'permission:system.settings,api'])->prefix('settings')->group(function () {
     // CRUD básico
+    // Ajustes declarados (config/settings.php), nivel plataforma. Antes de `/{id}`.
+    Route::get('/registry', [SettingsRegistryController::class, 'index'])->name('settings.registry.index');
+    Route::put('/registry/{key}', [SettingsRegistryController::class, 'update'])->name('settings.registry.update');
+    Route::delete('/registry/{key}', [SettingsRegistryController::class, 'destroy'])->name('settings.registry.destroy');
+
     Route::get('/', [SettingsController::class, 'index'])
         ->name('settings.index');
 

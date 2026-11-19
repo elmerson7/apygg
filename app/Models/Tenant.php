@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $domain
  * @property TenantStatus $status
  * @property int|null $parent_id
+ * @property string|null $plan
  * @property array<string, mixed>|null $settings
  * @property string|null $locale
  * @property string|null $timezone
@@ -36,6 +37,7 @@ class Tenant extends Model
         'domain',
         'status',
         'parent_id',
+        'plan',
         'settings',
         'locale',
         'timezone',

@@ -1,0 +1,167 @@
+<?php
+
+namespace App\Services;
+
+use App\Contracts\PlanLimitsInterface;
+use App\Exceptions\PlanLimitReachedException;
+use App\Models\Tenant;
+use App\Models\TenantLimitOverride;
+use App\Support\Tenancy\TenantContext;
+use Illuminate\Support\Facades\DB;
+
+/**
+ * PlanLimits
+ *
+ * Límites de `config/plans.php` con override por tenant en BD. Estado del tenant en caché corta con
+ * clave explícita y global (la escribe la plataforma). Concurrencia: `guarded()` bloquea la fila del
+ * tenant con `FOR UPDATE` dentro de la transacción del alta; sin estado entre peticiones (Octane).
+ */
+class PlanLimits implements PlanLimitsInterface
+{
+    public function __construct(private readonly TenantContext $tenants) {}
+
+    public function enabled(): bool
+    {
+        return (bool) config('plans.enabled', false) && $this->tenants->enabled();
+    }
+
+    public function limit(string $key, ?int $tenantId = null): ?int
+    {
+        $this->assertDeclared($key);
+
+        $tenantId ??= $this->tenants->enforcing() ? $this->tenants->id() : null;
+
+        if (! $this->enabled() || $tenantId === null) {
+            return null;
+        }
+
+        $state = $this->state($tenantId);
+
+        if (array_key_exists($key, $state['overrides'])) {
+            return $state['overrides'][$key];
+        }
+
+        $value = config("plans.plans.{$state['plan']}.limits.{$key}");
+
+        return $value === null ? null : (int) $value;
+    }
+
+    public function check(string $key, int $current, int $adding = 1, ?int $tenantId = null): bool
+    {
+        $limit = $this->limit($key, $tenantId);
+
+        return $limit === null || $current + $adding <= $limit;
+    }
+
+    public function ensureWithin(string $key, int $current, int $adding = 1, ?int $tenantId = null): void
+    {
+        $limit = $this->limit($key, $tenantId);
+
+        if ($limit !== null && $current + $adding > $limit) {
+            throw new PlanLimitReachedException($key, $limit, $current);
+        }
+    }
+
+    public function guarded(string $key, \Closure $count, \Closure $create, int $adding = 1): mixed
+    {
+        $tenantId = $this->tenants->enforcing() ? $this->tenants->id() : null;
+
+        if (! $this->enabled() || $tenantId === null) {
+            return $create();
+        }
+
+        return DB::transaction(function () use ($key, $count, $create, $adding, $tenantId) {
+            // Serializa las altas del mismo tenant: la segunda espera a que la primera confirme.
+            Tenant::query()->whereKey($tenantId)->lockForUpdate()->first();
+
+            $this->ensureWithin($key, $count(), $adding, $tenantId);
+
+            return $create();
+        });
+    }
+
+    public function overview(int $tenantId): array
+    {
+        $state = $this->state($tenantId);
+        $limits = [];
+
+        foreach (array_keys((array) config('plans.limits', [])) as $key) {
+            $overridden = array_key_exists($key, $state['overrides']);
+            $planValue = config("plans.plans.{$state['plan']}.limits.{$key}");
+
+            $limits[$key] = [
+                'limit' => $overridden ? $state['overrides'][$key] : ($planValue === null ? null : (int) $planValue),
+                'source' => $overridden ? 'override' : 'plan',
+                'description' => config("plans.limits.{$key}.description"),
+            ];
+        }
+
+        return ['enabled' => $this->enabled(), 'plan' => $state['plan'], 'limits' => $limits];
+    }
+
+    public function setPlan(int $tenantId, ?string $plan): void
+    {
+        $tenant = Tenant::query()->findOrFail($tenantId);
+        $tenant->plan = $plan;
+        $tenant->save();
+
+        $this->forget($tenantId);
+        LogService::logActivity('updated', Tenant::class, $tenantId, ['plan' => $plan]);
+    }
+
+    public function setOverride(int $tenantId, string $key, ?int $value): void
+    {
+        $this->assertDeclared($key);
+        Tenant::query()->findOrFail($tenantId);
+
+        TenantLimitOverride::query()->updateOrCreate(['tenant_id' => $tenantId, 'key' => $key], ['value' => $value]);
+
+        $this->forget($tenantId);
+        LogService::logActivity('updated', Tenant::class, $tenantId, ['limit_override' => $key, 'value' => $value]);
+    }
+
+    public function clearOverride(int $tenantId, string $key): void
+    {
+        $this->assertDeclared($key);
+
+        TenantLimitOverride::query()->where('tenant_id', $tenantId)->where('key', $key)->delete();
+
+        $this->forget($tenantId);
+    }
+
+    private function assertDeclared(string $key): void
+    {
+        if (! array_key_exists($key, (array) config('plans.limits', []))) {
+            throw new \InvalidArgumentException("Límite no declarado en config/plans.php: {$key}");
+        }
+    }
+
+    /**
+     * @return array{plan: string, overrides: array<string, int|null>}
+     */
+    private function state(int $tenantId): array
+    {
+        return $this->tenants->withoutTenant(fn () => CacheService::remember(
+            $this->cacheKey($tenantId),
+            (int) config('plans.cache_ttl', 60),
+            function () use ($tenantId): array {
+                $plan = Tenant::query()->whereKey($tenantId)->value('plan');
+
+                return [
+                    'plan' => is_string($plan) && config("plans.plans.{$plan}") !== null ? $plan : (string) config('plans.default', 'free'),
+                    'overrides' => TenantLimitOverride::query()->where('tenant_id', $tenantId)->pluck('value', 'key')->all(),
+                ];
+            }
+        ));
+    }
+
+    private function forget(int $tenantId): void
+    {
+        $this->tenants->withoutTenant(fn () => CacheService::forget($this->cacheKey($tenantId)));
+    }
+
+    private function cacheKey(int $tenantId): string
+    {
+        return "plans:tenant:{$tenantId}";
+    }
+}

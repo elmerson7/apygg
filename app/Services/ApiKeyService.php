@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Contracts\ApiKeyServiceInterface;
+use App\Contracts\PlanLimitsInterface;
 use App\Exceptions\BusinessLogicException;
 use App\Models\ApiKey;
 use App\Models\Tenant;
@@ -43,6 +44,8 @@ class ApiKeyService implements ApiKeyServiceInterface
      */
     protected const ROTATION_GRACE_PERIOD_DAYS = 7;
 
+    public function __construct(private readonly PlanLimitsInterface $limits) {}
+
     /**
      * Crear una nueva API Key
      *
@@ -56,6 +59,23 @@ class ApiKeyService implements ApiKeyServiceInterface
      * @throws BusinessLogicException Si los scopes no son válidos
      */
     public function create(User $user, string $name, array $scopes = [], ?\DateTimeInterface $expiresAt = null, string $environment = 'live'): array
+    {
+        // Límite del plan: cuenta y crea bajo bloqueo de la fila del tenant (sin carrera). Las keys
+        // vigentes (la antigua en periodo de gracia incluida) cuentan; ver docs/settings-and-flags.md.
+        return $this->limits->guarded(
+            'max_api_keys',
+            fn (): int => ApiKey::query()->count(),
+            fn (): array => $this->createKey($user, $name, $scopes, $expiresAt, $environment),
+        );
+    }
+
+    /**
+     * Alta sin comprobar el límite (la rotación reemplaza una key: no debe bloquearse en el tope).
+     *
+     * @param  list<string>  $scopes
+     * @return array<string, mixed>
+     */
+    private function createKey(User $user, string $name, array $scopes, ?\DateTimeInterface $expiresAt, string $environment): array
     {
         // Las keys de prueba no valen en producción
         if ($environment === 'test' && ! $this->testKeysAllowed()) {
@@ -192,7 +212,7 @@ class ApiKeyService implements ApiKeyServiceInterface
 
         // Nueva key + periodo de gracia de la antigua en una sola transacción
         return DB::transaction(function () use ($user, $name, $scopes, $expiresAt, $environment, $oldApiKey) {
-            $result = $this->create($user, $name, $scopes, $expiresAt, $environment);
+            $result = $this->createKey($user, $name, $scopes, $expiresAt, $environment);
             $newApiKey = $result['api_key'];
 
             // La key antigua caduca al acabar el periodo de gracia, pero nunca DESPUÉS de su
