@@ -1,5 +1,13 @@
 # Error Handling Conventions
 
+## Código estable y request_id
+
+Todo error lleva `code` (legible por máquina, p. ej. `validation_failed`,
+`not_found`, `rate_limited`) y `request_id` (= cabecera `X-Request-ID`, = `trace_id`
+de los logs). El frontend ramifica por `code`; soporte pide el `request_id`.
+Tabla de códigos, forma de cada error y cómo declarar un código propio de proyecto
+(`ApiException::errorCode()`): [api-response-structure.md](api-response-structure.md).
+
 ## API Response Format
 
 ### Success (2xx)
@@ -17,6 +25,8 @@
   "success": false,
   "message": "The given data was invalid.",
   "type": "validation_error",
+  "code": "validation_failed",
+  "request_id": "uuid",
   "errors": {
     "password": [
       "El campo password debe contener una letra may\u00fascula, una letra min\u00fascula, un car\u00e1cter especial."
@@ -33,6 +43,8 @@
   "title": "An internal server error occurred.",
   "status": 500,
   "instance": "users",
+  "code": "server_error",
+  "request_id": "uuid",
   "meta": { "version": "1.0", "timestamp": "...", "request_id": "uuid" }
 }
 ```
@@ -45,6 +57,7 @@ respuesta en [api-response-structure.md](api-response-structure.md).
 
 | Status Code | Show to user |
 |-------------|-------------|
+| Cualquiera | Ramificar por `data.code`, no por el texto. En errores 5xx mostrar el `request_id` para soporte. |
 | 422 | Mostrar **mensaje del API** (`errors.campo[0]` o `message`). Son textos en español escritos para el usuario final. |
 | 401 | Mostrar mensaje genérico: *"Sesión expirada. Inicia sesión nuevamente."* |
 | 403 | Mostrar mensaje genérico: *"No tienes permisos para esta acción."* |

@@ -10,10 +10,6 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Ruta raíz
-Route::options('/{path}', function () {
-    return response('', 204);
-})->where('path', '.*');
-
 Route::get('/', function () {
     $broadcastingEnabled = config('broadcasting.default') !== 'null';
 

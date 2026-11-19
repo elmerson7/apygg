@@ -1,19 +1,50 @@
 <?php
 
+use App\Enums\ErrorCode;
 use App\Exceptions\ApiException;
 use App\Exceptions\BusinessLogicException;
 use App\Helpers\ApiResponse;
+use App\Http\Middleware\AdaptiveRateLimitingMiddleware;
+use App\Http\Middleware\CheckApiKeyScope;
+use App\Http\Middleware\CheckFeatureFlag;
+use App\Http\Middleware\CompressionMiddleware;
+use App\Http\Middleware\CorsMiddleware;
+use App\Http\Middleware\ForceJsonResponse;
+use App\Http\Middleware\IpWhitelistMiddleware;
+use App\Http\Middleware\LogApiRequests;
+use App\Http\Middleware\OptionalAuthMiddleware;
+use App\Http\Middleware\RateLimitLoggerMiddleware;
+use App\Http\Middleware\ResolveClientIpMiddleware;
+use App\Http\Middleware\SecurityHeadersMiddleware;
+use App\Http\Middleware\SecurityLoggerMiddleware;
+use App\Http\Middleware\TraceIdMiddleware;
+use App\Providers\AuthServiceProvider;
+use App\Services\Logging\ApiLogger;
+use App\Services\Logging\SecurityLogger;
 use App\Services\LogService;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Validation\ValidationException;
+use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
+use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenExpiredException;
 use Sentry\Laravel\Integration;
+use Spatie\Permission\Exceptions\UnauthorizedException;
+use Spatie\Permission\Middleware\PermissionMiddleware;
+use Spatie\Permission\Middleware\RoleMiddleware;
+use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withProviders([
-        \App\Providers\AuthServiceProvider::class,
+        AuthServiceProvider::class,
     ])
     // Los listeners se registran explícitamente (EventServiceProvider::$listen y
     // AppServiceProvider). El autodescubrimiento de app/Listeners los registraría
@@ -32,18 +63,24 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Request ID / Trace ID en TODA petición (también 404/405 sin ruta, que no pasan por el grupo `api`)
+        // y `code`/`request_id` en errores fabricados a mano por un middleware.
+        $middleware->prepend(TraceIdMiddleware::class);
+
+        // CORS global (antes del enrutado): responde el preflight OPTIONS de cualquier
+        // ruta sin necesitar una ruta comodín, y añade las cabeceras al resto.
+        $middleware->prepend(CorsMiddleware::class);
+
         // Middleware para API: todas las respuestas en JSON
         $middleware->api(prepend: [
-            \App\Http\Middleware\ResolveClientIpMiddleware::class, // IP real del cliente detrás de Cloudflare (antes que todo lo que use la IP)
-            \App\Http\Middleware\CorsMiddleware::class, // CORS personalizado con ALLOWED_ORIGINS
-            \App\Http\Middleware\TraceIdMiddleware::class, // Generar e inyectar Trace ID
-            \App\Http\Middleware\SecurityHeadersMiddleware::class, // Headers de seguridad HTTP
-            \App\Http\Middleware\AdaptiveRateLimitingMiddleware::class, // Rate limiting adaptativo por tipo de endpoint
-            \App\Http\Middleware\ForceJsonResponse::class,
-            \App\Http\Middleware\CompressionMiddleware::class, // Compresión HTTP (gzip/zstd) cuando no se usa Caddy
-            \App\Http\Middleware\LogApiRequests::class, // Registrar requests/responses
-            \App\Http\Middleware\SecurityLoggerMiddleware::class, // Registrar eventos de seguridad y detectar patrones anómalos
-            \App\Http\Middleware\RateLimitLoggerMiddleware::class, // Registrar bloqueos por rate limiting y detectar abuso
+            ResolveClientIpMiddleware::class, // IP real del cliente detrás de Cloudflare (antes que todo lo que use la IP)
+            SecurityHeadersMiddleware::class, // Headers de seguridad HTTP
+            AdaptiveRateLimitingMiddleware::class, // Rate limiting adaptativo por tipo de endpoint
+            ForceJsonResponse::class,
+            CompressionMiddleware::class, // Compresión HTTP (gzip/zstd) cuando no se usa Caddy
+            LogApiRequests::class, // Registrar requests/responses
+            SecurityLoggerMiddleware::class, // Registrar eventos de seguridad y detectar patrones anómalos
+            RateLimitLoggerMiddleware::class, // Registrar bloqueos por rate limiting y detectar abuso
         ]);
 
         // Proxies de confianza (X-Forwarded-*). TRUSTED_PROXIES: lista separada por
@@ -63,15 +100,15 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             // RBAC: middlewares de spatie/laravel-permission. Se declara siempre el permiso/rol
             // explícito y el guard: `permission:users.read,api`. Ver docs/permissions.md.
-            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
-            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
-            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+            'permission' => PermissionMiddleware::class,
+            'role' => RoleMiddleware::class,
+            'role_or_permission' => RoleOrPermissionMiddleware::class,
             // `auth:api-key` NO es un alias: es el middleware estándar `auth` con el guard `api-key`
             // (config/auth.php, registrado en AuthServiceProvider con Auth::viaRequest).
-            'api-key-scope' => \App\Http\Middleware\CheckApiKeyScope::class,
-            'ip.whitelist' => \App\Http\Middleware\IpWhitelistMiddleware::class,
-            'feature' => \App\Http\Middleware\CheckFeatureFlag::class,
-            'auth.optional' => \App\Http\Middleware\OptionalAuthMiddleware::class,
+            'api-key-scope' => CheckApiKeyScope::class,
+            'ip.whitelist' => IpWhitelistMiddleware::class,
+            'feature' => CheckFeatureFlag::class,
+            'auth.optional' => OptionalAuthMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -92,39 +129,39 @@ return Application::configure(basePath: dirname(__DIR__))
         };
 
         // Forzar respuestas JSON para todas las excepciones (API-only), salvo el back-office
-        $exceptions->shouldRenderJsonWhen(function ($request, \Throwable $e) use ($isBackoffice) {
+        $exceptions->shouldRenderJsonWhen(function ($request, Throwable $e) use ($isBackoffice) {
             return ! $isBackoffice($request);
         });
 
-        $exceptions->render(function (\Throwable $e, $request) use ($isBackoffice) {
+        $exceptions->render(function (Throwable $e, $request) use ($isBackoffice) {
             // El back-office usa el render estándar de Laravel/Filament (redirige al login, páginas 403/404 HTML).
             if ($isBackoffice($request)) {
                 return null;
             }
 
             // Helper para registrar request/response en logs_api (incluso para excepciones)
-            $logApiRequest = function (\Throwable $exception, $req) {
+            $logApiRequest = function (Throwable $exception, $req) {
                 try {
                     // Solo registrar si es una excepción HTTP (404, 403, etc.)
-                    if ($exception instanceof \Symfony\Component\HttpKernel\Exception\HttpException) {
+                    if ($exception instanceof HttpException) {
                         $statusCode = $exception->getStatusCode();
-                        
+
                         // Crear respuesta simulada para el logger
-                        $response = new \Illuminate\Http\Response(
+                        $response = new Response(
                             ['error' => $exception->getMessage()],
                             $statusCode
                         );
 
                         // Registrar en logs_api
-                        \App\Services\Logging\ApiLogger::logRequest($req, $response);
+                        ApiLogger::logRequest($req, $response);
                     }
-                } catch (\Throwable $logError) {
+                } catch (Throwable $logError) {
                     // Silenciar errores de logging para no interrumpir el flujo principal
                 }
             };
 
             // Helper para logging de excepciones
-            $logException = function (\Throwable $exception, $req, bool $isCritical = false): void {
+            $logException = function (Throwable $exception, $req, bool $isCritical = false): void {
                 try {
                     $context = [
                         'exception' => get_class($exception),
@@ -153,7 +190,7 @@ return Application::configure(basePath: dirname(__DIR__))
                     } else {
                         LogService::warning("Exception: {$exception->getMessage()}", $context);
                     }
-                } catch (\Throwable $logError) {
+                } catch (Throwable $logError) {
                     // Silenciar errores de logging para no interrumpir el flujo principal
                 }
             };
@@ -184,7 +221,7 @@ return Application::configure(basePath: dirname(__DIR__))
             // ApiException (con RFC 7807)
             if ($e instanceof ApiException) {
                 $logException($e, $request, $e->getStatusCode() >= 500);
-                
+
                 return ApiResponse::rfc7807(
                     $e->getMessage(),
                     $e->getStatusCode(),
@@ -193,15 +230,16 @@ return Application::configure(basePath: dirname(__DIR__))
                     $e->getInstance() ?? $request->path(),
                     array_merge(
                         $e->getExtensions(),
-                        !empty($e->getErrors()) ? ['errors' => $e->getErrors()] : []
-                    )
+                        ! empty($e->getErrors()) ? ['errors' => $e->getErrors()] : []
+                    ),
+                    $e->errorCode()
                 );
             }
 
             // BusinessLogicException
             if ($e instanceof BusinessLogicException) {
                 $logException($e, $request, false);
-                
+
                 return ApiResponse::rfc7807(
                     $e->getMessage(),
                     422,
@@ -217,12 +255,12 @@ return Application::configure(basePath: dirname(__DIR__))
             // ============================================
 
             // 404 - Ruta no encontrada
-            if ($e instanceof \Symfony\Component\HttpKernel\Exception\NotFoundHttpException) {
+            if ($e instanceof NotFoundHttpException) {
                 $logException($e, $request, false);
-                
+
                 // Registrar en logs_api antes de devolver respuesta
                 $logApiRequest($e, $request);
-                
+
                 return ApiResponse::rfc7807(
                     'Endpoint not found.',
                     404,
@@ -234,29 +272,30 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             // ValidationException (422)
-            if ($e instanceof \Illuminate\Validation\ValidationException) {
+            if ($e instanceof ValidationException) {
                 $logException($e, $request, false);
-                
+
                 return ApiResponse::validation($e->errors(), 'The given data was invalid.');
             }
 
             // Violación de restricción única: la validación `unique` no cierra la carrera entre
             // dos peticiones simultáneas; la BD sí. Se responde 422 (como la validación) y no 500,
             // sin exponer el SQL ni el valor duplicado.
-            if ($e instanceof \Illuminate\Database\UniqueConstraintViolationException) {
+            if ($e instanceof UniqueConstraintViolationException) {
                 $logException($e, $request, false);
 
                 $field = preg_match('/Key \(([a-z0-9_, ]+)\)=/i', $e->getMessage(), $m) ? trim(explode(',', $m[1])[0]) : 'resource';
 
                 return ApiResponse::validation(
                     [$field => ['Ya existe un registro con este valor.']],
-                    'The given data was invalid.'
+                    'The given data was invalid.',
+                    ErrorCode::Duplicate
                 );
             }
 
             // RBAC denegado (middlewares permission:/role: de Spatie): 403 con el formato del proyecto,
             // 401 si ni siquiera hay sesión en el guard de la API.
-            if ($e instanceof \Spatie\Permission\Exceptions\UnauthorizedException) {
+            if ($e instanceof UnauthorizedException) {
                 $logException($e, $request, false);
 
                 if (auth('api')->guest()) {
@@ -266,13 +305,13 @@ return Application::configure(basePath: dirname(__DIR__))
                 $required = array_merge($e->getRequiredRoles(), $e->getRequiredPermissions());
 
                 try {
-                    \App\Services\Logging\SecurityLogger::logPermissionDenied(
+                    SecurityLogger::logPermissionDenied(
                         auth('api')->user(),
                         implode('|', $required),
                         $request->path(),
                         $request
                     );
-                } catch (\Throwable $logError) {
+                } catch (Throwable $logError) {
                     // El registro de seguridad no debe alterar la respuesta
                 }
 
@@ -292,14 +331,14 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             // HttpException genéricas
-            if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpException) {
+            if ($e instanceof HttpException) {
                 $statusCode = $e->getStatusCode();
                 $isCritical = $statusCode >= 500;
                 $logException($e, $request, $isCritical);
-                
+
                 // Registrar en logs_api antes de devolver respuesta
                 $logApiRequest($e, $request);
-                
+
                 return ApiResponse::rfc7807(
                     $e->getMessage() ?: 'An error occurred',
                     $statusCode,
@@ -310,23 +349,28 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             // JWT inválido, expirado o revocado (401). Antes cada controller lo capturaba a mano.
-            if ($e instanceof \PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException) {
+            if ($e instanceof JWTException) {
                 $logException($e, $request, false);
 
-                return ApiResponse::unauthorized('Token inválido o expirado');
+                return ApiResponse::unauthorized(
+                    'Token inválido o expirado',
+                    $e instanceof TokenExpiredException
+                        ? ErrorCode::TokenExpired
+                        : ErrorCode::TokenInvalid
+                );
             }
 
             // AuthenticationException (401)
-            if ($e instanceof \Illuminate\Auth\AuthenticationException) {
+            if ($e instanceof AuthenticationException) {
                 $logException($e, $request, false);
-                
+
                 return ApiResponse::unauthorized('No autenticado');
             }
 
             // AuthorizationException (403)
-            if ($e instanceof \Illuminate\Auth\Access\AuthorizationException) {
+            if ($e instanceof AuthorizationException) {
                 $logException($e, $request, false);
-                
+
                 return ApiResponse::forbidden('No autorizado');
             }
 
@@ -336,10 +380,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
             // Logging automático para errores críticos
             $logException($e, $request, true);
-            
+
             // Respuesta RFC 7807 para errores críticos
-            $message = config('app.debug') 
-                ? $e->getMessage() 
+            $message = config('app.debug')
+                ? $e->getMessage()
                 : 'An internal server error occurred.';
 
             return ApiResponse::rfc7807(

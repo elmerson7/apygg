@@ -2,6 +2,7 @@
 
 namespace App\Exceptions;
 
+use App\Enums\ErrorCode;
 use Exception;
 
 /**
@@ -67,6 +68,24 @@ class ApiException extends Exception
         $this->type = $type;
         $this->instance = $instance;
         $this->extensions = $extensions;
+    }
+
+    /**
+     * Código de error estable y legible por máquina (campo `code` de la respuesta).
+     *
+     * Por defecto se deduce de `type` y del status HTTP. Una excepción propia de un
+     * proyecto lo declara sobrescribiendo este método; puede devolver un case de
+     * `ErrorCode` o un string propio (`invoice_already_paid`), que no debe cambiar
+     * nunca una vez publicado:
+     *
+     *     public function errorCode(): ErrorCode|string
+     *     {
+     *         return 'invoice_already_paid';
+     *     }
+     */
+    public function errorCode(): ErrorCode|string
+    {
+        return ErrorCode::fromType($this->type) ?? ErrorCode::fromStatus($this->statusCode);
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Contracts\SecurityServiceInterface;
+use App\Enums\ErrorCode;
 use App\Services\LogService;
 use Closure;
 use Illuminate\Http\Request;
@@ -175,6 +176,7 @@ class IpWhitelistMiddleware
         return response()->json([
             'success' => false,
             'message' => $message,
+            'code' => ErrorCode::IpNotAllowed->value,
             'error' => [
                 'type' => 'access_denied',
                 'code' => 'IP_NOT_ALLOWED',

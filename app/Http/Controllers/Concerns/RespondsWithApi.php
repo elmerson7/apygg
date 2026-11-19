@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Concerns;
 
+use App\Enums\ErrorCode;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -53,12 +54,17 @@ trait RespondsWithApi
      *
      * @param  array<string, mixed>  $errors
      */
-    protected function sendError(string $message = 'Error en la operación', int $statusCode = 400, array $errors = []): JsonResponse
+    protected function sendError(string $message = 'Error en la operación', int $statusCode = 400, array $errors = [], ErrorCode|string|null $code = null): JsonResponse
     {
         $response = [
             'success' => false,
             'message' => $message,
+            'code' => ErrorCode::resolve($code, $statusCode),
         ];
+
+        if ($requestId = request()->header('X-Trace-ID')) {
+            $response['request_id'] = $requestId;
+        }
 
         if (! empty($errors)) {
             $response['errors'] = $errors;

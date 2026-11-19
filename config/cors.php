@@ -65,6 +65,7 @@ return [
         'Authorization',
         'X-Requested-With',
         'X-Trace-ID',
+        'X-Request-ID',
         'Accept',
         'Origin',
         'X-CSRF-TOKEN',
@@ -81,6 +82,7 @@ return [
 
     'exposed_headers' => [
         'X-Trace-ID',
+        'X-Request-ID',
         'X-RateLimit-Limit',
         'X-RateLimit-Remaining',
         'X-RateLimit-Reset',

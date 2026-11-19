@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\ErrorCode;
 use App\Models\Tenant;
 use Closure;
 use Illuminate\Http\Request;
@@ -36,6 +37,7 @@ class ResolveTenant
             return response()->json([
                 'success' => false,
                 'message' => 'Tenant no encontrado o inválido.',
+                'code' => ErrorCode::TenantInvalid->value,
                 'error' => 'tenant_not_found',
             ], 403);
         }
@@ -44,6 +46,7 @@ class ResolveTenant
             return response()->json([
                 'success' => false,
                 'message' => 'Tenant inactivo.',
+                'code' => ErrorCode::TenantInactive->value,
                 'error' => 'tenant_inactive',
             ], 403);
         }

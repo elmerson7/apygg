@@ -2,6 +2,7 @@
 
 namespace App\Helpers;
 
+use App\Enums\ErrorCode;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -28,6 +29,22 @@ class ApiResponse
         return request()->header('X-Trace-ID')
             ?? request()->header('X-Request-ID')
             ?? null;
+    }
+
+    /**
+     * Campos comunes a toda respuesta de error: `code` estable y `request_id`.
+     *
+     * @return array<string, mixed>
+     */
+    private static function errorFields(ErrorCode|string|null $code, int $status, ?string $type): array
+    {
+        $fields = ['code' => ErrorCode::resolve($code, $status, $type)];
+
+        if ($traceId = self::getTraceId()) {
+            $fields['request_id'] = $traceId;
+        }
+
+        return $fields;
     }
 
     /**
@@ -164,16 +181,19 @@ class ApiResponse
      * @param  int  $statusCode  Código HTTP (default: 400)
      * @param  array<string, mixed>  $errors  Errores adicionales (opcional)
      * @param  string|null  $type  Tipo de error (RFC 7807)
+     * @param  ErrorCode|string|null  $code  Código estable; si falta se deduce de `type` y del status
      */
     public static function error(
         string $message = 'Error en la operación',
         int $statusCode = 400,
         array $errors = [],
-        ?string $type = null
+        ?string $type = null,
+        ErrorCode|string|null $code = null
     ): JsonResponse {
         $response = [
             'success' => false,
             'message' => $message,
+            ...self::errorFields($code, $statusCode, $type),
             'meta' => self::getMeta(),
         ];
 
@@ -195,9 +215,9 @@ class ApiResponse
      * @param  array<string, mixed>  $errors  Errores de validación
      * @param  string  $message  Mensaje de error
      */
-    public static function validation(array $errors, string $message = 'Error de validación'): JsonResponse
+    public static function validation(array $errors, string $message = 'Error de validación', ErrorCode|string|null $code = null): JsonResponse
     {
-        return self::error($message, 422, $errors, 'validation_error');
+        return self::error($message, 422, $errors, 'validation_error', $code);
     }
 
     /**
@@ -215,9 +235,9 @@ class ApiResponse
      *
      * @param  string  $message  Mensaje de error
      */
-    public static function unauthorized(string $message = 'No autenticado'): JsonResponse
+    public static function unauthorized(string $message = 'No autenticado', ErrorCode|string|null $code = null): JsonResponse
     {
-        return self::error($message, 401, [], 'unauthorized');
+        return self::error($message, 401, [], 'unauthorized', $code);
     }
 
     /**
@@ -248,6 +268,7 @@ class ApiResponse
             'success' => false,
             'message' => $message,
             'type' => 'rate_limit_exceeded',
+            ...self::errorFields(ErrorCode::RateLimited, 429, null),
             'meta' => self::getMeta(),
         ];
 
@@ -281,6 +302,7 @@ class ApiResponse
      * @param  string|null  $type  Tipo de error (URI)
      * @param  string|null  $instance  Instancia específica del error
      * @param  array<string, mixed>  $extensions  Campos adicionales
+     * @param  ErrorCode|string|null  $code  Código estable; si falta se deduce de `type` y del status
      */
     public static function rfc7807(
         string $title,
@@ -288,7 +310,8 @@ class ApiResponse
         ?string $detail = null,
         ?string $type = null,
         ?string $instance = null,
-        array $extensions = []
+        array $extensions = [],
+        ErrorCode|string|null $code = null
     ): JsonResponse {
         $response = [
             'type' => $type ?? 'about:blank',
@@ -307,6 +330,9 @@ class ApiResponse
         if (! empty($extensions)) {
             $response = array_merge($response, $extensions);
         }
+
+        // Tras las extensiones: `code` y `request_id` son contrato y no se pisan.
+        $response = array_merge($response, self::errorFields($code, $status, $type));
 
         $response['meta'] = self::getMeta();
 

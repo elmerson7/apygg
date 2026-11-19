@@ -14,10 +14,12 @@ listados paginados, donde `meta` es la paginación.
 ```
 
 ```json
-{ "success": false, "message": "Credenciales inválidas. Intentos restantes: 4" }
+{ "success": false, "message": "Credenciales inválidas. Intentos restantes: 4",
+  "code": "unauthenticated", "request_id": "3f2b8c1e-6a4d-4e0b-9d57-1c2a7b9e5f10" }
 ```
 
-`sendError` añade `"errors": { ... }` solo si se le pasan.
+`sendError` añade `"errors": { ... }` solo si se le pasan, y acepta un `code`
+propio (ver "Contrato común de errores").
 
 **Paginado** (`sendPaginated`, sin `message`):
 
@@ -38,6 +40,83 @@ devuelven propiedades sueltas al mismo nivel que `success`/`data`.
 | 200 | GET, PUT, PATCH, DELETE exitoso |
 | 201 | POST (creación) |
 
+## 1b. Contrato común de errores: `code` y `request_id`
+
+**Toda** respuesta de error (4xx/5xx), venga de donde venga (`sendError`, handler
+RFC 7807, `ApiResponse`, middleware), lleva además de los campos que ya tenía:
+
+- `code`: código estable y legible por máquina (`snake_case`). **Los clientes
+  ramifican por `code`**, no por `message` (que cambia con el idioma) ni solo por
+  el status. Un `code` publicado no se renombra.
+- `request_id`: el identificador de la petición, el mismo que la cabecera
+  `X-Request-ID` (y `X-Trace-ID`, alias) y que el campo `trace_id` de los logs.
+  Pídelo al usuario al reportar un fallo de soporte: localiza la traza exacta.
+
+`X-Request-ID` va en **todas** las respuestas, también las correctas y los
+404/405 sin ruta. Si el cliente envía `X-Request-ID` (o `X-Trace-ID`) se respeta
+solo si son 1 a 64 caracteres de `A-Za-z0-9._:-` (un UUID vale); si no, se
+genera un UUID. Lo añade `TraceIdMiddleware` (global, sin estado estático).
+
+### Códigos
+
+El status HTTP no cambia por el `code`; la columna indica el status habitual.
+
+| `code` | Status | Cuándo |
+|--------|--------|--------|
+| `bad_request` | 400 | Solicitud malformada |
+| `validation_failed` | 422 | Datos inválidos (`errors` por campo) |
+| `unauthenticated` | 401 | Sin sesión o credenciales ausentes/incorrectas |
+| `token_expired` | 401 | JWT expirado |
+| `token_invalid` | 401 | JWT inválido, manipulado o revocado |
+| `forbidden` | 403 | Sin permiso, rol o policy |
+| `not_found` | 404 | Ruta o recurso inexistente |
+| `method_not_allowed` | 405 | Método HTTP no admitido en la ruta |
+| `conflict` | 409 | Choca con el estado actual |
+| `duplicate` | 422 | Violación de unicidad en BD (carrera con la validación `unique`) |
+| `business_rule` | 422 | `BusinessLogicException` (el detalle va en `business_code`) |
+| `payload_too_large` | 413 | Cuerpo demasiado grande |
+| `rate_limited` | 429 | Límite de peticiones (ver `Retry-After`) |
+| `account_locked` | 401 | Login bloqueado por demasiados intentos (`lockout_minutes`) |
+| `account_blocked` | 403 | Identidad en la lista de bloqueo |
+| `feature_disabled` | 403 | Feature flag apagado |
+| `ip_not_allowed` | 403 | IP fuera de la lista blanca |
+| `api_key_required` | 401 | La ruta exige API Key |
+| `api_key_invalid` | 401 | API Key no encontrada o revocada |
+| `insufficient_scope` | 403 | La API Key no tiene el scope |
+| `tenant_invalid` | 403 | Tenant no encontrado o inválido |
+| `tenant_inactive` | 403 | Tenant inactivo |
+| `server_error` | 500 | Error interno |
+| `upstream_error` | 502/504 | Pasarela o servicio externo |
+| `service_unavailable` | 503 | Servicio no disponible |
+| `http_error` | otros | Cualquier otro status sin código propio |
+
+Si no se indica, el `code` se deduce del `type` histórico y, en su defecto, del
+status (`App\Enums\ErrorCode::fromType()` / `fromStatus()`). Cada `case` del enum
+debe aparecer en esta tabla (lo verifica `tests/Unit/ErrorCodeDocsTest.php`).
+
+### Códigos propios de un proyecto
+
+El enum es la base del boilerplate; un proyecto añade los suyos como string en su
+excepción, sin tocar el enum:
+
+```php
+class InvoiceAlreadyPaidException extends ApiException
+{
+    public function __construct()
+    {
+        parent::__construct('La factura ya está pagada.', 409);
+    }
+
+    public function errorCode(): ErrorCode|string
+    {
+        return 'invoice_already_paid';
+    }
+}
+```
+
+En controllers: `$this->sendError('...', 409, code: 'invoice_already_paid')`.
+Documenta cada código propio en la doc de la API del proyecto.
+
 ## 2. Errores del handler global (`bootstrap/app.php`)
 
 Toda excepción no capturada la convierte el handler. Llevan `meta` con
@@ -51,6 +130,8 @@ Toda excepción no capturada la convierte el handler. Llevan `meta` con
   "message": "The given data was invalid.",
   "meta": { "version": "1.0", "timestamp": "2026-05-22T16:40:46+00:00", "request_id": "uuid" },
   "type": "validation_error",
+  "code": "validation_failed",
+  "request_id": "uuid",
   "errors": { "login": ["El email o username es obligatorio."] }
 }
 ```
@@ -60,10 +141,12 @@ Toda excepción no capturada la convierte el handler. Llevan `meta` con
 ### No autenticado (401): token faltante, expirado, inválido o revocado
 
 ```json
-{ "success": false, "message": "No autenticado", "meta": { ... }, "type": "unauthorized" }
+{ "success": false, "message": "No autenticado", "code": "unauthenticated", "request_id": "uuid",
+  "meta": { ... }, "type": "unauthorized" }
 ```
 
-Un JWT inválido responde `"Token inválido o expirado"` con el mismo formato.
+Un JWT inválido responde `"Token inválido o expirado"` con el mismo formato y
+`code` `token_invalid` (o `token_expired` si expiró).
 
 ### No autorizado (403)
 
@@ -77,12 +160,14 @@ Falta de permiso en `permission:`/`role:` (Spatie):
   "detail": "No tienes permiso para realizar esta acción",
   "instance": "users",
   "required_permissions": ["users.read"],
+  "code": "forbidden",
+  "request_id": "uuid",
   "meta": { ... }
 }
 ```
 
 Una policy que deniega (`AuthorizationException`) responde
-`{ "success": false, "message": "No autorizado", "meta": {...}, "type": "forbidden" }`.
+`{ "success": false, "message": "No autorizado", "code": "forbidden", "request_id": "uuid", "meta": {...}, "type": "forbidden" }`.
 
 ### RFC 7807 (404, 422 de negocio, 5xx y excepciones de API)
 
@@ -96,6 +181,8 @@ Estructura `type`, `title`, `status`, `detail`, `instance` (+ extensiones) y `me
   "detail": "The requested endpoint does not exist.",
   "instance": "users/999",
   "path": "users/999",
+  "code": "not_found",
+  "request_id": "uuid",
   "meta": { ... }
 }
 ```
@@ -108,7 +195,7 @@ Estructura `type`, `title`, `status`, `detail`, `instance` (+ extensiones) y `me
 ### Rate limit (429)
 
 ```json
-{ "success": false, "message": "...", "type": "rate_limit_exceeded", "meta": { ... } }
+{ "success": false, "message": "...", "type": "rate_limit_exceeded", "code": "rate_limited", "request_id": "uuid", "meta": { ... } }
 ```
 
 con cabecera `Retry-After` cuando se conoce.
@@ -117,7 +204,7 @@ con cabecera `Retry-After` cuando se conoce.
 
 `success`, `created`, `paginated`, `error`, `validation`, `notFound`,
 `unauthorized`, `forbidden`, `rateLimited`, `serverError` y `rfc7807`. Aquí sí
-va `meta` (`version`, `timestamp`, `request_id`). **Los controllers no lo usan**:
+va `meta` (`version`, `timestamp`, `request_id`) y, en errores, `code` y `request_id`. **Los controllers no lo usan**:
 usan los métodos de la base.
 
 ---

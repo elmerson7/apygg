@@ -202,6 +202,9 @@ Guía completa: `docs/testing.md`.
 - ✅ `sendError($message, $statusCode, $errors)` → 4xx, 5xx
 - ✅ `sendPaginated($paginator)` → listados
 - ❌ NUNCA `response()->json()` a mano en un controller: rompe el envelope
+- Todo error lleva `code` (enum `App\Enums\ErrorCode`, o string propio vía
+  `ApiException::errorCode()`) y `request_id` (= `X-Request-ID`): ver
+  `docs/api-response-structure.md`. Un case nuevo del enum se documenta ahí.
 - `App\Helpers\ApiResponse` sí se usa en middlewares, handlers y en el propio
   Controller base — ahí es la capa correcta.
 

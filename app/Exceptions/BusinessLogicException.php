@@ -2,6 +2,8 @@
 
 namespace App\Exceptions;
 
+use App\Enums\ErrorCode;
+
 /**
  * BusinessLogicException
  *
@@ -40,6 +42,11 @@ class BusinessLogicException extends ApiException
         );
 
         $this->businessCode = $businessCode;
+    }
+
+    public function errorCode(): ErrorCode|string
+    {
+        return ErrorCode::BusinessRule;
     }
 
     /**

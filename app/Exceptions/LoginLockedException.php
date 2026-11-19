@@ -2,6 +2,8 @@
 
 namespace App\Exceptions;
 
+use App\Enums\ErrorCode;
+
 /**
  * Demasiados intentos de login fallidos: la identidad (o identidad+IP) está bloqueada.
  *
@@ -20,5 +22,10 @@ class LoginLockedException extends ApiException
             ['lockout_minutes' => $lockoutMinutes],
             $previous
         );
+    }
+
+    public function errorCode(): ErrorCode|string
+    {
+        return ErrorCode::AccountLocked;
     }
 }

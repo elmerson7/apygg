@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\ErrorCode;
 use App\Models\ApiKey;
 use App\Models\User;
 use App\Services\Logging\SecurityLogger;
@@ -35,6 +36,7 @@ class CheckApiKeyScope
             return response()->json([
                 'success' => false,
                 'message' => 'Esta ruta requiere una API Key',
+                'code' => ErrorCode::ApiKeyRequired->value,
                 'error' => [
                     'type' => 'api_key_missing',
                     'code' => 'API_KEY_REQUIRED',
@@ -49,6 +51,7 @@ class CheckApiKeyScope
             return response()->json([
                 'success' => false,
                 'message' => 'API Key no encontrada en el request',
+                'code' => ErrorCode::ApiKeyInvalid->value,
                 'error' => [
                     'type' => 'api_key_missing',
                     'code' => 'API_KEY_NOT_FOUND',
@@ -63,6 +66,7 @@ class CheckApiKeyScope
             return response()->json([
                 'success' => false,
                 'message' => 'API Key no encontrada',
+                'code' => ErrorCode::ApiKeyInvalid->value,
                 'error' => [
                     'type' => 'api_key_not_found',
                     'code' => 'API_KEY_NOT_FOUND',
@@ -101,6 +105,7 @@ class CheckApiKeyScope
             return response()->json([
                 'success' => false,
                 'message' => 'La API Key no tiene los scopes necesarios para realizar esta acción',
+                'code' => ErrorCode::InsufficientScope->value,
                 'error' => [
                     'type' => 'scope_denied',
                     'code' => 'INSUFFICIENT_SCOPES',

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\ErrorCode;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -187,6 +188,7 @@ class AdaptiveRateLimitingMiddleware
         $response = response()->json([
             'success' => false,
             'message' => $message,
+            'code' => ErrorCode::RateLimited->value,
             'error' => [
                 'type' => 'rate_limit_exceeded',
                 'limit' => $maxAttempts,

@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Errores con `code` estable y `request_id`: enum `App\Enums\ErrorCode`, `ApiException::errorCode()` para códigos de proyecto, `code`/`request_id` en todas las respuestas de error (handler RFC 7807, `ApiResponse`, `sendError`, validación, 429, JWT, middlewares) y cabecera `X-Request-ID` en todas las respuestas (se respeta la entrante si es válida). Cambio aditivo: no cambia status ni quita campos. `TraceIdMiddleware` pasa a ser global (cubre también 404/405 sin ruta)
 - Arranque de proyecto nuevo: `make init NAME=<slug>` (compose.env y .env con puertos, contraseñas y claves propios; renombra composer/package; `origin` -> `upstream`), `make setup`, `make doctor`, `make fresh`, `make upgrade-check`, `make wt-env` (entorno por worktree) y `docs/new-project.md`. `make validate` ahora comprueba puertos repetidos, `REDIS_PASSWORD` vacío y puertos de BD/Redis/S3/Mailpit abiertos al exterior
 - `APP_TITLE` / `config('app.title')`: nombre visible de la API (ficha de `/` y título de `/docs/api`)
 - Perfil `dev` de Compose con Mailpit y un emulador S3 (RustFS; MinIO ya no publica imágenes) con buckets público y privado creados solos; targets `up-dev`, `mail-ui`, `mail-clear`, `s3-ui`, `s3-init`, `s3-test`; suite `Integration` (`make test-integration`); `docs/local-services.md` (sustituye a `docs/minio-configuration.md`)
