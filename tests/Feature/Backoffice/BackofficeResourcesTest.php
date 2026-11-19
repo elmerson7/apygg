@@ -214,6 +214,7 @@ test('los permisos solo se listan: no se pueden crear, editar ni borrar', functi
     $this->actingAs(backofficeUser('admin'));
 
     Livewire::test(ListPermissions::class)->assertOk()
+        ->searchTable('users.read')
         ->assertCanSeeTableRecords(Permission::where('name', 'users.read')->get());
 
     expect(PermissionResource::canCreate())->toBeFalse()

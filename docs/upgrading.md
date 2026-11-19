@@ -259,6 +259,26 @@ Si tu proyecto lo usaba, cópialo a tu repo antes de actualizar:
 - Proyectos nuevos: `docs/new-project.md`. Proyectos existentes: nada que hacer; para
   recibir mejoras, `git remote add upstream <repo-apygg>` y `make upgrade-check`.
 
+### 14c. Multiempresa: el modelo `Tenant` cambió
+
+El multi-tenancy anterior (`Tenant::$currentTenant`, `ResolveTenant` sin registrar, `TenantScope` que
+no filtraba sin tenant) se sustituye por el de `docs/multi-tenancy.md`. Si tu proyecto lo usaba:
+
+- Migraciones nuevas `2026_11_19_000050` (`tenants.status` string y `parent_id`; **elimina `is_active`**,
+  convirtiendo `false` en `suspended`) y `000051` (`tenant_user`). `make art cmd="migrate"`.
+- `Tenant::setCurrent/resolveCurrent/clearCurrent/hasCurrent` desaparecen: usa
+  `app(App\Support\Tenancy\TenantContext::class)` (`current()`, `set()`, `run()`).
+- `Tenant::users()` ya no es `hasMany` por `users.tenant_id`: es many-to-many vía `tenant_user`. Migra a
+  mano tus usuarios con `tenant_id` a membresías.
+- `scopeActive` de `Tenant` pasa a `scopeOperational` (el `active()` heredado ahora es «no borrado»).
+- `BelongsToTenant` es fail-closed (con `MULTI_TENANCY_ENABLED=true`, sin tenant en el contexto lanza
+  `MissingTenantContext`); `scopeAllTenants`/`scopeForTenant` desaparecen: usa `TenantQuery::withoutTenant()`
+  o `TenantContext::run()`.
+- Middleware: alias `tenant` (`['auth:api', 'tenant']`); cabecera `X-Tenant` (antes `X-Tenant-ID`); ya no hay
+  resolución por claim JWT ni tenant por defecto. `config/multi-tenancy.php` cambia de claves.
+- Re-siembra permisos: `make art cmd="db:seed --class=PermissionSeeder"` (nuevo `tenants.access-any`).
+- Variables nuevas: `MULTI_TENANCY_ENABLED`, `TENANT_RESOLUTION`, `TENANT_HEADER`, `TENANT_BASE_DOMAIN`.
+
 ### 15. Verificación final
 
 ```bash

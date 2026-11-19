@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\Tenancy\TenantContext;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redis;
 
@@ -213,7 +214,7 @@ class CacheService
     {
         $ttl = $ttl ?? self::DEFAULT_TTLS['search'];
         $hash = md5($query.serialize($filters));
-        $key = "search:{$hash}";
+        $key = 'search:'.self::tenantSegment().$hash;
         $tag = 'searches';
 
         // Verificar si existe antes de remember para trackear hit/miss
@@ -326,7 +327,18 @@ class CacheService
      */
     protected static function buildKey(string $key): string
     {
-        return self::PREFIX.':'.$key;
+        return self::PREFIX.':'.self::tenantSegment().$key;
+    }
+
+    /**
+     * Segmento de tenant para las claves (`t<id>:`). Vacío con multi-tenancy apagado o sin
+     * tenant activo: un proyecto single-tenant no cambia sus claves. Ver docs/multi-tenancy.md §Caché.
+     */
+    protected static function tenantSegment(): string
+    {
+        $context = app(TenantContext::class);
+
+        return $context->enabled() && $context->id() !== null ? 't'.$context->id().':' : '';
     }
 
     /**

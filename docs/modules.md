@@ -20,6 +20,7 @@ reales para imitar: **Archivos** (`files`), **Webhooks**, **Correo** (`mail`).
 | Config | `config/<modulo>.php` + `.env.example` | Nunca `env()` en servicios/controllers |
 | Tests | `tests/Feature/<Modulo>/` (+ `tests/Unit/`) | Nombres en español, tercera persona; **camino denegado obligatorio** (403/401/422), p. ej. `ArchivosTest` comprueba `assertForbidden()` con otro usuario |
 | Docs | `docs/<modulo>.md` | Qué hace, endpoints, permisos, variables |
+| Multiempresa | trait `BelongsToTenant`, middleware `tenant` | Si el módulo guarda datos de una empresa: `tenant_id` + trait + ruta con `tenant`. `docs/multi-tenancy.md` |
 
 ## Checklist: añadir un módulo nuevo
 

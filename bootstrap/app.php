@@ -109,6 +109,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'ip.whitelist' => IpWhitelistMiddleware::class,
             'feature' => CheckFeatureFlag::class,
             'auth.optional' => OptionalAuthMiddleware::class,
+            'tenant' => \App\Http\Middleware\ResolveTenant::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

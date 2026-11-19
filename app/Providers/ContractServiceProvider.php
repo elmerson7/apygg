@@ -48,6 +48,7 @@ use App\Services\TokenService;
 use App\Services\UserService;
 use App\Services\Webhooks\DnsHostResolver;
 use App\Services\WebhookService;
+use App\Support\Tenancy\TenantContext;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -100,6 +101,9 @@ class ContractServiceProvider extends ServiceProvider
 
         // Colaborador sin estado: el DNS real; los tests lo sustituyen con `$this->app->instance(...)`.
         $this->app->singleton(HostResolverInterface::class, DnsHostResolver::class);
+
+        // Estado POR PETICIÓN/JOB (tenant activo): scoped, nunca singleton ni estático (docs/multi-tenancy.md).
+        $this->app->scoped(TenantContext::class);
     }
 
     public function boot(): void

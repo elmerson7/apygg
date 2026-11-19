@@ -83,8 +83,10 @@ El status HTTP no cambia por el `code`; la columna indica el status habitual.
 | `api_key_required` | 401 | La ruta exige API Key |
 | `api_key_invalid` | 401 | API Key no encontrada o revocada |
 | `insufficient_scope` | 403 | La API Key no tiene el scope |
-| `tenant_invalid` | 403 | Tenant no encontrado o inválido |
-| `tenant_inactive` | 403 | Tenant inactivo |
+| `tenant_invalid` | 403 | Tenant inexistente o sin acceso (misma respuesta en ambos casos) |
+| `tenant_inactive` | 403 | Tenant suspendido o inactivo |
+| `tenant_required` | 400 | La ruta exige indicar el tenant (cabecera `X-Tenant`, ruta o subdominio) |
+| `cross_tenant` | 403 | El recurso pertenece a otro tenant |
 | `server_error` | 500 | Error interno |
 | `upstream_error` | 502/504 | Pasarela o servicio externo |
 | `service_unavailable` | 503 | Servicio no disponible |

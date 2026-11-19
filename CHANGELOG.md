@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- `Tenant`: `is_active` pasa a `status` (string), desaparecen `Tenant::setCurrent/resolveCurrent/clearCurrent/hasCurrent` (usa `TenantContext`), `Tenant::users()` es many-to-many vía `tenant_user`; `ResolveTenant` se reescribe (alias `tenant`)
+
 ### Added
 - Errores con `code` estable y `request_id`: enum `App\Enums\ErrorCode`, `ApiException::errorCode()` para códigos de proyecto, `code`/`request_id` en todas las respuestas de error (handler RFC 7807, `ApiResponse`, `sendError`, validación, 429, JWT, middlewares) y cabecera `X-Request-ID` en todas las respuestas (se respeta la entrante si es válida). Cambio aditivo: no cambia status ni quita campos. `TraceIdMiddleware` pasa a ser global (cubre también 404/405 sin ruta)
 - Arranque de proyecto nuevo: `make init NAME=<slug>` (compose.env y .env con puertos, contraseñas y claves propios; renombra composer/package; `origin` -> `upstream`), `make setup`, `make doctor`, `make fresh`, `make upgrade-check`, `make wt-env` (entorno por worktree) y `docs/new-project.md`. `make validate` ahora comprueba puertos repetidos, `REDIS_PASSWORD` vacío y puertos de BD/Redis/S3/Mailpit abiertos al exterior
@@ -16,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CHANGELOG.md con formato Keep a Changelog
 - CONTRIBUTING.md con guías de contribución
 - ARCHITECTURE.md con documentación de arquitectura
-- Soporte base para multi-tenancy
+- Multiempresa opt-in (`MULTI_TENANCY_ENABLED`, `docs/multi-tenancy.md`): `TenantContext` (scoped), `BelongsToTenant` fail-closed, middleware `tenant` (cabecera/ruta/subdominio/dominio, membresía activa o `tenants.access-any`), tabla `tenant_user`, `tenants.status`/`parent_id`, propagación a jobs con `Context`, claves de caché por tenant y `TenantQuery::withoutTenant()` como único escape. Migraciones `2026_11_19_000050` y `000051`, permiso `tenants.access-any`
 - Stubs personalizados para Laravel
 - Sistema de correo multi-cuenta con registro de envíos y webhook de entrega (`MailService`, `/admin/mail`)
 - Gateway LLM agnóstico del proveedor, con áreas, modelos de respaldo y auditoría (`app/Services/LLM`, `/admin/llm`)

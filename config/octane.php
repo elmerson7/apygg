@@ -1,5 +1,6 @@
 <?php
 
+use App\Listeners\ResetTenantContext;
 use Laravel\Octane\Contracts\OperationTerminated;
 use Laravel\Octane\Events\RequestHandled;
 use Laravel\Octane\Events\RequestReceived;
@@ -73,7 +74,7 @@ return [
         RequestReceived::class => [
             ...Octane::prepareApplicationForNextOperation(),
             ...Octane::prepareApplicationForNextRequest(),
-            //
+            ResetTenantContext::class,
         ],
 
         RequestHandled::class => [
@@ -86,7 +87,7 @@ return [
 
         TaskReceived::class => [
             ...Octane::prepareApplicationForNextOperation(),
-            //
+            ResetTenantContext::class,
         ],
 
         TaskTerminated::class => [
@@ -95,7 +96,7 @@ return [
 
         TickReceived::class => [
             ...Octane::prepareApplicationForNextOperation(),
-            //
+            ResetTenantContext::class,
         ],
 
         TickTerminated::class => [

@@ -38,6 +38,8 @@ enum ErrorCode: string
     case InsufficientScope = 'insufficient_scope';
     case TenantInvalid = 'tenant_invalid';
     case TenantInactive = 'tenant_inactive';
+    case TenantRequired = 'tenant_required';
+    case CrossTenant = 'cross_tenant';
     case ServerError = 'server_error';
     case UpstreamError = 'upstream_error';
     case ServiceUnavailable = 'service_unavailable';

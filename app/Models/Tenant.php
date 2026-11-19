@@ -2,90 +2,98 @@
 
 namespace App\Models;
 
+use App\Enums\TenantMembershipStatus;
+use App\Enums\TenantStatus;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Tenant Model
+ * Tenant: organización o empresa de un SaaS multiempresa (docs/multi-tenancy.md).
  *
- * Representa una organización o inquilino en el sistema multi-tenant.
+ * El tenant ACTIVO no vive aquí sino en `App\Support\Tenancy\TenantContext` (scoped, nunca
+ * estático). Este modelo no usa `BelongsToTenant`: es el propio tenant.
+ *
+ * @property int $id
+ * @property string $name
+ * @property string $slug
+ * @property string|null $domain
+ * @property TenantStatus $status
+ * @property int|null $parent_id
+ * @property array<string, mixed>|null $settings
  */
 class Tenant extends Model
 {
-    /**
-     * Tenant actual resuelto por el middleware
-     */
-    protected static ?Tenant $currentTenant = null;
-
     protected $fillable = [
         'name',
         'slug',
         'domain',
+        'status',
+        'parent_id',
         'settings',
-        'is_active',
     ];
 
     protected $casts = [
         'settings' => 'array',
-        'is_active' => 'boolean',
+        'status' => TenantStatus::class,
     ];
 
     /**
-     * Usuarios pertenecientes a este tenant
+     * Miembros del tenant (cualquier estado de membresía).
      *
-     * @return HasMany<User, $this>
+     * @return BelongsToMany<User, $this>
      */
-    public function users(): HasMany
+    public function users(): BelongsToMany
     {
-        return $this->hasMany(User::class, 'tenant_id');
+        return $this->belongsToMany(User::class, 'tenant_user')
+            ->withPivot(['status', 'invited_by', 'joined_at'])
+            ->withTimestamps();
     }
 
     /**
-     * Establecer el tenant actual
+     * Tenant padre (agencia/marca) en la jerarquía opcional. Solo es un dato: no concede acceso.
+     *
+     * @return BelongsTo<Tenant, $this>
      */
-    public static function setCurrent(Tenant $tenant): void
+    public function parent(): BelongsTo
     {
-        static::$currentTenant = $tenant;
+        return $this->belongsTo(self::class, 'parent_id');
     }
 
     /**
-     * Obtener el tenant actual
+     * @return HasMany<Tenant, $this>
      */
-    public static function resolveCurrent(): ?Tenant
+    public function children(): HasMany
     {
-        return static::$currentTenant;
+        return $this->hasMany(self::class, 'parent_id');
+    }
+
+    public function isActive(): bool
+    {
+        return $this->status === TenantStatus::Active;
+    }
+
+    public function hasActiveMember(User|int $user): bool
+    {
+        return $this->users()
+            ->whereKey($user instanceof User ? $user->getKey() : $user)
+            ->wherePivot('status', TenantMembershipStatus::Active->value)
+            ->exists();
     }
 
     /**
-     * Limpiar el tenant actual
-     */
-    public static function clearCurrent(): void
-    {
-        static::$currentTenant = null;
-    }
-
-    /**
-     * Verificar si hay un tenant activo
-     */
-    public static function hasCurrent(): bool
-    {
-        return static::$currentTenant !== null;
-    }
-
-    /**
-     * Scope para tenants activos
+     * Tenants operativos (estado `active`).
      *
      * @param  Builder<static>  $query
      * @return Builder<static>
      */
-    public function scopeActive($query)
+    public function scopeOperational($query)
     {
-        return $query->where('is_active', true);
+        return $query->where('status', TenantStatus::Active->value);
     }
 
     /**
-     * Buscar tenant por dominio
-     *
      * @param  Builder<static>  $query
      * @return Builder<static>
      */
@@ -95,8 +103,6 @@ class Tenant extends Model
     }
 
     /**
-     * Buscar tenant por slug
-     *
      * @param  Builder<static>  $query
      * @return Builder<static>
      */

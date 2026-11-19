@@ -2,142 +2,134 @@
 
 namespace App\Http\Middleware;
 
-use App\Enums\ErrorCode;
 use App\Models\Tenant;
+use App\Models\User;
+use App\Support\Tenancy\Exceptions\MissingTenantContext;
+use App\Support\Tenancy\Exceptions\TenantAccessDenied;
+use App\Support\Tenancy\Exceptions\TenantSuspended;
+use App\Support\Tenancy\TenantContext;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * ResolveTenant
+ * ResolveTenant (alias `tenant`)
  *
- * Middleware que resuelve el tenant actual basado en:
- * 1. Header X-Tenant-ID
- * 2. Subdomain
- * 3. Header Authorization (claim 'tenant_id' en JWT)
+ * Resuelve el tenant activo (cabecera, parámetro de ruta, subdominio o dominio; ver
+ * config/multi-tenancy.php), comprueba que el usuario es miembro ACTIVO (o tiene el permiso de
+ * plataforma) y fija `TenantContext`. Va DESPUÉS de `auth:api`: `['auth:api', 'tenant']`.
  *
- * El tenant resuelto se almacena en Tenant::resolveCurrent()
- * y es usado por el trait BelongsToTenant y TenantScope.
+ * `tenant:optional` deja pasar sin tenant. Con multi-tenancy apagado no hace nada.
+ *
+ * Errores: sin tenant 400 `tenant_required`; tenant inexistente o sin membresía 403
+ * `tenant_forbidden` (misma respuesta); tenant no activo 403 `tenant_suspended`.
  */
 class ResolveTenant
 {
-    /**
-     * Handle an incoming request.
-     */
-    public function handle(Request $request, Closure $next): Response
+    /** Permiso de plataforma: entrar a cualquier tenant activo sin ser miembro (soporte). */
+    public const PLATFORM_PERMISSION = 'tenants.access-any';
+
+    public function __construct(private readonly TenantContext $context) {}
+
+    public function handle(Request $request, Closure $next, string $mode = 'required'): Response
     {
-        // Si multi-tenancy está deshabilitado, continuar sin resolver
-        if (! config('multi-tenancy.enabled', false)) {
+        if (! $this->context->enabled()) {
             return $next($request);
         }
 
-        $tenant = $this->resolveTenant($request);
+        // Nada de lo que hubiera antes (otra petición, un test) se hereda.
+        $this->context->clear();
 
-        if ($tenant === null) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Tenant no encontrado o inválido.',
-                'code' => ErrorCode::TenantInvalid->value,
-                'error' => 'tenant_not_found',
-            ], 403);
+        $identifier = $this->identifier($request);
+
+        if ($identifier === null) {
+            if ($mode === 'optional') {
+                return $next($request);
+            }
+
+            throw new MissingTenantContext;
         }
 
-        if (! $tenant->is_active) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Tenant inactivo.',
-                'code' => ErrorCode::TenantInactive->value,
-                'error' => 'tenant_inactive',
-            ], 403);
+        $user = $request->user('api');
+
+        if (! $user instanceof User) {
+            throw TenantAccessDenied::unauthenticated();
         }
 
-        // Establecer tenant actual
-        Tenant::setCurrent($tenant);
+        $tenant = $this->find($identifier);
+
+        if (! $tenant instanceof Tenant || ! $this->canAccess($user, $tenant)) {
+            throw new TenantAccessDenied;
+        }
+
+        if (! $tenant->isActive()) {
+            throw new TenantSuspended;
+        }
+
+        $this->context->set($tenant);
+        $request->attributes->set('tenant', $tenant);
 
         return $next($request);
     }
 
-    /**
-     * Resolver el tenant desde la request
-     */
-    protected function resolveTenant(Request $request): ?Tenant
+    public function terminate(Request $request, Response $response): void
     {
-        // 1. Desde header X-Tenant-ID
-        $tenant = $this->resolveFromHeader($request);
-        if ($tenant !== null) {
-            return $tenant;
-        }
-
-        // 2. Desde subdomain
-        $tenant = $this->resolveFromSubdomain($request);
-        if ($tenant !== null) {
-            return $tenant;
-        }
-
-        // 3. Desde JWT (claim tenant_id)
-        $tenant = $this->resolveFromJwt($request);
-        if ($tenant !== null) {
-            return $tenant;
-        }
-
-        // 4. Tenant por defecto de configuración
-        return $this->resolveDefault();
+        $this->context->clear();
     }
 
-    /**
-     * Resolver tenant desde header X-Tenant-ID
-     */
-    protected function resolveFromHeader(Request $request): ?Tenant
+    private function identifier(Request $request): ?string
     {
-        $tenantId = $request->header('X-Tenant-ID');
-        if ($tenantId === null) {
-            return null;
+        foreach ((array) config('multi-tenancy.resolution.strategies', []) as $strategy) {
+            $value = match ($strategy) {
+                'header' => $request->header((string) config('multi-tenancy.resolution.header')),
+                'route' => $request->route((string) config('multi-tenancy.resolution.route_parameter')),
+                'subdomain' => $this->subdomain($request),
+                'domain' => 'domain:'.$request->getHost(),
+                default => null,
+            };
+
+            if ($value instanceof Tenant) {
+                return (string) $value->getKey();
+            }
+
+            if (is_string($value) && trim($value) !== '') {
+                return trim($value);
+            }
         }
 
-        return Tenant::active()->find($tenantId);
+        return null;
     }
 
-    /**
-     * Resolver tenant desde subdomain
-     */
-    protected function resolveFromSubdomain(Request $request): ?Tenant
+    private function subdomain(Request $request): ?string
     {
+        $base = config('multi-tenancy.resolution.base_domain');
         $host = $request->getHost();
-        $parts = explode('.', $host);
 
-        if (count($parts) < 3) {
+        if (! is_string($base) || $base === '' || ! str_ends_with($host, '.'.$base)) {
             return null;
         }
 
-        $subdomain = $parts[0];
+        $sub = substr($host, 0, -strlen('.'.$base));
 
-        return Tenant::active()->bySlug($subdomain)->first()
-            ?? Tenant::active()->byDomain($host)->first();
+        return $sub !== '' && ! str_contains($sub, '.') ? $sub : null;
     }
 
-    /**
-     * Resolver tenant desde JWT token
-     */
-    protected function resolveFromJwt(Request $request): ?Tenant
+    private function find(string $identifier): ?Tenant
     {
-        $user = $request->user();
-        if ($user === null || ! isset($user->tenant_id)) {
-            return null;
+        if (str_starts_with($identifier, 'domain:')) {
+            return Tenant::query()->byDomain(substr($identifier, 7))->first();
         }
 
-        return Tenant::active()->find($user->tenant_id);
+        if (ctype_digit($identifier) && ($tenant = Tenant::query()->find((int) $identifier)) instanceof Tenant) {
+            return $tenant;
+        }
+
+        return Tenant::query()->bySlug($identifier)->first();
     }
 
-    /**
-     * Resolver tenant por defecto desde configuración
-     */
-    protected function resolveDefault(): ?Tenant
+    private function canAccess(User $user, Tenant $tenant): bool
     {
-        $defaultId = config('multi-tenancy.default_tenant_id');
-        if ($defaultId === null) {
-            return null;
-        }
-
-        return Tenant::active()->find($defaultId);
+        return $user->isActiveMemberOf($tenant)
+            || $user->checkPermissionTo('tenants.access-any', 'api');
     }
 }

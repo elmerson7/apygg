@@ -205,10 +205,9 @@ test('no hay propiedades estáticas mutables en App (estado compartido en Octane
     // PHP no admite `static readonly`: cualquier propiedad estática es mutable. Usa constantes,
     // config, atributos de la petición o un binding del contenedor.
     // Excepciones justificadas:
-    // - Tenant guarda el tenant actual; se rehace en la fase de multiempresa.
     // - app/Filament/: Filament exige metadatos estáticos ($model, $navigationIcon, $slug...)
     //   que se fijan en la declaración y nunca se mutan en tiempo de ejecución.
-    $permitidas = ['app/Models/Tenant.php'];
+    $permitidas = [];
     $carpetasPermitidas = ['app/Filament/'];
 
     $violaciones = [];
@@ -244,6 +243,22 @@ test('no se usa auth() ni Auth::id()/user()/check() sin guard explícito en App'
         $code = (string) preg_replace('~/\*.*?\*/|//[^\n]*~s', '', file_get_contents(base_path($file)));
 
         if (preg_match('/\bauth\(\s*\)\s*->|\bAuth::(?:id|user|check|guest|hasUser)\s*\(/', $code)) {
+            $violaciones[] = $file;
+        }
+    }
+
+    expect($violaciones)->toBe([]);
+});
+
+test('el aislamiento por tenant solo se salta con TenantQuery::withoutTenant (no hay withoutGlobalScope de TenantScope suelto)', function () {
+    $violaciones = [];
+
+    foreach (archPhpFiles('app') as $file) {
+        if (str_starts_with($file, 'app/Support/Tenancy/') || $file === 'app/Scopes/TenantScope.php' || $file === 'app/Traits/BelongsToTenant.php') {
+            continue;
+        }
+
+        if (preg_match('/withoutGlobalScope\(\s*(?:new\s+)?TenantScope/', file_get_contents(base_path($file)))) {
             $violaciones[] = $file;
         }
     }

@@ -14,7 +14,6 @@ declaran**; usa constantes, `config()`, atributos de la petición o un binding d
 una expresión regular y falla si encuentra `static $x`. Excepciones justificadas y listadas en
 el propio test:
 
-- `app/Models/Tenant.php` (`$currentTenant`): se rehace en la fase de multiempresa.
 - `app/Filament/`: metadatos estáticos que exige Filament (`$model`, `$navigationIcon`,
   `$slug`…), fijados en la declaración y nunca mutados.
 
@@ -29,7 +28,7 @@ Los bindings viven en `app/Providers/ContractServiceProvider.php` (ahí está la
 | Binding | Cuándo | Ejemplo en el repo |
 |---|---|---|
 | `bind` (por defecto) | Servicios de aplicación: instancia nueva por resolución, nunca arrastran estado | los 22 servicios del provider |
-| `scoped` | Necesita estado **por petición** pero compartido dentro de ella | no hay ninguno hoy |
+| `scoped` | Necesita estado **por petición** pero compartido dentro de ella | `TenantContext` (tenant activo; `docs/multi-tenancy.md`) |
 | `singleton` | Colaborador **sin estado** y costoso de crear | `HostResolverInterface` → `DnsHostResolver` |
 
 Regla: ante la duda, `bind`. Nada con estado de petición va en `singleton`.

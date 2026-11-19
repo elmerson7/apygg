@@ -3,65 +3,43 @@
 return [
     /*
     |--------------------------------------------------------------------------
-    | Multi-Tenancy
+    | Multi-Tenancy (opt-in)
     |--------------------------------------------------------------------------
     |
-    | Habilitar o deshabilitar el soporte multi-tenant.
-    | Cuando está deshabilitado, el middleware ResolveTenant no filtra
-    | por tenant y los modelos no aplican el TenantScope.
+    | Apagado por defecto: un proyecto de una sola empresa no paga nada (ni el scope,
+    | ni los hooks, ni el middleware `tenant`). Con true, los modelos con `BelongsToTenant`
+    | quedan aislados fail-closed. Ver docs/multi-tenancy.md.
     |
     */
-    'enabled' => env('MULTI_TENANCY_ENABLED', false),
+    'enabled' => (bool) env('MULTI_TENANCY_ENABLED', false),
 
     /*
     |--------------------------------------------------------------------------
-    | Tenant por Defecto
+    | Tenant por defecto
     |--------------------------------------------------------------------------
     |
-    | ID del tenant por defecto. Se usa cuando no se puede resolver
-    | el tenant desde header, subdomain o JWT.
-    | Útil para modo single-tenant con código multi-tenant.
+    | Solo lo usa la migración de equipos de Spatie (docs/permissions.md) para atribuir
+    | las asignaciones existentes. NO se usa para resolver peticiones.
     |
     */
     'default_tenant_id' => env('DEFAULT_TENANT_ID'),
 
     /*
     |--------------------------------------------------------------------------
-    | Estrategia de Resolución
+    | Resolución del tenant (middleware `tenant`)
     |--------------------------------------------------------------------------
     |
-    | Define cómo se resuelve el tenant actual:
-    | - header: Desde X-Tenant-ID header
-    | - subdomain: Desde subdomain (ej: acme.tuapp.com)
-    | - jwt: Desde claim tenant_id en el token JWT
-    | - auto: Intenta todas las estrategias en orden
+    | Estrategias en orden; gana la primera que aporte un identificador:
+    | - header:    cabecera `header` (id o slug)
+    | - route:     parámetro de ruta `route_parameter` (id o slug)
+    | - subdomain: `<slug>.<base_domain>`
+    | - domain:    dominio propio completo (`tenants.domain`)
     |
     */
-    'resolution_strategy' => env('TENANT_RESOLUTION_STRATEGY', 'auto'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Columna Tenant ID
-    |--------------------------------------------------------------------------
-    |
-    | Nombre de la columna que almacena el tenant_id en las tablas.
-    |
-    */
-    'column' => 'tenant_id',
-
-    /*
-    |--------------------------------------------------------------------------
-    | Modelos con Multi-Tenancy
-    |--------------------------------------------------------------------------
-    |
-    | Lista de modelos que usan el trait BelongsToTenant.
-    | Solo estos modelos aplicarán el TenantScope.
-    |
-    */
-    'models' => [
-        // Agregar modelos aquí cuando se active multi-tenancy
-        // App\Models\User::class,
-        // App\Models\ApiKey::class,
-        // App\Models\File::class,
+    'resolution' => [
+        'strategies' => array_values(array_filter(array_map('trim', explode(',', (string) env('TENANT_RESOLUTION', 'header,route'))))),
+        'header' => env('TENANT_HEADER', 'X-Tenant'),
+        'route_parameter' => env('TENANT_ROUTE_PARAMETER', 'tenant'),
+        'base_domain' => env('TENANT_BASE_DOMAIN'),
     ],
 ];

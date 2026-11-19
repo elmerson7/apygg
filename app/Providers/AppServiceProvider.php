@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Listeners\LogAuthenticationEvents;
+use App\Listeners\RestoreTenantForJob;
 use App\Logging\DateOrganizedStreamHandler;
 use App\Logging\FilterDeprecationWarningsHandler;
 use App\Models\ApiKey;
@@ -14,6 +15,10 @@ use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Queue\Events\JobExceptionOccurred;
+use Illuminate\Queue\Events\JobFailed;
+use Illuminate\Queue\Events\JobProcessed;
+use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -53,6 +58,11 @@ class AppServiceProvider extends ServiceProvider
         if (class_exists(Webhook::class)) {
             Webhook::observe(WebhookObserver::class);
         }
+        // Multiempresa: restaura el tenant del job en el worker y lo limpia al terminar (docs/multi-tenancy.md)
+        foreach ([JobProcessing::class, JobProcessed::class, JobFailed::class, JobExceptionOccurred::class] as $event) {
+            Event::listen($event, RestoreTenantForJob::class);
+        }
+
         // Registrar listeners para eventos de autenticación
         Event::listen(Login::class, [LogAuthenticationEvents::class, 'handleLogin']);
         Event::listen(Failed::class, [LogAuthenticationEvents::class, 'handleFailed']);

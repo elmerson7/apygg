@@ -4,38 +4,77 @@ namespace App\Traits;
 
 use App\Models\Tenant;
 use App\Scopes\TenantScope;
-use Illuminate\Database\Eloquent\Builder;
+use App\Support\Tenancy\Exceptions\CrossTenantViolation;
+use App\Support\Tenancy\Exceptions\MissingTenantContext;
+use App\Support\Tenancy\TenantContext;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * BelongsToTenant
  *
- * Trait para modelos que pertenecen a un tenant.
- * Agrega filtro automático por tenant_id y asignación automática al crear.
+ * Aislamiento fail-closed por tenant (requiere columna `tenant_id`). Solo actúa con
+ * `MULTI_TENANCY_ENABLED=true`; ver docs/multi-tenancy.md.
+ *
+ * - Lectura: scope global; sin tenant en el contexto lanza `MissingTenantContext`.
+ * - Creación: rellena `tenant_id` con el del contexto; uno distinto lanza `CrossTenantViolation`.
+ * - Cambio de `tenant_id` en un registro existente: siempre `CrossTenantViolation`.
+ * - Defensa extra: al hidratar, actualizar, borrar o restaurar se comprueba que el registro es
+ *   del tenant activo (cubre `withoutGlobalScopes()` y la restauración de modelos en jobs, que
+ *   Laravel hace sin scopes).
+ *
+ * No cubre las operaciones masivas de query (`insert`, `upsert`, `Model::query()->update()`):
+ * ahí el `tenant_id` lo respeta el scope de lectura, pero NO se debe escribir `tenant_id`.
+ *
+ * @mixin Model
  */
 trait BelongsToTenant
 {
-    /**
-     * Boot del trait
-     */
     protected static function bootBelongsToTenant(): void
     {
-        // Aplicar scope global de tenant
         static::addGlobalScope(new TenantScope);
 
-        // Asignar tenant_id automáticamente al crear
-        static::creating(function (self $model) {
-            if (is_null($model->tenant_id)) {
-                $tenant = Tenant::resolveCurrent();
-                if ($tenant !== null) {
-                    $model->tenant_id = $tenant->getKey();
+        static::creating(function (Model $model): void {
+            $context = app(TenantContext::class);
+
+            if (! $context->enabled()) {
+                return;
+            }
+
+            $current = $model->getAttribute('tenant_id');
+
+            if ($context->isWithoutTenant()) {
+                // Plataforma: el tenant lo decide quien llama, o el del contexto si lo hay.
+                if ($current === null) {
+                    $model->setAttribute('tenant_id', $context->id() ?? throw MissingTenantContext::forModel($model::class, 'create'));
                 }
+
+                return;
+            }
+
+            $expected = $context->requireId($model::class, 'create');
+
+            if ($current === null) {
+                $model->setAttribute('tenant_id', $expected);
+            } elseif ((int) $current !== $expected) {
+                throw CrossTenantViolation::foreignRecord($model::class);
             }
         });
+
+        static::updating(function (Model $model): void {
+            self::assertTenantUnchanged($model);
+            self::assertBelongsToActiveTenant($model);
+        });
+
+        static::deleting(fn (Model $model) => self::assertBelongsToActiveTenant($model));
+
+        static::restoring(fn (Model $model) => self::assertBelongsToActiveTenant($model));
+
+        static::retrieved(fn (Model $model) => self::assertBelongsToActiveTenant($model));
     }
 
     /**
-     * Relación con el Tenant
+     * @return BelongsTo<Tenant, $this>
      */
     public function tenant(): BelongsTo
     {
@@ -43,27 +82,33 @@ trait BelongsToTenant
     }
 
     /**
-     * Scope para filtrar por tenant específico
-     */
-    public function scopeForTenant(Builder $builder, string $tenantId): Builder
-    {
-        return $builder->withoutGlobalScope(new TenantScope)
-            ->where('tenant_id', $tenantId);
-    }
-
-    /**
-     * Scope para incluir registros de todos los tenants (sin filtro)
-     */
-    public function scopeAllTenants(Builder $builder): Builder
-    {
-        return $builder->withoutGlobalScope(new TenantScope);
-    }
-
-    /**
      * Verificar si el modelo pertenece a un tenant específico
      */
-    public function belongsToTenant(string $tenantId): bool
+    public function belongsToTenant(int|string $tenantId): bool
     {
-        return $this->tenant_id === $tenantId;
+        return (int) $this->getAttribute('tenant_id') === (int) $tenantId;
+    }
+
+    private static function assertTenantUnchanged(Model $model): void
+    {
+        if (app(TenantContext::class)->enabled() && $model->isDirty('tenant_id')) {
+            throw CrossTenantViolation::tenantChanged($model::class);
+        }
+    }
+
+    private static function assertBelongsToActiveTenant(Model $model): void
+    {
+        $context = app(TenantContext::class);
+
+        // Con select parcial sin la columna no hay nada que comparar (el scope sigue filtrando).
+        if (! $context->enforcing() || ! array_key_exists('tenant_id', $model->getAttributes())) {
+            return;
+        }
+
+        $expected = $context->requireId($model::class, 'access');
+
+        if ((int) ($model->getOriginal('tenant_id') ?? $model->getAttribute('tenant_id')) !== $expected) {
+            throw CrossTenantViolation::foreignRecord($model::class);
+        }
     }
 }
