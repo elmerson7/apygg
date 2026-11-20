@@ -2,11 +2,14 @@
 
 use App\Contracts\PaymentGatewayInterface;
 use App\Contracts\PaymentProcessorInterface;
+use App\Contracts\PaymentReconcilerInterface;
 use App\Contracts\PlanCatalogInterface;
 use App\Contracts\RenewalServiceInterface;
 use App\Contracts\SubscriptionServiceInterface;
 use App\Enums\BillingInterval;
 use App\Exceptions\BillingException;
+use App\Integrations\Exceptions\TransientIntegrationError;
+use App\Integrations\Payments\ChargeResult;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Tenant;
@@ -184,4 +187,35 @@ test('dos pagos simultáneos de la misma factura abierta cobran una sola vez', f
         ->and(in_array(collect($res)->reject(fn ($r) => $r === 'ok')->first(), ['invoice_not_open', 'payment_in_progress'], true))->toBeTrue(json_encode($results))
         ->and(collect($results)->sum('result.charges'))->toBe(1)
         ->and(DB::table('payments')->where('invoice_id', $factura)->where('status', 'succeeded')->count())->toBe(1);
+});
+
+test('el webhook, la conciliación y el cobro síncrono aplicando a la vez el mismo resultado de la pasarela saldan la factura UNA vez', function () {
+    $e = ccEmpresaVencida($this->sufijo, 'w');
+    $tid = $e['tenant']->id;
+    $sid = $e['sub']->id;
+
+    // Un cobro de renovación que quedó `pending` (respuesta perdida).
+    app(PaymentGatewayInterface::class)->failNext(TransientIntegrationError::class);
+    expect(app(TenantContext::class)->run($e['tenant'], fn () => app(RenewalServiceInterface::class)->renew($sid))->value)->toBe('retrying');
+    $pago = DB::table('payments')->where('tenant_id', $tid)->where('status', 'pending')->first();
+    $finAnterior = $e['sub']->current_period_end->toDateTimeString();
+
+    $results = ConcurrentRunner::run(4, function (int $i) use ($tid, $pago) {
+        config(['multi-tenancy.enabled' => true]);
+        $tenant = Tenant::query()->findOrFail($tid);
+        $charge = new ChargeResult(true, 'fake_pay_race', amountMinor: (int) $pago->amount_minor, currency: (string) $pago->currency, idempotencyKey: $pago->idempotency_key);
+
+        return app(TenantContext::class)->run($tenant, fn () => app(PaymentReconcilerInterface::class)->applyCharge($charge));
+    }, 90);
+
+    foreach ($results as $r) {
+        expect($r['ok'])->toBeTrue($r['error'] ?? '');
+    }
+
+    // Todos ven el cobro reflejado (idempotente), pero el efecto ocurre una sola vez: un pago, una factura pagada, un solo avance de periodo.
+    expect(collect($results)->pluck('result')->every(fn ($o) => $o === 'applied'))->toBeTrue(json_encode($results))
+        ->and(DB::table('subscriptions')->where('id', $sid)->value('current_period_start'))->toBe($finAnterior)
+        ->and(DB::table('payments')->where('id', $pago->id)->value('status'))->toBe('succeeded')
+        ->and(DB::table('invoices')->where('id', $pago->invoice_id)->value('status'))->toBe('paid')
+        ->and(DB::table('payments')->where('invoice_id', $pago->invoice_id)->count())->toBe(1);
 });

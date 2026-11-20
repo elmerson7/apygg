@@ -4,7 +4,9 @@ namespace App\Integrations\Payments;
 
 use App\Contracts\PaymentGatewayInterface;
 use App\Integrations\Concerns\RecordsCalls;
+use App\Integrations\Exceptions\IntegrationException;
 use App\Integrations\Exceptions\PermanentIntegrationError;
+use App\Integrations\Exceptions\TransientIntegrationError;
 
 /**
  * Pasarela falsa y determinista: sin red, reloj ni azar. Ids `fake_cus_1`, `fake_pay_1`... por instancia
@@ -13,6 +15,10 @@ use App\Integrations\Exceptions\PermanentIntegrationError;
  * Comportamiento por token (el de `attachPaymentMethod`): `tok_visa` y cualquier otro `tok_*` cobran bien;
  * `tok_declined`, `tok_insufficient_funds` y `tok_expired` son rechazados por el banco. Para forzar un rechazo
  * puntual: `declineNext('card_declined', times: 2)`. Para un fallo de infraestructura: `failNext(TransientIntegrationError::class)`.
+ * `tok_3ds` pide 3DS: con el cliente presente el cobro queda `requiresAction` (`completeAction($id)` simula que lo confirma);
+ * sin cliente (renovación) se rechaza con `authentication_required`. `loseResponseNext()` simula el peor caso: la pasarela
+ * COBRA y la respuesta se pierde (timeout). `findCharge`/`retrieve`/`cancelCharge`/`recentCharges` no consumen `failNext`
+ * (usa `failNextLookup()` para simular que la consulta también falla).
  */
 class FakePaymentGateway implements PaymentGatewayInterface
 {
@@ -41,6 +47,11 @@ class FakePaymentGateway implements PaymentGatewayInterface
     /** @var list<string> códigos de rechazo pendientes */
     private array $pendingDeclines = [];
 
+    private int $lostResponses = 0;
+
+    /** @var list<class-string<IntegrationException>> */
+    private array $lookupFailures = [];
+
     /** @var (\Closure(ChargeRequest): void)|null */
     private ?\Closure $chargeHook = null;
 
@@ -55,6 +66,35 @@ class FakePaymentGateway implements PaymentGatewayInterface
     public function name(): string
     {
         return 'fake';
+    }
+
+    /** Las próximas `$times` llamadas a `charge()` cobran de verdad y luego lanzan un error transitorio (respuesta perdida). */
+    public function loseResponseNext(int $times = 1): static
+    {
+        $this->lostResponses += $times;
+
+        return $this;
+    }
+
+    /**
+     * @param  class-string<IntegrationException>  $type
+     */
+    public function failNextLookup(string $type = TransientIntegrationError::class, int $times = 1): static
+    {
+        for ($i = 0; $i < $times; $i++) {
+            $this->lookupFailures[] = $type;
+        }
+
+        return $this;
+    }
+
+    /** El cliente confirmó el 3DS: el cobro pasa a `succeeded` (lo que luego llegaría por webhook). */
+    public function completeAction(string $paymentId): ChargeResult
+    {
+        $current = $this->chargesById[$paymentId] ?? throw new PermanentIntegrationError('Cobro no encontrado', 'payments');
+        $done = $this->with($current, succeeded: true, requiresAction: false, failureCode: null, failureMessage: null, clientSecret: null);
+
+        return $this->store($done);
     }
 
     public function declineNext(string $code = 'card_declined', int $times = 1): static
@@ -100,13 +140,34 @@ class FakePaymentGateway implements PaymentGatewayInterface
             ($this->chargeHook)($request);
         }
 
-        $result = $code === null
-            ? new ChargeResult(true, $id)
-            : new ChargeResult(false, $id, $code, 'Cobro rechazado por la pasarela simulada');
+        $extras = [
+            'customerId' => $request->customerId,
+            'amountMinor' => $request->amount->amountMinor,
+            'currency' => $request->amount->currency,
+            'idempotencyKey' => $request->idempotencyKey,
+            'metadata' => $request->metadata,
+        ];
 
-        $this->chargesById[$id] = $result;
+        if ($code === null && $token === 'tok_3ds') {
+            $result = $request->customerPresent
+                ? new ChargeResult(false, $id, ...$extras, requiresAction: true, clientSecret: "{$id}_secret_fake")
+                : new ChargeResult(false, $id, 'authentication_required', 'La tarjeta pide autenticación del cliente', ...$extras);
+        } else {
+            $result = $code === null
+                ? new ChargeResult(true, $id, ...$extras)
+                : new ChargeResult(false, $id, $code, 'Cobro rechazado por la pasarela simulada', ...$extras);
+        }
 
-        return $this->chargesByKey[$request->idempotencyKey] = $result;
+        $this->store($result);
+        $this->chargesByKey[$request->idempotencyKey] = $result;
+
+        if ($this->lostResponses > 0) {
+            $this->lostResponses--;
+
+            throw new TransientIntegrationError('Respuesta perdida (simulada)', 'payments');
+        }
+
+        return $result;
     }
 
     public function refund(RefundRequest $request): RefundResult
@@ -123,12 +184,67 @@ class FakePaymentGateway implements PaymentGatewayInterface
         return $this->chargesById[$gatewayPaymentId] ?? throw new PermanentIntegrationError('Cobro no encontrado', 'payments');
     }
 
+    public function findCharge(?string $customerId, string $idempotencyKey, int $sinceTimestamp): ?ChargeResult
+    {
+        $this->recordedCalls[] = ['operation' => 'findCharge', 'payload' => $idempotencyKey];
+        $this->failLookupIfNeeded();
+
+        return $this->chargesByKey[$idempotencyKey] ?? null;
+    }
+
+    public function cancelCharge(string $gatewayPaymentId): ChargeResult
+    {
+        $this->recordedCalls[] = ['operation' => 'cancelCharge', 'payload' => $gatewayPaymentId];
+        $this->failLookupIfNeeded();
+
+        $current = $this->chargesById[$gatewayPaymentId] ?? throw new PermanentIntegrationError('Cobro no encontrado', 'payments');
+
+        if (! $current->requiresAction) {
+            return $current;   // ya se cobró o ya falló: se informa de su estado real
+        }
+
+        return $this->store($this->with($current, requiresAction: false, failureCode: 'canceled', failureMessage: 'Cobro cancelado', clientSecret: null));
+    }
+
+    public function recentCharges(int $sinceTimestamp, ?string $cursor = null, int $limit = 100): array
+    {
+        $this->recordedCalls[] = ['operation' => 'recentCharges', 'payload' => $sinceTimestamp];
+        $this->failLookupIfNeeded();
+
+        return ['items' => array_slice(array_reverse(array_values($this->chargesById)), 0, $limit), 'next' => null];
+    }
+
     /**
      * @return list<ChargeRequest>
      */
     public function charges(): array
     {
         return array_map(fn (array $call) => $call['payload'], $this->calls('charge'));
+    }
+
+    private function failLookupIfNeeded(): void
+    {
+        $failure = array_shift($this->lookupFailures);
+
+        if ($failure !== null) {
+            throw new $failure('Fallo inyectado en la consulta', 'payments');
+        }
+    }
+
+    private function store(ChargeResult $result): ChargeResult
+    {
+        $this->chargesById[$result->paymentId] = $result;
+
+        if ($result->idempotencyKey !== null) {
+            $this->chargesByKey[$result->idempotencyKey] = $result;
+        }
+
+        return $result;
+    }
+
+    private function with(ChargeResult $c, bool $succeeded = false, bool $requiresAction = false, ?string $failureCode = null, ?string $failureMessage = null, ?string $clientSecret = null): ChargeResult
+    {
+        return new ChargeResult($succeeded, $c->paymentId, $failureCode, $failureMessage, $requiresAction, $c->processing, $clientSecret, $c->customerId, $c->amountMinor, $c->currency, $c->idempotencyKey, $c->metadata);
     }
 
     protected function serviceName(): string

@@ -25,6 +25,17 @@ return [
         'webhook_secret' => env('RESEND_WEBHOOK_SECRET'),
     ],
 
+    // Stripe (docs/billing.md §Stripe). PAYMENTS_MODE=real + PAYMENTS_PROVIDER=stripe. Nunca claves reales en el repo.
+    'stripe' => [
+        'secret' => env('STRIPE_SECRET'),
+        // Secreto(s) del endpoint de webhooks (whsec_...). Varios separados por comas durante una rotación.
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+        'webhook_tolerance' => (int) env('STRIPE_WEBHOOK_TOLERANCE', 300),
+        'api_base' => env('STRIPE_API_BASE', 'https://api.stripe.com/v1'),
+        // Fija la versión de la API para que un cambio de Stripe no altere el comportamiento (p. ej. 2025-09-30.clover).
+        'api_version' => env('STRIPE_API_VERSION'),
+    ],
+
     'ses' => [
         'key' => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),

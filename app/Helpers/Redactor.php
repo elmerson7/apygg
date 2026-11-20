@@ -73,6 +73,10 @@ class Redactor
                 $value,
             );
         }
+        if (in_array('stripe', $patterns, true) && preg_match('/(?:sk|rk|pk|whsec)_|_secret_/', $value) === 1) {
+            // Claves de Stripe (sk_live_..., rk_..., whsec_...) y client_secret de un PaymentIntent (pi_..._secret_...).
+            $value = (string) preg_replace('/\b(?:(?:sk|rk|pk)_(?:live|test)_|whsec_)[A-Za-z0-9]{8,}|\bpi_[A-Za-z0-9]+_secret_[A-Za-z0-9]+/', self::MASK, $value);
+        }
         $hasDigits = preg_match('/\d(?:[ ().\-]*\d){6}/', $value) === 1;
         if ($hasDigits && in_array('card', $patterns, true)) {
             $value = (string) preg_replace_callback(

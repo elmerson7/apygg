@@ -202,6 +202,7 @@ class AcmeEventsHandler implements InboundWebhookHandlerInterface
     'handler' => AcmeEventsHandler::class,
     'rules' => ['type' => 'required|string'],
     'store_headers' => ['x-acme-delivery'],
+    'strip_payload' => ['data.object.client_secret'],   // opcional: rutas del payload que no se guardan en el recibo
 ],
 ```
 

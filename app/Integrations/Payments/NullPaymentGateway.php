@@ -41,6 +41,21 @@ class NullPaymentGateway implements PaymentGatewayInterface
         throw $this->disabled();
     }
 
+    public function findCharge(?string $customerId, string $idempotencyKey, int $sinceTimestamp): ?ChargeResult
+    {
+        throw $this->disabled();
+    }
+
+    public function cancelCharge(string $gatewayPaymentId): ChargeResult
+    {
+        throw $this->disabled();
+    }
+
+    public function recentCharges(int $sinceTimestamp, ?string $cursor = null, int $limit = 100): array
+    {
+        throw $this->disabled();
+    }
+
     private function disabled(): PermanentIntegrationError
     {
         return new PermanentIntegrationError('No hay pasarela de pago configurada (PAYMENTS_MODE=null): solo pago manual', 'payments');

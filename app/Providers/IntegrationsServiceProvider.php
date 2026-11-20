@@ -7,6 +7,7 @@ use App\Contracts\PushTransportInterface;
 use App\Contracts\SmsSenderInterface;
 use App\Integrations\Payments\FakePaymentGateway;
 use App\Integrations\Payments\NullPaymentGateway;
+use App\Integrations\Payments\StripePaymentGateway;
 use App\Integrations\Push\FakePushTransport;
 use App\Integrations\Push\FcmPushTransport;
 use App\Integrations\Push\LogPushTransport;
@@ -45,11 +46,14 @@ class IntegrationsServiceProvider extends ServiceProvider
             },
         ]);
 
-        // Pasarela de pago (docs/billing.md). La real (Stripe) llega en la ola 6.2: hasta entonces `real` falla claro al resolverla.
+        // Pasarela de pago (docs/billing.md). `real` = Stripe (PAYMENTS_PROVIDER).
         $this->bindByMode(PaymentGatewayInterface::class, 'payments', [
             'fake' => fn () => new FakePaymentGateway,
             'null' => fn () => new NullPaymentGateway,
-            'real' => fn () => throw new InvalidArgumentException('PAYMENTS_MODE=real: no hay pasarela real instalada; implementa PaymentGatewayInterface y regístrala aquí (docs/billing.md §Añadir una pasarela)'),
+            'real' => fn () => match (config('integrations.payments.provider', 'stripe')) {
+                'stripe' => new StripePaymentGateway((array) config('services.stripe')),
+                default => throw new InvalidArgumentException('PAYMENTS_PROVIDER no válido: usa stripe (u otra pasarela registrada aquí, docs/billing.md §Añadir una pasarela)'),
+            },
         ]);
 
         $this->bindByMode(PushTransportInterface::class, 'push', [

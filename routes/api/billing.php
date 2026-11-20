@@ -85,6 +85,13 @@ Route::middleware(['auth:api', 'permission:billing.manage,api'])->prefix('admin/
         ->middleware('idempotent')
         ->name('admin.billing.plan.assign');
 
+    Route::get('/discrepancies', [AdminBillingController::class, 'discrepancies'])
+        ->name('admin.billing.discrepancies.index');
+
+    Route::post('/discrepancies/{id}/resolve', [AdminBillingController::class, 'resolveDiscrepancy'])
+        ->whereNumber('id')
+        ->name('admin.billing.discrepancies.resolve');
+
     Route::post('/tenants/{tenant}/free-period', [AdminBillingController::class, 'grantFreePeriod'])
         ->whereNumber('tenant')
         ->name('admin.billing.free-period');

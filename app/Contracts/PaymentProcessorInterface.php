@@ -3,6 +3,7 @@
 namespace App\Contracts;
 
 use App\Exceptions\BillingException;
+use App\Integrations\Payments\ChargeResult;
 use App\Models\Invoice;
 use App\Models\Tenant;
 use App\Models\User;
@@ -16,9 +17,10 @@ use App\Support\Billing\PaymentOutcome;
 interface PaymentProcessorInterface
 {
     /**
-     * Debe llamarse con el tenant de la factura en el contexto.
+     * Debe llamarse con el tenant de la factura en el contexto. `$customerPresent`: el cliente está delante (alta, cambio de plan):
+     * la pasarela puede pedirle 3DS (`PaymentOutcome::RequiresAction`); `false` = cobro automático (renovación).
      */
-    public function collect(int $invoiceId): PaymentOutcome;
+    public function collect(int $invoiceId, bool $customerPresent = false): PaymentOutcome;
 
     /**
      * Reintento pedido por el cliente (p. ej. tras cambiar de tarjeta). Exige `tenant-billing.manage` del actor.
@@ -43,6 +45,13 @@ interface PaymentProcessorInterface
      * @return bool true si el reembolso se registró en esta llamada
      */
     public function refund(int $paymentId): bool;
+
+    /**
+     * Aplica lo que la pasarela dice de un intento `pending`/`requires_action` (webhook o conciliación) con EXACTAMENTE la misma
+     * lógica que el cobro síncrono: da igual cuál llegue antes, el resultado es el mismo y repetirlo no cambia nada.
+     * Con el tenant del pago en el contexto.
+     */
+    public function applyGatewayResult(int $paymentId, ChargeResult $result): PaymentOutcome;
 
     /**
      * Convierte el resultado de un cobro síncrono (alta, cambio de plan) en el error HTTP que corresponde.

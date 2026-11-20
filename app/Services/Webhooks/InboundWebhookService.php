@@ -71,6 +71,11 @@ class InboundWebhookService implements InboundWebhookServiceInterface
         $deliveryId = $this->deliveryId($request, $payload, $config);
         $tenantId = $this->resolveTenant($request, $payload, $config);
 
+        foreach ((array) ($config['strip_payload'] ?? []) as $path) {
+            // Secretos del proveedor que el handler no necesita (p. ej. el `client_secret` de Stripe): no llegan a la BD.
+            data_forget($payload, (string) $path);
+        }
+
         $receipt = InboundWebhookReceipt::recordOnce([
             'provider' => $provider,
             'delivery_id' => $deliveryId,

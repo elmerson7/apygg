@@ -240,7 +240,7 @@ return [
             'password', 'passwd', '_token', 'secret', 'api_key', 'apikey', 'authorization', 'cookie',
             'recovery_codes', 'private_key', 'card_number', 'cardnumber', 'csrf', 'xsrf', 'iban',
         ],
-        'patterns' => ['email', 'card', 'phone', 'jwt', 'bearer'],
+        'patterns' => ['email', 'card', 'phone', 'jwt', 'bearer', 'stripe'],
         'max_depth' => 8,
         'max_string' => 10000,
     ],

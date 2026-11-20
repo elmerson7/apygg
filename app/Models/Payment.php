@@ -34,6 +34,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property CarbonInterface|null $processed_at
  * @property CarbonInterface|null $refunded_at
  * @property string|null $refund_id
+ * @property bool $customer_present
+ * @property int $refunded_amount_minor
+ * @property string|null $dispute_id
+ * @property CarbonInterface|null $disputed_at
  */
 class Payment extends Model
 {
@@ -42,6 +46,7 @@ class Payment extends Model
     protected $fillable = [
         'invoice_id', 'attempt', 'method', 'gateway', 'status', 'amount', 'currency', 'idempotency_key', 'gateway_payment_id',
         'failure_code', 'failure_message', 'reference', 'reason', 'recorded_by', 'tries', 'claimed_until', 'processed_at', 'refunded_at', 'refund_id',
+        'customer_present', 'refunded_amount_minor', 'dispute_id', 'disputed_at',
     ];
 
     protected function casts(): array
@@ -54,6 +59,9 @@ class Payment extends Model
             'claimed_until' => 'datetime',
             'processed_at' => 'datetime',
             'refunded_at' => 'datetime',
+            'disputed_at' => 'datetime',
+            'customer_present' => 'boolean',
+            'refunded_amount_minor' => 'integer',
         ];
     }
 

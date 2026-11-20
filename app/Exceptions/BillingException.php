@@ -70,6 +70,12 @@ class BillingException extends ApiException
         return new self($message ?? 'El cobro fue rechazado.', 402, 'payment_failed', ['failure_code' => $failureCode]);
     }
 
+    /** 3DS/SCA: el front debe confirmar el cobro con `client_secret` (p. ej. `stripe.confirmCardPayment`); el resultado llega por webhook. */
+    public static function paymentRequiresAction(?string $clientSecret, ?string $paymentIntentId): self
+    {
+        return new self('El banco pide autenticar el pago: confírmalo desde la aplicación.', 402, 'payment_requires_action', ['client_secret' => $clientSecret, 'payment_intent_id' => $paymentIntentId]);
+    }
+
     public static function paymentPending(): self
     {
         return new self('La pasarela no respondió: el cobro se reintentará automáticamente. Consulta la factura más tarde.', 409, 'payment_pending');

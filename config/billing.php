@@ -46,6 +46,21 @@ return [
         // Error transitorio de la pasarela: se reintenta con la misma clave tras este tiempo, hasta `max_transient_tries`.
         'transient_backoff_seconds' => 300,
         'max_transient_tries' => 5,
+        // 3DS/SCA: el cliente tiene este tiempo para confirmar; pasado, `payments:reconcile` cancela el cobro en la pasarela
+        // y el intento falla (`action_expired`).
+        'requires_action_hours' => (int) env('BILLING_REQUIRES_ACTION_HOURS', 24),
+    ],
+
+    // Conciliación con la pasarela (`payments:reconcile`, docs/billing.md §Conciliación).
+    'reconcile' => [
+        // Un cobro `pending` se consulta en la pasarela cuando su arrendamiento lleva vencido este tiempo (minutos).
+        'stale_minutes' => (int) env('BILLING_RECONCILE_STALE_MINUTES', 10),
+        // Cobros de la pasarela de las últimas N horas que se cuadran con lo local. Debe cubrir el periodo en que un webhook
+        // puede perderse y reintentarse; las claves de Stripe duran 24 h, así que 48 deja margen.
+        'lookback_hours' => (int) env('BILLING_RECONCILE_LOOKBACK_HOURS', 48),
+        // Páginas de 100 cobros por ejecución (acota el coste).
+        'max_pages' => 20,
+        'batch' => 200,
     ],
 
     // Tope de días del periodo gratis que concede un admin de plataforma.

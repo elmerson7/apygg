@@ -27,6 +27,7 @@ const AISLAMIENTO_MODELOS_CUBIERTOS = [
     'App\Models\Payment' => 'FacturacionAislamientoTest.php',
     'App\Models\BillingAccount' => 'FacturacionAislamientoTest.php',
     'App\Models\BillingNotice' => 'AvisosFacturacionAislamientoTest.php',
+    'App\Models\PaymentDiscrepancy' => 'FacturacionAislamientoTest.php',
 ];
 
 /**

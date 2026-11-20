@@ -11,6 +11,8 @@ enum PaymentOutcome: string
     case Declined = 'declined';
     /** Error transitorio de la pasarela: el intento queda pendiente y se retoma con la misma clave de idempotencia. */
     case Pending = 'pending';
+    /** La pasarela pide acción al cliente (3DS): el `client_secret` va al front; el resultado llegará por webhook. */
+    case RequiresAction = 'requires_action';
     /** Otro proceso está cobrando esta factura ahora mismo (arrendamiento vigente): no se hace nada. */
     case InProgress = 'in_progress';
     /** La factura ya no está abierta (pagada, anulada...) o su suscripción terminó: nada que cobrar. */

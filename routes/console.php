@@ -203,3 +203,12 @@ Schedule::command('billing:notify')
     ->onFailure(function () {
         Log::error('Los avisos de facturación (billing:notify) fallaron');
     });
+
+// Conciliación con la pasarela (docs/billing.md §Conciliación): cobros inciertos por clave/id, 3DS vencidos y cobros sin reflejo.
+// Cada 10 minutos, antes de que `billing:renew` reenvíe nada (ambos son seguros en cualquier orden).
+Schedule::command('payments:reconcile')
+    ->everyTenMinutes()
+    ->withoutOverlapping()
+    ->onFailure(function () {
+        Log::error('La conciliación de pagos (payments:reconcile) falló');
+    });

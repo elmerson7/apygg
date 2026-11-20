@@ -162,12 +162,12 @@ class InvoiceService implements InvoiceServiceInterface
                 throw BillingException::invoiceNotOpen();
             }
 
-            $pending = Payment::query()->where('invoice_id', $invoice->id)->where('status', PaymentStatus::Pending->value)->lockForUpdate()->first();
+            $pending = Payment::query()->where('invoice_id', $invoice->id)->whereIn('status', [PaymentStatus::Pending->value, PaymentStatus::RequiresAction->value])->lockForUpdate()->first();
 
             if ($pending instanceof Payment) {
                 // La pasarela está cobrando ahora, o un intento quedó a medias (corte, timeout) y PUDO cobrar: no se sabe hasta
                 // que `billing:renew` lo retome con la misma clave. Darlo por fallido y cobrar a mano arriesgaría un doble cobro.
-                throw $pending->claimed_until?->isFuture() ? BillingException::paymentInProgress() : BillingException::paymentPending();
+                throw $pending->status === PaymentStatus::RequiresAction || $pending->claimed_until?->isFuture() ? BillingException::paymentInProgress() : BillingException::paymentPending();
             }
 
             $attempt = (int) Payment::query()->where('invoice_id', $invoice->id)->max('attempt') + 1;

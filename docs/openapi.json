@@ -404,6 +404,187 @@
                 ]
             }
         },
+        "/admin/billing/discrepancies": {
+            "get": {
+                "operationId": "admin.billing.discrepancies.index",
+                "summary": "Bandeja de discrepancias entre la pasarela y lo local (cobros sin reflejo, duplicados, reembolsos o disputas externos)",
+                "tags": [
+                    "AdminBilling"
+                ],
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "open",
+                                "resolved"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "tenant_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Número de página (empieza en 1).",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Ítems por página; se acota al máximo del endpoint (100 por defecto).",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15,
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "meta": {
+                                            "$ref": "#/components/schemas/PaginationMeta"
+                                        },
+                                        "links": {
+                                            "$ref": "#/components/schemas/PaginationLinks"
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "data",
+                                        "meta",
+                                        "links"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationFailed"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/billing/discrepancies/{id}/resolve": {
+            "post": {
+                "operationId": "admin.billing.discrepancies.resolve",
+                "tags": [
+                    "AdminBilling"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ResolveDiscrepancyRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/PaymentDiscrepancyResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationFailed"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/admin/billing/tenants/{tenant}/free-period": {
             "post": {
                 "operationId": "admin.billing.free-period",
@@ -20537,6 +20718,92 @@
                 ],
                 "title": "PaginationMeta"
             },
+            "PaymentDiscrepancyResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "tenant_id": {
+                        "type": "integer"
+                    },
+                    "payment_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "invoice_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "kind": {
+                        "type": "string"
+                    },
+                    "gateway": {
+                        "type": "string"
+                    },
+                    "reference": {
+                        "type": "string"
+                    },
+                    "amount_minor": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "currency": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "details": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "additionalProperties": {}
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "detected_at": {
+                        "type": "string"
+                    },
+                    "resolved_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "resolution_note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "tenant_id",
+                    "payment_id",
+                    "invoice_id",
+                    "kind",
+                    "gateway",
+                    "reference",
+                    "amount_minor",
+                    "currency",
+                    "details",
+                    "status",
+                    "detected_at",
+                    "resolved_at",
+                    "resolution_note"
+                ],
+                "title": "PaymentDiscrepancyResource"
+            },
             "Permission": {
                 "type": "object",
                 "properties": {
@@ -20957,6 +21224,19 @@
                     "password_confirmation"
                 ],
                 "title": "ResetPasswordRequest"
+            },
+            "ResolveDiscrepancyRequest": {
+                "type": "object",
+                "properties": {
+                    "note": {
+                        "type": "string",
+                        "maxLength": 500
+                    }
+                },
+                "required": [
+                    "note"
+                ],
+                "title": "ResolveDiscrepancyRequest"
             },
             "Role": {
                 "type": "object",

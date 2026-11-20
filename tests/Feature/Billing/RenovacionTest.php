@@ -287,7 +287,14 @@ test('tras agotar los intentos transitorios el cobro se da por fallido (gateway_
 
     $this->renewNow($this->a, $this->sub->id);
     $this->travel(6)->minutes();
+    // El último envío también dio timeout: NO se da por fallido en esa misma pasada (la pasarela pudo seguir procesándolo).
+    expect($this->renewNow($this->a, $this->sub->id)->value)->toBe('retrying');
+    $envios = count($this->gateway()->calls('charge'));
+
+    $this->travel(6)->minutes();
     expect($this->renewNow($this->a, $this->sub->id)->value)->toBe('payment_failed');
+    // La pasada que lo da por fallido solo consulta (confirma que no existe): no reenvía.
+    expect($this->gateway()->calls('charge'))->toHaveCount($envios);
 
     $s = $this->fresh($this->a, $this->sub->id);
     expect($s->status)->toBe(SubscriptionStatus::PastDue)->and($s->last_failure_code)->toBe('gateway_unavailable');
@@ -440,7 +447,7 @@ test('el pago manual no pisa un cobro de la pasarela a medias: 409 y billing:ren
     expect($claves)->toBe(["inv-{$factura->id}-a1", "inv-{$factura->id}-a1"]);
 });
 
-test('un cobro a medias sobre una factura anulada después (baja tras un error de la pasarela) se resuelve con la misma clave y se reembolsa', function () {
+test('un cobro a medias sobre una factura anulada después: si la pasarela confirma que nunca llegó, NO se cobra para reembolsar', function () {
     $this->ctx->run($this->a, fn () => Subscription::query()->delete());
     $this->gateway()->failNext(TransientIntegrationError::class);
     expect(fn () => $this->subscribeTo($this->a, $this->owner, token: null))->toThrow(rnCodigo('payment_pending'));
@@ -448,15 +455,19 @@ test('un cobro a medias sobre una factura anulada después (baja tras un error d
     $this->ctx->run($this->a, fn () => app(SubscriptionServiceInterface::class)->cancel($this->a, $this->owner, true));
     $pago = $this->ctx->run($this->a, fn () => Payment::query()->orderByDesc('id')->first());
     expect($pago->status->value)->toBe('pending');
+    $envios = count($this->gateway()->calls('charge'));
+    Event::fake([PaymentFailed::class]);
 
     $this->travelTo(now()->addMinutes(10));
     $this->ctx->clear();
-    $this->artisan('billing:renew')->expectsOutputToContain('charge_voided: 1')->assertSuccessful();
+    $this->artisan('billing:renew')->expectsOutputToContain('payment_failed: 1')->assertSuccessful();
 
-    $this->ctx->run($this->a, fn () => expect(Payment::query()->findOrFail($pago->id)->status->value)->toBe('refunded'));
-    $cobros = collect($this->gateway()->charges())->slice(1)->map(fn ($c) => $c->idempotencyKey)->values()->all();
-    expect($cobros)->toBe([$pago->idempotency_key, $pago->idempotency_key])
-        ->and(collect($this->gateway()->calls('refund'))->map(fn ($c) => $c['payload']->idempotencyKey)->all())->toBe(['refund-'.$pago->id]);
+    $this->ctx->run($this->a, fn () => expect(Payment::query()->findOrFail($pago->id)->status->value)->toBe('failed')
+        ->and(Payment::query()->findOrFail($pago->id)->failure_code)->toBe('invoice_void'));
+    // Se consultó por la clave, no se reenvió el cobro, no hubo reembolso ni aviso de «pago fallido» por una factura anulada.
+    expect($this->gateway()->calls('charge'))->toHaveCount($envios)->and($this->gateway()->calls('findCharge'))->toHaveCount(1)
+        ->and($this->gateway()->calls('refund'))->toBe([]);
+    Event::assertNotDispatched(PaymentFailed::class);
 
     // Resuelto: ya no vuelve a salir en el barrido.
     expect(app(RenewalServiceInterface::class)->due(50))->toBe([]);

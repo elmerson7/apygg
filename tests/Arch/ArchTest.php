@@ -187,6 +187,8 @@ function archServiciosConInterfaz(): array
         'App\Services\Billing\SubscriptionLifecycle' => 'App\Contracts\SubscriptionLifecycleInterface',
         'App\Services\Billing\InvoiceService' => 'App\Contracts\InvoiceServiceInterface',
         'App\Services\Billing\PaymentProcessor' => 'App\Contracts\PaymentProcessorInterface',
+        'App\Services\Billing\PaymentReconciler' => 'App\Contracts\PaymentReconcilerInterface',
+        'App\Services\Billing\PaymentDiscrepancyService' => 'App\Contracts\PaymentDiscrepancyServiceInterface',
         'App\Services\Billing\SubscriptionService' => 'App\Contracts\SubscriptionServiceInterface',
         'App\Services\Billing\RenewalService' => 'App\Contracts\RenewalServiceInterface',
         'App\Services\Billing\SubscriptionAccess' => 'App\Contracts\SubscriptionAccessInterface',

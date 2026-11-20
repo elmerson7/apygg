@@ -169,7 +169,9 @@ class SubscriptionService implements SubscriptionServiceInterface
 
         if ($invoiceId !== null) {
             // La suscripción y su factura ya están confirmadas: un rechazo deja `incomplete` y el cliente puede reintentar.
-            $this->payments->throwUnlessPaid($this->payments->collect($invoiceId), $invoiceId);
+            // Asignado por la plataforma (`$assignedBy`): el titular de la tarjeta NO está delante, así que es un cobro
+            // off_session (sin 3DS ni `client_secret` para el admin); con 3DS obligatorio se rechaza (`authentication_required`).
+            $this->payments->throwUnlessPaid($this->payments->collect($invoiceId, customerPresent: $assignedBy === null), $invoiceId);
         }
 
         return Subscription::query()->with('plan')->findOrFail($subscriptionId);
@@ -288,7 +290,7 @@ class SubscriptionService implements SubscriptionServiceInterface
         });
 
         if ($invoiceId !== null) {
-            $this->payments->throwUnlessPaid($this->payments->collect($invoiceId), $invoiceId);
+            $this->payments->throwUnlessPaid($this->payments->collect($invoiceId, customerPresent: $assignedBy === null), $invoiceId);
         }
 
         return Subscription::query()->with('plan')->whereIn('status', SubscriptionStatus::liveValues())->firstOrFail();

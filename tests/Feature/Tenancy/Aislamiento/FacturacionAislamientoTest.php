@@ -1,9 +1,11 @@
 <?php
 
+use App\Contracts\PaymentDiscrepancyServiceInterface;
 use App\Enums\SubscriptionStatus;
 use App\Models\BillingAccount;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Models\PaymentDiscrepancy;
 use App\Models\Plan;
 use App\Models\Role;
 use App\Models\Subscription;
@@ -104,4 +106,13 @@ test('los modelos de facturación solo ven lo del tenant activo y fallan cerrado
     foreach ([Invoice::class, Subscription::class, Payment::class, BillingAccount::class] as $model) {
         expect(fn () => $model::query()->count())->toThrow(MissingTenantContext::class);
     }
+});
+
+test('las discrepancias de pagos de A no se ven desde B y sin tenant en el contexto fallan cerrado', function () {
+    $this->ctx->run($this->a, fn () => app(PaymentDiscrepancyServiceInterface::class)->record('dispute', 'stripe', 'dp_1', Payment::query()->first(), 2900, 'USD'));
+
+    $this->ctx->run($this->a, fn () => expect(PaymentDiscrepancy::query()->count())->toBe(1));
+    $this->ctx->run($this->b, fn () => expect(PaymentDiscrepancy::query()->count())->toBe(0));
+    $this->ctx->clear();
+    expect(fn () => PaymentDiscrepancy::query()->count())->toThrow(MissingTenantContext::class);
 });

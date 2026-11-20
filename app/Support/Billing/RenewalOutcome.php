@@ -14,6 +14,8 @@ enum RenewalOutcome: string
     case PaymentFailed = 'payment_failed';
     case Retrying = 'retrying';
     case InProgress = 'in_progress';
+    /** El cobro espera la confirmación 3DS del cliente. */
+    case ActionRequired = 'action_required';
     case Canceled = 'canceled';
     case Expired = 'expired';
     /** Se resolvió un cobro que había quedado a medias sobre una factura ya anulada: el cargo se reembolsa. */

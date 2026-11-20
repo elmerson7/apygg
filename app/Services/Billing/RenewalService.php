@@ -77,6 +77,7 @@ class RenewalService implements RenewalServiceInterface
             PaymentOutcome::Declined => RenewalOutcome::PaymentFailed,
             PaymentOutcome::Pending => RenewalOutcome::Retrying,
             PaymentOutcome::InProgress => RenewalOutcome::InProgress,
+            PaymentOutcome::RequiresAction => RenewalOutcome::ActionRequired,
             PaymentOutcome::Skipped => RenewalOutcome::NotDue,
             PaymentOutcome::Voided => RenewalOutcome::ChargeVoided,
         };

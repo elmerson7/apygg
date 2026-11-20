@@ -1,6 +1,9 @@
 <?php
 
 use App\Integrations\Webhooks\Handlers\ResendMailEventsHandler;
+use App\Integrations\Webhooks\Handlers\StripeEventsHandler;
+use App\Integrations\Webhooks\StripeEventTenantResolver;
+use App\Integrations\Webhooks\StripeSignatureVerifier;
 
 /*
 |--------------------------------------------------------------------------
@@ -58,10 +61,12 @@ return [
     | Pagos: PaymentGatewayInterface (docs/billing.md).
     |   PAYMENTS_MODE=fake   FakePaymentGateway (determinista, sin red; por defecto)
     |   PAYMENTS_MODE=null   NullPaymentGateway (sin pasarela: solo pago manual)
-    |   PAYMENTS_MODE=real   la pasarela real del proyecto (Stripe llega en la ola 6.2; ver docs/billing.md §Añadir una pasarela)
+    |   PAYMENTS_MODE=real   la pasarela real, elegida con PAYMENTS_PROVIDER (hoy `stripe`; credenciales en config/services.php)
     */
     'payments' => [
         'mode' => env('PAYMENTS_MODE', 'fake'),
+        'provider' => env('PAYMENTS_PROVIDER', 'stripe'),
+        'http' => ['timeout' => (int) env('PAYMENTS_HTTP_TIMEOUT', 15)],
     ],
 
     /*
@@ -110,10 +115,23 @@ return [
         |   handler        clase que implementa InboundWebhookHandlerInterface
         |   rules          reglas de validación del payload (422 si no cumple)
         |   store_headers  cabeceras que se guardan en el recibo (las de firma NUNCA)
+        |   strip_payload  rutas (`a.b.c`) del payload que NO se guardan en el recibo (secretos que el handler no necesita)
         |   tenant_resolver  clase InboundWebhookTenantResolverInterface (multiempresa) y `tenant_required`
         |   max_bytes      tope propio
         */
         'providers' => [
+            // Stripe: firma `Stripe-Signature` (t=...,v1=...), recibo único por `event.id` (docs/billing.md §Stripe).
+            'stripe' => [
+                'secret_config' => 'services.stripe.webhook_secret',
+                'signature' => ['driver' => StripeSignatureVerifier::class],
+                'delivery_id' => ['payload' => 'id'],
+                'handler' => StripeEventsHandler::class,
+                'tenant_resolver' => StripeEventTenantResolver::class,
+                'rules' => ['id' => 'required|string|max:100', 'type' => 'required|string', 'data.object' => 'required|array'],
+                'store_headers' => [],
+                // El PaymentIntent trae su `client_secret` (permite confirmarlo desde el front): no se guarda en BD.
+                'strip_payload' => ['data.object.client_secret'],
+            ],
             'resend' => [
                 'secret_config' => 'services.resend.webhook_secret',
                 'signature' => ['driver' => 'svix'],
