@@ -67,6 +67,17 @@ class Tenant extends Model
     }
 
     /**
+     * Invitaciones del tenant. `TenantInvitation` es multiempresa (fail-closed): léelas dentro de
+     * `TenantContext::run($tenant, ...)` o de `TenantQuery::withoutTenant()` (back-office).
+     *
+     * @return HasMany<TenantInvitation, $this>
+     */
+    public function invitations(): HasMany
+    {
+        return $this->hasMany(TenantInvitation::class);
+    }
+
+    /**
      * Tenant padre (agencia/marca) en la jerarquía opcional. Solo es un dato: no concede acceso.
      *
      * @return BelongsTo<Tenant, $this>

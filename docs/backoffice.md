@@ -58,6 +58,23 @@ make art cmd="db:seed --class=RoleSeeder"          # lo da al rol admin
 | Sistema | Lista negra | `security.blacklist` | bloquear y desbloquear |
 | Dashboard | Salud | — | widget que reutiliza `HealthController::detailed()` |
 
+### Recursos de plataforma (módulos nuevos)
+
+| Grupo | Recurso | Permiso | Operaciones y servicio |
+|---|---|---|---|
+| Plataforma | Empresas | `tenants.read` / `tenants.manage` (+ `plan-limits.manage`) | listado, búsqueda, ficha con miembros e invitaciones (solo lectura); suspender/reactivar (`TenantAdminServiceInterface`, motivo auditado), cambiar plan y override de límite (`PlanLimitsInterface`, motivo auditado). Solo aparece con multiempresa activo |
+| Plataforma | Auditoría | `audit.read` | solo lectura; filtros por empresa, actor, tipo de actor, evento y fecha; diff con `Pretty::json` |
+| Plataforma | Feature flags | `feature-flags.read` / `.manage` | crear/editar/restablecer (`FeatureFlagServiceInterface`; solo claves de `config/features.php`) y overrides por empresa |
+| Correo | Supresión | `mail.suppressions` | alta manual y quitar (`MailSuppressionServiceInterface`; quitar exige motivo auditado) |
+| Privacidad | Documentos legales | `legal-documents.read` / `.manage` | publicar versión nueva (`ConsentServiceInterface::publish`, inmutable); la ficha agrega aceptaciones sin datos personales |
+| Privacidad | Datos personales exportados | `users.export` | solo lectura (nunca disco ni ruta) |
+| Datos | Exportaciones, Importaciones | `users.export`, `users.import` | solo lectura (nunca disco ni ruta) |
+| Sistema | Mantenimiento | `maintenance.manage` | página: activar con mensaje y fin / desactivar (`MaintenanceServiceInterface`) |
+
+Los modelos multiempresa (`TenantInvitation`) se leen en la ficha con `TenantQuery::withoutTenant()` (trait
+`QueriesWithoutTenant`, deja rastro en el log de seguridad) y solo para lectura. Las acciones sensibles piden
+motivo con `AuditServiceInterface::requireReason` antes de actuar y lo registran con `recordAction`.
+
 "Desactivar" un usuario es el borrado lógico de `UserService::delete`, igual que `DELETE /users/{id}`.
 No hay borrado definitivo desde el panel.
 

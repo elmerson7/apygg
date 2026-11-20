@@ -97,6 +97,9 @@ class PermissionSeeder extends Seeder
             ['name' => 'tenant-billing.read', 'display_name' => 'Ver Facturación del Tenant', 'description' => 'Permite ver la suscripción, el método de pago y las facturas de la empresa activa'],
             ['name' => 'tenant-billing.manage', 'display_name' => 'Gestionar Facturación del Tenant', 'description' => 'Permite contratar, cambiar de plan, cancelar, reanudar, pagar facturas y cambiar el método de pago de la empresa activa'],
             ['name' => 'billing.manage', 'display_name' => 'Gestionar Facturación de la Plataforma', 'description' => 'Permite marcar facturas como pagadas a mano y conceder periodos gratis a cualquier empresa'],
+            // Empresas desde el back-office (plataforma)
+            ['name' => 'tenants.read', 'display_name' => 'Ver Empresas', 'description' => 'Permite listar y ver las empresas (tenants) de la plataforma, sus miembros e invitaciones'],
+            ['name' => 'tenants.manage', 'display_name' => 'Gestionar Empresas', 'description' => 'Permite suspender y reactivar empresas, con motivo obligatorio y auditado'],
 
             // Back-office (Filament, opcional): ver docs/backoffice.md
             ['name' => 'backoffice.access', 'display_name' => 'Acceder al Back-office', 'description' => 'Permite entrar al panel interno (Filament); además exige MFA. Cada recurso pide sus propios permisos'],

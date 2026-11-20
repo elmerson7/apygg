@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model as EloquentModel;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Estado en BD de una flag declarada en `config/features.php` (docs/settings-and-flags.md).
@@ -25,4 +26,14 @@ class FeatureFlag extends EloquentModel
         'enabled' => 'boolean',
         'rollout_percentage' => 'integer',
     ];
+
+    /**
+     * Overrides de esta flag (por tenant o por usuario).
+     *
+     * @return HasMany<FeatureFlagOverride, $this>
+     */
+    public function overrides(): HasMany
+    {
+        return $this->hasMany(FeatureFlagOverride::class, 'feature_key', 'key');
+    }
 }

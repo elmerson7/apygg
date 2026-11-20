@@ -542,3 +542,10 @@ make testdb-migrate && make test
 - Nuevo middleware global `EnsureLegalConsents` en el grupo `api`, **apagado** (`PRIVACY_CONSENTS_ENFORCE=false`). Al activarlo, los clientes deben manejar `409 consent_required`.
 - Tipos de notificación nuevos (`data_export_ready`, `account_deletion_scheduled`, `account_deletion_blocked`): añade sus textos si sobrescribes `lang/*/notifications.php`.
 - Programador: `privacy:process-deletions` (cada hora) y `privacy:purge` (03:45). Necesitas un worker de cola para el export y el borrado.
+
+
+## Back-office: recursos de plataforma (ola 8.2-B, `docs/backoffice.md`)
+
+- Sin migraciones. Permisos nuevos `tenants.read` y `tenants.manage` (`PermissionSeeder`; el rol `admin` los recibe al resembrar; asígnalos a quien administre empresas desde el panel).
+- `config/audit.php`: `reason_required` incorpora `tenant.suspend`, `tenant.reactivate`, `tenant.limit-override` y `mail-suppression.release`. Si fijas `AUDIT_REASON_REQUIRED` en tu `.env`, añade esas acciones.
+- Nuevo `TenantAdminServiceInterface` (enlazado en `ContractServiceProvider`). `Failure::guard()` trata ahora como error de dominio cualquier `ApiException`.

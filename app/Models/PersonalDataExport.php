@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model as EloquentModel;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Exportación de datos personales de un usuario (portabilidad RGPD; docs/privacy.md). No confundir con
@@ -39,4 +40,12 @@ class PersonalDataExport extends EloquentModel
     protected $hidden = ['disk', 'path'];
 
     protected $casts = ['ready_at' => 'datetime', 'expires_at' => 'datetime', 'size' => 'integer'];
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 }

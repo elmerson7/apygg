@@ -2,7 +2,7 @@
 
 namespace App\Filament\Support;
 
-use App\Exceptions\BusinessLogicException;
+use App\Exceptions\ApiException;
 use Filament\Notifications\Notification;
 use Illuminate\Auth\Access\AuthorizationException;
 use Throwable;
@@ -39,7 +39,8 @@ final class Failure
 
     public static function isDomainError(Throwable $e): bool
     {
-        return $e instanceof BusinessLogicException
+        return // Todas las de dominio de la API (BusinessLogic, Audit, FeatureFlag, Privacy, PlanLimit...)
+            $e instanceof ApiException
             || $e instanceof AuthorizationException
             || $e instanceof \InvalidArgumentException
             // Los servicios lanzan `\Exception` simples con un mensaje pensado para el usuario

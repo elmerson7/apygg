@@ -3,19 +3,35 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Http\Middleware\BackofficeSecurityHeaders;
+use App\Filament\Policies\AuditLogPolicy;
 use App\Filament\Policies\BlacklistPolicy;
+use App\Filament\Policies\DataExportPolicy;
+use App\Filament\Policies\DataImportPolicy;
+use App\Filament\Policies\FeatureFlagPolicy;
+use App\Filament\Policies\LegalDocumentPolicy;
 use App\Filament\Policies\MailLogPolicy;
 use App\Filament\Policies\MailManagePolicy;
+use App\Filament\Policies\MailSuppressionPolicy;
+use App\Filament\Policies\PersonalDataExportPolicy;
 use App\Filament\Policies\SystemLogPolicy;
+use App\Filament\Policies\TenantPolicy;
 use App\Filament\Widgets\HealthStatusWidget;
 use App\Http\Middleware\ResolveClientIpMiddleware;
+use App\Models\AuditLog;
 use App\Models\Blacklist;
+use App\Models\DataExport;
+use App\Models\DataImport;
+use App\Models\FeatureFlag;
+use App\Models\LegalDocument;
 use App\Models\Logs\ActivityLog;
 use App\Models\Logs\ApiLog;
 use App\Models\Logs\SecurityLog;
 use App\Models\Mail\MailAccount;
 use App\Models\Mail\MailLog;
+use App\Models\Mail\MailSuppression;
 use App\Models\Mail\MailTemplateConfig;
+use App\Models\PersonalDataExport;
+use App\Models\Tenant;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -65,6 +81,14 @@ class BackofficePanelProvider extends PanelProvider
         Gate::policy(MailTemplateConfig::class, MailManagePolicy::class);
         Gate::policy(MailLog::class, MailLogPolicy::class);
         Gate::policy(Blacklist::class, BlacklistPolicy::class);
+        Gate::policy(Tenant::class, TenantPolicy::class);
+        Gate::policy(AuditLog::class, AuditLogPolicy::class);
+        Gate::policy(FeatureFlag::class, FeatureFlagPolicy::class);
+        Gate::policy(MailSuppression::class, MailSuppressionPolicy::class);
+        Gate::policy(LegalDocument::class, LegalDocumentPolicy::class);
+        Gate::policy(DataExport::class, DataExportPolicy::class);
+        Gate::policy(DataImport::class, DataImportPolicy::class);
+        Gate::policy(PersonalDataExport::class, PersonalDataExportPolicy::class);
     }
 
     public function panel(Panel $panel): Panel

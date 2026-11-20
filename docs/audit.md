@@ -59,6 +59,7 @@ que exigen `reason`; si falta, **422 `audit_reason_required`** y no se ejecuta n
 | `user.roles-change` | `POST /users/{id}/roles`, `DELETE /users/{id}/roles/{roleId}` | campo `reason` |
 | `user.block` | `POST /admin/blacklist` | `reason` (ya era obligatorio) |
 | `user.unblock` | `DELETE /admin/blacklist/{id}` | campo `reason` |
+| `tenant.suspend`, `tenant.reactivate`, `tenant.limit-override`, `mail-suppression.release` | solo back-office (`docs/backoffice.md`) | campo «Motivo» del modal |
 
 Una operación nueva (impersonar, suspender un tenant...) se añade a la lista y llama a los dos métodos de arriba.
 El back-office debe hacer lo mismo al escribir.

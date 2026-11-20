@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Imagen base actualizada a `dunglas/frankenphp:1.13.6-php8.5.13-bookworm` (antes `1.11-php8.5-bookworm`: PHP 8.5.3, FrankenPHP 1.11.3). PHP 8.5.12 corrige dos vulnerabilidades críticas de ejecución remota sin autenticación (CVE-2026-109618 y CVE-2026-109619); 8.5.13 es la última 8.5.x. La etiqueta queda fijada a versión exacta para builds reproducibles. Proyectos derivados: ver `docs/upgrading.md` ("Actualizar la imagen por seguridad")
 
 ### Added
+- Back-office: recursos para los módulos nuevos (empresas con miembros e invitaciones, suspender/reactivar y overrides de límites, auditoría, feature flags con overrides por empresa, supresión de correo, documentos legales con aceptaciones agregadas, mantenimiento, exportaciones/importaciones y datos personales). `TenantAdminServiceInterface` (suspender/reactivar con motivo auditado), permisos `tenants.read`/`tenants.manage`. Ver `docs/backoffice.md`
 - Migraciones sin parada: guía en `docs/migrations.md` (§9-11), linter `php artisan migrations:lint` (`config/migration-lint.php`, `make migrations-lint`), clase base opcional `SafeMigration` (`lock_timeout`/`statement_timeout`) y job de CI `migrations` (aplica las nuevas sobre el esquema anterior y prueba el rollback)
 
 ### Changed
