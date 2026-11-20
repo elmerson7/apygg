@@ -2,7 +2,7 @@
 
 namespace App\Services\Mail;
 
-use App\Contracts\WebhookSignatureVerifierInterface;
+use App\Contracts\InspectsWebhookSignatureInterface;
 use Illuminate\Http\Request;
 
 /**
@@ -19,7 +19,7 @@ use Illuminate\Http\Request;
  *   - `svix-signature` trae una lista separada por espacios: "v1,<firma> v1,<firma>"
  *     (durante una rotación de secreto puede haber más de una).
  */
-class SvixSignatureVerifier implements WebhookSignatureVerifierInterface
+class SvixSignatureVerifier implements InspectsWebhookSignatureInterface
 {
     /**
      * Ventana de tolerancia para el timestamp, en segundos. Evita que una
@@ -29,22 +29,27 @@ class SvixSignatureVerifier implements WebhookSignatureVerifierInterface
 
     public function verify(Request $request, string $secret): bool
     {
+        return $this->inspect($request, $secret) === null;
+    }
+
+    public function inspect(Request $request, string $secret): ?string
+    {
         $id = $request->header('svix-id');
         $timestamp = $request->header('svix-timestamp');
         $signatureHeader = $request->header('svix-signature');
 
         if (! $id || ! $timestamp || ! $signatureHeader) {
-            return false;
+            return self::MISSING;
         }
 
         if (! $this->timestampIsFresh($timestamp)) {
-            return false;
+            return ctype_digit($timestamp) ? self::EXPIRED : self::INVALID;
         }
 
         $key = $this->decodeSecret($secret);
 
         if ($key === null) {
-            return false;
+            return self::INVALID;
         }
 
         $signedContent = "{$id}.{$timestamp}.{$request->getContent()}";
@@ -58,11 +63,11 @@ class SvixSignatureVerifier implements WebhookSignatureVerifierInterface
             }
 
             if (hash_equals($expected, $parts[1])) {
-                return true;
+                return null;
             }
         }
 
-        return false;
+        return self::INVALID;
     }
 
     private function timestampIsFresh(string $timestamp): bool

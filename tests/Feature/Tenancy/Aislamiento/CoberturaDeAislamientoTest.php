@@ -32,6 +32,7 @@ const AISLAMIENTO_TABLAS_CUBIERTAS = [
     'logs_security' => 'LogsAislamientoTest.php',
     'sequences' => 'SecuenciasAislamientoTest.php',
     'idempotency_keys' => 'IdempotenciaAislamientoTest.php',
+    'inbound_webhook_receipts' => 'WebhooksEntrantesAislamientoTest.php',
     'tenant_user' => 'MiembrosAislamientoTest.php',
     'feature_flag_overrides' => 'FeatureFlagsYPlanAislamientoTest.php',
     'tenant_limit_overrides' => 'FeatureFlagsYPlanAislamientoTest.php',

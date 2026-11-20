@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\InboundWebhookReceipt;
 use App\Models\Mail\MailEvent;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;
@@ -8,6 +9,7 @@ use Tests\Support\ConcurrentRunner;
 
 afterEach(function () {
     DB::table('mail_events')->where('provider_event_id', 'like', 'msg_carrera_%')->delete();
+    DB::table('inbound_webhook_receipts')->where('delivery_id', 'like', 'msg_carrera_%')->delete();
 });
 
 test('dos entregas simultaneas del mismo evento de correo dan 200 y una sola fila', function () {
@@ -15,7 +17,7 @@ test('dos entregas simultaneas del mismo evento de correo dan 200 y una sola fil
     $eventId = 'msg_carrera_'.bin2hex(random_bytes(4));
 
     $results = ConcurrentRunner::run(2, function (int $i) use ($secret, $eventId) {
-        config(['services.resend.webhook_secret' => $secret]);
+        config(['services.resend.webhook_secret' => $secret, 'queue.default' => 'sync']);
 
         $body = json_encode(['type' => 'email.delivered', 'data' => ['email_id' => 'em_'.$eventId]]);
         $ts = (string) time();
@@ -39,5 +41,6 @@ test('dos entregas simultaneas del mismo evento de correo dan 200 y una sola fil
     }
 
     expect(collect($results)->pluck('result.status')->all())->toBe([200, 200], json_encode($results));
+    expect(InboundWebhookReceipt::where('delivery_id', $eventId)->count())->toBe(1);
     expect(MailEvent::where('provider_event_id', $eventId)->count())->toBe(1);
 });

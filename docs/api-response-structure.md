@@ -127,6 +127,17 @@ class InvoiceAlreadyPaidException extends ApiException
 En controllers: `$this->sendError('...', 409, code: 'invoice_already_paid')`.
 Documenta cada código propio en la doc de la API del proyecto.
 
+Códigos de string que ya trae el boilerplate (webhooks entrantes, `docs/integrations.md` §7):
+
+| `code` | HTTP | Significado |
+|---|---|---|
+| `webhook_provider_unknown` | 404 | El `{provider}` no está registrado |
+| `webhook_not_configured` | 500 | El proveedor no tiene secreto configurado |
+| `webhook_signature_missing` | 401 | Falta la cabecera de firma (o su timestamp) |
+| `webhook_signature_invalid` | 401 | La firma no coincide con el cuerpo |
+| `webhook_timestamp_expired` | 401 | Timestamp fuera de la ventana anti-replay |
+| `webhook_payload_malformed` | 400 | Cuerpo no JSON o sin id de entrega |
+
 ## 2. Errores del handler global (`bootstrap/app.php`)
 
 Toda excepción no capturada la convierte el handler. Llevan `meta` con

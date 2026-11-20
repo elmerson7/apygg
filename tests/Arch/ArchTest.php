@@ -155,6 +155,7 @@ function archServiciosConInterfaz(): array
         'App\Services\Mail\MailEventStatusService' => 'App\Contracts\MailEventStatusServiceInterface',
         'App\Services\Mail\MailSendPolicy' => 'App\Contracts\MailSendPolicyInterface',
         'App\Services\Mail\SvixSignatureVerifier' => 'App\Contracts\WebhookSignatureVerifierInterface',
+        'App\Services\Webhooks\InboundWebhookService' => 'App\Contracts\InboundWebhookServiceInterface',
         'App\Services\Webhooks\DnsHostResolver' => 'App\Contracts\HostResolverInterface',
         'App\Services\I18n\LocaleResolver' => 'App\Contracts\LocaleResolverInterface',
         'App\Services\I18n\LocaleSettingsService' => 'App\Contracts\LocaleSettingsServiceInterface',

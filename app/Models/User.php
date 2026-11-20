@@ -284,6 +284,14 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     }
 
     /**
+     * Destino del canal `sms` de Notifications (teléfono del perfil, formato E.164).
+     */
+    public function routeNotificationForSms(): ?string
+    {
+        return $this->profile?->phone;
+    }
+
+    /**
      * @return HasOne<UserProfile, $this>
      */
     public function profile(): HasOne

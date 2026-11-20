@@ -5,7 +5,6 @@ use App\Http\Controllers\Mail\MailLogController;
 use App\Http\Controllers\Mail\MailProviderController;
 use App\Http\Controllers\Mail\MailSettingsController;
 use App\Http\Controllers\Mail\MailTemplateController;
-use App\Http\Controllers\Webhooks\MailWebhookController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -62,7 +61,3 @@ Route::middleware(['auth:api', 'permission:mail.logs,api'])
         Route::get('/logs/stats', [MailLogController::class, 'stats'])->name('mail.logs.stats');
         Route::get('/logs/{mailLog}', [MailLogController::class, 'show'])->name('mail.logs.show');
     });
-
-// Webhook del proveedor: autenticado por firma (ver SvixSignatureVerifier)
-Route::post('/webhooks/mail', [MailWebhookController::class, 'handle'])
-    ->name('webhooks.mail');

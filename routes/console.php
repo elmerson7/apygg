@@ -124,3 +124,11 @@ Schedule::command('idempotency:clean')
     ->onFailure(function () {
         Log::error('Falló la limpieza de claves de idempotencia');
     });
+
+// Webhooks entrantes: reencola recibos atascados (Redis caído al recibirlos) y borra los antiguos
+Schedule::command('webhooks:inbound-sweep')
+    ->everyTenMinutes()
+    ->withoutOverlapping()
+    ->onFailure(function () {
+        Log::error('Barrido de webhooks entrantes falló');
+    });

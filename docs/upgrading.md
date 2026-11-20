@@ -386,6 +386,21 @@ y los filtros `docker ps --filter name=^<proyecto>_`.
 - Nuevo permiso `tenant-settings.manage` (`make seed` o `PermissionSeeder`; el rol `admin` lo recibe por `RoleSeeder`).
 - Docs: `docs/internationalization.md` se sustituye por `docs/i18n.md`.
 
+### 15c. Integraciones y webhooks entrantes genéricos (ola 5.1-B/C)
+
+- **Migración nueva**: `2026_11_20_000120_create_inbound_webhook_receipts_table` (`php artisan migrate`).
+- **Config y `.env`**: `config/integrations.php` (copiarlo) y variables `SMS_MODE` (por defecto `fake`), `SMS_DRIVER`, `SMS_FROM`,
+  `SMS_HTTP_URL`, `SMS_HTTP_TOKEN`, `INBOUND_WEBHOOK_*`, `INTEGRATIONS_*`. En producción pon `SMS_MODE=real` solo si vas a enviar SMS.
+- **Provider nuevo**: añade `App\Providers\IntegrationsServiceProvider` a `bootstrap/providers.php`.
+- **`POST /webhooks/mail` (Resend)**: la URL no cambia (alias de `/webhooks/inbound/resend`) y `RESEND_WEBHOOK_SECRET` sigue igual,
+  pero ahora el evento se guarda en `inbound_webhook_receipts` y se procesa **en cola** (necesitas un worker; con `QUEUE_CONNECTION=sync` va
+  en la misma petición). `MailWebhookController` se eliminó: si lo referenciabas, usa `InboundWebhookController`. Los errores llevan
+  `code` estable (`webhook_signature_invalid`, `webhook_timestamp_expired`, `webhook_not_configured`...); un payload sin `type`/`data.email_id` sigue dando 422.
+- **Scheduler**: `webhooks:inbound-sweep` (cada 10 min, ya en `routes/console.php`) reencola recibos atascados y aplica la retención.
+- **`NotificationService`** recibe ahora `SmsSenderInterface` en el constructor y `sendSms()` envía de verdad (antes era un stub que solo
+  registraba): con `SMS_MODE=fake` no sale nada; revisa quién lo llamaba. Si lo instancias a mano, pasa el nuevo argumento.
+- Si registras tus propios proveedores de webhook entrante, usa `config/integrations.php` -> `inbound_webhooks.providers` (`docs/integrations.md` §7).
+
 ### 16. Verificación final
 
 ```bash

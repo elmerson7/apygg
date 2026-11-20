@@ -1,4 +1,10 @@
-# Webhooks salientes
+# Webhooks salientes (y dónde están los entrantes)
+
+> **Dos mecanismos distintos.** Este documento trata los webhooks **salientes**: APYGG llama a la URL que registra un usuario
+> (`/webhooks`, firma `X-Webhook-Signature`, SSRF, reintentos). Los webhooks **entrantes** (un proveedor externo llama a APYGG:
+> Resend, pasarelas de pago, WhatsApp...) son otro mecanismo, genérico y con su propia tabla de recibos
+> (`inbound_webhook_receipts`), firma, ventana anti-replay e idempotencia: `POST /webhooks/inbound/{provider}`,
+> en `docs/integrations.md` §7.
 
 Un usuario registra una URL (`POST /webhooks`) y recibe POSTs firmados cuando ocurren eventos (`config/webhooks.php` -> `events`).
 

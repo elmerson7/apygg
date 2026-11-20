@@ -10,5 +10,6 @@ return [
     App\Providers\ContractServiceProvider::class,
     App\Providers\AuthSecurityServiceProvider::class,
     App\Providers\MailSystemServiceProvider::class,
+    App\Providers\IntegrationsServiceProvider::class,
     App\Providers\Filament\BackofficePanelProvider::class,
 ];

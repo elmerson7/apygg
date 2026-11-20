@@ -4,6 +4,10 @@ namespace App\Services;
 
 use App\Contracts\MailServiceInterface;
 use App\Contracts\NotificationServiceInterface;
+use App\Contracts\SmsSenderInterface;
+use App\Integrations\RetryPolicy;
+use App\Integrations\Sms\SmsMessage;
+use App\Jobs\SendSmsJob;
 use App\Models\NotificationHistory;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Collection;
@@ -17,7 +21,10 @@ use Illuminate\Support\Facades\Log;
  */
 class NotificationService implements NotificationServiceInterface
 {
-    public function __construct(private readonly MailServiceInterface $mail) {}
+    public function __construct(
+        private readonly MailServiceInterface $mail,
+        private readonly SmsSenderInterface $sms,
+    ) {}
 
     /**
      * Canales disponibles
@@ -145,19 +152,11 @@ class NotificationService implements NotificationServiceInterface
     public function sendSms(string $phone, string $message, bool $queue = true): bool
     {
         try {
-            // Implementar integración con servicio SMS (Twilio, AWS SNS, etc.)
-            // Por ahora solo loguear
-            Log::info('SMS notification queued', [
-                'phone' => $phone,
-                'message' => substr($message, 0, 50).'...',
-            ]);
-
+            // Integración real/simulada elegida por SMS_MODE (docs/integrations.md)
             if ($queue) {
-                // Dispatch job para enviar SMS
-                // SmsJob::dispatch($phone, $message);
+                SendSmsJob::dispatch($phone, $message, bin2hex(random_bytes(16)));
             } else {
-                // Enviar SMS inmediatamente
-                // $this->sendSmsImmediate($phone, $message);
+                RetryPolicy::fromConfig()->run(fn () => $this->sms->send(new SmsMessage($phone, $message)));
             }
 
             $this->logNotification('sms', $phone, 'SMS');
@@ -165,7 +164,7 @@ class NotificationService implements NotificationServiceInterface
             return true;
         } catch (\Exception $e) {
             Log::error('Failed to send SMS notification', [
-                'phone' => $phone,
+                'phone' => SmsMessage::mask($phone),
                 'error' => $e->getMessage(),
             ]);
 

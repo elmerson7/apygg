@@ -1,0 +1,68 @@
+<?php
+
+namespace App\Providers;
+
+use App\Contracts\SmsSenderInterface;
+use App\Integrations\Sms\FakeSmsSender;
+use App\Integrations\Sms\HttpSmsSender;
+use App\Integrations\Sms\LogSmsSender;
+use App\Integrations\Sms\SmsChannel;
+use Closure;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\ServiceProvider;
+use InvalidArgumentException;
+
+/**
+ * Único punto donde se elige la implementación de cada integración (docs/integrations.md §3):
+ * `config('integrations.<servicio>.mode')` = `real|fake` (env `<SERVICIO>_MODE`).
+ *
+ * Binding `scoped`: una instancia por petición/job (Octane), nunca estado entre peticiones.
+ * Los fakes registran sus llamadas en la instancia, así que un test las lee con `app(Interfaz::class)`.
+ */
+class IntegrationsServiceProvider extends ServiceProvider
+{
+    public function register(): void
+    {
+        $this->bindByMode(SmsSenderInterface::class, 'sms', [
+            'fake' => fn () => new FakeSmsSender,
+            'real' => fn () => match (config('integrations.sms.driver', 'http')) {
+                'log' => new LogSmsSender,
+                'http' => new HttpSmsSender([...(array) config('integrations.sms.http'), 'from' => config('integrations.sms.from')]),
+                default => throw new InvalidArgumentException('SMS_DRIVER no válido: usa http o log'),
+            },
+        ]);
+    }
+
+    public function boot(): void
+    {
+        // Canal `sms` de Notifications: `via() => ['sms']` + `toSms($notifiable)`.
+        Notification::extend('sms', fn ($app) => $app->make(SmsChannel::class));
+
+        // Webhooks entrantes: por IP y proveedor, para que un proveedor ruidoso no ahogue a los demás.
+        RateLimiter::for('inbound-webhooks', fn (Request $request) => Limit::perMinute(
+            max(1, (int) config('integrations.inbound_webhooks.rate_limit_per_minute', 120))
+        )->by($request->ip().'|'.$request->route('provider')));
+    }
+
+    /**
+     * Enlaza `$abstract` con la fábrica que corresponda al `mode` configurado de `$service`.
+     * Un proyecto que añade una integración la registra con esta misma llamada.
+     *
+     * @param  array<string, Closure>  $factories  `fake` y `real` => fábrica
+     */
+    protected function bindByMode(string $abstract, string $service, array $factories): void
+    {
+        $this->app->scoped($abstract, function () use ($service, $factories) {
+            $mode = (string) config("integrations.{$service}.mode", 'fake');
+
+            if (! isset($factories[$mode])) {
+                throw new InvalidArgumentException("integrations.{$service}.mode debe ser real o fake, no «{$mode}»");
+            }
+
+            return $factories[$mode]();
+        });
+    }
+}
