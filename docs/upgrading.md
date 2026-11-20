@@ -401,6 +401,23 @@ y los filtros `docker ps --filter name=^<proyecto>_`.
   registraba): con `SMS_MODE=fake` no sale nada; revisa quién lo llamaba. Si lo instancias a mano, pasa el nuevo argumento.
 - Si registras tus propios proveedores de webhook entrante, usa `config/integrations.php` -> `inbound_webhooks.providers` (`docs/integrations.md` §7).
 
+### 15d. Notificaciones multicanal (ola 5.2-A, `docs/notifications.md`)
+
+Rompe si tu proyecto usaba el servicio viejo:
+
+- **`NotificationServiceInterface` cambia por completo.** Desaparecen `sendEmail`, `sendDatabase`, `sendSms`, `sendPush`
+  (era un stub), `sendMultiChannel` y `getHistory`. Ahora: `notify($users, 'tipo', $params, ?$tenant)` y `notifyNow()`.
+  Correo suelto: `MailServiceInterface::send()`; SMS: `SendSmsJob` o un tipo con canal `sms`.
+- **`NotificationHistory` y la tabla `notification_history` se eliminan** (migración `2026_11_20_000204`; su `down()` la recrea
+  vacía). Lo sustituye `notification_deliveries` (por usuario y canal, con estado e intentos). No hay migración de datos:
+  si necesitabas el historial, expórtalo antes.
+- La tabla `device_tokens` (sin modelo ni uso) se sustituye por `user_devices` (migración `000200`). Si tu proyecto la usaba, copia los tokens antes.
+- Tablas nuevas: `notification_preferences`, `notification_settings`, `inbox_notifications` (con `tenant_id`, `BelongsToTenant`), migraciones `000201`-`000203`.
+- Variables nuevas (`.env.example`): `PUSH_MODE` (`fake` por defecto), `FCM_PROJECT_ID`, `FCM_CREDENTIALS_PATH`, `NOTIFICATIONS_*`.
+- Comandos programados nuevos: `notifications:sweep` (cada 10 min) y `notifications:purge` (diario). Reinicia el scheduler.
+- Con multiempresa activa, notificar sin tenant en el contexto omite la bandeja (`no_tenant_context`): pasa `$tenant` a `notify()`.
+- `Job::notifyFailure()` envía ahora con `MailServiceInterface` directamente.
+
 ### 16. Verificación final
 
 ```bash

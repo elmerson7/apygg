@@ -132,3 +132,18 @@ Schedule::command('webhooks:inbound-sweep')
     ->onFailure(function () {
         Log::error('Barrido de webhooks entrantes falló');
     });
+
+// Notificaciones: entregas atascadas (cada 10 min) y retención (a diario)
+Schedule::command('notifications:sweep')
+    ->everyTenMinutes()
+    ->withoutOverlapping()
+    ->onFailure(function () {
+        Log::error('Barrido de entregas de notificaciones falló');
+    });
+
+Schedule::command('notifications:purge')
+    ->dailyAt('03:30')
+    ->withoutOverlapping()
+    ->onFailure(function () {
+        Log::error('Purga de notificaciones falló');
+    });

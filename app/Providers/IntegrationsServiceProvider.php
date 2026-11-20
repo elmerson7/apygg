@@ -2,11 +2,18 @@
 
 namespace App\Providers;
 
+use App\Contracts\PushTransportInterface;
 use App\Contracts\SmsSenderInterface;
+use App\Integrations\Push\FakePushTransport;
+use App\Integrations\Push\FcmPushTransport;
+use App\Integrations\Push\LogPushTransport;
 use App\Integrations\Sms\FakeSmsSender;
 use App\Integrations\Sms\HttpSmsSender;
 use App\Integrations\Sms\LogSmsSender;
 use App\Integrations\Sms\SmsChannel;
+use App\Notifications\Channels\DeliveryChannel;
+use App\Notifications\Channels\InboxChannel;
+use App\Notifications\Channels\PushChannel;
 use Closure;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -34,12 +41,27 @@ class IntegrationsServiceProvider extends ServiceProvider
                 default => throw new InvalidArgumentException('SMS_DRIVER no válido: usa http o log'),
             },
         ]);
+
+        $this->bindByMode(PushTransportInterface::class, 'push', [
+            'fake' => fn () => new FakePushTransport,
+            'real' => fn () => match (config('integrations.push.driver', 'fcm')) {
+                'log' => new LogPushTransport,
+                'fcm' => new FcmPushTransport((array) config('integrations.push.fcm')),
+                default => throw new InvalidArgumentException('PUSH_DRIVER no válido: usa fcm o log'),
+            },
+        ]);
     }
 
     public function boot(): void
     {
         // Canal `sms` de Notifications: `via() => ['sms']` + `toSms($notifiable)`.
         Notification::extend('sms', fn ($app) => $app->make(SmsChannel::class));
+
+        // Canales del módulo de notificaciones (docs/notifications.md): `delivery` reparte una TypedNotification
+        // entre mail / inbox (el `database` de la config) / push / sms con preferencias y reclamo idempotente.
+        Notification::extend('delivery', fn ($app) => $app->make(DeliveryChannel::class));
+        Notification::extend('inbox', fn ($app) => $app->make(InboxChannel::class));
+        Notification::extend('push', fn ($app) => $app->make(PushChannel::class));
 
         // Webhooks entrantes: por IP y proveedor, para que un proveedor ruidoso no ahogue a los demás.
         RateLimiter::for('inbound-webhooks', fn (Request $request) => Limit::perMinute(

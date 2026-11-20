@@ -55,6 +55,26 @@ return [
     ],
 
     /*
+    | Push: PushTransportInterface (docs/notifications.md).
+    |   PUSH_MODE=fake   FakePushTransport (registra las llamadas, sin red; por defecto)
+    |   PUSH_MODE=real   FcmPushTransport (Firebase Cloud Messaging HTTP v1, sin SDK)
+    | Credenciales FCM: cuenta de servicio (JSON en `credentials_path`) o un token ya emitido (`access_token`).
+    */
+    'push' => [
+        'mode' => env('PUSH_MODE', 'fake'),
+        'driver' => env('PUSH_DRIVER', 'fcm'),
+        'fcm' => [
+            'project_id' => env('FCM_PROJECT_ID'),
+            'credentials_path' => env('FCM_CREDENTIALS_PATH'),
+            'access_token' => env('FCM_ACCESS_TOKEN'),
+            'endpoint' => 'https://fcm.googleapis.com/v1/projects/{project}/messages:send',
+            'token_url' => 'https://oauth2.googleapis.com/token',
+            'timeout' => (int) env('FCM_TIMEOUT', 10),
+        ],
+        'http' => ['timeout' => (int) env('FCM_TIMEOUT', 10)],
+    ],
+
+    /*
     | Webhooks ENTRANTES genéricos: POST /webhooks/inbound/{provider}.
     | Cada proveedor se registra en `providers` (ver docs/integrations.md §7).
     */

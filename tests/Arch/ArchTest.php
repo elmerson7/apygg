@@ -164,6 +164,10 @@ function archServiciosConInterfaz(): array
         'App\Services\TenantOnboardingService' => 'App\Contracts\TenantOnboardingServiceInterface',
         'App\Services\TenantInvitationService' => 'App\Contracts\TenantInvitationServiceInterface',
         'App\Services\TenantMemberService' => 'App\Contracts\TenantMemberServiceInterface',
+        'App\Services\Notifications\InboxService' => 'App\Contracts\InboxServiceInterface',
+        'App\Services\Notifications\DeviceService' => 'App\Contracts\DeviceServiceInterface',
+        'App\Services\Notifications\NotificationPreferenceService' => 'App\Contracts\NotificationPreferenceServiceInterface',
+        'App\Services\Notifications\NotificationDeliveryService' => 'App\Contracts\NotificationDeliveryServiceInterface',
     ];
 }
 

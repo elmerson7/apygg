@@ -65,6 +65,9 @@ require __DIR__.'/api/tenant-onboarding.php';
 // Usuario autenticado (/user)
 require __DIR__.'/api/user.php';
 
+// Notificaciones del usuario: bandeja, preferencias y dispositivos push (/user/notifications, /user/devices)
+require __DIR__.'/api/notifications.php';
+
 // Idioma, zona horaria y moneda (/user/locale, /tenant/locale)
 require __DIR__.'/api/i18n.php';
 

@@ -1,6 +1,5 @@
 <?php
 
-use App\Contracts\NotificationServiceInterface;
 use App\Contracts\SmsSenderInterface;
 use App\Integrations\Exceptions\InvalidOutputError;
 use App\Integrations\Exceptions\PermanentIntegrationError;
@@ -20,7 +19,6 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Queue;
 
 uses(RefreshDatabase::class);
 
@@ -203,32 +201,6 @@ describe('cola y notificaciones', function () {
         $job->setJob($queueJob);
 
         $job->process($fake);
-    });
-
-    test('NotificationService::sendSms encola un job y, sin cola, envía con la integración', function () {
-        $service = app(NotificationServiceInterface::class);
-
-        Queue::fake();
-        expect($service->sendSms('+34600000001', 'Hola'))->toBeTrue();
-        Queue::assertPushed(SendSmsJob::class);
-
-        $fake = app(SmsSenderInterface::class);
-        expect($service->sendSms('+34600000001', 'Hola', false))->toBeTrue()
-            ->and($fake->sent())->toHaveCount(1);
-    });
-
-    test('sendSms sin cola reintenta el error transitorio y devuelve false con uno permanente', function () {
-        $fake = app(SmsSenderInterface::class);
-        $service = app(NotificationServiceInterface::class);
-
-        $fake->failNext(TransientIntegrationError::class);
-        expect($service->sendSms('+34600000001', 'Hola', false))->toBeTrue()
-            ->and($fake->calls('send'))->toHaveCount(2);
-
-        $fake->resetFake();
-        $fake->failNext(PermanentIntegrationError::class);
-        expect($service->sendSms('+34600000001', 'Hola', false))->toBeFalse()
-            ->and($fake->calls('send'))->toHaveCount(1);
     });
 
     test('el canal sms de Notifications envía al teléfono del perfil', function () {

@@ -20,6 +20,7 @@ const AISLAMIENTO_MODELOS_CUBIERTOS = [
     'App\Models\WebhookDelivery' => 'WebhooksAislamientoTest.php',
     'App\Models\ApiKey' => 'ApiKeysAislamientoTest.php',
     'App\Models\TenantInvitation' => 'InvitacionesAislamientoTest.php',
+    'App\Models\InboxNotification' => 'NotificacionesAislamientoTest.php',
 ];
 
 /**
@@ -34,6 +35,7 @@ const AISLAMIENTO_TABLAS_CUBIERTAS = [
     'idempotency_keys' => 'IdempotenciaAislamientoTest.php',
     'inbound_webhook_receipts' => 'WebhooksEntrantesAislamientoTest.php',
     'tenant_user' => 'MiembrosAislamientoTest.php',
+    'notification_deliveries' => 'NotificacionesAislamientoTest.php',
     'feature_flag_overrides' => 'FeatureFlagsYPlanAislamientoTest.php',
     'tenant_limit_overrides' => 'FeatureFlagsYPlanAislamientoTest.php',
     // Tablas de Spatie con equipos (docs/permissions.md §Teams): cubiertas por SpatieTeamsTest

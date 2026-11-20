@@ -6,6 +6,7 @@ use App\Contracts\ApiKeyServiceInterface;
 use App\Contracts\AuthServiceInterface;
 use App\Contracts\BackupServiceInterface;
 use App\Contracts\BrandResolverInterface;
+use App\Contracts\DeviceServiceInterface;
 use App\Contracts\DocsIndexerInterface;
 use App\Contracts\DocsServiceInterface;
 use App\Contracts\FeatureFlagServiceInterface;
@@ -13,6 +14,7 @@ use App\Contracts\FileServiceInterface;
 use App\Contracts\HostResolverInterface;
 use App\Contracts\IdempotencyInterface;
 use App\Contracts\InboundWebhookServiceInterface;
+use App\Contracts\InboxServiceInterface;
 use App\Contracts\LocaleResolverInterface;
 use App\Contracts\LocaleSettingsServiceInterface;
 use App\Contracts\MailAccountServiceInterface;
@@ -21,6 +23,8 @@ use App\Contracts\MailSendPolicyInterface;
 use App\Contracts\MailServiceInterface;
 use App\Contracts\MailSuppressionServiceInterface;
 use App\Contracts\MenuServiceInterface;
+use App\Contracts\NotificationDeliveryServiceInterface;
+use App\Contracts\NotificationPreferenceServiceInterface;
 use App\Contracts\NotificationServiceInterface;
 use App\Contracts\PasswordServiceInterface;
 use App\Contracts\PermissionServiceInterface;
@@ -56,6 +60,10 @@ use App\Services\Mail\MailSuppressionService;
 use App\Services\Mail\SvixSignatureVerifier;
 use App\Services\MailService;
 use App\Services\Menu\MenuService;
+use App\Services\Notifications\DeviceService;
+use App\Services\Notifications\InboxService;
+use App\Services\Notifications\NotificationDeliveryService;
+use App\Services\Notifications\NotificationPreferenceService;
 use App\Services\NotificationService;
 use App\Services\PasswordService;
 use App\Services\PermissionService;
@@ -138,6 +146,12 @@ class ContractServiceProvider extends ServiceProvider
         $this->app->bind(TenantOnboardingServiceInterface::class, TenantOnboardingService::class);
         $this->app->bind(TenantInvitationServiceInterface::class, TenantInvitationService::class);
         $this->app->bind(TenantMemberServiceInterface::class, TenantMemberService::class);
+
+        // Notificaciones multicanal (docs/notifications.md)
+        $this->app->bind(InboxServiceInterface::class, InboxService::class);
+        $this->app->bind(DeviceServiceInterface::class, DeviceService::class);
+        $this->app->bind(NotificationPreferenceServiceInterface::class, NotificationPreferenceService::class);
+        $this->app->bind(NotificationDeliveryServiceInterface::class, NotificationDeliveryService::class);
 
         // Colaborador sin estado: el DNS real; los tests lo sustituyen con `$this->app->instance(...)`.
         $this->app->singleton(HostResolverInterface::class, DnsHostResolver::class);

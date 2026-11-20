@@ -2,309 +2,62 @@
 
 namespace App\Services;
 
-use App\Contracts\MailServiceInterface;
 use App\Contracts\NotificationServiceInterface;
-use App\Contracts\SmsSenderInterface;
-use App\Integrations\RetryPolicy;
-use App\Integrations\Sms\SmsMessage;
-use App\Jobs\SendSmsJob;
-use App\Models\NotificationHistory;
-use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Notifications\Notification;
-use Illuminate\Support\Facades\Log;
+use App\Models\Tenant;
+use App\Models\User;
+use App\Notifications\NotificationType;
+use App\Notifications\TypedNotification;
+use App\Support\Tenancy\TenantContext;
+use Illuminate\Support\Facades\Notification;
 
 /**
  * NotificationService
  *
- * Servicio centralizado para notificaciones multi-canal (email, SMS, push, database).
+ * Único camino para notificar a usuarios (docs/notifications.md). Valida el tipo y delega en
+ * `TypedNotification` (en cola, `afterCommit`), que decide canales, preferencias y silencio al enviar.
  */
 class NotificationService implements NotificationServiceInterface
 {
-    public function __construct(
-        private readonly MailServiceInterface $mail,
-        private readonly SmsSenderInterface $sms,
-    ) {}
+    public function __construct(private readonly TenantContext $tenants) {}
 
-    /**
-     * Canales disponibles
-     */
-    protected const CHANNELS = [
-        'mail' => 'email',
-        'database' => 'database',
-        'sms' => 'sms',
-        'push' => 'push',
-    ];
-
-    /**
-     * Enviar notificación por email
-     *
-     * @param  string|array  $to  Email(s) destinatario(s)
-     * @param  string  $subject  Asunto
-     * @param  string  $view  Vista del email
-     * @param  array  $data  Datos para la vista
-     * @param  bool  $queue  Si debe enviarse en cola
-     */
-    /**
-     * Enviar notificación por email.
-     *
-     * Delega en MailService para que el envío pase por el sistema de correo:
-     * selección de cuenta, pausa global, plantillas y registro en mail_logs.
-     * No envíes correo con Mail::send() directamente.
-     *
-     * @param  string|array<int, string|array{email: string, name?: string}>  $to
-     * @param  array<string, mixed>  $data
-     * @param  string|null  $templateKey  Clave de plantilla (permite pausarla desde el panel)
-     */
-    public function sendEmail(
-        string|array $to,
-        string $subject,
-        string $view,
-        array $data = [],
-        bool $queue = true,
-        ?string $templateKey = null
-    ): bool {
-        $sent = $this->mail->send(
-            to: $to,
-            subject: $subject,
-            view: $view,
-            data: $data,
-            templateKey: $templateKey,
-            queue: $queue,
-        );
-
-        if ($sent) {
-            $this->logNotification('mail', $to, $subject);
-        }
-
-        return $sent;
-    }
-
-    /**
-     * Enviar notificación a base de datos
-     *
-     * @param  string  $title  Título
-     * @param  string  $message  Mensaje
-     * @param  array<string, mixed>  $data  Datos adicionales
-     * @param  string|null  $type  Tipo de notificación
-     */
-    public function sendDatabase(
-        Authenticatable $notifiable,
-        string $title,
-        string $message,
-        array $data = [],
-        ?string $type = null
-    ): bool {
-        try {
-            $notifiable->notify(new class($title, $message, $data, $type) extends Notification
-            {
-                /**
-                 * @param  array<string, mixed>  $data
-                 */
-                public function __construct(
-                    public string $title,
-                    public string $message,
-                    public array $data,
-                    public ?string $type
-                ) {}
-
-                /**
-                 * @return list<string>
-                 */
-                public function via(mixed $notifiable): array
-                {
-                    return ['database'];
-                }
-
-                /**
-                 * @return array<string, mixed>
-                 */
-                public function toDatabase(mixed $notifiable): array
-                {
-                    return [
-                        'title' => $this->title,
-                        'message' => $this->message,
-                        'type' => $this->type,
-                        'data' => $this->data,
-                    ];
-                }
-            });
-
-            $this->logNotification('database', $notifiable->id ?? 'unknown', $title);
-
-            return true;
-        } catch (\Exception $e) {
-            Log::error('Failed to send database notification', [
-                'error' => $e->getMessage(),
-            ]);
-
-            return false;
-        }
-    }
-
-    /**
-     * Enviar notificación SMS (requiere servicio externo)
-     *
-     * @param  string  $phone  Número de teléfono
-     * @param  string  $message  Mensaje
-     * @param  bool  $queue  Si debe enviarse en cola
-     */
-    public function sendSms(string $phone, string $message, bool $queue = true): bool
+    public function notify(User|iterable $users, string $type, array $params = [], ?Tenant $tenant = null): void
     {
-        try {
-            // Integración real/simulada elegida por SMS_MODE (docs/integrations.md)
-            if ($queue) {
-                SendSmsJob::dispatch($phone, $message, bin2hex(random_bytes(16)));
-            } else {
-                RetryPolicy::fromConfig()->run(fn () => $this->sms->send(new SmsMessage($phone, $message)));
-            }
-
-            $this->logNotification('sms', $phone, 'SMS');
-
-            return true;
-        } catch (\Exception $e) {
-            Log::error('Failed to send SMS notification', [
-                'phone' => SmsMessage::mask($phone),
-                'error' => $e->getMessage(),
-            ]);
-
-            return false;
-        }
+        $this->dispatch($users, $type, $params, $tenant, false);
     }
 
-    /**
-     * Enviar notificación push (requiere servicio externo)
-     *
-     * @param  string|list<string>  $tokens  Token(s) del dispositivo
-     * @param  string  $title  Título
-     * @param  string  $message  Mensaje
-     * @param  array<string, mixed>  $data  Datos adicionales
-     * @param  bool  $queue  Si debe enviarse en cola
-     */
-    public function sendPush(
-        string|array $tokens,
-        string $title,
-        string $message,
-        array $data = [],
-        bool $queue = true
-    ): bool {
-        try {
-            // Implementar integración con servicio push (FCM, APNS, etc.)
-            // Por ahora solo loguear
-            Log::info('Push notification queued', [
-                'tokens_count' => is_array($tokens) ? count($tokens) : 1,
-                'title' => $title,
-            ]);
-
-            if ($queue) {
-                // PushJob::dispatch($tokens, $title, $message, $data);
-            } else {
-                // $this->sendPushImmediate($tokens, $title, $message, $data);
-            }
-
-            $this->logNotification('push', is_array($tokens) ? count($tokens).' tokens' : $tokens, $title);
-
-            return true;
-        } catch (\Exception $e) {
-            Log::error('Failed to send push notification', [
-                'error' => $e->getMessage(),
-            ]);
-
-            return false;
-        }
-    }
-
-    /**
-     * Enviar notificación multi-canal
-     *
-     * @param  list<string>  $channels  Canales a usar ['mail', 'database', 'sms', 'push']
-     * @param  mixed  $notifiable  Usuario o email/phone
-     * @param  string  $title  Título
-     * @param  string  $message  Mensaje
-     * @param  array<string, mixed>  $data  Datos adicionales
-     * @param  bool  $queue  Si debe enviarse en cola
-     * @return array<string, mixed> Resultados por canal
-     */
-    public function sendMultiChannel(
-        array $channels,
-        $notifiable,
-        string $title,
-        string $message,
-        array $data = [],
-        bool $queue = true
-    ): array {
-        $results = [];
-
-        foreach ($channels as $channel) {
-            $results[$channel] = match ($channel) {
-                'mail' => $this->sendEmail(
-                    is_object($notifiable) ? $notifiable->email : $notifiable,
-                    $title,
-                    'emails.notification',
-                    array_merge($data, ['message' => $message]),
-                    $queue
-                ),
-                'database' => $this->sendDatabase($notifiable, $title, $message, $data),
-                'sms' => $this->sendSms(
-                    is_object($notifiable) ? $notifiable->phone : $notifiable,
-                    $message,
-                    $queue
-                ),
-                'push' => $this->sendPush(
-                    is_object($notifiable) ? $notifiable->push_tokens : [],
-                    $title,
-                    $message,
-                    $data,
-                    $queue
-                ),
-                default => false,
-            };
-        }
-
-        return $results;
-    }
-
-    /**
-     * Guardar historial de notificación
-     *
-     * @param  string|array<int|string, mixed>  $recipient
-     */
-    protected function logNotification(string $channel, $recipient, string $subject): void
+    public function notifyNow(User|iterable $users, string $type, array $params = [], ?Tenant $tenant = null): void
     {
-        try {
-            NotificationHistory::create([
-                'channel' => $channel,
-                'recipient' => is_array($recipient) ? json_encode($recipient) : $recipient,
-                'subject' => $subject,
-                'status' => NotificationHistory::STATUS_SENT,
-                'sent_at' => now(),
-            ]);
-        } catch (\Throwable $e) {
-            // El historial nunca debe tumbar el envío que lo originó.
-            Log::warning('NotificationService: no se pudo registrar el historial', [
-                'channel' => $channel,
-                'error' => $e->getMessage(),
-            ]);
-        }
+        $this->dispatch($users, $type, $params, $tenant, true);
+    }
+
+    public function types(): array
+    {
+        return NotificationType::all();
     }
 
     /**
-     * Obtener historial de notificaciones
-     *
-     * @param  string|null  $channel  Filtrar por canal
-     * @param  int  $limit  Límite de resultados
-     * @return Collection<int, NotificationHistory>
+     * @param  User|iterable<User>  $users
+     * @param  array<string, scalar|null>  $params
      */
-    public function getHistory(?string $channel = null, int $limit = 50): Collection
+    private function dispatch(User|iterable $users, string $type, array $params, ?Tenant $tenant, bool $now): void
     {
-        $query = NotificationHistory::query()
-            ->orderBy('sent_at', 'desc')
-            ->limit($limit);
+        NotificationType::find($type); // falla ya (422) si el tipo no está declarado
 
-        if ($channel) {
-            $query->where('channel', $channel);
+        $recipients = $users instanceof User ? [$users] : collect($users)->all();
+
+        if ($recipients === []) {
+            return;
         }
 
-        return $query->get();
+        $send = function () use ($recipients, $type, $params, $now): void {
+            $notification = new TypedNotification($type, $params);
+
+            $now
+                ? Notification::sendNow($recipients, $notification)
+                : Notification::send($recipients, $notification);
+        };
+
+        // La notificación captura el tenant en su constructor (también viaja en el Context de la cola).
+        $tenant === null ? $send() : $this->tenants->run($tenant, $send);
     }
 }

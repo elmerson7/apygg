@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Contracts\NotificationServiceInterface;
+use App\Contracts\MailServiceInterface;
 use App\Services\LogService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -150,11 +150,11 @@ abstract class Job implements ShouldQueue
 
             if ($adminEmail) {
                 // failed()/notifyFailure no admiten inyección: se resuelve por interfaz.
-                app(NotificationServiceInterface::class)->sendEmail(
-                    $adminEmail,
-                    "Job Fallido: {$jobName}",
-                    'emails.job-failed',
-                    [
+                app(MailServiceInterface::class)->send(
+                    to: $adminEmail,
+                    subject: "Job Fallido: {$jobName}",
+                    view: 'emails.job-failed',
+                    data: [
                         'job_name' => $jobName,
                         'exception_message' => $exception->getMessage(),
                         'exception_class' => get_class($exception),
@@ -163,7 +163,7 @@ abstract class Job implements ShouldQueue
                         'trace_id' => $this->traceId,
                         'context' => $context,
                     ],
-                    false // Enviar inmediatamente, no en cola
+                    queue: false // Enviar inmediatamente, no en cola
                 );
             }
 

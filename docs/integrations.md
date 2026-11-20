@@ -231,7 +231,7 @@ RetryPolicy::fromConfig()->run(fn () => app(SmsSenderInterface::class)->send(new
 // En cola (idempotencyKey fijada al encolar, reutilizada en cada reintento):
 SendSmsJob::dispatch('+34600000001', 'Hola', $uuid);
 
-// Servicio existente: NotificationService::sendSms($phone, $msg, queue: true|false)
+// Para avisar a usuarios por varios canales (incluido sms) usa NotificationServiceInterface::notify() (docs/notifications.md)
 
 // Notification de Laravel con canal `sms`:
 public function via(object $notifiable): array { return ['sms']; }

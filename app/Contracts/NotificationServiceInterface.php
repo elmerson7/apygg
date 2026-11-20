@@ -2,97 +2,43 @@
 
 namespace App\Contracts;
 
-use App\Models\NotificationHistory;
-use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Database\Eloquent\Collection;
+use App\Exceptions\BusinessLogicException;
+use App\Models\Tenant;
+use App\Models\User;
+use App\Notifications\NotificationType;
 
 /**
  * NotificationServiceInterface
  *
- * Contrato del servicio de notificaciones multicanal.
+ * ÚNICO camino para avisar a usuarios por varios canales (docs/notifications.md). El tipo se declara en
+ * `config/notifications.php`; el texto, en `lang/<idioma>/notifications.php`. Preferencias, horas de
+ * silencio, reclamo idempotente y registro de entregas se aplican solos.
  */
 interface NotificationServiceInterface
 {
     /**
-     * Enviar notificación por email.
+     * Encola la notificación (un job por destinatario, tras el commit de la transacción abierta).
      *
-     * Delega en MailService para que el envío pase por el sistema de correo:
-     * selección de cuenta, pausa global, plantillas y registro en mail_logs.
-     * No envíes correo con Mail::send() directamente.
+     * @param  User|iterable<User>  $users
+     * @param  array<string, scalar|null>  $params  sustituyen `:param` en título y cuerpo (`action_url` añade un botón)
+     * @param  Tenant|null  $tenant  tenant en el que se envía (por defecto, el del contexto actual)
      *
-     * @param  string|array<int, string|array{email: string, name?: string}>  $to
-     * @param  array<string, mixed>  $data
-     * @param  string|null  $templateKey  Clave de plantilla (permite pausarla desde el panel)
+     * @throws BusinessLogicException tipo desconocido
      */
-    public function sendEmail(string|array $to,
-        string $subject,
-        string $view,
-        array $data = [],
-        bool $queue = true,
-        ?string $templateKey = null): bool;
+    public function notify(User|iterable $users, string $type, array $params = [], ?Tenant $tenant = null): void;
 
     /**
-     * Enviar notificación a base de datos
+     * Igual que `notify()` pero en la misma petición (sin cola). Para comandos y pruebas.
      *
-     * @param  string  $title  Título
-     * @param  string  $message  Mensaje
-     * @param  array<string, mixed>  $data  Datos adicionales
-     * @param  string|null  $type  Tipo de notificación
+     * @param  User|iterable<User>  $users
+     * @param  array<string, scalar|null>  $params
      */
-    public function sendDatabase(Authenticatable $notifiable,
-        string $title,
-        string $message,
-        array $data = [],
-        ?string $type = null): bool;
+    public function notifyNow(User|iterable $users, string $type, array $params = [], ?Tenant $tenant = null): void;
 
     /**
-     * Enviar notificación SMS (requiere servicio externo)
+     * Tipos declarados, por clave.
      *
-     * @param  string  $phone  Número de teléfono
-     * @param  string  $message  Mensaje
-     * @param  bool  $queue  Si debe enviarse en cola
+     * @return array<string, NotificationType>
      */
-    public function sendSms(string $phone, string $message, bool $queue = true): bool;
-
-    /**
-     * Enviar notificación push (requiere servicio externo)
-     *
-     * @param  string|list<string>  $tokens  Token(s) del dispositivo
-     * @param  string  $title  Título
-     * @param  string  $message  Mensaje
-     * @param  array<string, mixed>  $data  Datos adicionales
-     * @param  bool  $queue  Si debe enviarse en cola
-     */
-    public function sendPush(string|array $tokens,
-        string $title,
-        string $message,
-        array $data = [],
-        bool $queue = true): bool;
-
-    /**
-     * Enviar notificación multi-canal
-     *
-     * @param  list<string>  $channels  Canales a usar ['mail', 'database', 'sms', 'push']
-     * @param  mixed  $notifiable  Usuario o email/phone
-     * @param  string  $title  Título
-     * @param  string  $message  Mensaje
-     * @param  array<string, mixed>  $data  Datos adicionales
-     * @param  bool  $queue  Si debe enviarse en cola
-     * @return array<string, mixed> Resultados por canal
-     */
-    public function sendMultiChannel(array $channels,
-        $notifiable,
-        string $title,
-        string $message,
-        array $data = [],
-        bool $queue = true): array;
-
-    /**
-     * Obtener historial de notificaciones
-     *
-     * @param  string|null  $channel  Filtrar por canal
-     * @param  int  $limit  Límite de resultados
-     * @return Collection<int, NotificationHistory>
-     */
-    public function getHistory(?string $channel = null, int $limit = 50): Collection;
+    public function types(): array;
 }

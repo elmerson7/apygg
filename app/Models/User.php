@@ -292,6 +292,16 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     }
 
     /**
+     * Dispositivos push del usuario (docs/notifications.md).
+     *
+     * @return HasMany<UserDevice, $this>
+     */
+    public function devices(): HasMany
+    {
+        return $this->hasMany(UserDevice::class);
+    }
+
+    /**
      * @return HasOne<UserProfile, $this>
      */
     public function profile(): HasOne
