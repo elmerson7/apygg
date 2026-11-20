@@ -16,9 +16,16 @@ interface AuthServiceInterface
      *
      * @param  array<string, mixed>  $credentials  Credenciales ['identity_document' => string, 'password' => string]
      * @param  string|null  $ipAddress  Dirección IP del cliente
-     * @return array<string, mixed> ['user' => User, 'tokens' => array] o null si falla
+     * @return array<string, mixed>|null ['user' => User, 'tokens' => array], o ['user' => User, 'two_factor' => ['challenge_token', 'expires_in']] si tiene 2FA; null si falla
      */
     public function authenticate(array $credentials, ?string $ipAddress = null): ?array;
+
+    /**
+     * Segundo paso del login con 2FA: resuelve el desafío con un código y abre la sesión.
+     *
+     * @return array<string, mixed> ['user' => User, 'tokens' => array]
+     */
+    public function verifyTwoFactor(string $challengeToken, string $code, ?string $ipAddress = null): array;
 
     /**
      * Registrar un usuario nuevo y abrirle sesión.

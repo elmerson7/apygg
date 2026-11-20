@@ -48,5 +48,14 @@ return [
             'ignore' => 'Si no solicitaste este cambio, ignora este email.',
             'salutation' => 'Saludos, :app',
         ],
+        'email_verification' => [
+            'subject' => 'Verifica tu correo electrónico',
+            'greeting' => 'Hola :name,',
+            'intro' => 'Confirma que este correo es tuyo para terminar de configurar tu cuenta.',
+            'action' => 'Verificar correo',
+            'expires' => 'Este enlace expirará en :minutes minutos.',
+            'ignore' => 'Si no creaste esta cuenta, ignora este email.',
+            'salutation' => 'Saludos, :app',
+        ],
     ],
 ];

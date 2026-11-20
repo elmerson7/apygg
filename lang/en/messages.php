@@ -48,5 +48,14 @@ return [
             'ignore' => 'If you did not request this change, ignore this email.',
             'salutation' => 'Regards, :app',
         ],
+        'email_verification' => [
+            'subject' => 'Verify your email address',
+            'greeting' => 'Hello :name,',
+            'intro' => 'Confirm that this email address is yours to finish setting up your account.',
+            'action' => 'Verify email',
+            'expires' => 'This link will expire in :minutes minutes.',
+            'ignore' => 'If you did not create this account, ignore this email.',
+            'salutation' => 'Regards, :app',
+        ],
     ],
 ];

@@ -84,6 +84,7 @@ class MailTemplateConfig extends Model
         return [
             ['template_key' => 'welcome', 'template_name' => 'Bienvenida', 'is_active' => true],
             ['template_key' => 'password_reset', 'template_name' => 'Recuperar contraseña', 'is_active' => true],
+            ['template_key' => 'email_verification', 'template_name' => 'Verificación de correo', 'is_active' => true],
         ];
     }
 

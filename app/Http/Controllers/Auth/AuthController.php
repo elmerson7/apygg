@@ -48,6 +48,15 @@ class AuthController extends Controller
             );
         }
 
+        // Con 2FA activo no hay tokens todavía: el cliente completa en POST /auth/2fa/verify.
+        if (isset($result['two_factor'])) {
+            return $this->sendSuccess([
+                'two_factor_required' => true,
+                'challenge_token' => $result['two_factor']['challenge_token'],
+                'expires_in' => $result['two_factor']['expires_in'],
+            ], 'Verificación en dos pasos requerida');
+        }
+
         return $this->sendSuccess(
             $this->authPayload($result['user'], $result['tokens']),
             'Login exitoso'

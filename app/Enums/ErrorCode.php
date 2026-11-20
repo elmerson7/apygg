@@ -31,6 +31,9 @@ enum ErrorCode: string
     case RateLimited = 'rate_limited';
     case AccountLocked = 'account_locked';
     case AccountBlocked = 'account_blocked';
+    case TwoFactorInvalid = 'two_factor_invalid';
+    case EmailNotVerified = 'email_not_verified';
+    case AppUpdateRequired = 'app_update_required';
     case FeatureDisabled = 'feature_disabled';
     case IpNotAllowed = 'ip_not_allowed';
     case ApiKeyRequired = 'api_key_required';

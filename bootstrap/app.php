@@ -87,6 +87,7 @@ return Application::configure(basePath: dirname(__DIR__))
             LogApiRequests::class, // Registrar requests/responses
             SecurityLoggerMiddleware::class, // Registrar eventos de seguridad y detectar patrones anómalos
             RateLimitLoggerMiddleware::class, // Registrar bloqueos por rate limiting y detectar abuso
+            \App\Http\Middleware\EnsureMinimumAppVersion::class, // 426 si la app es antigua (apagado por defecto: config/app-versions.php)
         ]);
 
         // Proxies de confianza (X-Forwarded-*). TRUSTED_PROXIES: lista separada por
@@ -118,6 +119,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant' => \App\Http\Middleware\ResolveTenant::class,
             'idempotent' => \App\Http\Middleware\EnsureIdempotency::class,
             'tenancy.enabled' => \App\Http\Middleware\EnsureTenancyEnabled::class,
+            // Correo verificado (403 `email_not_verified`) y versión mínima de app (426); ver docs/sessions-and-2fa.md
+            'verified' => \App\Http\Middleware\EnsureEmailVerified::class,
+            'app-version' => \App\Http\Middleware\EnsureMinimumAppVersion::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

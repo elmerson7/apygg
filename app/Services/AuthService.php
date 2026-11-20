@@ -3,7 +3,10 @@
 namespace App\Services;
 
 use App\Contracts\AuthServiceInterface;
+use App\Contracts\EmailVerificationServiceInterface;
+use App\Contracts\SessionServiceInterface;
 use App\Contracts\TokenServiceInterface;
+use App\Contracts\TwoFactorServiceInterface;
 use App\Contracts\UserServiceInterface;
 use App\Events\UserLoggedIn;
 use App\Events\UserLoggedOut;
@@ -11,6 +14,8 @@ use App\Exceptions\AccountBlockedException;
 use App\Exceptions\ApiException;
 use App\Exceptions\BusinessLogicException;
 use App\Exceptions\LoginLockedException;
+use App\Exceptions\RefreshSupersededException;
+use App\Exceptions\TwoFactorException;
 use App\Models\Blacklist;
 use App\Models\User;
 use Illuminate\Auth\Events\Login;
@@ -19,6 +24,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
+use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenInvalidException;
 
 /**
  * AuthService
@@ -50,7 +56,10 @@ class AuthService implements AuthServiceInterface
 
     public function __construct(
         protected TokenServiceInterface $tokenService,
-        protected UserServiceInterface $userService
+        protected UserServiceInterface $userService,
+        protected SessionServiceInterface $sessions,
+        protected TwoFactorServiceInterface $twoFactor,
+        protected EmailVerificationServiceInterface $emailVerification
     ) {
         $this->maxAttempts = (int) config('auth.login.max_attempts', 5);
         $this->maxAttemptsPerIdentity = (int) config('auth.login.max_attempts_per_identity', 10);
@@ -148,9 +157,52 @@ class AuthService implements AuthServiceInterface
         // Limpiar intentos fallidos al autenticar exitosamente
         $this->clearFailedAttempts($login, $ipAddress);
 
-        // Generar tokens
+        // Con 2FA activo la contraseña sola no abre sesión: se devuelve un desafío.
+        if ($this->twoFactor->isEnabled($user)) {
+            LogService::info('Login pendiente de 2FA', ['user_id' => $user->id, 'ip' => $ipAddress], 'security');
+
+            return [
+                'user' => $user,
+                'two_factor' => $this->twoFactor->startChallenge($user),
+            ];
+        }
+
+        return $this->completeLogin($user, $login, $ipAddress);
+    }
+
+    /**
+     * Segundo paso del login con 2FA: resuelve el desafío con un código y abre la sesión.
+     *
+     * @return array<string, mixed> ['user' => User, 'tokens' => array]
+     *
+     * @throws TwoFactorException
+     * @throws LoginLockedException
+     * @throws AccountBlockedException
+     */
+    public function verifyTwoFactor(string $challengeToken, string $code, ?string $ipAddress = null): array
+    {
+        $user = $this->twoFactor->resolveChallenge($challengeToken, $code);
+
+        if (Blacklist::isBlocked(
+            email: $user->email,
+            identityDocument: $user->identity_document,
+            userId: $user->id
+        )) {
+            throw new AccountBlockedException;
+        }
+
+        return $this->completeLogin($user, $user->email, $ipAddress);
+    }
+
+    /**
+     * Abre la sesión (registro + tokens) y emite los eventos del login.
+     *
+     * @return array<string, mixed> ['user' => User, 'tokens' => array]
+     */
+    protected function completeLogin(User $user, string $login, ?string $ipAddress): array
+    {
         try {
-            $tokens = $this->tokenService->generateTokens($user);
+            $tokens = $this->startSession($user, $ipAddress);
 
             LogService::info('Autenticación exitosa', [
                 'user_id' => $user->id,
@@ -184,6 +236,18 @@ class AuthService implements AuthServiceInterface
     }
 
     /**
+     * Crea la sesión y emite sus tokens (`sid` en ambos, `jti` vigente en el refresh).
+     *
+     * @return array{access_token: string, refresh_token: string}
+     */
+    protected function startSession(User $user, ?string $ipAddress): array
+    {
+        $session = $this->sessions->start($user, $ipAddress, request()->userAgent());
+
+        return $this->tokenService->generateSessionTokens($user, $session->public_id, (string) $session->refresh_jti);
+    }
+
+    /**
      * Registrar un usuario nuevo y abrirle sesión.
      *
      * Delega la creación en UserService (transacción usuario + perfil + rol por
@@ -202,9 +266,13 @@ class AuthService implements AuthServiceInterface
             'password' => $data['password'],
         ]);
 
+        if (config('auth.email_verification.send_on_register', true)) {
+            $this->emailVerification->send($user);
+        }
+
         return [
             'user' => $user,
-            'tokens' => $this->tokenService->generateTokens($user),
+            'tokens' => $this->startSession($user, request()->ip()),
         ];
     }
 
@@ -233,17 +301,43 @@ class AuthService implements AuthServiceInterface
     public function refreshToken(?string $refreshToken = null): array
     {
         try {
-            $result = $this->tokenService->refreshToken($refreshToken);
+            $validated = $this->tokenService->validateRefreshToken($refreshToken);
+            $user = $validated['user'];
+            $claims = $validated['claims'];
+            $sid = $claims['sid'] ?? null;
 
-            if (isset($result['user'])) {
-                LogService::info('Token renovado exitosamente', [
-                    'user_id' => $result['user']->id,
-                ], 'auth');
+            if (! is_string($sid) || $sid === '') {
+                // Refresh anterior a las sesiones: solo si no se exige `sid`; se migra a una sesión.
+                if (config('auth.sessions.require_sid', false)) {
+                    throw new TokenInvalidException('Sesión revocada');
+                }
+
+                $this->tokenService->revokeToken($refreshToken);
+                $tokens = $this->startSession($user, request()->ip());
+            } else {
+                $presentedJti = (string) ($claims['jti'] ?? '');
+                $newJti = $this->sessions->newRefreshJti();
+                $tokens = $this->tokenService->generateSessionTokens($user, $sid, $newJti);
+
+                // Solo uno gana la rotación; el anterior dentro de la gracia da 401 sin revocar; una reutilización real revoca la sesión.
+                $resultado = $presentedJti === ''
+                    ? SessionServiceInterface::REJECTED
+                    : $this->sessions->rotate($sid, $user->id, $presentedJti, $newJti);
+
+                if ($resultado === SessionServiceInterface::SUPERSEDED) {
+                    throw new RefreshSupersededException;
+                }
+
+                if ($resultado !== SessionServiceInterface::ROTATED) {
+                    throw new TokenInvalidException('Sesión revocada');
+                }
             }
 
-            return $result;
+            LogService::info('Token renovado exitosamente', ['user_id' => $user->id], 'auth');
+
+            return array_merge($tokens, ['user' => $user]);
         } catch (JWTException $e) {
-            LogService::error('Error al renovar token', [
+            LogService::warning('Refresh token rechazado', [
                 'error' => $e->getMessage(),
             ], 'auth');
 
@@ -277,6 +371,7 @@ class AuthService implements AuthServiceInterface
         try {
             // Intentar obtener usuario antes de revocar (para logging y eventos)
             $user = $this->tokenService->getUserFromToken($token);
+            $sid = $this->sessionIdOf($token);
 
             // El refresh token de esta sesión se revoca primero: revocar el
             // access deja el estado del servicio de JWT apuntando a otro token.
@@ -286,6 +381,10 @@ class AuthService implements AuthServiceInterface
 
             // Revocar token (maneja automáticamente el caso de token ya blacklisted)
             $result = $this->tokenService->revokeToken($token);
+
+            if ($sid !== null) {
+                $this->sessions->revokeBySid($sid, 'logout');
+            }
 
             if ($result) {
                 if ($user) {
@@ -321,6 +420,20 @@ class AuthService implements AuthServiceInterface
 
             throw $e;
         }
+    }
+
+    /**
+     * `sid` del token (o del de la petición); null si no lo trae o no se puede leer.
+     */
+    protected function sessionIdOf(?string $token): ?string
+    {
+        try {
+            $sid = $this->tokenService->getTokenClaims($token)['sid'] ?? null;
+        } catch (JWTException) {
+            return null;
+        }
+
+        return is_string($sid) && $sid !== '' ? $sid : null;
     }
 
     /**

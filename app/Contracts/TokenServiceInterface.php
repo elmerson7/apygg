@@ -24,9 +24,24 @@ interface TokenServiceInterface
      * Generar refresh token para un usuario
      *
      * @param  User  $user  Usuario para el cual generar el token
+     * @param  array<string, mixed>  $customClaims  Claims adicionales (`sid`, `jti`)
      * @return string Refresh token JWT
      */
-    public function generateRefreshToken(User $user): string;
+    public function generateRefreshToken(User $user, array $customClaims = []): string;
+
+    /**
+     * Tokens de una sesión: ambos llevan `sid`; el refresh lleva el `jti` vigente de la sesión.
+     *
+     * @return array{access_token: string, refresh_token: string}
+     */
+    public function generateSessionTokens(User $user, string $sid, string $refreshJti): array;
+
+    /**
+     * Valida un refresh token sin consumirlo (tipo, firma, caducidad, usuario, versión, lista negra).
+     *
+     * @return array{claims: array<string, mixed>, user: User}
+     */
+    public function validateRefreshToken(?string $refreshToken): array;
 
     /**
      * Generar access token y refresh token para un usuario

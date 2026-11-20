@@ -302,6 +302,7 @@ Una norma por documento; esos archivos son la fuente de verdad de cada tema:
 - [`docs/settings-and-flags.md`](docs/settings-and-flags.md) → ajustes tipados por niveles (tenant -> plataforma -> default), feature flags en BD con porcentaje estable y límites por plan (`PlanLimits::guarded`).
 - [`docs/notifications.md`](docs/notifications.md) → avisos a usuarios: `NotificationServiceInterface::notify()` con tipos en `config/notifications.php`, canales mail/bandeja/push/sms, preferencias, horas de silencio, entregas idempotentes y dispositivos push.
 - [`docs/files.md`](docs/files.md) → archivos: prefijo de entorno + tenant, URL firmada de descarga, subida directa presignada con verificación del objeto real y cuotas por plan (`max_storage_mb`, `max_file_mb`) bajo bloqueo del tenant.
+- [`docs/sessions-and-2fa.md`](docs/sessions-and-2fa.md) → sesiones por dispositivo (`sid`, revocación), refresh rotado con detección de reutilización, 2FA TOTP de la API, verificación de correo (`verified`) y versión mínima de app (426).
 
 ## Al añadir algo al boilerplate
 

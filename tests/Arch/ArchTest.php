@@ -170,6 +170,9 @@ function archServiciosConInterfaz(): array
         'App\Services\Notifications\NotificationPreferenceService' => 'App\Contracts\NotificationPreferenceServiceInterface',
         'App\Services\Notifications\NotificationDeliveryService' => 'App\Contracts\NotificationDeliveryServiceInterface',
         'App\Services\AuditService' => 'App\Contracts\AuditServiceInterface',
+        'App\Services\SessionService' => 'App\Contracts\SessionServiceInterface',
+        'App\Services\TwoFactorService' => 'App\Contracts\TwoFactorServiceInterface',
+        'App\Services\EmailVerificationService' => 'App\Contracts\EmailVerificationServiceInterface',
     ];
 }
 

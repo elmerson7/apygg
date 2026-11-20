@@ -187,6 +187,12 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     public function revokeAllTokens(): void
     {
         $this->increment('token_version');
+
+        // Las sesiones listadas también se cierran (la versión ya invalida sus tokens).
+        UserSession::query()
+            ->where('user_id', $this->getKey())
+            ->whereNull('revoked_at')
+            ->update(['revoked_at' => now(), 'revoked_reason' => 'tokens_revoked']);
     }
 
     /**

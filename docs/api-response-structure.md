@@ -78,6 +78,9 @@ El status HTTP no cambia por el `code`; la columna indica el status habitual.
 | `rate_limited` | 429 | Límite de peticiones (ver `Retry-After`) |
 | `account_locked` | 401 | Login bloqueado por demasiados intentos (`lockout_minutes`) |
 | `account_blocked` | 403 | Identidad en la lista de bloqueo |
+| `two_factor_invalid` | 401 | Código 2FA (TOTP o de recuperación) o desafío de login inválido, caducado o agotado |
+| `email_not_verified` | 403 | La ruta exige correo verificado (middleware `verified`) |
+| `app_update_required` | 426 | La versión de la app (`X-App-Version`) es menor que la mínima configurada (`minimum_version`) |
 | `feature_disabled` | 403 | Feature flag apagado |
 | `ip_not_allowed` | 403 | IP fuera de la lista blanca |
 | `api_key_required` | 401 | La ruta exige API Key |

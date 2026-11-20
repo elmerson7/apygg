@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\EmailVerificationServiceInterface;
 use App\Contracts\UserServiceInterface;
 use App\Events\PermissionGranted;
 use App\Events\PermissionRevoked;
@@ -31,6 +32,8 @@ use Illuminate\Support\Facades\Hash;
  */
 class UserService implements UserServiceInterface
 {
+    public function __construct(private readonly EmailVerificationServiceInterface $emailVerification) {}
+
     protected const CACHE_TTL = 3600;
 
     protected const CACHE_PREFIX = 'user:';
@@ -137,6 +140,8 @@ class UserService implements UserServiceInterface
             }
         }
 
+        $emailCambiado = isset($data['email']) && $data['email'] !== $user->email;
+
         $oldAttributes = $user->getAttributes();
 
         if (isset($data['password'])) {
@@ -163,6 +168,15 @@ class UserService implements UserServiceInterface
         }
 
         $user->update($data);
+
+        // Un correo nuevo no está verificado: se anula y se vuelve a pedir la verificación.
+        if ($emailCambiado) {
+            $user->forceFill(['email_verified_at' => null])->save();
+
+            if (config('auth.email_verification.send_on_email_change', true)) {
+                $this->emailVerification->send($user);
+            }
+        }
 
         // Actualizar profile si se enviaron first_name o last_name
         if (! empty($profileData)) {

@@ -68,11 +68,12 @@ class TokenService implements TokenServiceInterface
      * Generar refresh token para un usuario
      *
      * @param  User  $user  Usuario para el cual generar el token
+     * @param  array<string, mixed>  $customClaims  Claims adicionales (`sid`, `jti`); `type` y `exp` no se pueden pisar
      * @return string Refresh token JWT
      *
      * @throws JWTException
      */
-    public function generateRefreshToken(User $user): string
+    public function generateRefreshToken(User $user, array $customClaims = []): string
     {
         try {
             // Refresh token con expiración más larga
@@ -89,10 +90,10 @@ class TokenService implements TokenServiceInterface
 
             try {
                 // Generar token con expiración explícita y claim de tipo refresh
-                $token = $this->jwtAuth->customClaims([
+                $token = $this->jwtAuth->customClaims(array_merge($customClaims, [
                     'type' => 'refresh',
                     'exp' => $expirationTime, // Expiración explícita en segundos Unix timestamp
-                ])->fromUser($user);
+                ]))->fromUser($user);
             } finally {
                 // Restaurar TTL original
                 config(['jwt.ttl' => $originalTtl]);
@@ -129,6 +130,22 @@ class TokenService implements TokenServiceInterface
         return [
             'access_token' => $this->generateAccessToken($user, $customClaims),
             'refresh_token' => $this->generateRefreshToken($user),
+        ];
+    }
+
+    /**
+     * Tokens de una sesión: ambos llevan `sid`; el refresh lleva además el `jti` que la sesión
+     * tiene anotado como vigente (la rotación lo compara).
+     *
+     * @return array{access_token: string, refresh_token: string}
+     *
+     * @throws JWTException
+     */
+    public function generateSessionTokens(User $user, string $sid, string $refreshJti): array
+    {
+        return [
+            'access_token' => $this->generateAccessToken($user, ['sid' => $sid]),
+            'refresh_token' => $this->generateRefreshToken($user, ['sid' => $sid, 'jti' => $refreshJti]),
         ];
     }
 
@@ -327,31 +344,27 @@ class TokenService implements TokenServiceInterface
     }
 
     /**
-     * Renovar access token usando refresh token (con rotación)
+     * Valida un refresh token SIN consumirlo: tipo, firma, caducidad, usuario, versión de
+     * tokens y lista negra. Devuelve sus claims y el usuario.
      *
-     * @param  string|null  $refreshToken  Refresh token a usar (null = usar token del request)
-     * @return array<string, mixed> ['access_token' => string, 'refresh_token' => string, 'user' => User]
+     * @return array{claims: array<string, mixed>, user: User}
      *
      * @throws JWTException
      */
-    public function refreshToken(?string $refreshToken = null): array
+    public function validateRefreshToken(?string $refreshToken): array
     {
         try {
             if (! $refreshToken) {
                 throw new TokenInvalidException('Refresh token no proporcionado');
             }
 
-            // IMPORTANTE: parseToken() intenta obtener el token del request automáticamente
-            // Solución: Modificar temporalmente el request para incluir el token en Authorization header
-            // antes de llamar a parseToken()
+            // parseToken() lee el token del request: se pone temporalmente en Authorization.
             $request = request();
             $originalAuthHeader = $request->header('Authorization');
 
             try {
-                // Agregar el refresh token al header Authorization temporalmente
                 $request->headers->set('Authorization', 'Bearer '.$refreshToken);
 
-                // Ahora parseToken() podrá obtener el token del request
                 $claims = $this->jwtAuth->parseToken()->getPayload()->toArray();
             } catch (TokenExpiredException $e) {
                 LogService::warning('Refresh token expirado al parsear', [
@@ -377,7 +390,6 @@ class TokenService implements TokenServiceInterface
 
                 throw new TokenInvalidException('Token inválido: '.$e->getMessage());
             } finally {
-                // Restaurar el header Authorization original
                 if ($originalAuthHeader) {
                     $request->headers->set('Authorization', $originalAuthHeader);
                 } else {
@@ -385,19 +397,15 @@ class TokenService implements TokenServiceInterface
                 }
             }
 
-            // Verificar que es un refresh token
             if (($claims['type'] ?? null) !== 'refresh') {
                 throw new TokenInvalidException('Token proporcionado no es un refresh token');
             }
 
-            // Obtener usuario del token ANTES de invalidarlo
-            // Obtener el ID del usuario desde el claim 'sub'
             $userId = $claims['sub'] ?? null;
             if (! $userId) {
                 throw new TokenInvalidException('Usuario no encontrado en el token');
             }
 
-            // Buscar el usuario en la base de datos
             $authenticatedUser = User::find($userId);
             if (! $authenticatedUser instanceof User) {
                 throw new TokenInvalidException('Usuario no encontrado');
@@ -421,31 +429,46 @@ class TokenService implements TokenServiceInterface
                 throw new TokenInvalidException('Sesión no permitida');
             }
 
-            // Revocar el refresh token antiguo (rotación)
-            // IMPORTANTE: invalidar después de obtener el usuario
-            // Configurar el token antes de invalidarlo
-            $this->jwtAuth->setToken($refreshToken)->invalidate(true);
+            return ['claims' => $claims, 'user' => $authenticatedUser];
+        } catch (TokenExpiredException $e) {
+            LogService::warning('Refresh token expirado', ['error' => $e->getMessage()], 'auth');
 
-            // Generar nuevos tokens
+            throw $e;
+        } catch (TokenInvalidException $e) {
+            LogService::warning('Refresh token inválido', ['error' => $e->getMessage()], 'auth');
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Renovar access token usando refresh token (con rotación por lista negra, SIN sesión).
+     *
+     * Es el camino de los tokens anteriores a las sesiones; el login actual rota con
+     * `AuthService::refreshToken()` (sesión + detección de reutilización).
+     *
+     * @param  string|null  $refreshToken  Refresh token a usar
+     * @return array<string, mixed> ['access_token' => string, 'refresh_token' => string, 'user' => User]
+     *
+     * @throws JWTException
+     */
+    public function refreshToken(?string $refreshToken = null): array
+    {
+        try {
+            $validated = $this->validateRefreshToken($refreshToken);
+            $authenticatedUser = $validated['user'];
+
+            // Revocar el refresh token antiguo (rotación) DESPUÉS de validar
+            $this->jwtAuth->setToken((string) $refreshToken)->invalidate(true);
+
             $newTokens = $this->generateTokens($authenticatedUser);
 
             LogService::info('Token renovado con rotación', [
                 'user_id' => $authenticatedUser->id,
             ], 'auth');
 
-            // Retornar tokens junto con el usuario
             return array_merge($newTokens, ['user' => $authenticatedUser]);
-        } catch (TokenExpiredException $e) {
-            LogService::warning('Refresh token expirado', [
-                'error' => $e->getMessage(),
-            ], 'auth');
-
-            throw $e;
-        } catch (TokenInvalidException $e) {
-            LogService::warning('Refresh token inválido', [
-                'error' => $e->getMessage(),
-            ], 'auth');
-
+        } catch (TokenExpiredException|TokenInvalidException $e) {
             throw $e;
         } catch (JWTException $e) {
             LogService::error('Error al renovar token', [

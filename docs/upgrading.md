@@ -56,6 +56,32 @@ punto de partida compara: `git diff <tu-commit-base> HEAD -- database/migrations
   El constructor de `FileService` recibe también `PlanLimitsInterface` (se resuelve por contenedor).
 - Programa `files:purge-intents` (ya está en `routes/console.php`; si tienes tu propio scheduler, añádelo cada hora).
 
+### Sesiones, 2FA y verificación de correo (ola 5.3-A)
+
+- **Migración** `2026_11_20_000280_create_user_sessions_table`: `make migrate`.
+- **Tokens anteriores.** Los JWT emitidos antes no llevan `sid`: siguen valiendo hasta que caducan y su refresh se
+  migra a una sesión al renovarse. Pasado `JWT_REFRESH_TTL` desde el despliegue pon `AUTH_REQUIRE_SESSION=true`
+  para que los tokens sin sesión dejen de valer. Si generas tokens a mano (`JWTAuth::fromUser`), no tendrán sesión.
+- **Refresh rotado.** Presentar el refresh inmediatamente anterior dentro de `AUTH_REFRESH_REUSE_GRACE` (10 s) da 401
+  `refresh_superseded` sin cerrar la sesión (carrera legítima); fuera de la gracia o con uno más antiguo se revoca la
+  sesión entera. El cliente debe guardar siempre el último `refresh_token` y no cerrar sesión ante `refresh_superseded`.
+- **2FA de la API = el del back-office.** Se reutilizan `users.app_authentication_secret` y
+  `app_authentication_recovery_codes`: quien ya tenga MFA en `/backoffice` recibirá desde ahora un desafío en
+  `POST /auth/login` (`data.two_factor_required`, `data.challenge_token`, sin tokens) y debe completar
+  `POST /auth/2fa/verify`. Adapta tu cliente o apaga la función con `AUTH_2FA_ENABLED=false`.
+- **Correo de verificación.** `POST /auth/register` envía `VerifyEmailNotification` (apágalo con
+  `AUTH_EMAIL_VERIFICATION_ON_REGISTER=false`); fija `AUTH_EMAIL_VERIFICATION_URL` a la pantalla del frontend. Nueva
+  plantilla `email_verification` en `mail_template_configs` (`MailTemplateConfig::seedDefaults()`). El alias
+  `verified` ahora es el de APYGG (403 `email_not_verified`). Cambiar el correo de un usuario
+  (`UserService::update`) anula `email_verified_at` y reenvía la verificación (`AUTH_EMAIL_VERIFICATION_ON_CHANGE`).
+  `UserService` ahora recibe `EmailVerificationServiceInterface` por constructor.
+- **Dependencia declarada**: `pragmarx/google2fa ^9.0` en `composer.json` (antes solo transitiva de Filament).
+- **Versión mínima de app.** `EnsureMinimumAppVersion` va en el grupo `api` pero está apagado (`APP_MIN_VERSION_ENABLED`).
+- **Códigos de error nuevos** (`two_factor_invalid`, `email_not_verified`, `app_update_required`): documentados en
+  `docs/api-response-structure.md`.
+- `TokenServiceInterface` añade `generateSessionTokens()` y `validateRefreshToken()`, y `generateRefreshToken()` acepta
+  claims; `AuthService` recibe tres dependencias nuevas (si lo extiendes, ajusta el constructor).
+
 ### Ajustes, feature flags y límites (ola 4.2-B)
 
 - `Feature::enabled()` y el middleware `feature:` ahora pasan por `FeatureFlagServiceInterface` (BD + caché + overrides). Con tablas vacías el resultado es el de `config/features.php`, igual que antes. `CheckFeatureFlag` recibe la interfaz por constructor: si lo instancias a mano, pásasela.
