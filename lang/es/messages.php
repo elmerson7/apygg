@@ -8,6 +8,8 @@ return [
     'errors' => [
         'not_found' => 'Recurso no encontrado.',
         'endpoint_not_found' => 'Endpoint no encontrado.',
+        'maintenance' => 'API en mantenimiento.',
+        'maintenance_detail' => 'El servicio está en mantenimiento. Inténtalo de nuevo más tarde.',
         'endpoint_not_found_detail' => 'El endpoint solicitado no existe.',
         'unauthenticated' => 'No autenticado',
         'unauthorized' => 'No autorizado',

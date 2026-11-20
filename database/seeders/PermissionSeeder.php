@@ -89,6 +89,10 @@ class PermissionSeeder extends Seeder
             ['name' => 'legal-documents.read', 'display_name' => 'Ver Documentos Legales', 'description' => 'Permite ver todas las versiones de los documentos legales'],
             ['name' => 'legal-documents.manage', 'display_name' => 'Publicar Documentos Legales', 'description' => 'Permite publicar versiones de términos, privacidad y otros documentos legales'],
 
+            // Impersonación de soporte y modo mantenimiento (docs/impersonation.md, docs/maintenance-mode.md)
+            ['name' => 'users.impersonate', 'display_name' => 'Impersonar Usuarios', 'description' => 'Permite actuar como otro usuario (soporte), con motivo obligatorio y auditado'],
+            ['name' => 'maintenance.manage', 'display_name' => 'Gestionar Modo Mantenimiento', 'description' => 'Permite activar y desactivar el modo mantenimiento de la API'],
+
             // Back-office (Filament, opcional): ver docs/backoffice.md
             ['name' => 'backoffice.access', 'display_name' => 'Acceder al Back-office', 'description' => 'Permite entrar al panel interno (Filament); además exige MFA. Cada recurso pide sus propios permisos'],
 

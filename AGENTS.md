@@ -298,6 +298,8 @@ Una norma por documento; esos archivos son la fuente de verdad de cada tema:
 - [`docs/i18n.md`](docs/i18n.md) → idioma, zona horaria y moneda por usuario/tenant/instalación, `LocaleResolver`, `lang/` con paridad de claves y correos en el idioma del destinatario.
 - [`docs/money.md`](docs/money.md) → dinero: `Money` (entero en unidad menor + ISO 4217), `MoneyCast`, regla `MoneyAmount`, `config/currencies.php`. Nunca float.
 - [`docs/sequences.md`](docs/sequences.md) → numeraciones atómicas (`SequenceInterface`): facturas, pedidos, tickets; nunca `count()+1` ni `max()+1`.
+- [`docs/impersonation.md`](docs/impersonation.md) → impersonación de soporte: token corto con claim `imp`, motivo obligatorio, rutas sensibles bloqueadas, auditoría con `impersonator_id`.
+- [`docs/maintenance-mode.md`](docs/maintenance-mode.md) → modo mantenimiento de la API (503 `maintenance`, estado en caché compartida, lista blanca).
 - [`docs/audit.md`](docs/audit.md) → auditoría de negocio por tenant: trait `Auditable` (diff sin secretos), acciones con motivo (`recordAction`/`requireReason`), `/tenant/audit` y export CSV, retención.
 - [`docs/settings-and-flags.md`](docs/settings-and-flags.md) → ajustes tipados por niveles (tenant -> plataforma -> default), feature flags en BD con porcentaje estable y límites por plan (`PlanLimits::guarded`).
 - [`docs/privacy.md`](docs/privacy.md) → RGPD/LGPD: consentimientos versionados, exportación de datos (portabilidad), borrado de cuenta con gracia y retención; un módulo con datos personales añade su `PersonalDataContributor` (etiqueta `privacy.contributors`).

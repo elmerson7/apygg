@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\Model as EloquentModel;
  * @property string|null $reason
  * @property string|null $ip_address
  * @property string|null $request_id
+ * @property string|null $impersonator_id
  * @property CarbonInterface $created_at
  */
 class AuditLog extends EloquentModel

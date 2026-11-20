@@ -9,6 +9,7 @@ use App\Helpers\Redactor;
 use App\Models\AuditLog;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Support\Impersonation;
 use App\Support\Tenancy\TenantContext;
 use App\Support\Tenancy\TenantRoles;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -22,7 +23,7 @@ use Illuminate\Http\Request;
  */
 class AuditService implements AuditServiceInterface
 {
-    private const CSV_HEADER = ['id', 'created_at', 'tenant_id', 'event', 'auditable_type', 'auditable_id', 'actor_type', 'actor_id', 'reason', 'ip_address', 'request_id', 'old_values', 'new_values'];
+    private const CSV_HEADER = ['id', 'created_at', 'tenant_id', 'event', 'auditable_type', 'auditable_id', 'actor_type', 'actor_id', 'reason', 'ip_address', 'request_id', 'old_values', 'new_values', 'impersonator_id'];
 
     public function __construct(private readonly TenantContext $tenants) {}
 
@@ -130,6 +131,8 @@ class AuditService implements AuditServiceInterface
             'reason' => $reason === null ? null : Redactor::redactString($reason),
             'ip_address' => $request->ip(),
             'request_id' => $this->requestId($request),
+            // Soporte impersonando (docs/impersonation.md): `actor_id` es el usuario suplantado; aquí, quien lo hace de verdad.
+            'impersonator_id' => Impersonation::actorId(),
         ]);
     }
 
@@ -252,6 +255,7 @@ class AuditService implements AuditServiceInterface
                 (string) $log->request_id,
                 $log->old_values === null ? '' : (string) json_encode($log->old_values, JSON_UNESCAPED_UNICODE),
                 $log->new_values === null ? '' : (string) json_encode($log->new_values, JSON_UNESCAPED_UNICODE),
+                (string) $log->impersonator_id,
             ];
         }
     }

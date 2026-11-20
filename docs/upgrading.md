@@ -38,6 +38,15 @@ punto de partida compara: `git diff <tu-commit-base> HEAD -- database/migrations
 - Nuevo `.env.deploy` (no versionado, plantilla `.env.deploy.example`) y `deploy/compose.prod.yml`: el compose de producción
   no incluye PostgreSQL ni Redis.
 
+### Impersonación y modo mantenimiento (ola 5.3-B)
+
+- Migración nueva `2026_11_20_000340_add_impersonator_to_audit_logs_table` (`make migrate`): `audit_logs.impersonator_id`.
+  El CSV de auditoría gana una última columna `impersonator_id`.
+- Permisos nuevos `users.impersonate` y `maintenance.manage` (vuelve a ejecutar `PermissionSeeder`; no se asignan a roles). Configs nuevas
+  `config/impersonation.php` y `config/maintenance.php`; `impersonation.start` se añade a `audit.reason_required`.
+- Dos middlewares nuevos al principio del grupo `api` en `bootstrap/app.php` (`CheckMaintenanceMode`, `EnforceImpersonation`).
+  Añade a `impersonation.blocked_routes` las rutas sensibles de tu proyecto.
+
 ### Auditoría de negocio (ola 5.2-D)
 
 - Migración nueva `2026_11_20_000260_create_audit_logs_table` (`make migrate`). Si tu proyecto tiene una tabla propia con

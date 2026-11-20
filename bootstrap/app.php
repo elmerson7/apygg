@@ -6,6 +6,8 @@ use App\Exceptions\BusinessLogicException;
 use App\Helpers\ApiResponse;
 use App\Http\Middleware\AdaptiveRateLimitingMiddleware;
 use App\Http\Middleware\CheckApiKeyScope;
+use App\Http\Middleware\CheckMaintenanceMode;
+use App\Http\Middleware\EnforceImpersonation;
 use App\Http\Middleware\CheckFeatureFlag;
 use App\Http\Middleware\CompressionMiddleware;
 use App\Http\Middleware\CorsMiddleware;
@@ -80,6 +82,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Middleware para API: todas las respuestas en JSON
         $middleware->api(prepend: [
             ResolveClientIpMiddleware::class, // IP real del cliente detrás de Cloudflare (antes que todo lo que use la IP)
+            CheckMaintenanceMode::class, // 503 `maintenance` (docs/maintenance-mode.md); necesita la IP real
+            EnforceImpersonation::class, // bloquea rutas sensibles y fija el tenant si el token es de impersonación
             SecurityHeadersMiddleware::class, // Headers de seguridad HTTP
             AdaptiveRateLimitingMiddleware::class, // Rate limiting adaptativo por tipo de endpoint
             ForceJsonResponse::class,

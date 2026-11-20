@@ -179,6 +179,8 @@ function archServiciosConInterfaz(): array
         'App\Services\Privacy\ConsentService' => 'App\Contracts\ConsentServiceInterface',
         'App\Services\Privacy\PersonalDataExportService' => 'App\Contracts\PersonalDataExportServiceInterface',
         'App\Services\Privacy\AccountDeletionService' => 'App\Contracts\AccountDeletionServiceInterface',
+        'App\Services\ImpersonationService' => 'App\Contracts\ImpersonationServiceInterface',
+        'App\Services\MaintenanceService' => 'App\Contracts\MaintenanceServiceInterface',
     ];
 }
 
