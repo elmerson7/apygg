@@ -82,3 +82,7 @@ está declarado para el módulo de miembros.
 |---|---|
 | `GET /admin/tenants/{id}/plan`, `PUT .../plan`, `PUT|DELETE .../limits/{key}` | `plan-limits.manage` |
 | `GET /tenant/limits` | `tenant-settings.read` |
+
+### Features por plan
+
+`config/plans.php` -> `plans.<plan>.features` declara qué flags incluye cada plan (`['*']` = todas). Si algún plan declara una flag, solo los tenants de esos planes la tienen (el override por tenant/usuario de plataforma sigue mandando; la flag global apagada también). Ver `docs/billing.md` §Bloqueo por estado.

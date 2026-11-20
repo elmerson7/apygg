@@ -35,6 +35,12 @@ punto de partida compara: `git diff <tu-commit-base> HEAD -- database/migrations
 - La numeración de facturas es **global** por defecto (`BILLING_INVOICE_SEQUENCE_SCOPE=global`). Los planes privados (`public: false`) ya no los contrata el tenant: los asigna la plataforma (`POST /admin/billing/tenants/{id}/plan`).
 - Variables nuevas en `.env.example`: `PAYMENTS_MODE`, `BILLING_*` (incluye `BILLING_RENEW_INACTIVE_TENANTS`). Fija `BILLING_INVOICE_SEQUENCE_SCOPE` antes de la primera factura: después no se puede cambiar (409). Programa `billing:renew` (ya está en `routes/console.php`; cada 15 min).
 
+### Bloqueo por estado de la suscripcion (ola 6.2-B)
+
+- Sin migraciones. `ResolveTenant` recibe `SubscriptionAccessInterface` (si lo construyes a mano, anadelo) y responde **402** a las escrituras de un tenant con suscripcion `past_due` fuera de gracia, `incomplete`, `canceled` o `expired` (`payment_required`, `subscription_inactive`); lectura y `billing.enforcement.allow_paths` siguen abiertas. Sin suscripcion no cambia nada (`BILLING_NO_SUBSCRIPTION=allow`). Apagalo con `BILLING_ENFORCEMENT_ENABLED=false`.
+- `PlanLimitsInterface` gana `includesFeature()`; `FeatureFlagService` recibe `PlanLimitsInterface`. `TenantInvitationService` recibe `PlanLimitsInterface` y aplica `max_members` (con `PLAN_LIMITS_ENABLED=true` invitar/aceptar por encima del tope da 403 `plan_limit_reached`).
+- `X-Subscription-Warning` se expone en CORS.
+
 ### Despliegue (ola 8.1-A)
 
 - **`cd.yml` se reescribe**: desaparecen las estrategias cpanel, railway, blue-green, canary y rolling (nunca se

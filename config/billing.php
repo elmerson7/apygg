@@ -54,6 +54,22 @@ return [
     // `false`: `billing:renew` no factura a tenants suspendidos o pendientes (se omiten y se registra en el log de seguridad).
     'renew_inactive_tenants' => (bool) env('BILLING_RENEW_INACTIVE_TENANTS', false),
 
+    // Bloqueo de escritura según el estado de la suscripción (docs/billing.md §Bloqueo por estado). Lo aplica `ResolveTenant`
+    // a toda ruta con `tenant`. `no_subscription`: `allow` (sin suscripción = plan gratuito, todo permitido) o `require`
+    // (sin suscripción, solo lectura). `past_due_grace_days`: días con escritura y aviso desde que se emitió la factura impagada.
+    'enforcement' => [
+        'enabled' => (bool) env('BILLING_ENFORCEMENT_ENABLED', true),
+        'no_subscription' => env('BILLING_NO_SUBSCRIPTION', 'allow'),
+        'past_due_grace_days' => (int) env('BILLING_PAST_DUE_GRACE_DAYS', 7),
+        // Siempre permitido aunque la empresa esté en solo lectura (patrones de `Request::is`).
+        'allow_paths' => [
+            'tenant/billing', 'tenant/billing/*',
+            'auth/*', 'user', 'user/*',
+            'health', 'health/*',
+            'webhooks/inbound/*',
+        ],
+    ],
+
     // Suscripciones procesadas por ejecución de `billing:renew`.
     'renew_batch' => 200,
 

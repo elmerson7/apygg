@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Contracts\LocaleResolverInterface;
+use App\Contracts\SubscriptionAccessInterface;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\Tenancy\Exceptions\MissingTenantContext;
@@ -35,6 +36,7 @@ class ResolveTenant
     public function __construct(
         private readonly TenantContext $context,
         private readonly LocaleResolverInterface $locale,
+        private readonly SubscriptionAccessInterface $access,
     ) {}
 
     public function handle(Request $request, Closure $next, string $mode = 'required'): Response
@@ -79,7 +81,16 @@ class ResolveTenant
         // El idioma del tenant entra en la cadena (usuario -> tenant -> cabecera): se reaplica; SetApiLocale lo restaura.
         App::setLocale($this->locale->locale());
 
-        return $next($request);
+        // Bloqueo por estado de la suscripción (402 en escritura si está impagada o cancelada; docs/billing.md).
+        $warning = $this->access->enforce($request, $tenant);
+
+        $response = $next($request);
+
+        if ($warning !== null) {
+            $response->headers->set('X-Subscription-Warning', $warning);
+        }
+
+        return $response;
     }
 
     public function terminate(Request $request, Response $response): void

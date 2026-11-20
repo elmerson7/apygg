@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Back-office: recursos para los módulos nuevos (empresas con miembros e invitaciones, suspender/reactivar y overrides de límites, auditoría, feature flags con overrides por empresa, supresión de correo, documentos legales con aceptaciones agregadas, mantenimiento, exportaciones/importaciones y datos personales). `TenantAdminServiceInterface` (suspender/reactivar con motivo auditado), permisos `tenants.read`/`tenants.manage`. Ver `docs/backoffice.md`
+- Bloqueo de escritura por estado de la suscripcion (ola 6.2-B, `docs/billing.md` §Bloqueo por estado): 402 `payment_required`/`subscription_inactive`/`subscription_required` con la accion sugerida, gracia configurable en `past_due` con `X-Subscription-Warning`, lista blanca y modo sin suscripcion; `max_members` aplicado al invitar/aceptar; features por plan (`plans.<plan>.features`) respetadas por `FeatureFlagService`.
 - Migraciones sin parada: guía en `docs/migrations.md` (§9-11), linter `php artisan migrations:lint` (`config/migration-lint.php`, `make migrations-lint`), clase base opcional `SafeMigration` (`lock_timeout`/`statement_timeout`) y job de CI `migrations` (aplica las nuevas sobre el esquema anterior y prueba el rollback)
 
 ### Changed

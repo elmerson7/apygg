@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Contracts\AuditServiceInterface;
+use App\Contracts\PlanLimitsInterface;
 use App\Contracts\TenantInvitationServiceInterface;
 use App\Enums\TenantMembershipStatus;
 use App\Exceptions\Tenancy\TenantOnboardingException;
@@ -32,7 +33,11 @@ use Illuminate\Support\Str;
  */
 class TenantInvitationService implements TenantInvitationServiceInterface
 {
-    public function __construct(private readonly TenantContext $context, private readonly AuditServiceInterface $audit) {}
+    public function __construct(
+        private readonly TenantContext $context,
+        private readonly AuditServiceInterface $audit,
+        private readonly PlanLimitsInterface $limits,
+    ) {}
 
     public function paginate(Tenant $tenant, User $actor, array $filters, int $perPage): LengthAwarePaginator
     {
@@ -84,6 +89,9 @@ class TenantInvitationService implements TenantInvitationServiceInterface
                 if ($max > 0 && TenantInvitation::query()->where('tenant_id', $tenant->getKey())->usable()->count() >= $max) {
                     throw TenantOnboardingException::invitationLimitReached();
                 }
+
+                // `max_members` del plan: miembros (activos o suspendidos) + invitaciones pendientes, con el tenant bloqueado.
+                $this->limits->ensureWithin('max_members', $this->seats($tenant), 1, (int) $tenant->getKey());
 
                 return TenantInvitation::create([
                     'email' => $email,
@@ -189,6 +197,10 @@ class TenantInvitationService implements TenantInvitationServiceInterface
                         throw TenantOnboardingException::alreadyMember();
                     }
 
+                    // Serializa con las altas y revisa `max_members` (tras una bajada de plan ya no caben más; nada se borra).
+                    Tenant::query()->whereKey($tenant->getKey())->lockForUpdate()->firstOrFail();
+                    $this->limits->ensureWithin('max_members', (int) DB::table('tenant_user')->where('tenant_id', $tenant->getKey())->count(), 1, (int) $tenant->getKey());
+
                     $tenant->users()->attach($user->getKey(), [
                         'status' => TenantMembershipStatus::Active->value,
                         'role' => $invitation->role,
@@ -217,6 +229,13 @@ class TenantInvitationService implements TenantInvitationServiceInterface
         ], 'security');
 
         return $tenant;
+    }
+
+    /** Plazas ocupadas: membresías (cualquier estado) + invitaciones pendientes aún utilizables. */
+    private function seats(Tenant $tenant): int
+    {
+        return (int) DB::table('tenant_user')->where('tenant_id', $tenant->getKey())->count()
+            + TenantInvitation::query()->where('tenant_id', $tenant->getKey())->usable()->count();
     }
 
     private function assertOpen(TenantInvitation $invitation, bool $allowExpired = false): void

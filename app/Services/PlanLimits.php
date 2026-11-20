@@ -48,6 +48,33 @@ class PlanLimits implements PlanLimitsInterface
         return $value === null ? null : (int) $value;
     }
 
+    public function includesFeature(string $feature, ?int $tenantId = null): ?bool
+    {
+        $tenantId ??= $this->tenants->enforcing() ? $this->tenants->id() : null;
+
+        if (! $this->enabled() || $tenantId === null) {
+            return null;
+        }
+
+        $gated = false;
+
+        foreach ((array) config('plans.plans', []) as $plan) {
+            $features = (array) ($plan['features'] ?? []);
+
+            if (in_array($feature, $features, true)) {
+                $gated = true;
+            }
+        }
+
+        if (! $gated) {
+            return null;
+        }
+
+        $features = (array) config("plans.plans.{$this->state($tenantId)['plan']}.features", []);
+
+        return in_array('*', $features, true) || in_array($feature, $features, true);
+    }
+
     public function check(string $key, int $current, int $adding = 1, ?int $tenantId = null): bool
     {
         $limit = $this->limit($key, $tenantId);
@@ -98,7 +125,12 @@ class PlanLimits implements PlanLimitsInterface
             ];
         }
 
-        return ['enabled' => $this->enabled(), 'plan' => $state['plan'], 'limits' => $limits];
+        return [
+            'enabled' => $this->enabled(),
+            'plan' => $state['plan'],
+            'limits' => $limits,
+            'features' => array_values(array_map('strval', (array) config("plans.plans.{$state['plan']}.features", []))),
+        ];
     }
 
     public function setPlan(int $tenantId, ?string $plan): void

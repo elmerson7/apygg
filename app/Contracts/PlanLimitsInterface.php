@@ -26,6 +26,12 @@ interface PlanLimitsInterface
      */
     public function limit(string $key, ?int $tenantId = null): ?int;
 
+    /**
+     * ¿El plan del tenant incluye la feature? `null` = la feature no está limitada por plan (ningún plan la declara en
+     * `features`) o los planes están apagados: decide solo la flag. `features => ['*']` incluye todas.
+     */
+    public function includesFeature(string $feature, ?int $tenantId = null): ?bool;
+
     /** ¿Cabe `$adding` más sobre `$current` sin pasarse? */
     public function check(string $key, int $current, int $adding = 1, ?int $tenantId = null): bool;
 

@@ -86,6 +86,7 @@ return [
         'X-RateLimit-Limit',
         'X-RateLimit-Remaining',
         'X-RateLimit-Reset',
+        'X-Subscription-Warning',
     ],
 
     /*

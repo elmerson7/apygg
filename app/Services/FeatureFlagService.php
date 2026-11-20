@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Contracts\FeatureFlagServiceInterface;
+use App\Contracts\PlanLimitsInterface;
 use App\Exceptions\FeatureFlagException;
 use App\Models\FeatureFlag;
 use App\Models\FeatureFlagOverride;
@@ -24,7 +25,7 @@ class FeatureFlagService implements FeatureFlagServiceInterface
 {
     private const DEFINITIONS_KEY = 'features:definitions';
 
-    public function __construct(private readonly TenantContext $tenants) {}
+    public function __construct(private readonly TenantContext $tenants, private readonly PlanLimitsInterface $plans) {}
 
     public function enabled(string $key, ?User $user = null): bool
     {
@@ -62,6 +63,12 @@ class FeatureFlagService implements FeatureFlagServiceInterface
             if ($override !== null) {
                 return $override;
             }
+        }
+
+        // Feature de plan (`config/plans.php` -> `features`): si el plan del tenant no la incluye, queda apagada
+        // (un override explícito de arriba, concedido por la plataforma, sí manda sobre el plan).
+        if ($tenantId !== null && $this->plans->includesFeature($key, $tenantId) === false) {
+            return false;
         }
 
         [$enabled, $percentage, $by] = $this->globalState($key);

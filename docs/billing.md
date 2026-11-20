@@ -3,7 +3,7 @@
 Planes, suscripción del tenant, facturas, ciclo de cobro y pasarela de pago (simulada o nula). **Es dinero**: importes
 siempre enteros en unidad menor + moneda (`docs/money.md`), numeración con `SequenceInterface` (`docs/sequences.md`),
 cobros con clave de idempotencia (`docs/integrations.md` §6) y todo cambio de estado auditado (`docs/audit.md`).
-Genérico: ningún negocio concreto. Stripe, conciliación, bloqueo de escritura por estado y avisos de morosidad llegan en las olas 6.2.
+Genérico: ningún negocio concreto. Stripe, conciliación y avisos de morosidad llegan en las olas 6.2; el bloqueo de escritura por estado está en §Bloqueo por estado.
 
 Módulo **quitable**: `app/Services/Billing/`, `app/Models/{Plan,PlanPrice,BillingAccount,Subscription,Invoice,InvoiceLine,Payment}.php`,
 `app/Integrations/Payments/`, `app/Events/Billing/`, `app/Http/*/Billing/`, `routes/api/billing.php`, `config/billing.php`, las
@@ -104,6 +104,29 @@ Las POST de contratar, cambiar, pagar y asignar plan admiten `Idempotency-Key` (
 - **PDF**: `GET /tenant/billing/invoices/{id}/pdf` (`tenant-billing.read` + rango en el tenant; la de otro tenant da 404) con `PdfRendererInterface` (dompdf) y la vista
   `resources/views/billing/invoice-pdf.blade.php`: emisor = marca de la **plataforma** (`BrandResolverInterface` resuelto sin el ajuste del tenant, para que el cliente no pueda
   cambiar al emisor), cliente = nombre del tenant, líneas, subtotal, impuesto y total formateados con `Money::format` en el idioma de la petición. Se genera al vuelo (no se guarda).
+
+## Bloqueo por estado
+
+`ResolveTenant` (alias `tenant`) consulta `SubscriptionAccessInterface::enforce()` tras fijar el tenant, así que **toda ruta con `tenant` queda cubierta sin declarar nada por ruta** (fail-closed). Sin estado entre peticiones ni caché: una lectura indexada por tenant, y un cambio de estado se nota en la petición siguiente. Config en `billing.enforcement` (`BILLING_ENFORCEMENT_ENABLED`, `BILLING_NO_SUBSCRIPTION`, `BILLING_PAST_DUE_GRACE_DAYS`).
+
+| Estado | Lectura (GET/HEAD/OPTIONS) | Escritura |
+|---|---|---|
+| `trialing`, `active` | si | si |
+| `past_due` dentro de la gracia (`past_due_grace_days`, 7, contados desde que se emitió la factura impagada más antigua; sin factura, desde el inicio del periodo) | si | si, con cabecera `X-Subscription-Warning: past_due; grace_ends_at=<ISO 8601>` |
+| `past_due` pasada la gracia | si | **402 `payment_required`** |
+| `incomplete` (primer pago sin cobrar) | si | **402 `payment_required`** |
+| `canceled`, `expired` | si | **402 `subscription_inactive`** |
+| sin suscripción | si | `no_subscription=allow` (por defecto, plan gratuito): si; `require`: **402 `subscription_required`** |
+
+El 402 incluye `subscription_status`, `access_mode`, `grace_ends_at`, `invoice_id` y `suggested_action` (`{action, method, path}`: `pay_invoice` -> `POST /tenant/billing/invoices/{id}/pay`, `resubscribe`/`choose_plan` -> `POST /tenant/billing/subscription`). Los clientes ramifican por `code`.
+
+Siempre permitido aunque haya bloqueo (`billing.enforcement.allow_paths`, patrones de `Request::is`): `tenant/billing*` (para poder pagar o recontratar), `auth/*`, `user*` (perfil, consentimientos, exportar y borrar datos personales), `health*` y `webhooks/inbound/*`. Un proyecto derivado añade ahi lo suyo (p. ej. «exportar mis datos»). Las rutas sin `tenant` (login, perfil, `/admin/*` de plataforma) no pasan por el bloqueo. `BILLING_ENFORCEMENT_ENABLED=false` lo apaga. Quitar el modulo de facturacion: quita tambien la dependencia de `ResolveTenant` en `SubscriptionAccessInterface`.
+
+### Límites y features al cambiar de plan
+
+- `PlanLimits` lee el plan de la suscripción con acceso (`trialing`/`active`/`past_due`); en solo lectura cae a `tenants.plan` o `plans.default`. Se aplica a **miembros** (`max_members`: miembros más invitaciones pendientes al invitar, y miembros al aceptar, con el tenant bloqueado), **API keys**, **almacenamiento** y **tamaño de archivo**.
+- **Al bajar de plan no se borra nada.** Lo que excede el nuevo tope se conserva y se puede leer y borrar; solo se frena el alta nueva (403 `plan_limit_reached`) hasta volver dentro del tope. Los límites solo cuentan al crear.
+- **Features por plan**: `config/plans.php` -> `plans.<plan>.features` (lista de claves de `config/features.php`, o `['*']`). Una feature que algun plan declara solo la tienen los tenants de esos planes; las que ningún plan declara dependen solo de la flag. `FeatureFlagService` (y `feature:` en rutas) lo respetan; la flag global apagada manda siempre y un override de plataforma por tenant/usuario concede la feature aunque el plan no la incluya.
 
 ## Ciclo de cobro: `billing:renew`
 
