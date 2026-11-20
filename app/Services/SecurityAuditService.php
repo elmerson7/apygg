@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\SecurityAnalysisProviderInterface;
 use App\Contracts\SecurityAuditServiceInterface;
 use App\Jobs\RunSecurityScanJob;
 use App\Models\ApiKey;
@@ -10,7 +11,6 @@ use App\Models\Logs\ApiLog;
 use App\Models\Logs\SecurityLog;
 use App\Models\SecurityScan;
 use App\Models\User;
-use App\Services\LLM\LlmGateway;
 use App\Support\Tenancy\TenantQuery;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -470,15 +470,10 @@ class SecurityAuditService implements SecurityAuditServiceInterface
      */
     public function analyzeWithLlm(array $findings, SecurityScan $scan): array
     {
-        $gateway = app(LlmGateway::class)
-            ->useCase('security.audit')
-            ->module('security')
-            ->withMeta(['scan_id' => $scan->id]);
-
-        $analysis = $gateway->structured([
+        $analysis = app(SecurityAnalysisProviderInterface::class)->analyze([
             ['role' => 'system', 'content' => $this->systemPrompt()],
             ['role' => 'user', 'content' => $this->analysisPrompt($scan, $findings)],
-        ]);
+        ], (int) $scan->id);
 
         if ($analysis === null) {
             // Sin IA el escaneo sigue siendo útil: los hallazgos locales ya

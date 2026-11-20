@@ -53,5 +53,6 @@ include make/openapi.mk
 include make/backup.mk
 include make/dev.mk
 include make/project.mk
+include make/modules.mk
 include make/deploy.mk
 include make/help.mk

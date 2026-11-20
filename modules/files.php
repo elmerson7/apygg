@@ -1,0 +1,36 @@
+<?php
+
+// Manifiesto del módulo de núcleo «files» (docs/modules.md): no se quita sin rehacer el boilerplate.
+return [
+    'description' => 'Archivos: subida, subida directa, cuotas.',
+    'core' => true,
+    'depends' => [],
+    'files' => [
+        'app/Console/Commands/FilesPurgeIntentsCommand.php',
+        'app/Contracts/DirectUploadServiceInterface.php',
+        'app/Contracts/FileServiceInterface.php',
+        'app/Exceptions/DirectUploadException.php',
+        'app/Exceptions/FileTooLargeForPlanException.php',
+        'app/Http/Controllers/Files',
+        'app/Http/Requests/Files',
+        'app/Http/Resources/Files',
+        'app/Models/File.php',
+        'app/Models/FileUploadIntent.php',
+        'app/Services/DirectUploadService.php',
+        'app/Services/FileService.php',
+        'config/files.php',
+        'config/filesystems.php',
+        'database/factories/FileFactory.php',
+        'database/migrations/2026_01_26_160701_create_files_table.php',
+        'database/migrations/2026_05_21_000001_create_user_profiles_table.php',
+        'docs/files.md',
+        'routes/api/files.php',
+        'tests/Concurrency/CuotaDeArchivosConcurrenteTest.php',
+        'tests/Feature/Files',
+    ],
+    'migrations' => [],
+    'tables' => [],
+    'permissions' => [],
+    'env' => [],
+    'packages' => [],
+];

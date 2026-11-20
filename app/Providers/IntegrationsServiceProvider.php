@@ -46,6 +46,7 @@ class IntegrationsServiceProvider extends ServiceProvider
             },
         ]);
 
+        // module:billing:start
         // Pasarela de pago (docs/billing.md). `real` = Stripe (PAYMENTS_PROVIDER).
         $this->bindByMode(PaymentGatewayInterface::class, 'payments', [
             'fake' => fn () => new FakePaymentGateway,
@@ -55,6 +56,7 @@ class IntegrationsServiceProvider extends ServiceProvider
                 default => throw new InvalidArgumentException('PAYMENTS_PROVIDER no válido: usa stripe (u otra pasarela registrada aquí, docs/billing.md §Añadir una pasarela)'),
             },
         ]);
+        // module:billing:end
 
         $this->bindByMode(PushTransportInterface::class, 'push', [
             'fake' => fn () => new FakePushTransport,

@@ -33,6 +33,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/email/verify', [EmailVerificationController::class, 'verify'])->name('auth.email.verify');
 });
 
+// module:reverb:start
 // Broadcasting auth (WebSockets - OPCIONAL)
 // Solo funciona si BROADCAST_CONNECTION=reverb está configurado
 // NOTA: Laravel también crea una ruta automática en routes/web.php
@@ -40,6 +41,7 @@ Route::prefix('auth')->group(function () {
 Route::post('/broadcasting/auth', [BroadcastAuthController::class, 'authenticate'])
     ->middleware('auth:api')
     ->name('broadcasting.auth');
+// module:reverb:end
 
 // Rutas protegidas de autenticación (requieren autenticación JWT)
 Route::middleware(['auth:api'])->prefix('auth')->group(function () {

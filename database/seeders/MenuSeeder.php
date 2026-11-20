@@ -27,13 +27,13 @@ class MenuSeeder extends Seeder
 
             ['key' => 'configuracion', 'label' => 'Configuración', 'route' => null, 'icon' => 'settings', 'permission' => 'system.settings', 'sort_order' => 80],
             ['key' => 'configuracion.correo', 'label' => 'Correo', 'route' => '/admin/mail', 'icon' => 'mail', 'permission' => 'mail.manage', 'parent_key' => 'configuracion', 'sort_order' => 81],
-            ['key' => 'configuracion.ia', 'label' => 'IA', 'route' => '/admin/llm', 'icon' => 'sparkles', 'permission' => 'llm.manage', 'parent_key' => 'configuracion', 'sort_order' => 82],
+            ['key' => 'configuracion.ia', 'label' => 'IA', 'route' => '/admin/llm', 'icon' => 'sparkles', 'permission' => 'llm.manage', 'parent_key' => 'configuracion', 'sort_order' => 82], // module:llm
             ['key' => 'configuracion.menu', 'label' => 'Menú', 'route' => '/admin/menu', 'icon' => 'list', 'permission' => 'menu.manage', 'parent_key' => 'configuracion', 'sort_order' => 83],
 
             ['key' => 'auditoria', 'label' => 'Auditoría', 'route' => null, 'icon' => 'file-text', 'permission' => 'system.logs', 'sort_order' => 90],
             ['key' => 'auditoria.logs', 'label' => 'Logs del sistema', 'route' => '/admin/logs', 'icon' => 'file-text', 'permission' => 'system.logs', 'parent_key' => 'auditoria', 'sort_order' => 91],
             ['key' => 'auditoria.correo', 'label' => 'Historial de correo', 'route' => '/admin/mail/logs', 'icon' => 'send', 'permission' => 'mail.logs', 'parent_key' => 'auditoria', 'sort_order' => 92],
-            ['key' => 'auditoria.ia', 'label' => 'Consumo de IA', 'route' => '/admin/llm/logs', 'icon' => 'activity', 'permission' => 'llm.logs', 'parent_key' => 'auditoria', 'sort_order' => 93],
+            ['key' => 'auditoria.ia', 'label' => 'Consumo de IA', 'route' => '/admin/llm/logs', 'icon' => 'activity', 'permission' => 'llm.logs', 'parent_key' => 'auditoria', 'sort_order' => 93], // module:llm
         ];
 
         foreach ($items as $item) {

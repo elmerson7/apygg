@@ -10,6 +10,20 @@ impacto en un proyecto existente están en `CHANGELOG.md`.
 
 ## De 1.0.0 a la versión actual (Unreleased)
 
+### Módulos opcionales quitables (ola 8.2-A)
+
+Sin cambios de comportamiento ni de rutas. Lo nuevo que afecta a un derivado:
+
+- **Contratos nuevos** (núcleo): `SubscriptionPlanSourceInterface` (`PlanLimits` ya no lee la tabla `subscriptions`; el
+  constructor de `PlanLimits` recibe el contrato) y `SecurityAnalysisProviderInterface` (`SecurityAuditService` ya no usa
+  `LlmGateway`). Si tu proyecto hereda de esas clases o las construye con `new`, pasa el contrato (resuélvelo del contenedor).
+- **`routes/api/maintenance.php`** nuevo: las rutas `/admin/maintenance` salen de `routes/api/impersonation.php`. Si tu
+  `routes/api.php` está personalizado, añade `require __DIR__.'/api/maintenance.php';`.
+- **Marcadores `// module:<nombre>`** en providers, rutas, seeders, `.env.example`, `docker-compose.yml`, `phpunit.xml` y tests
+  compartidos: no cambian nada al ejecutar; son los que usa `make module-remove`. Si resuelves conflictos de merge, consérvalos.
+- Para quitar un módulo en un derivado ya desplegado, usa `make module-remove name=X` (conserva las migraciones y crea una
+  de baja); solo antes del primer despliegue admite `--purge-migrations`.
+
 La versión 1.0.0 es la de `CHANGELOG.md` (2026-01-27). Todo lo de abajo sale de
 `CHANGELOG.md`, `git log` y `.env.example`; no hay tag, así que si dudas de tu
 punto de partida compara: `git diff <tu-commit-base> HEAD -- database/migrations .env.example`.

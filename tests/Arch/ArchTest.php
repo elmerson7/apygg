@@ -100,7 +100,7 @@ test('los controladores no dependen de servicios concretos: solo de App\Contract
     // Excepciones justificadas, por archivo: LlmGateway es un constructor fluido con
     // estado por llamada (useCase()->module()->chat()), no un servicio inyectable.
     $excepciones = [
-        'app/Http/Controllers/Llm/LlmAreaController.php' => ['App\Services\LLM\LlmGateway'],
+        'app/Http/Controllers/Llm/LlmAreaController.php' => ['App\Services\LLM\LlmGateway'], // module:llm
     ];
 
     $violaciones = [];
@@ -150,8 +150,8 @@ function archServiciosConInterfaz(): array
         'App\Services\BackupService' => 'App\Contracts\BackupServiceInterface',
         'App\Services\SecurityAuditService' => 'App\Contracts\SecurityAuditServiceInterface',
         'App\Services\Menu\MenuService' => 'App\Contracts\MenuServiceInterface',
-        'App\Services\Docs\DocsService' => 'App\Contracts\DocsServiceInterface',
-        'App\Services\Docs\DocsIndexer' => 'App\Contracts\DocsIndexerInterface',
+        'App\Services\Docs\DocsService' => 'App\Contracts\DocsServiceInterface', // module:docs-assistant
+        'App\Services\Docs\DocsIndexer' => 'App\Contracts\DocsIndexerInterface', // module:docs-assistant
         'App\Services\Mail\MailAccountService' => 'App\Contracts\MailAccountServiceInterface',
         'App\Services\Mail\MailEventStatusService' => 'App\Contracts\MailEventStatusServiceInterface',
         'App\Services\Mail\MailSendPolicy' => 'App\Contracts\MailSendPolicyInterface',
@@ -160,8 +160,8 @@ function archServiciosConInterfaz(): array
         'App\Services\Mail\SvixSignatureVerifier' => 'App\Contracts\WebhookSignatureVerifierInterface',
         'App\Services\Webhooks\InboundWebhookService' => 'App\Contracts\InboundWebhookServiceInterface',
         'App\Services\Webhooks\DnsHostResolver' => 'App\Contracts\HostResolverInterface',
-        'App\Services\ExportService' => 'App\Contracts\ExportServiceInterface',
-        'App\Services\ImportService' => 'App\Contracts\ImportServiceInterface',
+        'App\Services\ExportService' => 'App\Contracts\ExportServiceInterface', // module:export-import
+        'App\Services\ImportService' => 'App\Contracts\ImportServiceInterface', // module:export-import
         'App\Services\Pdf\DompdfRenderer' => 'App\Contracts\PdfRendererInterface',
         'App\Services\I18n\LocaleResolver' => 'App\Contracts\LocaleResolverInterface',
         'App\Services\I18n\LocaleSettingsService' => 'App\Contracts\LocaleSettingsServiceInterface',
@@ -177,22 +177,23 @@ function archServiciosConInterfaz(): array
         'App\Services\SessionService' => 'App\Contracts\SessionServiceInterface',
         'App\Services\TwoFactorService' => 'App\Contracts\TwoFactorServiceInterface',
         'App\Services\EmailVerificationService' => 'App\Contracts\EmailVerificationServiceInterface',
-        'App\Services\Privacy\ConsentService' => 'App\Contracts\ConsentServiceInterface',
-        'App\Services\Privacy\PersonalDataExportService' => 'App\Contracts\PersonalDataExportServiceInterface',
-        'App\Services\Privacy\AccountDeletionService' => 'App\Contracts\AccountDeletionServiceInterface',
-        'App\Services\ImpersonationService' => 'App\Contracts\ImpersonationServiceInterface',
-        'App\Services\MaintenanceService' => 'App\Contracts\MaintenanceServiceInterface',
-        'App\Services\Billing\PlanCatalog' => 'App\Contracts\PlanCatalogInterface',
-        'App\Services\Billing\BillingAccountService' => 'App\Contracts\BillingAccountServiceInterface',
-        'App\Services\Billing\SubscriptionLifecycle' => 'App\Contracts\SubscriptionLifecycleInterface',
-        'App\Services\Billing\InvoiceService' => 'App\Contracts\InvoiceServiceInterface',
-        'App\Services\Billing\PaymentProcessor' => 'App\Contracts\PaymentProcessorInterface',
-        'App\Services\Billing\PaymentReconciler' => 'App\Contracts\PaymentReconcilerInterface',
-        'App\Services\Billing\PaymentDiscrepancyService' => 'App\Contracts\PaymentDiscrepancyServiceInterface',
-        'App\Services\Billing\SubscriptionService' => 'App\Contracts\SubscriptionServiceInterface',
-        'App\Services\Billing\RenewalService' => 'App\Contracts\RenewalServiceInterface',
-        'App\Services\Billing\SubscriptionAccess' => 'App\Contracts\SubscriptionAccessInterface',
-        'App\Services\Billing\BillingNoticeService' => 'App\Contracts\BillingNoticeServiceInterface',
+        'App\Services\Privacy\ConsentService' => 'App\Contracts\ConsentServiceInterface', // module:privacy
+        'App\Services\Privacy\PersonalDataExportService' => 'App\Contracts\PersonalDataExportServiceInterface', // module:privacy
+        'App\Services\Privacy\AccountDeletionService' => 'App\Contracts\AccountDeletionServiceInterface', // module:privacy
+        'App\Services\ImpersonationService' => 'App\Contracts\ImpersonationServiceInterface', // module:impersonation
+        'App\Services\MaintenanceService' => 'App\Contracts\MaintenanceServiceInterface', // module:maintenance
+        'App\Services\Billing\PlanCatalog' => 'App\Contracts\PlanCatalogInterface', // module:billing
+        'App\Services\Billing\BillingAccountService' => 'App\Contracts\BillingAccountServiceInterface', // module:billing
+        'App\Services\Billing\SubscriptionLifecycle' => 'App\Contracts\SubscriptionLifecycleInterface', // module:billing
+        'App\Services\Billing\InvoiceService' => 'App\Contracts\InvoiceServiceInterface', // module:billing
+        'App\Services\Billing\PaymentProcessor' => 'App\Contracts\PaymentProcessorInterface', // module:billing
+        'App\Services\Billing\PaymentReconciler' => 'App\Contracts\PaymentReconcilerInterface', // module:billing
+        'App\Services\Billing\PaymentDiscrepancyService' => 'App\Contracts\PaymentDiscrepancyServiceInterface', // module:billing
+        'App\Services\Billing\SubscriptionService' => 'App\Contracts\SubscriptionServiceInterface', // module:billing
+        'App\Services\Billing\RenewalService' => 'App\Contracts\RenewalServiceInterface', // module:billing
+        'App\Services\Billing\SubscriptionAccess' => 'App\Contracts\SubscriptionAccessInterface', // module:billing
+        'App\Services\Billing\SubscriptionPlanSource' => 'App\Contracts\SubscriptionPlanSourceInterface', // module:billing
+        'App\Services\Billing\BillingNoticeService' => 'App\Contracts\BillingNoticeServiceInterface', // module:billing
     ];
 }
 

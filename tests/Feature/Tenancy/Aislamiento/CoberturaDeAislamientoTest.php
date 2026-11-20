@@ -22,12 +22,12 @@ const AISLAMIENTO_MODELOS_CUBIERTOS = [
     'App\Models\ApiKey' => 'ApiKeysAislamientoTest.php',
     'App\Models\TenantInvitation' => 'InvitacionesAislamientoTest.php',
     'App\Models\InboxNotification' => 'NotificacionesAislamientoTest.php',
-    'App\Models\Subscription' => 'FacturacionAislamientoTest.php',
-    'App\Models\Invoice' => 'FacturacionAislamientoTest.php',
-    'App\Models\Payment' => 'FacturacionAislamientoTest.php',
-    'App\Models\BillingAccount' => 'FacturacionAislamientoTest.php',
-    'App\Models\BillingNotice' => 'AvisosFacturacionAislamientoTest.php',
-    'App\Models\PaymentDiscrepancy' => 'FacturacionAislamientoTest.php',
+    'App\Models\Subscription' => 'FacturacionAislamientoTest.php', // module:billing
+    'App\Models\Invoice' => 'FacturacionAislamientoTest.php', // module:billing
+    'App\Models\Payment' => 'FacturacionAislamientoTest.php', // module:billing
+    'App\Models\BillingAccount' => 'FacturacionAislamientoTest.php', // module:billing
+    'App\Models\BillingNotice' => 'AvisosFacturacionAislamientoTest.php', // module:billing
+    'App\Models\PaymentDiscrepancy' => 'FacturacionAislamientoTest.php', // module:billing
 ];
 
 /**
@@ -41,8 +41,8 @@ const AISLAMIENTO_TABLAS_CUBIERTAS = [
     'sequences' => 'SecuenciasAislamientoTest.php',
     'idempotency_keys' => 'IdempotenciaAislamientoTest.php',
     'inbound_webhook_receipts' => 'WebhooksEntrantesAislamientoTest.php',
-    'data_exports' => 'ExportarAislamientoTest.php',
-    'data_imports' => 'ExportarAislamientoTest.php',
+    'data_exports' => 'ExportarAislamientoTest.php', // module:export-import
+    'data_imports' => 'ExportarAislamientoTest.php', // module:export-import
     'tenant_user' => 'MiembrosAislamientoTest.php',
     'notification_deliveries' => 'NotificacionesAislamientoTest.php',
     'feature_flag_overrides' => 'FeatureFlagsYPlanAislamientoTest.php',

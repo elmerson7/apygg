@@ -45,6 +45,7 @@ Schedule::command('mail:logs-clean')
         Log::error('Falló la limpieza del historial de correo');
     });
 
+// module:llm:start
 // Limpieza de la auditoría de IA: cada día a las 2:45 AM
 Schedule::command('llm:prune-logs')
     ->dailyAt('02:45')
@@ -52,6 +53,7 @@ Schedule::command('llm:prune-logs')
     ->onFailure(function () {
         Log::error('Falló la limpieza de la auditoría de IA');
     });
+// module:llm:end
 
 // Generación de reportes: cada semana (lunes) a las 8 AM
 Schedule::command('reports:generate')
@@ -77,6 +79,7 @@ Schedule::command('backup:clean')
         Log::error('Falló la limpieza de backups antiguos');
     });
 
+// module:search:start
 // Sincronización de índices de búsqueda: cada hora
 Schedule::command('search:sync-indexes')
     ->hourly()
@@ -84,6 +87,7 @@ Schedule::command('search:sync-indexes')
     ->onFailure(function () {
         Log::error('Falló la sincronización de índices de búsqueda');
     });
+// module:search:end
 
 // Verificación de salud de servicios: cada 5 minutos
 Schedule::command('health:check')
@@ -164,6 +168,7 @@ Schedule::command('audit:prune')
         Log::error('Falló la retención de la auditoría');
     });
 
+// module:export-import:start
 // Exportar/importar: borra archivos caducados (docs/export-import.md)
 Schedule::command('exports:prune')
     ->hourly()
@@ -171,7 +176,9 @@ Schedule::command('exports:prune')
     ->onFailure(function () {
         Log::error('Falló la limpieza de exportaciones e importaciones');
     });
+// module:export-import:end
 
+// module:privacy:start
 // Privacidad: borrados de cuenta vencidos (cada hora) y caducidad de exportaciones (a diario 3:45)
 Schedule::command('privacy:process-deletions')
     ->hourly()
@@ -179,14 +186,18 @@ Schedule::command('privacy:process-deletions')
     ->onFailure(function () {
         Log::error('Falló el procesado de borrados de cuenta');
     });
+// module:privacy:end
 
+// module:privacy:start
 Schedule::command('privacy:purge')
     ->dailyAt('03:45')
     ->withoutOverlapping()
     ->onFailure(function () {
         Log::error('Falló la purga de privacidad');
     });
+// module:privacy:end
 
+// module:billing:start
 // Facturación (docs/billing.md): renovaciones vencidas, reintentos de cobro, altas sin pagar y cobros interrumpidos.
 // Cada 15 minutos; seguro con varias instancias a la vez (bloqueo por suscripción + índices únicos).
 Schedule::command('billing:renew')
@@ -195,7 +206,9 @@ Schedule::command('billing:renew')
     ->onFailure(function () {
         Log::error('El ciclo de cobro (billing:renew) falló');
     });
+// module:billing:end
 
+// module:billing:start
 // Avisos de facturación con antelación (docs/billing.md §Avisos): fin de prueba y renovación próxima. Idempotente.
 Schedule::command('billing:notify')
     ->hourly()
@@ -203,7 +216,9 @@ Schedule::command('billing:notify')
     ->onFailure(function () {
         Log::error('Los avisos de facturación (billing:notify) fallaron');
     });
+// module:billing:end
 
+// module:billing:start
 // Conciliación con la pasarela (docs/billing.md §Conciliación): cobros inciertos por clave/id, 3DS vencidos y cobros sin reflejo.
 // Cada 10 minutos, antes de que `billing:renew` reenvíe nada (ambos son seguros en cualquier orden).
 Schedule::command('payments:reconcile')
@@ -212,3 +227,4 @@ Schedule::command('payments:reconcile')
     ->onFailure(function () {
         Log::error('La conciliación de pagos (payments:reconcile) falló');
     });
+// module:billing:end

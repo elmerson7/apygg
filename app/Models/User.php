@@ -57,7 +57,10 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery, HasLocalePreference, JWTSubject
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, HasRoles, InteractsWithAppAuthentication, InteractsWithAppAuthenticationRecovery, LogsActivity, Notifiable, Searchable, SoftDeletes, SoftDeletesWithUser;
+    use HasApiTokens, HasFactory, HasRoles, LogsActivity, Notifiable, SoftDeletes, SoftDeletesWithUser;
+
+    use InteractsWithAppAuthentication, InteractsWithAppAuthenticationRecovery; // 2FA del núcleo (TwoFactorService)
+    use Searchable; // module:search
 
     /** Memo de `isPlatformAdmin()` (solo con equipos de Spatie); se invalida al soltar la relación `roles`. */
     private ?bool $platformAdminMemo = null;
@@ -264,7 +267,7 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
             return false;
         }
 
-        return $this->can('backoffice.access');
+        return $this->can((string) config('backoffice.permission', 'backoffice.access'));
     }
 
     /**
@@ -348,6 +351,7 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         return $query->where('email', $email);
     }
 
+    // module:search:start
     /**
      * Get the indexable data array for the model.
      * Sobrescribe el método del trait Searchable para personalizar los campos indexables.
@@ -420,4 +424,5 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
             'email_verified_at',
         ];
     }
+    // module:search:end
 }

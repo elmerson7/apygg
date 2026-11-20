@@ -410,7 +410,8 @@ class UserService implements UserServiceInterface
 
             if ($meilisearchAvailable) {
                 // 1. Meilisearch: typo tolerance para name, email, username
-                $matchedIds = User::search($searchTerm)->get()->pluck('id');
+                // `search()` lo aporta el módulo `search` (trait Searchable de Scout); solo se llega aquí si está activo.
+                $matchedIds = collect(call_user_func([User::class, 'search'], $searchTerm)->get())->pluck('id');
 
                 // 2. SQL ILIKE: substring matching para identity_document
                 //    (Meilisearch no soporta %substring%)

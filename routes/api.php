@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Route;
 
 // Ruta raíz
 Route::get('/', function () {
-    $broadcastingEnabled = config('broadcasting.default') !== 'null';
+    $broadcastingEnabled = config('broadcasting.default') !== 'null'; // module:reverb
 
     $response = [
         'name' => config('app.title'),
@@ -22,12 +22,13 @@ Route::get('/', function () {
             'health_live' => '/health/live',
             'health_ready' => '/health/ready',
             'health_detailed' => '/health/detailed',
-            'search' => '/search',
+            'search' => '/search', // module:search
             'webhooks' => '/webhooks',
             'documentation' => '/docs/api',
         ],
     ];
 
+    // module:reverb:start
     if ($broadcastingEnabled) {
         $response['websockets'] = [
             'enabled' => true,
@@ -35,6 +36,7 @@ Route::get('/', function () {
             'documentation' => '/docs/websockets.md',
         ];
     }
+    // module:reverb:end
 
     return response()->json($response);
 });
@@ -51,14 +53,14 @@ Route::middleware(['auth:api'])->get('/health/detailed', [HealthController::clas
 // Público
 require __DIR__.'/api/auth.php';
 require __DIR__.'/api/files.php';
-require __DIR__.'/api/search.php';
+require __DIR__.'/api/search.php'; // module:search
 require __DIR__.'/api/webhooks.php';
 require __DIR__.'/api/mail.php';
 require __DIR__.'/api/inbound-webhooks.php';
-require __DIR__.'/api/llm.php';
+require __DIR__.'/api/llm.php'; // module:llm
 require __DIR__.'/api/menu.php';
 require __DIR__.'/api/security.php';
-require __DIR__.'/api/docs.php';
+require __DIR__.'/api/docs.php'; // module:docs-assistant
 require __DIR__.'/api/settings.php';
 require __DIR__.'/api/tenant-onboarding.php';
 
@@ -69,7 +71,7 @@ require __DIR__.'/api/user.php';
 require __DIR__.'/api/notifications.php';
 
 // Privacidad: documentos legales, consentimientos, exportación y borrado de cuenta (/legal, /user/consents...)
-require __DIR__.'/api/privacy.php';
+require __DIR__.'/api/privacy.php'; // module:privacy
 
 // Idioma, zona horaria y moneda (/user/locale, /tenant/locale)
 require __DIR__.'/api/i18n.php';
@@ -85,9 +87,10 @@ require __DIR__.'/api/feature-flags.php';
 require __DIR__.'/api/plans.php';
 require __DIR__.'/api/tenant-settings.php';
 require __DIR__.'/api/audit.php';
-require __DIR__.'/api/export-import.php';
-require __DIR__.'/api/impersonation.php';
-require __DIR__.'/api/billing.php';
+require __DIR__.'/api/export-import.php'; // module:export-import
+require __DIR__.'/api/impersonation.php'; // module:impersonation
+require __DIR__.'/api/maintenance.php'; // module:maintenance
+require __DIR__.'/api/billing.php'; // module:billing
 // ─────────────────────────────────────────────────────────────────────────────────
 
 // Solo local/testing: son endpoints de diagnóstico que fuerzan excepciones y logs.

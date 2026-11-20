@@ -123,6 +123,7 @@ return [
         |   max_bytes      tope propio
         */
         'providers' => [
+            // module:billing:start
             // Stripe: firma `Stripe-Signature` (t=...,v1=...), recibo único por `event.id` (docs/billing.md §Stripe).
             'stripe' => [
                 'secret_config' => 'services.stripe.webhook_secret',
@@ -135,6 +136,7 @@ return [
                 // El PaymentIntent trae su `client_secret` (permite confirmarlo desde el front): no se guarda en BD.
                 'strip_payload' => ['data.object.client_secret'],
             ],
+            // module:billing:end
             'resend' => [
                 'secret_config' => 'services.resend.webhook_secret',
                 'signature' => ['driver' => 'svix'],

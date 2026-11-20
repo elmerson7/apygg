@@ -80,6 +80,7 @@ class EventServiceProvider extends ServiceProvider
             WebhookListener::class,
         ],
 
+        // module:billing:start
         // Avisos de facturación a dueños/admins (docs/billing.md §Avisos)
         InvoicePaid::class => [
             [SendBillingNotices::class, 'handleInvoicePaid'],
@@ -90,6 +91,7 @@ class EventServiceProvider extends ServiceProvider
         SubscriptionCanceled::class => [
             [SendBillingNotices::class, 'handleSubscriptionCanceled'],
         ],
+        // module:billing:end
     ];
 
     /**

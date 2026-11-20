@@ -283,6 +283,15 @@ Guía completa: `docs/testing.md`.
   (`app/Logging/FiltersDeprecationWarnings.php`, configurable en
   `config/logging.php` → `deprecation_filter`).
 
+## Módulos opcionales
+
+- Cada pieza vertical es un módulo con manifiesto `modules/<nombre>.php`; `docs/modules.md` lista los módulos, cómo
+  quitarlos (`make module-remove name=X`, con `DRY=1` para simular) y cómo crear uno (`make module-new name=X`).
+- Lo que un módulo opcional pone en un archivo compartido (binding, `require` de rutas, schedule, permiso, env…) lleva el
+  marcador `// module:<nombre>` (o bloque `module:<nombre>:start` … `:end`): sin él, `module:remove` no puede limpiarlo.
+- El núcleo nunca importa un módulo opcional: usa un contrato con valor por defecto nulo (ver `docs/modules.md`).
+- Un archivo nuevo debe pertenecer a un módulo (`ModulosInventarioTest` falla si no).
+
 ## Normas
 
 Una norma por documento; esos archivos son la fuente de verdad de cada tema:

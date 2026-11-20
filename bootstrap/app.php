@@ -82,8 +82,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Middleware para API: todas las respuestas en JSON
         $middleware->api(prepend: [
             ResolveClientIpMiddleware::class, // IP real del cliente detrás de Cloudflare (antes que todo lo que use la IP)
-            CheckMaintenanceMode::class, // 503 `maintenance` (docs/maintenance-mode.md); necesita la IP real
-            EnforceImpersonation::class, // bloquea rutas sensibles y fija el tenant si el token es de impersonación
+            CheckMaintenanceMode::class, // 503 `maintenance` (docs/maintenance-mode.md); necesita la IP real // module:maintenance
+            EnforceImpersonation::class, // bloquea rutas sensibles y fija el tenant si el token es de impersonación // module:impersonation
             SecurityHeadersMiddleware::class, // Headers de seguridad HTTP
             AdaptiveRateLimitingMiddleware::class, // Rate limiting adaptativo por tipo de endpoint
             ForceJsonResponse::class,
@@ -95,7 +95,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         // Exige aceptar la versión vigente de los documentos legales obligatorios (apagado por defecto; docs/privacy.md).
-        $middleware->api(append: [\App\Http\Middleware\EnsureLegalConsents::class]);
+        $middleware->api(append: [\App\Http\Middleware\EnsureLegalConsents::class]); // module:privacy
 
         // Proxies de confianza (X-Forwarded-*). TRUSTED_PROXIES: lista separada por
         // comas de IPs/CIDR, o '*' para confiar en cualquiera. Por defecto vacío:

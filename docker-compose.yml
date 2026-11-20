@@ -32,6 +32,7 @@ services:
       redis:
         condition: service_healthy
 
+  # module:reverb:start
   reverb:
     <<: *app
     container_name: ${PROJECT:-apygg}-reverb
@@ -47,6 +48,7 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+  # module:reverb:end
 
   horizon:
     <<: *app
@@ -157,6 +159,7 @@ services:
       - network
     restart: unless-stopped
 
+  # module:search:start
   meilisearch:
     profiles: ["search"]
     build:
@@ -179,6 +182,7 @@ services:
     networks:
       - network
     restart: unless-stopped
+  # module:search:end
 
   # ── Servicios de desarrollo (perfil "dev"): make up-dev ─────────────────
   # Solo para trabajar en local. Puertos únicamente en 127.0.0.1.
@@ -261,7 +265,9 @@ volumes:
     name: ${PROJECT:-apygg}-pgdata
   redisdata:
     name: ${PROJECT:-apygg}-redisdata
+  # module:search:start
   meilidata:
     name: ${PROJECT:-apygg}-meilidata
+  # module:search:end
   s3data:
     name: ${PROJECT:-apygg}-s3data

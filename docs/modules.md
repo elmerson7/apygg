@@ -1,94 +1,162 @@
-# Módulos: cómo se organiza uno y cómo añadirlo
+# Módulos: qué hay, cómo quitar uno y cómo añadir otro
 
-Un «módulo» en APYGG es una pieza vertical (ruta → controller → servicio → modelo → permisos →
-tests) que se puede entender y, en los opcionales, quitar sin tocar el resto. Referencias
-reales para imitar: **Archivos** (`files`), **Webhooks**, **Correo** (`mail`).
+APYGG es un boilerplate: lo que un SaaS no use se **quita con un comando**, y lo que falte se añade con el
+mismo esqueleto. Un «módulo» es una pieza vertical (ruta → controller → servicio → modelo → permisos → tests →
+doc). Cada módulo tiene un **manifiesto** `modules/<nombre>.php` que dice qué archivos le pertenecen, de qué
+depende, qué tablas crea y qué permisos siembra. Referencias reales para imitar: **Archivos** (`files`),
+**Webhooks** (`webhooks`), **Correo** (`mail`).
 
-## Anatomía de un módulo (hoy)
+```bash
+make module-list                          # módulos, estado (presente/quitado), dependencias
+make module-remove name=billing DRY=1     # simulación: lo que borraría y editaría
+make module-remove name=billing           # lo quita y verifica que la app arranca
+make module-new name=mi-modulo            # esqueleto de un módulo nuevo
+```
 
-| Capa | Dónde | Regla |
+(`php artisan module:list | module:remove | module:new` por debajo; todo dentro del contenedor.)
+
+## Mapa de módulos
+
+**Núcleo** (no se quita sin rehacer el boilerplate): `auth` (JWT, sesiones, 2FA, API keys), `users`, `roles`
+(Spatie), `tenancy` (multiempresa), `files`, `mail`, `notifications`, `audit`, `settings-flags` (ajustes, flags,
+límites por plan, menú, i18n, dinero, numeraciones), `idempotency`, `logging`, `security`, `webhooks` (salientes: lo usan de recurso de ejemplo las pruebas de auditoría y
+aislamiento y migraciones del núcleo tocan sus tablas), `inbound-webhooks` y
+`plataforma` (base de controllers/modelos, proveedores, config, Docker, CI, scripts, docs).
+
+**Opcionales** (se pueden quitar uno a uno):
+
+| Módulo | Qué incluye | Depende de | Tablas | Apagarlo sin quitarlo |
+|---|---|---|---|---|
+| `llm` | Gateway de IA, áreas, auditoría de consumo | — | `llm_areas`, `logs_llm` | Sin `LLM_URL`/`LLM_API_KEY` usa `NullProvider` |
+| `docs-assistant` | Asistente RAG sobre `docs/` | `llm` | `doc_chunks`, `doc_conversations` | Sin LLM responde solo con búsqueda |
+| `backoffice` | Panel Filament (MFA) | — | — | `BACKOFFICE_ENABLED=false` |
+| `billing` | Planes, suscripción, facturas, Stripe, conciliación, bloqueo y avisos | — | `plans`, `plan_prices`, `billing_accounts`, `subscriptions`, `invoices`, `invoice_lines`, `payments`, `payment_discrepancies`, `billing_notices` | `PAYMENTS_MODE=null`, `BILLING_ENFORCEMENT_ENABLED=false` |
+| `export-import` | Exportar/importar CSV/XLSX con cola | — | `data_exports`, `data_imports` | — |
+| `privacy` | Documentos legales, consentimientos, exportación y borrado de cuenta | — | `legal_documents`, `user_consents`, `personal_data_exports`, `account_deletion_requests` | `PRIVACY_CONSENTS_ENFORCE=false` |
+| `impersonation` | Impersonación de soporte auditada | — | — | `IMPERSONATION_ENABLED=false` |
+| `maintenance` | Modo mantenimiento (503) | — | — | — |
+| `search` | Scout/Meilisearch y `/search` | — | — | `SCOUT_DRIVER=database` |
+| `reverb` | WebSockets (autenticación de canales) | — | — | `BROADCAST_CONNECTION=null` |
+
+Solo `docs-assistant → llm` es una dependencia dura: `module:remove llm` se niega mientras `docs-assistant`
+esté presente. El resto son independientes; los puntos de contacto se resuelven con puntos de extensión (abajo).
+
+## Qué hace `module:remove`
+
+1. Comprueba que ningún módulo **presente** depende del que quitas (y que no es núcleo).
+2. **Borra** los archivos del manifiesto (`files`: app, config, rutas, tests, doc, vistas, factories, Filament…).
+3. Quita de los archivos compartidos las líneas con **marcadores** `module:<nombre>` (bindings en providers,
+   `require` de rutas, schedule de `routes/console.php`, permisos de `PermissionSeeder`/`RoleSeeder`, menú,
+   `.env.example`, `docker-compose.yml`, `phpunit.xml`, `AGENTS.md`, tests compartidos) y los `use` de las clases borradas.
+4. Crea una migración **nueva** `*_drop_<modulo>_module_tables.php` que elimina sus tablas (`DROP TABLE IF EXISTS … CASCADE`).
+5. Ejecuta Pint sobre lo editado, `composer dump-autoload`, `route:list` (la app arranca) y `openapi:export`
+   (el contrato `docs/openapi.json` cambia al quitar rutas).
+6. Avisa de los paquetes de composer que ya no usa nadie (`composer remove …`; no se ejecuta solo).
+
+Es **idempotente** (un módulo ya quitado no hace nada) y `--dry-run` no toca nada.
+
+### Migraciones: las dos opciones
+
+- **Por defecto (seguro, también para proyectos desplegados):** las migraciones que crearon las tablas **se
+  conservan** (ya están aplicadas en otros entornos y migraciones posteriores del núcleo las tocan, p. ej.
+  `tenant_id` y `jsonb`) y la migración de baja elimina las tablas. En una BD nueva se crean y se borran justo
+  después: coste cero y ningún entorno diverge.
+- **`--purge-migrations` (solo antes del primer despliegue):** borra también las migraciones del módulo y no crea
+  la de baja, así la BD nueva nace sin esas tablas. Un manifiesto con `'purgeable' => false` no lo admite. Si el
+  proyecto ya desplegó, no la uses (`docs/migrations.md`: migraciones inmutables).
+
+La migración de baja es irreversible (`down()` vacío): recupera los datos de una copia de seguridad.
+
+## Marcadores en archivos compartidos
+
+Un archivo compartido (provider, rutas, seeders…) marca lo que pertenece a un módulo para que `module:remove`
+lo pueda quitar sin conocer el archivo:
+
+```php
+$this->app->bind(FooInterface::class, Foo::class); // module:foo           ← línea suelta
+// module:foo:start
+...varias líneas...
+// module:foo:end                                                           ← bloque
+```
+
+Valen `//`, `#`, `<!-- -->` y `{{-- --}}` (PHP, `.env.example`, YAML, Markdown, Blade). Un bloque sin cerrar
+aborta la baja antes de tocar nada. `tests/Feature/Modulos/ModulosInventarioTest.php` comprueba que cada marcador
+apunta a un módulo opcional real y que los bloques están balanceados.
+
+## El manifiesto
+
+```php
+// modules/billing.php
+return [
+    'description' => '…',
+    'core'        => false,          // true = núcleo (no se quita)
+    'depends'     => [],             // módulos de los que depende
+    'files'       => ['app/Services/Billing', 'routes/api/billing.php', 'tests/Feature/Billing', …], // archivo, carpeta o patrón con *
+    'migrations'  => ['database/migrations/…'],  // se conservan salvo --purge-migrations
+    'tables'      => ['plans', …],   // las elimina la migración de baja
+    'permissions' => ['billing.manage', …],      // informativo (se quitan con marcadores)
+    'env'         => [],             // informativo
+    'packages'    => [],             // composer: solo si NADIE más los usa
+    'purgeable'   => true,           // false = no admite --purge-migrations
+];
+```
+
+Regla del inventario (`ModulosInventarioTest`): **cada archivo** de `app/`, `routes/`, `config/`, `database/`,
+`lang/`, `resources/`, `tests/`, `make/`, `stubs/`, `docker/` y `scripts/` pertenece a un módulo (núcleo u
+opcional), ningún archivo es de dos opcionales y el núcleo no depende de un opcional. Un archivo nuevo sin dueño
+hace fallar el test: añádelo al manifiesto de su módulo.
+
+## Desacoplamientos (puntos de extensión)
+
+El núcleo nunca importa un módulo opcional. Donde necesita algo de uno, define un contrato con valor por defecto
+(null-object) que el módulo sustituye con su propio `bind` (el último binding gana; la línea del módulo lleva marcador):
+
+| Contrato (núcleo) | Por defecto (núcleo) | Lo sustituye |
 |---|---|---|
-| Rutas | `routes/api/<modulo>.php`, incluido con `require` en `routes/api.php` | Sin prefijo `/api`; `docs/api-routes-conventions.md`. Cada ruta con `permission:x.y,api` (guard `api` explícito); `->name('modulo.recurso.accion')`, sin nombres duplicados |
-| Controller | `app/Http/Controllers/<Modulo>/XController.php` | Extiende `Controller`, **solo importa `App\Contracts`** (ArchTest), respuestas con `sendSuccess`/`sendError`/`sendPaginated`, acciones tipadas (`store(StoreXRequest $request)`). `docs/CONTROLLER_CONVENTIONS.md` |
-| Form Requests | `app/Http/Requests/<Modulo>/` | Heredan de `BaseFormRequest` (ArchTest) |
-| Resource | `app/Http/Resources/<Modulo>/` | Heredan de `BaseResource`; nunca devuelvas el modelo crudo |
-| Servicio | interfaz en `app/Contracts/XServiceInterface.php`, clase en `app/Services/XService.php`, `bind` en `ContractServiceProvider`, línea en `archServiciosConInterfaz()` | `docs/CODING_STANDARDS.md` → «Crear un servicio nuevo» |
-| Modelo | `app/Models/X.php` (hereda de `App\Models\Model`) | Sin servicios ni capa HTTP (ArchTest) |
-| Policy | `app/Policies/XPolicy.php` (`FilePolicy`, `UserPolicy`…) y `$this->authorize()` en el controller | Para reglas que dependen del recurso («¿es tuyo?»). El middleware `permission:` solo es la puerta de la ruta |
-| Permisos | `PermissionSeeder::catalog()` (+ `RoleSeeder`) | Nombre `recurso.accion`; `PermissionCatalogTest` falla si usas un permiso sin sembrar o siembras uno sin uso. `docs/permissions.md` |
-| Jobs | `app/Jobs/` extienden `Job` | `docs/queues-and-jobs.md` |
-| Config | `config/<modulo>.php` + `.env.example` | Nunca `env()` en servicios/controllers |
-| Tests | `tests/Feature/<Modulo>/` (+ `tests/Unit/`) | Nombres en español, tercera persona; **camino denegado obligatorio** (403/401/422), p. ej. `ArchivosTest` comprueba `assertForbidden()` con otro usuario |
-| Docs | `docs/<modulo>.md` | Qué hace, endpoints, permisos, variables |
-| Multiempresa | trait `BelongsToTenant`, middleware `tenant` | Si el módulo guarda datos de una empresa: `tenant_id` + trait + ruta con `tenant`. `docs/multi-tenancy.md` |
+| `SubscriptionAccessInterface` (lo usa `ResolveTenant`) | `NullSubscriptionAccess`: acceso completo, sin avisos | `billing` → `SubscriptionAccess` (402 por impago) |
+| `SubscriptionPlanSourceInterface` (lo usa `PlanLimits`) | `NullSubscriptionPlanSource`: sin suscripción → `tenants.plan` | `billing` → `SubscriptionPlanSource` |
+| `SecurityAnalysisProviderInterface` (lo usa `SecurityAuditService`) | `NullSecurityAnalysisProvider`: escaneo sin análisis de IA | `llm` → `LlmSecurityAnalysisProvider` |
 
-## Checklist: añadir un módulo nuevo
+Además: `Support\Impersonation` (lector de claims del JWT) es núcleo y devuelve null sin el módulo; `User` conserva
+las interfaces de Filament porque el 2FA del núcleo usa sus traits (el paquete `filament/filament` se queda);
+`UserService` solo llama a `User::search()` si `scout.driver` es `meilisearch` (config que aporta `search`).
 
-Antes: ¿sirve a cualquier proyecto que parta del boilerplate? Si es lógica de un negocio
-concreto, **no va aquí** (`AGENTS.md`). Si es dinero o un servicio de terceros, lee antes
-`docs/money.md` y `docs/integrations.md`.
+## Probar que se puede quitar cada módulo
 
-1. **Migración** nueva (nunca editar las publicadas): `jsonb`, índices, `down()`, estados como
-   string. `docs/migrations.md`. Luego `make testdb-migrate`.
-2. **Modelo** hereda de `App\Models\Model`; `$fillable`, casts (`bigint` → `integer`), relaciones;
-   scopes sin estrechar la firma del base.
-3. **Interfaz + servicio + binding** (`bind`) + registro en `archServiciosConInterfaz()`.
-   Errores de dominio con `BusinessLogicException`, nada de `\Exception`.
-4. **Form Requests** (`Store…Request`, `Update…Request`) heredando de `BaseFormRequest`.
-5. **Resource** que defina la forma pública (sin campos internos ni secretos).
-6. **Controller** que inyecta la **interfaz**, tipa los Form Requests, usa `findOrFail`/route-model
-   binding, `sendSuccess`/`sendPaginated` y `$this->authorize()` si hay regla por recurso. Listados
-   con `->paginate()` y eager loading.
-7. **Policy** si hay reglas por recurso (dueño, jerarquía).
-8. **Permisos**: añádelos a `PermissionSeeder::catalog()` y al rol que corresponda en
-   `RoleSeeder`; en entornos existentes `db:seed --class=PermissionSeeder`.
-9. **Rutas**: `routes/api/<modulo>.php` con `auth:api` + `permission:x.y,api` y nombres; añade el
-   `require` en `routes/api.php`.
-10. **Cola/eventos** si aplica: job que extiende `Job`, cola declarada en Horizon, `afterCommit`.
-11. **Cache**: si un listado público cacheado cambia, invalida su clave (`docs/cache-invalidation.md`).
-12. **Config y `.env.example`** (y `docs/upgrading.md` si rompe proyectos derivados).
-13. **Tests Feature** con camino feliz **y denegado** (sin token, sin permiso, de otro usuario);
-    unitarios del servicio. Si hay concurrencia (contadores, numeraciones, idempotencia): un test
-    de `tests/Concurrency/`. **Si el módulo tiene datos por empresa** (`BelongsToTenant` / `tenant_id`):
-    prueba de aislamiento A/B en `tests/Feature/Tenancy/Aislamiento/` con la plantilla
-    `tests/Support/AssertsTenantIsolation.php` y registra el modelo en `CoberturaDeAislamientoTest`
-    (lo exige el meta-test); ver `docs/multi-tenancy.md` §«Cómo probar el aislamiento de un recurso nuevo».
-14. **Documentación** `docs/<modulo>.md` y enlace desde `AGENTS.md` si es una norma.
-15. **`make check`** (Pint + PHPStan nivel 6) y `make test`. Todo en Docker vía Make.
+En CI, el job `modules-removed` (`.github/workflows/ci.yml`) lo hace en tres escenarios (sin ningún opcional, solo sin
+`billing`, solo sin `backoffice`): `module:remove`, `php artisan about`, migrar, `openapi:export` y la suite restante.
 
-## Núcleo y módulos opcionales
+`tests/Unit/Modules/` prueba el motor (marcadores, baja, idempotencia) sobre un proyecto de juguete. La prueba de
+verdad —quitar cada opcional **en una copia temporal** del repo y comprobar que arranca, que las rutas cargan y
+que PHPStan, Pint y la suite restante pasan— se ejecuta así (nunca en el repo real):
 
-**Núcleo (no se quita sin rehacer el boilerplate):** autenticación JWT y sesiones, usuarios,
-roles y permisos (Spatie), tokens de API y API keys, archivos, ajustes, webhooks salientes,
-correo (`mail`), notificaciones, logs/auditoría y seguridad, health checks, cola/Horizon, caché.
+```bash
+rsync -a --exclude .git ./ /tmp/apygg-copia/ && cd /tmp/apygg-copia
+make module-remove name=billing     # o: php artisan module:remove billing
+php artisan route:list >/dev/null && make check && make test
+```
 
-**Opcionales:** se pueden apagar o quitar. Lo que está comprobado en el repo:
+## Añadir un módulo nuevo
 
-| Módulo | Qué incluye | Apagarlo sin quitarlo | Quitarlo |
-|---|---|---|---|
-| **Back-office (Filament)** | `app/Filament/`, `BackofficePanelProvider`, `config/backoffice.php` | `BACKOFFICE_ENABLED=false` (el panel no se registra; `/backoffice` da 404) | Procedimiento completo y comprobado en `docs/backoffice.md` → «Quitar el módulo» |
-| **LLM** | `app/Services/LLM/`, `routes/api/llm.php`, `config/llm.php`, tablas `llm_areas` y `logs_llm`, permisos `llm.manage`/`llm.logs` | Sin `LLM_URL`/`LLM_API_KEY` se usa `NullProvider` (respuesta «skipped», sin red); flags por caso de uso en `config/features.php` (`docs/llm.md`) | Ver nota 1 |
-| **Docs RAG** | `app/Services/Docs/`, `routes/api/docs.php`, `docs:index`, tablas `doc_chunks` y `doc_conversations`; depende de LLM para responder | Sin LLM devuelve solo búsqueda (`docs/docs-assistant.md` → «Sin LLM configurado») | Ver nota 1 |
-| **Búsqueda (Scout/Meilisearch)** | `app/Traits/Searchable.php`, `routes/api/search.php`, `config/scout.php`, servicio `meilisearch` | `SCOUT_DRIVER=database`; `AppServiceProvider` ya cae solo a `database` si Meilisearch no responde | Ver nota 1 |
-| **Reverb (WebSockets)** | `laravel/reverb`, `config/reverb.php`, `routes/channels.php`, servicio `reverb` | `BROADCAST_CONNECTION=null` (la raíz `/` ya omite la sección `websockets` si es `null`) | Ver nota 1 |
+`make module-new name=mi-modulo` genera el esqueleto de la checklist (manifiesto, interfaz + servicio + `bind`
+con marcador, controller, Form Request, ruta, permiso en `PermissionSeeder::catalog()`, entrada en
+`archServiciosConInterfaz()`, test con 401/403/200 y doc). Después completa a mano:
 
-**Nota 1 — quitar un opcional.** Solo el back-office tiene un procedimiento completo y
-verificado. Para los demás, el orden seguro es el mismo, pero **no está comprobado paso a paso**
-en el repo, hazlo en una rama y deja que `make check` y los tests te lo confirmen:
+1. **Migración** nueva (nunca editar las publicadas): `jsonb`, índices, `down()`. `docs/migrations.md`. Anótala
+   en `migrations` y sus tablas en `tables` del manifiesto.
+2. **Modelo** (`App\Models\Model`; `BelongsToTenant` si guarda datos de una empresa) y, si procede, policy.
+3. **Resource** de la respuesta pública y Form Requests tipados (`BaseFormRequest`); listados con `->paginate()`.
+4. **Permisos** en `RoleSeeder` si algún rol los trae de serie (en su propia línea con marcador).
+5. **Cola/eventos/schedule**: jobs que extienden `Job`; el `Schedule::command(...)` de `routes/console.php`
+   envuelto en `// module:nombre:start` … `:end`.
+6. **Config y `.env.example`** (bloque con marcadores) y `docs/upgrading.md` si rompe derivados.
+7. **Tests**: camino feliz y denegado; **aislamiento A/B** si hay datos por empresa
+   (`tests/Support/AssertsTenantIsolation.php`, `CoberturaDeAislamientoTest`); concurrencia si hay contadores.
+8. **Doc** `docs/<modulo>.md` con su sección «Quitar el módulo».
+9. `make check`, `make test`, `make openapi` y `make module-remove name=… DRY=1` (debe listar todo lo suyo).
 
-1. Quita el `require` de su archivo en `routes/api.php`.
-2. Borra controllers, requests, resources, servicios, contratos, modelos y `config/<modulo>.php`;
-   quita su binding de `ContractServiceProvider` y su línea de `archServiciosConInterfaz()`.
-3. Quita sus permisos de `PermissionSeeder::catalog()` y de `RoleSeeder`, y bórralos en los
-   entornos existentes (`PermissionCatalogTest` lo exige); `permission:cache-reset`.
-4. Quita sus tests y su doc. Quita variables de `.env.example` y `phpunit.xml`.
-5. `composer remove <paquete>` si el paquete ya no lo usa nadie (`laravel/reverb`,
-   `meilisearch/meilisearch-php`, `laravel/scout`…); comprueba referencias residuales en
-   `User`, el menú (`MenuService`) y `docker-compose.yml`.
-6. **Las migraciones ya publicadas no se borran** (`docs/migrations.md`): crea una migración que
-   elimine sus tablas, o déjalas inertes. Un proyecto nuevo puede omitirlas antes del primer despliegue.
-7. `make check` y `make test`.
+Antes de empezar: ¿sirve a cualquier proyecto que parta del boilerplate? Si es lógica de un negocio concreto,
+**no va aquí** (`AGENTS.md`). Si es dinero o un tercero, lee `docs/money.md` y `docs/integrations.md`.
 
-Un módulo opcional nuevo debe cumplir: todo bajo su propia carpeta, un único interruptor en
-`.env`, sin que el núcleo lo importe (dependencia solo hacia el núcleo), y su sección «Quitar el
-módulo» en su doc.
+Un módulo opcional debe cumplir: todo bajo carpetas propias, un único interruptor en `.env`, el núcleo no lo
+importa (dependencia solo hacia el núcleo, o punto de extensión con valor nulo) y su sección «Quitar el módulo».

@@ -33,8 +33,8 @@ class PermissionSeeder extends Seeder
             ['name' => 'users.update', 'display_name' => 'Actualizar Usuarios', 'description' => 'Permite editar los datos de otros usuarios'],
             ['name' => 'users.delete', 'display_name' => 'Eliminar Usuarios', 'description' => 'Permite eliminar usuarios'],
             ['name' => 'users.restore', 'display_name' => 'Restaurar Usuarios', 'description' => 'Permite restaurar usuarios eliminados'],
-            ['name' => 'users.export', 'display_name' => 'Exportar Usuarios', 'description' => 'Permite exportar usuarios a CSV/XLSX y consultar sus propias exportaciones'],
-            ['name' => 'users.import', 'display_name' => 'Importar Usuarios', 'description' => 'Permite importar usuarios desde CSV/XLSX con vista previa'],
+            ['name' => 'users.export', 'display_name' => 'Exportar Usuarios', 'description' => 'Permite exportar usuarios a CSV/XLSX y consultar sus propias exportaciones'], // module:export-import
+            ['name' => 'users.import', 'display_name' => 'Importar Usuarios', 'description' => 'Permite importar usuarios desde CSV/XLSX con vista previa'], // module:export-import
             ['name' => 'users.manage-roles', 'display_name' => 'Gestionar Roles de Usuarios', 'description' => 'Permite asignar y quitar roles a usuarios'],
 
             // Roles
@@ -66,15 +66,15 @@ class PermissionSeeder extends Seeder
             ['name' => 'menu.manage', 'display_name' => 'Gestionar Menú', 'description' => 'Permite configurar los ítems del menú y su visibilidad'],
 
             // IA
-            ['name' => 'llm.manage', 'display_name' => 'Gestionar IA', 'description' => 'Permite configurar las áreas y modelos de IA'],
-            ['name' => 'llm.logs', 'display_name' => 'Ver Auditoría de IA', 'description' => 'Permite consultar el consumo y la auditoría de las llamadas a IA'],
+            ['name' => 'llm.manage', 'display_name' => 'Gestionar IA', 'description' => 'Permite configurar las áreas y modelos de IA'], // module:llm
+            ['name' => 'llm.logs', 'display_name' => 'Ver Auditoría de IA', 'description' => 'Permite consultar el consumo y la auditoría de las llamadas a IA'], // module:llm
 
             // Multiempresa (docs/multi-tenancy.md)
             ['name' => 'tenants.access-any', 'display_name' => 'Acceder a Cualquier Tenant', 'description' => 'Permite entrar en cualquier tenant activo sin ser miembro (soporte de plataforma)'],
 
             ['name' => 'tenant-settings.manage', 'display_name' => 'Gestionar Ajustes del Tenant', 'description' => 'Permite cambiar los ajustes de la empresa activa (idioma, zona horaria y moneda por defecto)'],
             ['name' => 'tenant-members.read', 'display_name' => 'Ver Miembros del Tenant', 'description' => 'Permite listar los miembros de la empresa activa'],
-            ['name' => 'tenant-members.export', 'display_name' => 'Exportar Miembros del Tenant', 'description' => 'Permite exportar a CSV/XLSX los miembros de la empresa activa'],
+            ['name' => 'tenant-members.export', 'display_name' => 'Exportar Miembros del Tenant', 'description' => 'Permite exportar a CSV/XLSX los miembros de la empresa activa'], // module:export-import
             ['name' => 'tenant-members.manage', 'display_name' => 'Gestionar Miembros del Tenant', 'description' => 'Permite cambiar el rol, suspender, reactivar y quitar miembros de la empresa activa'],
             ['name' => 'tenant-invitations.manage', 'display_name' => 'Gestionar Invitaciones del Tenant', 'description' => 'Permite listar, crear, reenviar y revocar invitaciones a la empresa activa'],
             // Ajustes, flags y límites (docs/settings-and-flags.md)
@@ -86,23 +86,23 @@ class PermissionSeeder extends Seeder
             // Auditoría de negocio (docs/audit.md)
             ['name' => 'tenant-audit.read', 'display_name' => 'Ver Auditoría del Tenant', 'description' => 'Permite ver y exportar la auditoría de la empresa activa'],
             ['name' => 'audit.read', 'display_name' => 'Ver Auditoría de la Plataforma', 'description' => 'Permite ver y exportar la auditoría de todas las empresas'],
-            ['name' => 'legal-documents.read', 'display_name' => 'Ver Documentos Legales', 'description' => 'Permite ver todas las versiones de los documentos legales'],
-            ['name' => 'legal-documents.manage', 'display_name' => 'Publicar Documentos Legales', 'description' => 'Permite publicar versiones de términos, privacidad y otros documentos legales'],
+            ['name' => 'legal-documents.read', 'display_name' => 'Ver Documentos Legales', 'description' => 'Permite ver todas las versiones de los documentos legales'], // module:privacy
+            ['name' => 'legal-documents.manage', 'display_name' => 'Publicar Documentos Legales', 'description' => 'Permite publicar versiones de términos, privacidad y otros documentos legales'], // module:privacy
 
             // Impersonación de soporte y modo mantenimiento (docs/impersonation.md, docs/maintenance-mode.md)
-            ['name' => 'users.impersonate', 'display_name' => 'Impersonar Usuarios', 'description' => 'Permite actuar como otro usuario (soporte), con motivo obligatorio y auditado'],
-            ['name' => 'maintenance.manage', 'display_name' => 'Gestionar Modo Mantenimiento', 'description' => 'Permite activar y desactivar el modo mantenimiento de la API'],
+            ['name' => 'users.impersonate', 'display_name' => 'Impersonar Usuarios', 'description' => 'Permite actuar como otro usuario (soporte), con motivo obligatorio y auditado'], // module:impersonation
+            ['name' => 'maintenance.manage', 'display_name' => 'Gestionar Modo Mantenimiento', 'description' => 'Permite activar y desactivar el modo mantenimiento de la API'], // module:maintenance
 
             // Facturación y suscripciones (docs/billing.md)
-            ['name' => 'tenant-billing.read', 'display_name' => 'Ver Facturación del Tenant', 'description' => 'Permite ver la suscripción, el método de pago y las facturas de la empresa activa'],
-            ['name' => 'tenant-billing.manage', 'display_name' => 'Gestionar Facturación del Tenant', 'description' => 'Permite contratar, cambiar de plan, cancelar, reanudar, pagar facturas y cambiar el método de pago de la empresa activa'],
-            ['name' => 'billing.manage', 'display_name' => 'Gestionar Facturación de la Plataforma', 'description' => 'Permite marcar facturas como pagadas a mano y conceder periodos gratis a cualquier empresa'],
+            ['name' => 'tenant-billing.read', 'display_name' => 'Ver Facturación del Tenant', 'description' => 'Permite ver la suscripción, el método de pago y las facturas de la empresa activa'], // module:billing
+            ['name' => 'tenant-billing.manage', 'display_name' => 'Gestionar Facturación del Tenant', 'description' => 'Permite contratar, cambiar de plan, cancelar, reanudar, pagar facturas y cambiar el método de pago de la empresa activa'], // module:billing
+            ['name' => 'billing.manage', 'display_name' => 'Gestionar Facturación de la Plataforma', 'description' => 'Permite marcar facturas como pagadas a mano y conceder periodos gratis a cualquier empresa'], // module:billing
             // Empresas desde el back-office (plataforma)
-            ['name' => 'tenants.read', 'display_name' => 'Ver Empresas', 'description' => 'Permite listar y ver las empresas (tenants) de la plataforma, sus miembros e invitaciones'],
-            ['name' => 'tenants.manage', 'display_name' => 'Gestionar Empresas', 'description' => 'Permite suspender y reactivar empresas, con motivo obligatorio y auditado'],
+            ['name' => 'tenants.read', 'display_name' => 'Ver Empresas', 'description' => 'Permite listar y ver las empresas (tenants) de la plataforma, sus miembros e invitaciones'], // module:backoffice
+            ['name' => 'tenants.manage', 'display_name' => 'Gestionar Empresas', 'description' => 'Permite suspender y reactivar empresas, con motivo obligatorio y auditado'], // module:backoffice
 
             // Back-office (Filament, opcional): ver docs/backoffice.md
-            ['name' => 'backoffice.access', 'display_name' => 'Acceder al Back-office', 'description' => 'Permite entrar al panel interno (Filament); además exige MFA. Cada recurso pide sus propios permisos'],
+            ['name' => 'backoffice.access', 'display_name' => 'Acceder al Back-office', 'description' => 'Permite entrar al panel interno (Filament); además exige MFA. Cada recurso pide sus propios permisos'], // module:backoffice
 
             // Sistema
             ['name' => 'system.settings', 'display_name' => 'Gestionar Configuración', 'description' => 'Permite ver la sección de configuración del sistema en el menú'],

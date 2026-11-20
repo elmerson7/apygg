@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Contracts\PlanLimitsInterface;
-use App\Enums\SubscriptionStatus;
+use App\Contracts\SubscriptionPlanSourceInterface;
 use App\Exceptions\PlanLimitReachedException;
 use App\Exceptions\PlanLimitUnknownException;
 use App\Models\Tenant;
@@ -20,7 +20,10 @@ use Illuminate\Support\Facades\DB;
  */
 class PlanLimits implements PlanLimitsInterface
 {
-    public function __construct(private readonly TenantContext $tenants) {}
+    public function __construct(
+        private readonly TenantContext $tenants,
+        private readonly SubscriptionPlanSourceInterface $subscriptions,
+    ) {}
 
     public function enabled(): bool
     {
@@ -187,11 +190,7 @@ class PlanLimits implements PlanLimitsInterface
             function () use ($tenantId): array {
                 // La suscripción con derecho a uso (en prueba, activa o en gracia por impago) manda sobre `tenants.plan`,
                 // que queda como respaldo y para asignar planes a mano sin facturación (docs/billing.md).
-                $plan = DB::table('subscriptions')
-                    ->where('tenant_id', $tenantId)
-                    ->whereIn('status', SubscriptionStatus::accessValues())
-                    ->whereNull('deleted_at')
-                    ->value('plan_code') ?? Tenant::query()->whereKey($tenantId)->value('plan');
+                $plan = $this->subscriptions->planCodeFor($tenantId) ?? Tenant::query()->whereKey($tenantId)->value('plan');
 
                 return [
                     'plan' => is_string($plan) && config("plans.plans.{$plan}") !== null ? $plan : (string) config('plans.default', 'free'),

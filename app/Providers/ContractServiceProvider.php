@@ -50,6 +50,7 @@ use App\Contracts\PlanLimitsInterface;
 use App\Contracts\Privacy\DeletionSecondFactorInterface;
 use App\Contracts\RenewalServiceInterface;
 use App\Contracts\RoleServiceInterface;
+use App\Contracts\SecurityAnalysisProviderInterface;
 use App\Contracts\SecurityAuditServiceInterface;
 use App\Contracts\SecurityServiceInterface;
 use App\Contracts\SequenceInterface;
@@ -58,6 +59,7 @@ use App\Contracts\SettingsRegistryInterface;
 use App\Contracts\SettingsServiceInterface;
 use App\Contracts\SubscriptionAccessInterface;
 use App\Contracts\SubscriptionLifecycleInterface;
+use App\Contracts\SubscriptionPlanSourceInterface;
 use App\Contracts\SubscriptionServiceInterface;
 use App\Contracts\TenantAdminServiceInterface;
 use App\Contracts\TenantInvitationServiceInterface;
@@ -82,6 +84,7 @@ use App\Services\Billing\PlanCatalog;
 use App\Services\Billing\RenewalService;
 use App\Services\Billing\SubscriptionAccess;
 use App\Services\Billing\SubscriptionLifecycle;
+use App\Services\Billing\SubscriptionPlanSource;
 use App\Services\Billing\SubscriptionService;
 use App\Services\DirectUploadService;
 use App\Services\Docs\DocsIndexer;
@@ -95,6 +98,7 @@ use App\Services\I18n\LocaleSettingsService;
 use App\Services\IdempotencyService;
 use App\Services\ImpersonationService;
 use App\Services\ImportService;
+use App\Services\LLM\LlmSecurityAnalysisProvider;
 use App\Services\Mail\BrandResolver;
 use App\Services\Mail\MailAccountService;
 use App\Services\Mail\MailEventStatusService;
@@ -142,7 +146,10 @@ use App\Support\Privacy\Contributors\SessionsContributor;
 use App\Support\Privacy\Contributors\TenantMembershipsContributor;
 use App\Support\Privacy\PersonalDataRegistry;
 use App\Support\Privacy\TwoFactorDeletionSecondFactor;
+use App\Support\Security\NullSecurityAnalysisProvider;
 use App\Support\Sequences\Sequence;
+use App\Support\Tenancy\NullSubscriptionAccess;
+use App\Support\Tenancy\NullSubscriptionPlanSource;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Support\ServiceProvider;
 
@@ -193,8 +200,8 @@ class ContractServiceProvider extends ServiceProvider
         $this->app->bind(MailServiceInterface::class, MailService::class);
         $this->app->bind(BackupServiceInterface::class, BackupService::class);
         $this->app->bind(MenuServiceInterface::class, MenuService::class);
-        $this->app->bind(DocsServiceInterface::class, DocsService::class);
-        $this->app->bind(DocsIndexerInterface::class, DocsIndexer::class);
+        $this->app->bind(DocsServiceInterface::class, DocsService::class); // module:docs-assistant
+        $this->app->bind(DocsIndexerInterface::class, DocsIndexer::class); // module:docs-assistant
         $this->app->bind(MailAccountServiceInterface::class, MailAccountService::class);
         $this->app->bind(MailEventStatusServiceInterface::class, MailEventStatusService::class);
         $this->app->bind(MailSendPolicyInterface::class, MailSendPolicy::class);
@@ -206,18 +213,27 @@ class ContractServiceProvider extends ServiceProvider
         $this->app->bind(SequenceInterface::class, Sequence::class);
         $this->app->bind(IdempotencyInterface::class, IdempotencyService::class);
 
+        // Puntos de extensión con valor por defecto (sin módulo de facturación): el módulo `billing` los sustituye
+        // con su propio `bind` más abajo (el último binding gana).
+        $this->app->bind(SubscriptionAccessInterface::class, NullSubscriptionAccess::class);
+        $this->app->bind(SubscriptionPlanSourceInterface::class, NullSubscriptionPlanSource::class);
+        $this->app->bind(SecurityAnalysisProviderInterface::class, NullSecurityAnalysisProvider::class);
+
+        $this->app->bind(SecurityAnalysisProviderInterface::class, LlmSecurityAnalysisProvider::class); // module:llm
+
         // Facturación y suscripciones (docs/billing.md)
-        $this->app->bind(PlanCatalogInterface::class, PlanCatalog::class);
-        $this->app->bind(BillingAccountServiceInterface::class, BillingAccountService::class);
-        $this->app->bind(SubscriptionLifecycleInterface::class, SubscriptionLifecycle::class);
-        $this->app->bind(SubscriptionAccessInterface::class, SubscriptionAccess::class);
-        $this->app->bind(InvoiceServiceInterface::class, InvoiceService::class);
-        $this->app->bind(PaymentProcessorInterface::class, PaymentProcessor::class);
-        $this->app->bind(PaymentReconcilerInterface::class, PaymentReconciler::class);
-        $this->app->bind(PaymentDiscrepancyServiceInterface::class, PaymentDiscrepancyService::class);
-        $this->app->bind(SubscriptionServiceInterface::class, SubscriptionService::class);
-        $this->app->bind(RenewalServiceInterface::class, RenewalService::class);
-        $this->app->bind(BillingNoticeServiceInterface::class, BillingNoticeService::class);
+        $this->app->bind(PlanCatalogInterface::class, PlanCatalog::class); // module:billing
+        $this->app->bind(BillingAccountServiceInterface::class, BillingAccountService::class); // module:billing
+        $this->app->bind(SubscriptionLifecycleInterface::class, SubscriptionLifecycle::class); // module:billing
+        $this->app->bind(SubscriptionAccessInterface::class, SubscriptionAccess::class); // module:billing
+        $this->app->bind(SubscriptionPlanSourceInterface::class, SubscriptionPlanSource::class); // module:billing
+        $this->app->bind(InvoiceServiceInterface::class, InvoiceService::class); // module:billing
+        $this->app->bind(PaymentProcessorInterface::class, PaymentProcessor::class); // module:billing
+        $this->app->bind(PaymentReconcilerInterface::class, PaymentReconciler::class); // module:billing
+        $this->app->bind(PaymentDiscrepancyServiceInterface::class, PaymentDiscrepancyService::class); // module:billing
+        $this->app->bind(SubscriptionServiceInterface::class, SubscriptionService::class); // module:billing
+        $this->app->bind(RenewalServiceInterface::class, RenewalService::class); // module:billing
+        $this->app->bind(BillingNoticeServiceInterface::class, BillingNoticeService::class); // module:billing
 
         $this->app->bind(LocaleResolverInterface::class, LocaleResolver::class);
         $this->app->bind(LocaleSettingsServiceInterface::class, LocaleSettingsService::class);
@@ -226,29 +242,31 @@ class ContractServiceProvider extends ServiceProvider
         $this->app->bind(TenantMemberServiceInterface::class, TenantMemberService::class);
         $this->app->bind(TenantAdminServiceInterface::class, TenantAdminService::class);
         $this->app->bind(AuditServiceInterface::class, AuditService::class);
-        $this->app->bind(ImpersonationServiceInterface::class, ImpersonationService::class);
-        $this->app->bind(MaintenanceServiceInterface::class, MaintenanceService::class);
+        $this->app->bind(ImpersonationServiceInterface::class, ImpersonationService::class); // module:impersonation
+        $this->app->bind(MaintenanceServiceInterface::class, MaintenanceService::class); // module:maintenance
 
         // Notificaciones multicanal (docs/notifications.md)
         $this->app->bind(InboxServiceInterface::class, InboxService::class);
         $this->app->bind(DeviceServiceInterface::class, DeviceService::class);
         $this->app->bind(NotificationPreferenceServiceInterface::class, NotificationPreferenceService::class);
         $this->app->bind(NotificationDeliveryServiceInterface::class, NotificationDeliveryService::class);
-        $this->app->bind(ExportServiceInterface::class, ExportService::class);
-        $this->app->bind(ImportServiceInterface::class, ImportService::class);
+        $this->app->bind(ExportServiceInterface::class, ExportService::class); // module:export-import
+        $this->app->bind(ImportServiceInterface::class, ImportService::class); // module:export-import
         $this->app->bind(PdfRendererInterface::class, DompdfRenderer::class);
 
         // Colaborador sin estado: el DNS real; los tests lo sustituyen con `$this->app->instance(...)`.
         // Privacidad (docs/privacy.md): cada módulo añade su contribuidor con la etiqueta `privacy.contributors`.
-        $this->app->bind(ConsentServiceInterface::class, ConsentService::class);
-        $this->app->bind(PersonalDataExportServiceInterface::class, PersonalDataExportService::class);
-        $this->app->bind(AccountDeletionServiceInterface::class, AccountDeletionService::class);
-        $this->app->bind(DeletionSecondFactorInterface::class, TwoFactorDeletionSecondFactor::class);
+        $this->app->bind(ConsentServiceInterface::class, ConsentService::class); // module:privacy
+        $this->app->bind(PersonalDataExportServiceInterface::class, PersonalDataExportService::class); // module:privacy
+        $this->app->bind(AccountDeletionServiceInterface::class, AccountDeletionService::class); // module:privacy
+        $this->app->bind(DeletionSecondFactorInterface::class, TwoFactorDeletionSecondFactor::class); // module:privacy
+        // module:privacy:start
         $this->app->tag([
             FilesContributor::class, ApiKeysContributor::class, NotificationsContributor::class, ConsentsContributor::class,
             AuditContributor::class, SessionsContributor::class, TenantMembershipsContributor::class, ProfileContributor::class,
         ], 'privacy.contributors');
-        $this->app->bind(PersonalDataRegistry::class, fn ($app) => new PersonalDataRegistry($app->tagged('privacy.contributors')));
+        // module:privacy:end
+        $this->app->bind(PersonalDataRegistry::class, fn ($app) => new PersonalDataRegistry($app->tagged('privacy.contributors'))); // module:privacy
 
         $this->app->singleton(HostResolverInterface::class, DnsHostResolver::class);
 

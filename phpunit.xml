@@ -44,12 +44,12 @@
         <!-- Caché en memoria: Redis persiste entre tests y RefreshDatabase no lo
              revierte, así que un test podría leer datos cacheados por otro. -->
         <env name="CACHE_STORE" force="true" value="array"/>
-        <env name="SCOUT_DRIVER" force="true" value="null"/>
+        <env name="SCOUT_DRIVER" force="true" value="null"/> <!-- module:search -->
         <env name="MAIL_MAILER" force="true" value="array"/>
         <env name="MAIL_BLOCK_RESERVED_DOMAINS" force="true" value="false"/>
         <env name="QUEUE_CONNECTION" force="true" value="sync"/>
         <env name="SESSION_DRIVER" value="array" force="true"/>
-        <env name="BACKOFFICE_ENABLED" value="true" force="true"/>
+        <env name="BACKOFFICE_ENABLED" value="true" force="true"/> <!-- module:backoffice -->
         <env name="BROADCAST_CONNECTION" value="null" force="true"/>
         <env name="TELESCOPE_ENABLED" value="false" force="true"/>
         <ini name="memory_limit" value="1G"/>
