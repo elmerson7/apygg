@@ -76,6 +76,24 @@ test('aplicar la baja borra archivos, limpia marcadores e imports y crea la migr
     borrarArbol($root);
 });
 
+test('la baja limpia el include marcado del Makefile raíz para que make siga funcionando', function () {
+    $root = moduloDeJuguete();
+    file_put_contents($root.'/Makefile', "include make/app.mk\ninclude make/extra.mk # module:extra\ninclude make/help.mk\n");
+    $remover = new ModuleRemover(new ModuleRegistry($root));
+
+    $plan = $remover->plan('extra');
+
+    expect(array_keys($plan['edits']))->toContain('Makefile')
+        ->and($plan['edits']['Makefile']['removed'])->toBe(1);
+
+    unlink($root.'/app/Bar.php');
+    $remover->apply($plan);
+
+    expect((string) file_get_contents($root.'/Makefile'))->toBe("include make/app.mk\ninclude make/help.mk\n");
+
+    borrarArbol($root);
+});
+
 test('un módulo de núcleo o inexistente no se puede quitar', function () {
     $root = moduloDeJuguete();
     $remover = new ModuleRemover(new ModuleRegistry($root));

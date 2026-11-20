@@ -1,0 +1,113 @@
+# Stack TEMPORAL y propio para las pruebas de carga (docs/load-testing.md). No es el stack de desarrollo:
+# nombre de proyecto único (LOAD_PROJECT), un puerto alto en 127.0.0.1, ≤ 2 GB en total y sin Horizon/Reverb/
+# Mailpit/S3. Se maneja con load/stack.sh (up | seed | down). Reutiliza las imágenes ya construidas del proyecto.
+name: ${LOAD_PROJECT:-apygg-load}
+
+x-env: &env
+  env_file: ${LOAD_ENV_FILE:-../.env}
+  environment: &envvars
+    APP_ENV: staging
+    APP_DEBUG: "false"
+    LOG_LEVEL: warning
+    LOG_STACK: single
+    TELESCOPE_ENABLED: "false"
+    SENTRY_LARAVEL_DSN: ""
+    DB_HOST: postgres
+    DB_PORT: "5432"
+    DB_DATABASE: load
+    DB_USERNAME: load
+    DB_PASSWORD: load
+    REDIS_HOST: redis
+    REDIS_PORT: "6379"
+    REDIS_PASSWORD: load
+    BROADCAST_CONNECTION: "null"
+    SCOUT_DRIVER: "null"
+    MAIL_MAILER: log
+    QUEUE_CONNECTION: redis
+    PAYMENTS_MODE: fake
+    MULTI_TENANCY_ENABLED: "true"
+    PERMISSION_TEAMS: "true"
+    TENANT_RESOLUTION: header,route
+    # Rate limiting alto: en una prueba de carga todo el tráfico sale de una IP y de pocos usuarios.
+    RATE_LIMIT_AUTH_MAX: "100000"
+    RATE_LIMIT_READ_MAX: "100000"
+    RATE_LIMIT_WRITE_MAX: "100000"
+    RATE_LIMIT_ADMIN_MAX: "100000"
+    # Subida presignada: se firma sin red; el endpoint no se contacta (solo el paso 1).
+    FILE_DISK_PRIVATE: s3_private
+    FILE_DISK_PUBLIC: s3
+    AWS_ACCESS_KEY_ID: load
+    AWS_SECRET_ACCESS_KEY: load-secret
+    AWS_DEFAULT_REGION: us-east-1
+    AWS_BUCKET: load
+    AWS_PRIVATE_BUCKET: load-private
+    AWS_ENDPOINT: http://s3.invalid:9000
+    AWS_URL: http://s3.invalid:9000/load
+    AWS_USE_PATH_STYLE_ENDPOINT: "true"
+    HOME: /tmp
+    XDG_CONFIG_HOME: /tmp
+    XDG_DATA_HOME: /tmp
+
+services:
+  postgres:
+    image: ${LOAD_POSTGRES_IMAGE:-apygg-postgres:latest}
+    container_name: ${LOAD_PROJECT:-apygg-load}-postgres
+    environment:
+      POSTGRES_DB: load
+      POSTGRES_USER: load
+      POSTGRES_PASSWORD: load
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements,vector", "-c", "jit=off", "-c", "shared_buffers=128MB", "-c", "max_connections=100", "-c", "fsync=off"]
+    volumes:
+      - pgdata:/var/lib/postgresql
+      - ./init-extensions.sql:/docker-entrypoint-initdb.d/init-extensions.sql:ro
+    mem_limit: 640m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U load -d load"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    networks: [net]
+
+  redis:
+    image: ${LOAD_REDIS_IMAGE:-apygg-redis:latest}
+    container_name: ${LOAD_PROJECT:-apygg-load}-redis
+    environment:
+      REDIS_PASSWORD: load
+    command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru", "--requirepass", "load"]
+    mem_limit: 192m
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a load ping | grep -q PONG"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    networks: [net]
+
+  app:
+    <<: *env
+    image: ${LOAD_APP_IMAGE:-apygg-app:latest}
+    container_name: ${LOAD_PROJECT:-apygg-load}-app
+    working_dir: /app
+    user: "${LOAD_UID:-1000}:${LOAD_GID:-1000}"
+    # Sin entrypoint del proyecto (no instala ni cambia permisos): solo Octane con workers fijos.
+    entrypoint: ["sh", "-c", "php artisan optimize:clear >/dev/null 2>&1; exec php artisan octane:start --server=frankenphp --host=0.0.0.0 --port=8000 --workers=${LOAD_WORKERS:-2} --max-requests=500"]
+    volumes:
+      - ../:/app
+    ports:
+      - "127.0.0.1:${LOAD_PORT:-18010}:8000"
+    mem_limit: 1100m
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/health/live || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    networks: [net]
+
+volumes:
+  pgdata: {}
+
+networks:
+  net: {}

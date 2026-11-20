@@ -54,5 +54,6 @@ include make/backup.mk
 include make/dev.mk
 include make/project.mk
 include make/modules.mk
+include make/load.mk # module:load-testing
 include make/deploy.mk
 include make/help.mk

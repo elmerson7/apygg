@@ -37,9 +37,12 @@ aislamiento y migraciones del núcleo tocan sus tablas), `inbound-webhooks` y
 | `maintenance` | Modo mantenimiento (503) | — | — | — |
 | `search` | Scout/Meilisearch y `/search` | — | — | `SCOUT_DRIVER=database` |
 | `reverb` | WebSockets (autenticación de canales) | — | — | `BROADCAST_CONNECTION=null` |
+| `seed-load` | Datos masivos reproducibles (`make seed-load`); ver `docs/seed-load.md` | `billing` | — | — (solo se ejecuta a mano) |
+| `load-testing` | Escenarios k6 (humo, carga, estrés, pico, resistencia) y stack temporal (`make load-*`); ver `docs/load-testing.md` | `seed-load` | — | — (solo se ejecuta a mano) |
 
-Solo `docs-assistant → llm` es una dependencia dura: `module:remove llm` se niega mientras `docs-assistant`
-esté presente. El resto son independientes; los puntos de contacto se resuelven con puntos de extensión (abajo).
+Las dependencias duras son `docs-assistant → llm`, `seed-load → billing` y `load-testing → seed-load`:
+`module:remove` se niega a quitar un módulo mientras quede otro que dependa de él. El resto son independientes;
+los puntos de contacto se resuelven con puntos de extensión (abajo).
 
 ## Qué hace `module:remove`
 

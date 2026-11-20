@@ -420,6 +420,8 @@ Equivalente local: `make ci` (check + cobertura mínima) y `make test-all` (toda
 
 `php artisan seed:load` (`make seed-load`) genera miles de empresas con facturas, pagos y archivos para pruebas de volumen y de carga; la suite lo prueba en pequeño (`tests/Feature/SeedLoad/`). Ver [seed-load.md](seed-load.md).
 
+Pruebas de carga con k6 (humo, carga, estrés, pico, resistencia) sobre esos datos: `make load-smoke` y compañía; ver [load-testing.md](load-testing.md).
+
 ## Referencias
 
 - [testing-database.md](testing-database.md) → la BD aislada en detalle
