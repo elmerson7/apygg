@@ -30,5 +30,17 @@ return [
             'title' => 'Importación terminada',
             'body' => 'Tu importación terminó: :message',
         ],
+        'data_export_ready' => [
+            'title' => 'Tu exportación de datos está lista',
+            'body' => 'Puedes descargarla durante las próximas :hours horas.',
+        ],
+        'account_deletion_scheduled' => [
+            'title' => 'Borrado de cuenta programado',
+            'body' => 'Tu cuenta se eliminará el :date. Si no fuiste tú, cancela la solicitud o cambia tu contraseña.',
+        ],
+        'account_deletion_blocked' => [
+            'title' => 'No se pudo borrar tu cuenta',
+            'body' => ':reason',
+        ],
     ],
 ];

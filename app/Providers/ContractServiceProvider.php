@@ -2,11 +2,13 @@
 
 namespace App\Providers;
 
+use App\Contracts\AccountDeletionServiceInterface;
 use App\Contracts\ApiKeyServiceInterface;
 use App\Contracts\AuditServiceInterface;
 use App\Contracts\AuthServiceInterface;
 use App\Contracts\BackupServiceInterface;
 use App\Contracts\BrandResolverInterface;
+use App\Contracts\ConsentServiceInterface;
 use App\Contracts\DeviceServiceInterface;
 use App\Contracts\DirectUploadServiceInterface;
 use App\Contracts\DocsIndexerInterface;
@@ -34,7 +36,9 @@ use App\Contracts\NotificationServiceInterface;
 use App\Contracts\PasswordServiceInterface;
 use App\Contracts\PdfRendererInterface;
 use App\Contracts\PermissionServiceInterface;
+use App\Contracts\PersonalDataExportServiceInterface;
 use App\Contracts\PlanLimitsInterface;
+use App\Contracts\Privacy\DeletionSecondFactorInterface;
 use App\Contracts\RoleServiceInterface;
 use App\Contracts\SecurityAuditServiceInterface;
 use App\Contracts\SecurityServiceInterface;
@@ -82,6 +86,9 @@ use App\Services\PasswordService;
 use App\Services\Pdf\DompdfRenderer;
 use App\Services\PermissionService;
 use App\Services\PlanLimits;
+use App\Services\Privacy\AccountDeletionService;
+use App\Services\Privacy\ConsentService;
+use App\Services\Privacy\PersonalDataExportService;
 use App\Services\RoleService;
 use App\Services\SecurityAuditService;
 use App\Services\SecurityService;
@@ -97,6 +104,16 @@ use App\Services\UserService;
 use App\Services\Webhooks\DnsHostResolver;
 use App\Services\Webhooks\InboundWebhookService;
 use App\Services\WebhookService;
+use App\Support\Privacy\Contributors\ApiKeysContributor;
+use App\Support\Privacy\Contributors\AuditContributor;
+use App\Support\Privacy\Contributors\ConsentsContributor;
+use App\Support\Privacy\Contributors\FilesContributor;
+use App\Support\Privacy\Contributors\NotificationsContributor;
+use App\Support\Privacy\Contributors\ProfileContributor;
+use App\Support\Privacy\Contributors\SessionsContributor;
+use App\Support\Privacy\Contributors\TenantMembershipsContributor;
+use App\Support\Privacy\PersonalDataRegistry;
+use App\Support\Privacy\TwoFactorDeletionSecondFactor;
 use App\Support\Sequences\Sequence;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Support\ServiceProvider;
@@ -178,6 +195,17 @@ class ContractServiceProvider extends ServiceProvider
         $this->app->bind(PdfRendererInterface::class, DompdfRenderer::class);
 
         // Colaborador sin estado: el DNS real; los tests lo sustituyen con `$this->app->instance(...)`.
+        // Privacidad (docs/privacy.md): cada módulo añade su contribuidor con la etiqueta `privacy.contributors`.
+        $this->app->bind(ConsentServiceInterface::class, ConsentService::class);
+        $this->app->bind(PersonalDataExportServiceInterface::class, PersonalDataExportService::class);
+        $this->app->bind(AccountDeletionServiceInterface::class, AccountDeletionService::class);
+        $this->app->bind(DeletionSecondFactorInterface::class, TwoFactorDeletionSecondFactor::class);
+        $this->app->tag([
+            FilesContributor::class, ApiKeysContributor::class, NotificationsContributor::class, ConsentsContributor::class,
+            AuditContributor::class, SessionsContributor::class, TenantMembershipsContributor::class, ProfileContributor::class,
+        ], 'privacy.contributors');
+        $this->app->bind(PersonalDataRegistry::class, fn ($app) => new PersonalDataRegistry($app->tagged('privacy.contributors')));
+
         $this->app->singleton(HostResolverInterface::class, DnsHostResolver::class);
 
         // Estado POR PETICIÓN/JOB (tenant activo): scoped, nunca singleton ni estático (docs/multi-tenancy.md).

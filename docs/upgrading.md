@@ -504,3 +504,11 @@ make testdb-migrate && make test
 - `ResendMailEventsHandler` recibe `MailSuppressionServiceInterface` en el constructor (resuelto por el contenedor).
 - Si publicaste tus propias plantillas `vendor/mail/*/message.blade.php`, adopta `BrandResolverInterface` (ver `docs/mail-system.md` §Marca) o seguirán mostrando `config('app.name')`.
 
+
+## Privacidad (ola 5.2-E, `docs/privacy.md`)
+
+- Migraciones `2026_11_20_000320`-`000323` (`legal_documents`, `user_consents`, `personal_data_exports`, `account_deletion_requests`) y permisos `legal-documents.read` / `legal-documents.manage` (`PermissionSeeder`; asígnalos a quien publique documentos legales).
+- **Contribuidores**: si tu proyecto guarda datos personales en tablas propias, implementa `App\Contracts\Privacy\PersonalDataContributor` (exportar sin secretos y anonimizar/borrar) y regístralo con `$this->app->tag([...], 'privacy.contributors')`. Sin él, el export y el borrado de cuenta no los cubren.
+- Nuevo middleware global `EnsureLegalConsents` en el grupo `api`, **apagado** (`PRIVACY_CONSENTS_ENFORCE=false`). Al activarlo, los clientes deben manejar `409 consent_required`.
+- Tipos de notificación nuevos (`data_export_ready`, `account_deletion_scheduled`, `account_deletion_blocked`): añade sus textos si sobrescribes `lang/*/notifications.php`.
+- Programador: `privacy:process-deletions` (cada hora) y `privacy:purge` (03:45). Necesitas un worker de cola para el export y el borrado.

@@ -90,6 +90,9 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\EnsureMinimumAppVersion::class, // 426 si la app es antigua (apagado por defecto: config/app-versions.php)
         ]);
 
+        // Exige aceptar la versión vigente de los documentos legales obligatorios (apagado por defecto; docs/privacy.md).
+        $middleware->api(append: [\App\Http\Middleware\EnsureLegalConsents::class]);
+
         // Proxies de confianza (X-Forwarded-*). TRUSTED_PROXIES: lista separada por
         // comas de IPs/CIDR, o '*' para confiar en cualquiera. Por defecto vacío:
         // no se confía en ningún proxy (una cabecera X-Forwarded-* falsificada

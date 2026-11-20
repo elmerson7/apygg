@@ -41,6 +41,9 @@ return [
         // Exportar/importar (docs/export-import.md)
         'export_ready' => ['channels' => ['database', 'mail']],
         'import_finished' => ['channels' => ['database', 'mail']],
+        'data_export_ready' => ['channels' => ['mail', 'database'], 'mandatory' => true],
+        'account_deletion_scheduled' => ['channels' => ['mail', 'database'], 'mandatory' => true],
+        'account_deletion_blocked' => ['channels' => ['mail', 'database'], 'mandatory' => true],
     ],
 
     /**

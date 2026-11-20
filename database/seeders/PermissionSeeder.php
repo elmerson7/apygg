@@ -86,6 +86,8 @@ class PermissionSeeder extends Seeder
             // Auditoría de negocio (docs/audit.md)
             ['name' => 'tenant-audit.read', 'display_name' => 'Ver Auditoría del Tenant', 'description' => 'Permite ver y exportar la auditoría de la empresa activa'],
             ['name' => 'audit.read', 'display_name' => 'Ver Auditoría de la Plataforma', 'description' => 'Permite ver y exportar la auditoría de todas las empresas'],
+            ['name' => 'legal-documents.read', 'display_name' => 'Ver Documentos Legales', 'description' => 'Permite ver todas las versiones de los documentos legales'],
+            ['name' => 'legal-documents.manage', 'display_name' => 'Publicar Documentos Legales', 'description' => 'Permite publicar versiones de términos, privacidad y otros documentos legales'],
 
             // Back-office (Filament, opcional): ver docs/backoffice.md
             ['name' => 'backoffice.access', 'display_name' => 'Acceder al Back-office', 'description' => 'Permite entrar al panel interno (Filament); además exige MFA. Cada recurso pide sus propios permisos'],

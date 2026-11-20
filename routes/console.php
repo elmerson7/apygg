@@ -171,3 +171,18 @@ Schedule::command('exports:prune')
     ->onFailure(function () {
         Log::error('Falló la limpieza de exportaciones e importaciones');
     });
+
+// Privacidad: borrados de cuenta vencidos (cada hora) y caducidad de exportaciones (a diario 3:45)
+Schedule::command('privacy:process-deletions')
+    ->hourly()
+    ->withoutOverlapping()
+    ->onFailure(function () {
+        Log::error('Falló el procesado de borrados de cuenta');
+    });
+
+Schedule::command('privacy:purge')
+    ->dailyAt('03:45')
+    ->withoutOverlapping()
+    ->onFailure(function () {
+        Log::error('Falló la purga de privacidad');
+    });

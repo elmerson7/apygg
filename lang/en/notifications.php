@@ -30,5 +30,17 @@ return [
             'title' => 'Import finished',
             'body' => 'Your import has finished: :message',
         ],
+        'data_export_ready' => [
+            'title' => 'Your data export is ready',
+            'body' => 'You can download it for the next :hours hours.',
+        ],
+        'account_deletion_scheduled' => [
+            'title' => 'Account deletion scheduled',
+            'body' => 'Your account will be deleted on :date. If this was not you, cancel the request or change your password.',
+        ],
+        'account_deletion_blocked' => [
+            'title' => 'Your account could not be deleted',
+            'body' => ':reason',
+        ],
     ],
 ];

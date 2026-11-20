@@ -176,6 +176,9 @@ function archServiciosConInterfaz(): array
         'App\Services\SessionService' => 'App\Contracts\SessionServiceInterface',
         'App\Services\TwoFactorService' => 'App\Contracts\TwoFactorServiceInterface',
         'App\Services\EmailVerificationService' => 'App\Contracts\EmailVerificationServiceInterface',
+        'App\Services\Privacy\ConsentService' => 'App\Contracts\ConsentServiceInterface',
+        'App\Services\Privacy\PersonalDataExportService' => 'App\Contracts\PersonalDataExportServiceInterface',
+        'App\Services\Privacy\AccountDeletionService' => 'App\Contracts\AccountDeletionServiceInterface',
     ];
 }
 
