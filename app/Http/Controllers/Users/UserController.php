@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Users;
 
+use App\Contracts\AuditServiceInterface;
 use App\Contracts\UserServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Users\AssignRoleRequest;
@@ -33,7 +34,7 @@ class UserController extends Controller
     /** @var list<string> */
     protected array $allowedRelations = ['roles', 'permissions', 'activityLogs', 'apiTokens'];
 
-    public function __construct(protected UserServiceInterface $userService) {}
+    public function __construct(protected UserServiceInterface $userService, protected AuditServiceInterface $audit) {}
 
     /**
      * Display a listing of users.
@@ -157,7 +158,11 @@ class UserController extends Controller
             $this->authorize('assign', $role);
         }
 
+        $reason = $this->audit->requireReason('user.roles-change', $validated['reason'] ?? null);
+
         $user = $this->userService->assignRoles($id, $roleIds);
+
+        $this->audit->recordAction('user.roles-change', $user, $reason, ['role_ids_before' => $currentIds, 'role_ids_after' => $roleIds]);
 
         return $this->sendSuccess($user, 'Roles asignados exitosamente');
     }
@@ -165,14 +170,18 @@ class UserController extends Controller
     /**
      * Remove a role from a user.
      */
-    public function removeRole(string $id, string $roleId): JsonResponse
+    public function removeRole(Request $request, string $id, string $roleId): JsonResponse
     {
         $user = $this->userService->find($id);
 
         $this->authorize('manageRoles', $user);
         $this->authorize('assign', Role::findOrFail($roleId));
 
+        $reason = $this->audit->requireReason('user.roles-change', $request->input('reason'));
+
         $user = $this->userService->removeRole($id, $roleId);
+
+        $this->audit->recordAction('user.roles-change', $user, $reason, ['role_id_removed' => (int) $roleId]);
 
         return $this->sendSuccess($user, 'Rol removido exitosamente');
     }

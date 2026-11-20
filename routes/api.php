@@ -81,6 +81,7 @@ require __DIR__.'/api/logs.php';
 require __DIR__.'/api/feature-flags.php';
 require __DIR__.'/api/plans.php';
 require __DIR__.'/api/tenant-settings.php';
+require __DIR__.'/api/audit.php';
 // ─────────────────────────────────────────────────────────────────────────────────
 
 // Solo local/testing: son endpoints de diagnóstico que fuerzan excepciones y logs.

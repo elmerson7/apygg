@@ -257,6 +257,7 @@ test('puede asignar roles a un usuario con permiso users.update', function () {
     $response = $this->withHeader('Authorization', "Bearer {$token}")
         ->postJson("/users/{$targetUser->id}/roles", [
             'role_ids' => [$managerRole->id, $editorRole->id],
+            'reason' => 'prueba',
         ]);
 
     $response->assertStatus(200);
@@ -278,7 +279,7 @@ test('puede remover un rol de un usuario con permiso users.update', function () 
     $targetUser->roles()->attach([$managerRole->id, $editorRole->id]);
 
     $response = $this->withHeader('Authorization', "Bearer {$token}")
-        ->deleteJson("/users/{$targetUser->id}/roles/{$managerRole->id}");
+        ->deleteJson("/users/{$targetUser->id}/roles/{$managerRole->id}", ['reason' => 'prueba']);
 
     $response->assertStatus(200);
 

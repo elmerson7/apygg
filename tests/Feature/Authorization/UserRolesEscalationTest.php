@@ -94,7 +94,7 @@ test('un admin no puede asignar roles por PUT, solo por la ruta de roles', funct
         ->assertStatus(422);
 
     $this->withHeaders(actingAsToken($admin))
-        ->postJson("/users/{$target->id}/roles", ['role_ids' => [$roleId]])
+        ->postJson("/users/{$target->id}/roles", ['role_ids' => [$roleId], 'reason' => 'prueba'])
         ->assertOk();
 
     expect($target->fresh()->hasRole('editor'))->toBeTrue();
@@ -107,7 +107,7 @@ test('un manager no puede asignarse el rol admin', function () {
     $adminRoleId = Role::where('name', 'admin')->value('id');
 
     $this->withHeaders(actingAsToken($manager))
-        ->postJson("/users/{$manager->id}/roles", ['role_ids' => [$adminRoleId]])
+        ->postJson("/users/{$manager->id}/roles", ['role_ids' => [$adminRoleId], 'reason' => 'prueba'])
         ->assertStatus(403);
 
     expect($manager->fresh()->hasRole('admin'))->toBeFalse();
@@ -120,7 +120,7 @@ test('asignar roles exige users.manage-roles y no basta users.update', function 
     $roleId = Role::where('name', 'guest')->value('id');
 
     $this->withHeaders(actingAsToken($user))
-        ->postJson("/users/{$target->id}/roles", ['role_ids' => [$roleId]])
+        ->postJson("/users/{$target->id}/roles", ['role_ids' => [$roleId], 'reason' => 'prueba'])
         ->assertStatus(403);
 });
 
@@ -131,7 +131,7 @@ test('un manager no puede asignar un rol con permisos que él no tiene', functio
     $roleId = Role::where('name', 'moderator')->value('id');
 
     $this->withHeaders(actingAsToken($manager))
-        ->postJson("/users/{$target->id}/roles", ['role_ids' => [$roleId]])
+        ->postJson("/users/{$target->id}/roles", ['role_ids' => [$roleId], 'reason' => 'prueba'])
         ->assertStatus(403);
 
     expect($target->fresh()->hasRole('moderator'))->toBeFalse();
@@ -143,7 +143,7 @@ test('un manager puede asignar un rol con permisos que él también tiene', func
     $roleId = Role::where('name', 'guest')->value('id');
 
     $this->withHeaders(actingAsToken($manager))
-        ->postJson("/users/{$target->id}/roles", ['role_ids' => [$roleId]])
+        ->postJson("/users/{$target->id}/roles", ['role_ids' => [$roleId], 'reason' => 'prueba'])
         ->assertOk();
 });
 
@@ -165,7 +165,7 @@ test('un manager no puede quitarle roles a un admin', function () {
     $adminRoleId = Role::where('name', 'admin')->value('id');
 
     $this->withHeaders(actingAsToken($manager))
-        ->deleteJson("/users/{$admin->id}/roles/{$adminRoleId}")
+        ->deleteJson("/users/{$admin->id}/roles/{$adminRoleId}", ['reason' => 'prueba'])
         ->assertStatus(403);
 });
 
@@ -230,7 +230,7 @@ test('el último admin no puede quitarse el rol admin', function () {
     $userRoleId = Role::where('name', 'user')->value('id');
 
     $this->withHeaders(actingAsToken($admin))
-        ->postJson("/users/{$admin->id}/roles", ['role_ids' => [$userRoleId]])
+        ->postJson("/users/{$admin->id}/roles", ['role_ids' => [$userRoleId], 'reason' => 'prueba'])
         ->assertStatus(422);
 
     expect($admin->fresh()->hasRole('admin'))->toBeTrue();
@@ -242,7 +242,7 @@ test('el último admin con dos roles no puede quitarse el rol admin', function (
     $adminRoleId = Role::where('name', 'admin')->value('id');
 
     $this->withHeaders(actingAsToken($admin))
-        ->deleteJson("/users/{$admin->id}/roles/{$adminRoleId}")
+        ->deleteJson("/users/{$admin->id}/roles/{$adminRoleId}", ['reason' => 'prueba'])
         ->assertStatus(422);
 
     expect($admin->fresh()->hasRole('admin'))->toBeTrue();
@@ -254,7 +254,7 @@ test('un admin puede quitarse el rol admin si queda otro admin', function () {
     $userRoleId = Role::where('name', 'user')->value('id');
 
     $this->withHeaders(actingAsToken($admin))
-        ->postJson("/users/{$admin->id}/roles", ['role_ids' => [$userRoleId]])
+        ->postJson("/users/{$admin->id}/roles", ['role_ids' => [$userRoleId], 'reason' => 'prueba'])
         ->assertOk();
 
     expect($admin->fresh()->hasRole('admin'))->toBeFalse();

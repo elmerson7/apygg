@@ -38,6 +38,7 @@ const AISLAMIENTO_TABLAS_CUBIERTAS = [
     'notification_deliveries' => 'NotificacionesAislamientoTest.php',
     'feature_flag_overrides' => 'FeatureFlagsYPlanAislamientoTest.php',
     'tenant_limit_overrides' => 'FeatureFlagsYPlanAislamientoTest.php',
+    'audit_logs' => 'AuditoriaAislamientoTest.php',
     // Tablas de Spatie con equipos (docs/permissions.md §Teams): cubiertas por SpatieTeamsTest
     'model_has_roles' => '../SpatieTeamsTest.php',
     'model_has_permissions' => '../SpatieTeamsTest.php',

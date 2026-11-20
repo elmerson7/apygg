@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,7 +15,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class ApiKey extends Model
 {
-    use BelongsToTenant;
+    use Auditable, BelongsToTenant;
+
+    /** @var list<string> */
+    protected array $auditExclude = ['last_used_at'];
 
     /**
      * The table associated with the model.

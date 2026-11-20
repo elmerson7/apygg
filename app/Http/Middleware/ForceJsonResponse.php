@@ -42,6 +42,11 @@ class ForceJsonResponse
         $response = $next($request);
 
         // Asegurar que la respuesta sea JSON si no lo es ya
+        // Las descargas (CSV en streaming, archivos) conservan su Content-Type.
+        if (str_starts_with((string) $response->headers->get('Content-Disposition'), 'attachment')) {
+            return $response;
+        }
+
         if (! $response->headers->has('Content-Type') ||
             ! str_contains($response->headers->get('Content-Type'), 'application/json')) {
             $response->headers->set('Content-Type', 'application/json');

@@ -224,7 +224,7 @@ test('quien tiene security.blacklist quita un bloqueo (borrado lógico)', functi
     $bloqueo = seguridadBloqueo();
 
     $this->withHeaders(seguridadCabeceras(seguridadUsuarioCon('security.blacklist')))
-        ->deleteJson("/admin/blacklist/{$bloqueo->id}")
+        ->deleteJson("/admin/blacklist/{$bloqueo->id}", ['reason' => 'prueba'])
         ->assertOk()
         ->assertJsonPath('success', true);
 

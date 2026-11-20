@@ -26,6 +26,18 @@ punto de partida compara: `git diff <tu-commit-base> HEAD -- database/migrations
   `make art cmd="migrate:fresh --seed"`.
 - **Sanctum no existe.** Nunca estuvo instalado; si lo usabas, es tuyo.
 
+### Auditoría de negocio (ola 5.2-D)
+
+- Migración nueva `2026_11_20_000260_create_audit_logs_table` (`make migrate`). Si tu proyecto tiene una tabla propia con
+  `tenant_id`, nada cambia; `audit_logs` ya figura en `CoberturaDeAislamientoTest`.
+- **Cambia el contrato de 4 rutas**: `POST /users/{id}/roles`, `DELETE /users/{id}/roles/{roleId}` y
+  `DELETE /admin/blacklist/{id}` exigen ahora un campo `reason` (422 `audit_reason_required`). Para no exigirlo:
+  `AUDIT_REASON_REQUIRED=` (vacío) o quita la acción de la lista en `config/audit.php`.
+- Permisos nuevos `tenant-audit.read` (roles `tenant-owner` y `tenant-admin`) y `audit.read`: vuelve a ejecutar los
+  seeders (`RoleSeeder` solo añade). `UserController` y `BlacklistController` reciben `AuditServiceInterface`;
+  `TenantMemberService`, `TenantInvitationService` y `TenantOnboardingService` también (si los extiendes, ajusta el constructor).
+- `ForceJsonResponse` deja intacto el `Content-Type` de las respuestas con `Content-Disposition: attachment`.
+
 ### Ajustes, feature flags y límites (ola 4.2-B)
 
 - `Feature::enabled()` y el middleware `feature:` ahora pasan por `FeatureFlagServiceInterface` (BD + caché + overrides). Con tablas vacías el resultado es el de `config/features.php`, igual que antes. `CheckFeatureFlag` recibe la interfaz por constructor: si lo instancias a mano, pásasela.

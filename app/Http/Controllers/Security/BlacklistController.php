@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Security;
 
+use App\Contracts\AuditServiceInterface;
 use App\Contracts\SecurityServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Security\StoreBlacklistRequest;
@@ -16,7 +17,10 @@ use Illuminate\Http\Request;
  */
 class BlacklistController extends Controller
 {
-    public function __construct(private readonly SecurityServiceInterface $security) {}
+    public function __construct(
+        private readonly SecurityServiceInterface $security,
+        private readonly AuditServiceInterface $audit,
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -36,7 +40,11 @@ class BlacklistController extends Controller
 
     public function store(StoreBlacklistRequest $request): JsonResponse
     {
+        $reason = $this->audit->requireReason('user.block', (string) $request->validated('reason'));
+
         $entry = $this->security->blockIdentity($request->validated(), $request->user()->id);
+
+        $this->audit->recordAction('user.block', $entry, $reason, ['user_id' => $entry->user_id, 'blocked_email' => $entry->email]);
 
         return $this->sendSuccess(
             $entry->load(['user:id,name,email', 'addedBy:id,name']),
@@ -45,9 +53,13 @@ class BlacklistController extends Controller
         );
     }
 
-    public function destroy(Blacklist $blacklist): JsonResponse
+    public function destroy(Request $request, Blacklist $blacklist): JsonResponse
     {
+        $reason = $this->audit->requireReason('user.unblock', $request->input('reason'));
+
         $blacklist->delete();
+
+        $this->audit->recordAction('user.unblock', $blacklist, $reason, ['user_id' => $blacklist->user_id]);
 
         if ($blacklist->user_id !== null) {
             Blacklist::forgetBlockCache($blacklist->user_id);

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\AuditServiceInterface;
 use App\Contracts\TenantOnboardingServiceInterface;
 use App\Enums\TenantMembershipStatus;
 use App\Enums\TenantStatus;
@@ -20,6 +21,8 @@ use Illuminate\Validation\ValidationException;
  */
 class TenantOnboardingService implements TenantOnboardingServiceInterface
 {
+    public function __construct(private readonly AuditServiceInterface $audit) {}
+
     public function createTenant(User $owner, array $data): Tenant
     {
         $config = (array) config('multi-tenancy.onboarding.signup', []);
@@ -58,6 +61,8 @@ class TenantOnboardingService implements TenantOnboardingServiceInterface
                 ]);
 
                 TenantRoles::sync($owner, $tenant, $role);
+
+                $this->audit->recordAction('tenant.member-added', $tenant, null, ['user_id' => $owner->getKey(), 'role' => $role], (int) $tenant->getKey());
 
                 return $tenant;
             });

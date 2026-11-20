@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\WebhookStatusEnum;
+use App\Traits\Auditable;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,7 +17,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Webhook extends Model
 {
-    use BelongsToTenant;
+    use Auditable, BelongsToTenant;
+
+    /** @var list<string> */
+    protected array $auditExclude = ['success_count', 'failure_count', 'last_triggered_at', 'last_success_at', 'last_failure_at'];
 
     /**
      * The table associated with the model.

@@ -168,6 +168,7 @@ function archServiciosConInterfaz(): array
         'App\Services\Notifications\DeviceService' => 'App\Contracts\DeviceServiceInterface',
         'App\Services\Notifications\NotificationPreferenceService' => 'App\Contracts\NotificationPreferenceServiceInterface',
         'App\Services\Notifications\NotificationDeliveryService' => 'App\Contracts\NotificationDeliveryServiceInterface',
+        'App\Services\AuditService' => 'App\Contracts\AuditServiceInterface',
     ];
 }
 

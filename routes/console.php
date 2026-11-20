@@ -147,3 +147,11 @@ Schedule::command('notifications:purge')
     ->onFailure(function () {
         Log::error('Purga de notificaciones falló');
     });
+
+// Retención de la auditoría de negocio (audit.retention_days): cada día a las 3:15 AM
+Schedule::command('audit:prune')
+    ->dailyAt('03:15')
+    ->withoutOverlapping()
+    ->onFailure(function () {
+        Log::error('Falló la retención de la auditoría');
+    });

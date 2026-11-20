@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\AuditServiceInterface;
 use App\Contracts\TenantInvitationServiceInterface;
 use App\Enums\TenantMembershipStatus;
 use App\Exceptions\Tenancy\TenantOnboardingException;
@@ -31,7 +32,7 @@ use Illuminate\Support\Str;
  */
 class TenantInvitationService implements TenantInvitationServiceInterface
 {
-    public function __construct(private readonly TenantContext $context) {}
+    public function __construct(private readonly TenantContext $context, private readonly AuditServiceInterface $audit) {}
 
     public function paginate(Tenant $tenant, User $actor, array $filters, int $perPage): LengthAwarePaginator
     {
@@ -196,6 +197,8 @@ class TenantInvitationService implements TenantInvitationServiceInterface
                     ]);
 
                     $invitation->forceFill(['accepted_at' => now(), 'accepted_by' => $user->getKey()])->save();
+
+                    $this->audit->recordAction('tenant.member-added', $tenant, null, ['user_id' => $user->getKey(), 'role' => $invitation->role, 'invitation_id' => $invitation->getKey()], (int) $tenant->getKey());
 
                     return $invitation->role;
                 });

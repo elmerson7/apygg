@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\AuditServiceInterface;
 use App\Contracts\TenantMemberServiceInterface;
 use App\Enums\TenantMembershipStatus;
 use App\Exceptions\Tenancy\TenantOnboardingException;
@@ -23,6 +24,8 @@ use Illuminate\Support\Facades\DB;
  */
 class TenantMemberService implements TenantMemberServiceInterface
 {
+    public function __construct(private readonly AuditServiceInterface $audit) {}
+
     public function paginate(Tenant $tenant, array $filters, int $perPage): LengthAwarePaginator
     {
         $query = $this->membersQuery($tenant);
@@ -56,6 +59,8 @@ class TenantMemberService implements TenantMemberServiceInterface
 
             DB::table('tenant_user')->where('id', $target->id)->update(['role' => $role, 'updated_at' => now()]);
 
+            $this->audit->recordAction('tenant.member-role-changed', $tenant, null, ['user_id' => (int) $target->user_id, 'role_before' => $target->role, 'role_after' => $role], (int) $tenant->getKey());
+
             // Dentro de la transacción y con el tenant bloqueado: dos cambios simultáneos se serializan y
             // el rol de Spatie siempre refleja el último `tenant_user.role` confirmado.
             TenantRoles::sync(User::query()->findOrFail($target->user_id), $tenant, $role);
@@ -77,6 +82,8 @@ class TenantMemberService implements TenantMemberServiceInterface
                 'status' => TenantMembershipStatus::Suspended->value,
                 'updated_at' => now(),
             ]);
+
+            $this->audit->recordAction('tenant.member-suspended', $tenant, null, ['user_id' => (int) $target->user_id], (int) $tenant->getKey());
         });
 
         return $this->find($tenant, $userId);
@@ -84,11 +91,13 @@ class TenantMemberService implements TenantMemberServiceInterface
 
     public function reactivate(Tenant $tenant, User $actor, int $userId): User
     {
-        $this->mutate($tenant, $actor, $userId, function (object $target): void {
+        $this->mutate($tenant, $actor, $userId, function (object $target) use ($tenant): void {
             DB::table('tenant_user')->where('id', $target->id)->update([
                 'status' => TenantMembershipStatus::Active->value,
                 'updated_at' => now(),
             ]);
+
+            $this->audit->recordAction('tenant.member-reactivated', $tenant, null, ['user_id' => (int) $target->user_id], (int) $tenant->getKey());
         });
 
         return $this->find($tenant, $userId);
@@ -100,6 +109,8 @@ class TenantMemberService implements TenantMemberServiceInterface
             $this->guardLastOwner($tenant, $target);
 
             DB::table('tenant_user')->where('id', $target->id)->delete();
+
+            $this->audit->recordAction('tenant.member-removed', $tenant, null, ['user_id' => (int) $target->user_id, 'role' => $target->role], (int) $tenant->getKey());
         });
 
         $member = User::query()->find($userId);

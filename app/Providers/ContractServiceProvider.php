@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Contracts\ApiKeyServiceInterface;
+use App\Contracts\AuditServiceInterface;
 use App\Contracts\AuthServiceInterface;
 use App\Contracts\BackupServiceInterface;
 use App\Contracts\BrandResolverInterface;
@@ -43,6 +44,7 @@ use App\Contracts\UserServiceInterface;
 use App\Contracts\WebhookServiceInterface;
 use App\Contracts\WebhookSignatureVerifierInterface;
 use App\Services\ApiKeyService;
+use App\Services\AuditService;
 use App\Services\AuthService;
 use App\Services\BackupService;
 use App\Services\Docs\DocsIndexer;
@@ -146,6 +148,7 @@ class ContractServiceProvider extends ServiceProvider
         $this->app->bind(TenantOnboardingServiceInterface::class, TenantOnboardingService::class);
         $this->app->bind(TenantInvitationServiceInterface::class, TenantInvitationService::class);
         $this->app->bind(TenantMemberServiceInterface::class, TenantMemberService::class);
+        $this->app->bind(AuditServiceInterface::class, AuditService::class);
 
         // Notificaciones multicanal (docs/notifications.md)
         $this->app->bind(InboxServiceInterface::class, InboxService::class);

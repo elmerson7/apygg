@@ -180,7 +180,7 @@ test('asignar roles con una lista vacía responde 422', function () {
     $objetivo = User::factory()->create();
 
     $this->withHeaders(usuariosCabeceras(User::factory()->admin()->create()))
-        ->postJson("/users/{$objetivo->id}/roles", ['role_ids' => []])
+        ->postJson("/users/{$objetivo->id}/roles", ['role_ids' => [], 'reason' => 'prueba'])
         ->assertUnprocessable();
 });
 
@@ -196,7 +196,7 @@ test('quitar un rol retira la asignación en la base de datos', function () {
     $objetivo->roles()->attach($rolUser);
 
     $this->withHeaders(usuariosCabeceras(User::factory()->admin()->create()))
-        ->deleteJson("/users/{$objetivo->id}/roles/{$rolUser}")
+        ->deleteJson("/users/{$objetivo->id}/roles/{$rolUser}", ['reason' => 'prueba'])
         ->assertOk();
 
     expect(DB::table('model_has_roles')->where('model_id', $objetivo->id)->where('role_id', $rolUser)->exists())

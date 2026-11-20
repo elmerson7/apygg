@@ -298,6 +298,7 @@ Una norma por documento; esos archivos son la fuente de verdad de cada tema:
 - [`docs/i18n.md`](docs/i18n.md) → idioma, zona horaria y moneda por usuario/tenant/instalación, `LocaleResolver`, `lang/` con paridad de claves y correos en el idioma del destinatario.
 - [`docs/money.md`](docs/money.md) → dinero: `Money` (entero en unidad menor + ISO 4217), `MoneyCast`, regla `MoneyAmount`, `config/currencies.php`. Nunca float.
 - [`docs/sequences.md`](docs/sequences.md) → numeraciones atómicas (`SequenceInterface`): facturas, pedidos, tickets; nunca `count()+1` ni `max()+1`.
+- [`docs/audit.md`](docs/audit.md) → auditoría de negocio por tenant: trait `Auditable` (diff sin secretos), acciones con motivo (`recordAction`/`requireReason`), `/tenant/audit` y export CSV, retención.
 - [`docs/settings-and-flags.md`](docs/settings-and-flags.md) → ajustes tipados por niveles (tenant -> plataforma -> default), feature flags en BD con porcentaje estable y límites por plan (`PlanLimits::guarded`).
 - [`docs/notifications.md`](docs/notifications.md) → avisos a usuarios: `NotificationServiceInterface::notify()` con tipos en `config/notifications.php`, canales mail/bandeja/push/sms, preferencias, horas de silencio, entregas idempotentes y dispositivos push.
 

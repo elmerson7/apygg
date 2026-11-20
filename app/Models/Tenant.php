@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\TenantMembershipStatus;
 use App\Enums\TenantStatus;
+use App\Traits\Auditable;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -31,6 +32,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Tenant extends Model
 {
+    use Auditable;
+
     protected $fillable = [
         'name',
         'slug',

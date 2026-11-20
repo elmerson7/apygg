@@ -80,6 +80,10 @@ class PermissionSeeder extends Seeder
             ['name' => 'feature-flags.manage', 'display_name' => 'Gestionar Feature Flags', 'description' => 'Permite activar flags, fijar porcentajes y overrides por tenant/usuario'],
             ['name' => 'plan-limits.manage', 'display_name' => 'Gestionar Planes y Límites', 'description' => 'Permite asignar el plan y sobrescribir límites de un tenant'],
 
+            // Auditoría de negocio (docs/audit.md)
+            ['name' => 'tenant-audit.read', 'display_name' => 'Ver Auditoría del Tenant', 'description' => 'Permite ver y exportar la auditoría de la empresa activa'],
+            ['name' => 'audit.read', 'display_name' => 'Ver Auditoría de la Plataforma', 'description' => 'Permite ver y exportar la auditoría de todas las empresas'],
+
             // Back-office (Filament, opcional): ver docs/backoffice.md
             ['name' => 'backoffice.access', 'display_name' => 'Acceder al Back-office', 'description' => 'Permite entrar al panel interno (Filament); además exige MFA. Cada recurso pide sus propios permisos'],
 
