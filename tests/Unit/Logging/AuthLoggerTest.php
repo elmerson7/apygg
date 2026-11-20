@@ -4,8 +4,11 @@ use App\Helpers\Redactor;
 use App\Models\Logs\SecurityLog;
 use App\Models\User;
 use App\Services\Logging\AuthLogger;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+
+uses(RefreshDatabase::class);
 
 beforeEach(function () {
     Cache::flush();

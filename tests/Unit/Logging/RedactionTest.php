@@ -3,8 +3,11 @@
 use App\Helpers\Redactor;
 use App\Models\User;
 use App\Services\Logging\ApiLogger;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+
+uses(RefreshDatabase::class);
 
 test('oculta contraseñas y tokens en cuerpos anidados', function () {
     $data = [

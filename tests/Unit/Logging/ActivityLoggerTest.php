@@ -3,7 +3,10 @@
 use App\Models\Logs\ActivityLog;
 use App\Models\User;
 use App\Services\Logging\ActivityLogger;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
+
+uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->user = User::factory()->create();
