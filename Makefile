@@ -40,7 +40,7 @@ export GROUP_ID
 
 .DEFAULT_GOAL := help
 
-.PHONY: init setup doctor rename-volumes fresh upgrade-check wt-env validate build up upsearch down down-v stop start restart redeploy reload logs ps sh exec composer art key jwt meilisearch-key migrate seed schema scout test test-filter test-watch test-parallel test-coverage test-coverage-min test-arch test-all test-contract test-concurrency test-e2e test-changed ci test-mutate test-unit test-feature testdb testdb-migrate testdb-parallel dbtest redistest meilitest pint pint-test phpstan check install-hooks horizon reverb octane clear storage-link cors-check fix-permissions check-project backup backup-list schema-dump restore-backup restore-remote prune-images prune-images-dry-run prune-builder up-dev mail-ui mail-clear s3-ui s3-init s3-test test-integration openapi openapi-check types help
+.PHONY: init setup doctor rename-volumes fresh upgrade-check wt-env validate build up upsearch down down-v stop start restart redeploy reload logs ps sh exec composer art key jwt meilisearch-key migrate seed schema scout test test-filter test-watch test-parallel test-coverage test-coverage-min test-arch test-all test-contract test-concurrency test-e2e test-changed ci test-mutate test-unit test-feature testdb testdb-migrate testdb-parallel dbtest redistest meilitest pint pint-test phpstan check install-hooks horizon reverb octane clear storage-link cors-check fix-permissions check-project backup backup-list schema-dump restore-backup restore-remote prune-images prune-images-dry-run prune-builder up-dev mail-ui mail-clear s3-ui s3-init s3-test test-integration openapi openapi-check types image deploy rollback smoke deploy-status help
 
 # Targets por tema: cada archivo de make/ agrupa uno
 # El orden de include es fijo (no comodín) para que el resultado sea estable
@@ -53,4 +53,5 @@ include make/openapi.mk
 include make/backup.mk
 include make/dev.mk
 include make/project.mk
+include make/deploy.mk
 include make/help.mk

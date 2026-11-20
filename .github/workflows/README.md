@@ -76,46 +76,16 @@ El workflow usa las siguientes variables por defecto:
 - Verifica que `docker/app/Dockerfile` esté correcto
 - Prueba construir localmente: `docker build -f docker/app/Dockerfile .`
 
-### `cd.yml` - Pipeline de Despliegue Continuo
+### `release.yml` - Imagen inmutable de producción
 
-Se ejecuta automáticamente después de que CI pasa exitosamente en ramas `main` o `staging`.
+En cada push a `main` y en tags `v*`: construye `docker/app/Dockerfile.prod`, la escanea con Trivy y la publica en
+GHCR con etiquetas fijas `sha-<commit>` y `vX.Y.Z` (nunca `latest`), con SBOM y provenance.
 
-#### Estrategias de Despliegue:
+### `cd.yml` - Despliegue manual (SSH + Docker Compose)
 
-1. **Blue-Green Deployment**
-   - Despliegue a entorno inactivo
-   - Health checks automáticos
-   - Cambio instantáneo de tráfico
-   - Zero-downtime garantizado
-
-2. **Canary Deployment**
-   - Despliegue gradual (10% → 50% → 100%)
-   - Monitoreo de métricas en cada etapa
-   - Rollback automático si falla
-   - Integración con feature flags
-
-3. **Rolling Deployment**
-   - Actualización en batches pequeños
-   - Verificación continua
-   - Rollback automático si falla
-
-#### Características:
-
-- **Rollback Automático**: Si cualquier etapa falla, se revierte automáticamente
-- **Health Checks**: Verificación continua de salud del servicio
-- **Post-Deployment**: Ejecución automática de migraciones y cache warming
-- **Notificaciones**: Estado del despliegue (configurable)
-
-#### Uso Manual:
-
-Puedes ejecutar despliegues manualmente desde la pestaña "Actions":
-
-1. Ve a "Actions" → "CD Pipeline"
-2. Click en "Run workflow"
-3. Selecciona:
-   - Environment (staging/production)
-   - Strategy (blue-green/canary/rolling)
-   - Rollback (si quieres hacer rollback)
+Solo `workflow_dispatch`: elige entorno, `image_tag` (o `rollback`) y ejecuta `scripts/deploy/deploy.sh`
+(pull, migraciones en contenedor aparte, `up --wait`, humo y rollback automático). Los mismos pasos corren en
+local con `make deploy|rollback|smoke`. Guía completa y secrets: `docs/deploy.md`.
 
 ### `sonarcloud.yml` - SonarCloud Analysis
 
@@ -155,7 +125,7 @@ Si quieres desactivar SonarCloud temporalmente:
 
 ## Próximos Pasos
 
-- [x] Configurar CD Pipeline (Fase 24.3) para despliegue automático ✅
+- [x] Imagen inmutable en GHCR y despliegue manual por SSH + Compose (`docs/deploy.md`) ✅
 - [x] Configurar SonarCloud Analysis ✅
 - [ ] Agregar más tests para aumentar cobertura
 - [ ] Configurar notificaciones (Slack, Discord, Email)

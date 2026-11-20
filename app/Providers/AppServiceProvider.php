@@ -35,6 +35,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Telescope es require-dev: en producción (composer --no-dev) no existe
+        if (! class_exists(Telescope::class)) {
+            return;
+        }
+
         // Configurar autorización de Telescope
         // Telescope::night() permite acceso sin autenticación solo en desarrollo
         Telescope::night();

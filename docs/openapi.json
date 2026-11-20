@@ -4539,6 +4539,9 @@
                                             "type": "string",
                                             "const": "ready"
                                         },
+                                        "release": {
+                                            "type": "string"
+                                        },
                                         "timestamp": {
                                             "type": "string"
                                         },
@@ -4565,6 +4568,7 @@
                                     },
                                     "required": [
                                         "status",
+                                        "release",
                                         "timestamp",
                                         "services"
                                     ]
@@ -4586,6 +4590,9 @@
                                             "type": "string",
                                             "const": "unhealthy"
                                         },
+                                        "release": {
+                                            "type": "string"
+                                        },
                                         "timestamp": {
                                             "type": "string"
                                         },
@@ -4612,6 +4619,7 @@
                                     },
                                     "required": [
                                         "status",
+                                        "release",
                                         "timestamp",
                                         "services"
                                     ]
@@ -4680,6 +4688,9 @@
                                             "type": "string",
                                             "const": "ready"
                                         },
+                                        "release": {
+                                            "type": "string"
+                                        },
                                         "timestamp": {
                                             "type": "string"
                                         },
@@ -4706,6 +4717,7 @@
                                     },
                                     "required": [
                                         "status",
+                                        "release",
                                         "timestamp",
                                         "services"
                                     ]
@@ -4727,6 +4739,9 @@
                                             "type": "string",
                                             "const": "unhealthy"
                                         },
+                                        "release": {
+                                            "type": "string"
+                                        },
                                         "timestamp": {
                                             "type": "string"
                                         },
@@ -4753,6 +4768,7 @@
                                     },
                                     "required": [
                                         "status",
+                                        "release",
                                         "timestamp",
                                         "services"
                                     ]

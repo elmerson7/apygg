@@ -29,8 +29,8 @@ class HealthController extends Controller
     /**
      * Readiness probe — verifica servicios críticos: DB y Redis
      */
-    #[Response(200, 'DB y Redis responden', type: 'array{status: "ready", timestamp: string, services: array<string, array{status: string, latency_ms?: float, message?: string}>}')]
-    #[Response(503, 'Algún servicio crítico no responde', type: 'array{status: "unhealthy", timestamp: string, services: array<string, array{status: string, latency_ms?: float, message?: string}>}')]
+    #[Response(200, 'DB y Redis responden', type: 'array{status: "ready", release: string, timestamp: string, services: array<string, array{status: string, latency_ms?: float, message?: string}>}')]
+    #[Response(503, 'Algún servicio crítico no responde', type: 'array{status: "unhealthy", release: string, timestamp: string, services: array<string, array{status: string, latency_ms?: float, message?: string}>}')]
     public function ready(): JsonResponse
     {
         $services = [];
@@ -61,6 +61,7 @@ class HealthController extends Controller
 
         return response()->json([
             'status' => $overallStatus,
+            'release' => (string) config('app.release'),
             'timestamp' => now()->toIso8601String(),
             'services' => $services,
         ], $statusCode);
@@ -69,8 +70,8 @@ class HealthController extends Controller
     /**
      * Alias de ready() para compatibilidad con /health
      */
-    #[Response(200, 'DB y Redis responden', type: 'array{status: "ready", timestamp: string, services: array<string, array{status: string, latency_ms?: float, message?: string}>}')]
-    #[Response(503, 'Algún servicio crítico no responde', type: 'array{status: "unhealthy", timestamp: string, services: array<string, array{status: string, latency_ms?: float, message?: string}>}')]
+    #[Response(200, 'DB y Redis responden', type: 'array{status: "ready", release: string, timestamp: string, services: array<string, array{status: string, latency_ms?: float, message?: string}>}')]
+    #[Response(503, 'Algún servicio crítico no responde', type: 'array{status: "unhealthy", release: string, timestamp: string, services: array<string, array{status: string, latency_ms?: float, message?: string}>}')]
     public function check(Request $request): JsonResponse
     {
         return $this->ready();

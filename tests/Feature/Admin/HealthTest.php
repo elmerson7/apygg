@@ -25,6 +25,17 @@ test('el health check general es público y responde el estado de sus servicios'
         ->assertJsonPath('services.database.status', 'ok');
 });
 
+test('las sondas de salud informan la release desplegada para que el humo post-despliegue la compruebe', function () {
+    config(['app.release' => 'sha-abc1234']);
+
+    $this->getJson('/health')->assertJsonPath('release', 'sha-abc1234');
+    $this->getJson('/health/ready')->assertOk()->assertJsonPath('release', 'sha-abc1234');
+});
+
+test('la release por defecto es dev cuando la imagen no fija APP_RELEASE', function () {
+    expect(config('app.release'))->toBe('dev');
+});
+
 test('la sonda de vida responde alive sin token', function () {
     $this->getJson('/health/live')
         ->assertOk()

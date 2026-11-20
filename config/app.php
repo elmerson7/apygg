@@ -181,4 +181,17 @@ return [
 
     'version' => env('APP_VERSION', '1.0.0'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Release desplegada
+    |--------------------------------------------------------------------------
+    |
+    | Identificador de la imagen en ejecución (`sha-<commit>` o `vX.Y.Z`). Lo fija
+    | el build de producción (ARG GIT_SHA -> ENV APP_RELEASE) y lo expone /health
+    | para que `make smoke` compruebe que se desplegó lo esperado.
+    |
+    */
+
+    'release' => env('APP_RELEASE', 'dev'),
+
 ];

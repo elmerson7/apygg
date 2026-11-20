@@ -180,5 +180,4 @@ rollback no requiera volver a descargar la imagen.
 
 - `Makefile` → targets `prune-images`, `prune-images-dry-run`, `prune-builder`
 - `scripts/prune-images.sh` → lógica idempotente (`--dry-run`, `--until`, `MIN_KEEP`)
-- `scripts/deploy/` → `blue-green.sh`, `canary.sh`, `rollback.sh`
-- `docs/cd-deployment-guide.md`, `docs/cd-pipeline-configuration.md`
+- `scripts/deploy/` y `docs/deploy.md` → despliegue por SSH + Compose (`make deploy|rollback|smoke`)

@@ -26,6 +26,18 @@ punto de partida compara: `git diff <tu-commit-base> HEAD -- database/migrations
   `make art cmd="migrate:fresh --seed"`.
 - **Sanctum no existe.** Nunca estuvo instalado; si lo usabas, es tuyo.
 
+### Despliegue (ola 8.1-A)
+
+- **`cd.yml` se reescribe**: desaparecen las estrategias cpanel, railway, blue-green, canary y rolling (nunca se
+  probaron). Quedan en `docs/archive/despliegue-plantillas/` (también `scripts/deploy/{blue-green,canary,rollback}.sh` y
+  `docs/cd-*.md`, sustituidos por `docs/deploy.md`). Si usabas alguna, copia la plantilla desde ahí a tu proyecto.
+- Workflows nuevos: `release.yml` (publica `ghcr.io/<repo>:sha-<commit>` y `vX.Y.Z`) y el nuevo `cd.yml` manual (secrets
+  `DEPLOY_HOST`, `DEPLOY_SSH_KEY`, `DEPLOY_PATH`, `SMOKE_URL`). Make: `image`, `deploy`, `rollback`, `smoke`, `deploy-status`.
+- `/health` y `/health/ready` añaden el campo `release` (`config('app.release')`, env `APP_RELEASE`, `dev` por defecto): un
+  cliente estricto con el esquema debe aceptarlo. `docs/openapi.json` y los tipos se regeneran (`make openapi`).
+- Nuevo `.env.deploy` (no versionado, plantilla `.env.deploy.example`) y `deploy/compose.prod.yml`: el compose de producción
+  no incluye PostgreSQL ni Redis.
+
 ### Auditoría de negocio (ola 5.2-D)
 
 - Migración nueva `2026_11_20_000260_create_audit_logs_table` (`make migrate`). Si tu proyecto tiene una tabla propia con

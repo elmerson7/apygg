@@ -1,0 +1,82 @@
+# Stack de PRODUCCIÓN para un VPS con Docker Compose. Se copia al servidor con `make deploy`
+# (DEPLOY_PATH/compose.prod.yml) y se arranca con `--env-file deploy.env` (IMAGE, IMAGE_TAG, PREVIOUS_TAG).
+# La etiqueta es SIEMPRE fija (sha-<commit> o vX.Y.Z), nunca `latest`.
+# PostgreSQL y Redis NO van aquí: apúntalos en `.env` (DB_HOST, REDIS_HOST) a tu instancia (gestionada o del propio
+# VPS; desde el contenedor el host del VPS es `host.docker.internal`). Guía: docs/deploy.md
+
+name: ${PROJECT:-apygg}
+
+x-app: &app
+  image: ${IMAGE:?define IMAGE (p. ej. ghcr.io/org/repo)}:${IMAGE_TAG:?define IMAGE_TAG (sha-<commit> o vX.Y.Z)}
+  env_file: .env
+  restart: unless-stopped
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  networks:
+    - network
+
+services:
+  app:
+    <<: *app
+    container_name: ${PROJECT:-apygg}-app
+    # Solo en loopback: el proxy TLS del VPS (Caddy/nginx) reenvía a este puerto
+    ports:
+      - "127.0.0.1:${APP_PORT:-8000}:8000"
+    stop_grace_period: 30s
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/health/ready || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 40s
+
+  horizon:
+    <<: *app
+    container_name: ${PROJECT:-apygg}-horizon
+    command: ["php", "artisan", "horizon"]
+    # Horizon termina ordenadamente (horizon:terminate al recibir SIGTERM): espera a los jobs en curso
+    stop_signal: SIGTERM
+    stop_grace_period: 120s
+    healthcheck:
+      test: ["CMD-SHELL", "php artisan horizon:status | grep -qi running || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  scheduler:
+    <<: *app
+    container_name: ${PROJECT:-apygg}-scheduler
+    command: ["php", "artisan", "schedule:work"]
+    healthcheck:
+      disable: true
+
+  reverb:
+    <<: *app
+    profiles: ["reverb"]
+    container_name: ${PROJECT:-apygg}-reverb
+    command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
+    ports:
+      - "127.0.0.1:${REVERB_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sS -o /dev/null http://localhost:8080 || exit 1"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+
+  # Tarea de un solo uso: `make deploy` la ejecuta ANTES de cambiar los servicios (docker compose run --rm migrate)
+  migrate:
+    <<: *app
+    profiles: ["tools"]
+    container_name: ${PROJECT:-apygg}-migrate
+    command: ["php", "artisan", "migrate", "--force"]
+    restart: "no"
+    environment:
+      SKIP_OPTIMIZE: "1"
+    healthcheck:
+      disable: true
+
+networks:
+  network:
+    name: ${PROJECT:-apygg}-network
+    driver: bridge

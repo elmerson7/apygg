@@ -1,0 +1,71 @@
+# syntax=docker/dockerfile:1
+# Imagen de PRODUCCIÓN (inmutable): código y vendor dentro, sin dependencias de desarrollo,
+# opcache sin revalidar, usuario no root. El de desarrollo es docker/app/Dockerfile.
+# Build: make image  (o el workflow release.yml). Guía: docs/deploy.md
+#   docker build -f docker/app/Dockerfile.prod --build-arg GIT_SHA=$(git rev-parse HEAD) -t apygg:sha-<commit> .
+
+# ── base: FrankenPHP + extensiones + wkhtmltopdf (capa cacheable, no depende del código) ──
+FROM dunglas/frankenphp:1.13.6-php8.5.13-bookworm AS base
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl wget ca-certificates gnupg fontconfig libfreetype6 libjpeg62-turbo libpng16-16 \
+        libx11-6 libxcb1 libxext6 libxrender1 xfonts-75dpi xfonts-base libicu-dev libpq-dev libzip-dev \
+    && echo "deb http://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+    && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends postgresql-client-18 \
+    && wget -q -O /tmp/wkhtmltox.deb https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-3/wkhtmltox_0.12.6.1-3.bookworm_amd64.deb \
+    && (dpkg -i /tmp/wkhtmltox.deb || apt-get install -y -f) \
+    && rm /tmp/wkhtmltox.deb \
+    && install-php-extensions pcntl intl zip opcache gd pdo_pgsql bcmath redis \
+    && rm -rf /var/lib/apt/lists/* /etc/apt/sources.list.d/pgdg.list
+
+# ── vendor: dependencias SIN dev, en una etapa aparte (git/unzip/composer no llegan a la imagen final) ──
+FROM base AS vendor
+ENV COMPOSER_ALLOW_SUPERUSER=1
+RUN apt-get update && apt-get install -y --no-install-recommends git unzip && rm -rf /var/lib/apt/lists/*
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install --no-interaction --prefer-dist --no-dev --no-scripts --no-autoloader
+COPY . .
+# Autoloader autoritativo + descubrimiento de paquetes (sin dev: solo los providers instalados)
+RUN composer dump-autoload --no-interaction --no-dev --classmap-authoritative \
+    && rm -rf bootstrap/cache/*.php storage/logs/* storage/framework/cache/data/* 2>/dev/null; \
+    mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
+
+# ── final ──
+FROM base AS final
+ARG GIT_SHA=unknown
+ARG APP_RELEASE=
+ARG USER_ID=10001
+LABEL org.opencontainers.image.title="apygg" \
+      org.opencontainers.image.revision="${GIT_SHA}"
+
+ENV APP_ENV=production \
+    APP_DEBUG=false \
+    APP_RELEASE="${APP_RELEASE:-sha-${GIT_SHA}}" \
+    OCTANE_SERVER=frankenphp \
+    XDG_CONFIG_HOME=/config \
+    XDG_DATA_HOME=/data
+
+COPY docker/app/php.prod.ini /usr/local/etc/php/conf.d/zz-prod.ini
+
+# Usuario no root; FrankenPHP sin capabilities de fichero (puerto >1024) y con /data y /config escribibles
+RUN useradd -u ${USER_ID} -m -s /usr/sbin/nologin appuser \
+    && (setcap -r /usr/local/bin/frankenphp || true) \
+    && mkdir -p /data/caddy /config/caddy \
+    && chown -R appuser:appuser /data /config
+
+WORKDIR /app
+COPY --from=vendor --chown=appuser:appuser /app /app
+RUN chmod +x docker/app/entrypoint-prod.sh \
+    && chmod -R ug+rwX storage bootstrap/cache
+
+USER appuser
+EXPOSE 8000
+HEALTHCHECK --interval=15s --timeout=3s --start-period=40s --retries=5 \
+    CMD curl -fsS http://localhost:8000/health/live || exit 1
+
+ENTRYPOINT ["/app/docker/app/entrypoint-prod.sh"]
+CMD ["php", "artisan", "octane:start", "--server=frankenphp", "--host=0.0.0.0", "--port=8000"]
