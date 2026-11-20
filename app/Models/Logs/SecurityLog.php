@@ -4,6 +4,7 @@ namespace App\Models\Logs;
 
 use App\Models\User;
 use App\Traits\RecordsTenant;
+use App\Traits\RedactsLogData;
 use Database\Factories\SecurityLogFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -19,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class SecurityLog extends Model
 {
     /** @use HasFactory<SecurityLogFactory> */
-    use HasFactory, RecordsTenant;
+    use HasFactory, RecordsTenant, RedactsLogData;
 
     /**
      * The table associated with the model.
@@ -59,6 +60,13 @@ class SecurityLog extends Model
         'user_agent',
         'details',
     ];
+
+    /**
+     * Atributos JSON que se redactan al guardar (RedactsLogData).
+     *
+     * @var list<string>
+     */
+    protected array $redactedAttributes = ['details'];
 
     /**
      * The attributes that should be cast.

@@ -59,7 +59,7 @@ test('un log de la API no muestra secretos aunque estén guardados sin redactar'
         })
         ->implode("\n");
 
-    expect($mostrado)->toContain('a@b.com')
+    expect($mostrado)->toContain('a***@b***.com')
         ->toContain('[REDACTED]')
         ->not->toContain('hunter2-secreta')
         ->not->toContain('sk-live-123')

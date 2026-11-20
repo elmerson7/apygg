@@ -8,7 +8,7 @@ use Illuminate\Http\Response;
 
 test('oculta contraseñas y tokens en cuerpos anidados', function () {
     $data = [
-        'email' => 'a@b.com',
+        'nombre' => 'x',
         'current_password' => 'secreto-actual',
         'data' => [
             'access_token' => 'AAA.BBB.CCC',
@@ -19,7 +19,7 @@ test('oculta contraseñas y tokens en cuerpos anidados', function () {
 
     $out = Redactor::redact($data);
 
-    expect($out['email'])->toBe('a@b.com')
+    expect($out['nombre'])->toBe('x')
         ->and($out['current_password'])->toBe('[REDACTED]')
         ->and($out['data']['access_token'])->toBe('[REDACTED]')
         ->and($out['data']['refresh_token'])->toBe('[REDACTED]')
@@ -28,7 +28,7 @@ test('oculta contraseñas y tokens en cuerpos anidados', function () {
 });
 
 test('la lista de claves sensibles es configurable', function () {
-    config(['logging.redact_keys' => ['mi_campo']]);
+    config(['logging.redact.keys' => ['mi_campo']]);
 
     expect(Redactor::redact(['mi_campo' => 'x', 'otro' => 'y']))->toBe(['mi_campo' => '[REDACTED]', 'otro' => 'y']);
 });
@@ -52,5 +52,5 @@ test('ApiLogger no guarda tokens ni contraseñas del request ni de la response',
         ->and($stored)->not->toContain('OldPass123!')
         ->and($stored)->not->toContain('ACCESS-TOKEN-VALUE')
         ->and($stored)->not->toContain('REFRESH-TOKEN-VALUE')
-        ->and($log->request_body['email'])->toBe('a@b.com');
+        ->and($log->request_body['email'])->toBe('a***@b***.com');
 });

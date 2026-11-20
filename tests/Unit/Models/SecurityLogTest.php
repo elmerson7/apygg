@@ -42,13 +42,13 @@ test('puede filtrar por tipo de evento', function () {
 });
 
 test('puede filtrar intentos de login fallidos', function () {
-    $uniqueEmail = 'test-'.uniqid().'@example.com';
+    $marker = 'intento-'.uniqid();
     SecurityLog::factory()->loginFailure()->count(5)->create([
-        'details' => ['email' => $uniqueEmail],
+        'details' => ['marker' => $marker],
     ]);
     SecurityLog::factory()->loginSuccess()->count(3)->create();
 
-    $failureLogs = SecurityLog::whereJsonContains('details->email', $uniqueEmail)->loginFailures()->get();
+    $failureLogs = SecurityLog::whereJsonContains('details->marker', $marker)->loginFailures()->get();
 
     expect($failureLogs)->toHaveCount(5)
         ->and($failureLogs->every(fn ($log) => $log->event_type === SecurityLog::EVENT_LOGIN_FAILURE))->toBeTrue();

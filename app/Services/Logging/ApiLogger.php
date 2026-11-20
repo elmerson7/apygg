@@ -188,10 +188,10 @@ class ApiLogger
 
         foreach ($headers as $key => $value) {
             $lowerKey = strtolower($key);
-            if (in_array($lowerKey, [...self::EXCLUDED_HEADERS, ...array_map('strtolower', (array) config('logging.api.excluded_headers', []))])) {
+            if (Redactor::isSensitiveKey($lowerKey) || in_array($lowerKey, [...self::EXCLUDED_HEADERS, ...array_map('strtolower', (array) config('logging.api.excluded_headers', []))])) {
                 $sanitized[$key] = '[REDACTED]';
             } else {
-                $sanitized[$key] = is_array($value) ? $value[0] ?? $value : $value;
+                $sanitized[$key] = Redactor::redact(is_array($value) ? $value[0] ?? $value : $value);
             }
         }
 

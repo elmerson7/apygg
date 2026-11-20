@@ -111,7 +111,7 @@ test('sanitiza campos sensibles en request body', function () {
         ->and($log->request_body['password_confirmation'])->toBe('[REDACTED]')
         ->and($log->request_body['api_token'])->toBe('[REDACTED]')
         ->and($log->request_body['name'])->toBe('Test User')
-        ->and($log->request_body['email'])->toBe('test@example.com');
+        ->and($log->request_body['email'])->toBe('t***@e***.com');
 });
 
 test('sanitiza headers sensibles', function () {

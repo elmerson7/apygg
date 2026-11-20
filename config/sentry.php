@@ -1,5 +1,7 @@
 <?php
 
+use App\Logging\SentryScrubber;
+
 /**
  * Sentry Laravel SDK configuration file.
  *
@@ -37,6 +39,10 @@ return [
 
     // The minimum log level that will be sent to Sentry as logs using the `sentry_logs` logging channel
     'logs_channel_level' => env('SENTRY_LOG_LEVEL', env('SENTRY_LOGS_LEVEL', env('LOG_LEVEL', 'debug'))),
+
+    // Ningún dato personal ni secreto sale hacia Sentry: ver App\Logging\SentryScrubber y docs/logging.md.
+    'before_send' => [SentryScrubber::class, 'beforeSend'],
+    'before_breadcrumb' => [SentryScrubber::class, 'beforeBreadcrumb'],
 
     // @see: https://docs.sentry.io/platforms/php/guides/laravel/configuration/options/#send_default_pii
     'send_default_pii' => env('SENTRY_SEND_DEFAULT_PII', false),

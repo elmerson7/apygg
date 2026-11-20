@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 - Revisión de aislamiento 4.3-B: la lista negra corta las sesiones vivas (JWT y API keys); canal de presencia por tenant sin correo; `security.allow_public_sharing` se aplica (403 `public_sharing_disabled`); búsqueda Scout filtrada por `tenant_id`; reglas `TenantExists`/`TenantUnique`; `Sequence` rechaza tenants explícitos ajenos; tope de empresas por usuario bajo bloqueo; `tenancy:assign-orphans` solo asigna filas de miembros; resincronización de roles `tenant-*` al activar equipos; jobs de tenants no activos no se ejecutan; `PlanLimits` y `SequenceExhausted` como excepciones de dominio. Ver `docs/upgrading.md`
+- Redacción unificada de datos personales y secretos en logs y Sentry: `Redactor` con claves, patrones (email, tarjeta/Luhn, teléfono, JWT, Bearer), modo `mask`/`remove` y límites; aplicado por processor de Monolog en todos los canales, modelos de log de BD, `before_send`/`before_breadcrumb` de Sentry y `Pretty::json()`. Ver `docs/logging.md`
 - Imagen base actualizada a `dunglas/frankenphp:1.13.6-php8.5.13-bookworm` (antes `1.11-php8.5-bookworm`: PHP 8.5.3, FrankenPHP 1.11.3). PHP 8.5.12 corrige dos vulnerabilidades críticas de ejecución remota sin autenticación (CVE-2026-109618 y CVE-2026-109619); 8.5.13 es la última 8.5.x. La etiqueta queda fijada a versión exacta para builds reproducibles. Proyectos derivados: ver `docs/upgrading.md` ("Actualizar la imagen por seguridad")
 
 ### Changed

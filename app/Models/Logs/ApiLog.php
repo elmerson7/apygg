@@ -4,6 +4,7 @@ namespace App\Models\Logs;
 
 use App\Models\User;
 use App\Traits\RecordsTenant;
+use App\Traits\RedactsLogData;
 use Database\Factories\ApiLogFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -19,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ApiLog extends Model
 {
     /** @use HasFactory<ApiLogFactory> */
-    use HasFactory, RecordsTenant;
+    use HasFactory, RecordsTenant, RedactsLogData;
 
     /**
      * The table associated with the model.
@@ -65,6 +66,13 @@ class ApiLog extends Model
         'user_agent',
         'ip_address',
     ];
+
+    /**
+     * Atributos JSON que se redactan al guardar (RedactsLogData).
+     *
+     * @var list<string>
+     */
+    protected array $redactedAttributes = ['request_query', 'request_body', 'request_headers', 'response_body'];
 
     /**
      * The attributes that should be cast.

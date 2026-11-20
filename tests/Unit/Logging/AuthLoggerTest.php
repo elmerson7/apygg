@@ -1,5 +1,6 @@
 <?php
 
+use App\Helpers\Redactor;
 use App\Models\Logs\SecurityLog;
 use App\Models\User;
 use App\Services\Logging\AuthLogger;
@@ -47,7 +48,7 @@ test('puede registrar intento de login fallido', function () {
         ->and($log->ip_address)->toBe($ipAddress)
         ->and($log->details)->toHaveKey('email')
         ->and($log->details)->toHaveKey('reason')
-        ->and($log->details['email'])->toBe($email)
+        ->and($log->details['email'])->toBe(Redactor::maskEmail($email))
         ->and($log->details['reason'])->toBe($reason);
 });
 

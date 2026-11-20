@@ -393,3 +393,7 @@ make art cmd="route:list"        # cada ruta con permission:x.y,api
 make check
 make testdb-migrate && make test
 ```
+
+## Redacción unificada de logs
+
+`config/logging.php`: `redact_keys` y `redact_key_fragments` pasan a `redact.keys` y `redact.key_fragments` (más `mode`, `patterns`, `max_depth`, `max_string`). Los canales llevan `tap => [RedactLogs::class]` y `config/sentry.php` define `before_send`/`before_breadcrumb`. Los emails en logs de BD quedan enmascarados (`a***@b***.com`). Ver `docs/logging.md`.

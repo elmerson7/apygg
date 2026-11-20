@@ -275,6 +275,7 @@ Guía completa: `docs/testing.md`.
 
 ## Logging
 
+- **Nada de datos personales ni secretos en logs ni Sentry**: un único `App\Helpers\Redactor` (config `logging.redact`); canales nuevos llevan `tap => [RedactLogs::class]`. Ver `docs/logging.md`.
 - `LogService` para logs de aplicación; canales `activity`, `security`, `auth`
   organizados por fecha.
 - Los warnings de deprecación de `vendor/` se filtran automáticamente
