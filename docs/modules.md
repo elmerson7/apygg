@@ -49,7 +49,10 @@ concreto, **no va aquí** (`AGENTS.md`). Si es dinero o un servicio de terceros,
 12. **Config y `.env.example`** (y `docs/upgrading.md` si rompe proyectos derivados).
 13. **Tests Feature** con camino feliz **y denegado** (sin token, sin permiso, de otro usuario);
     unitarios del servicio. Si hay concurrencia (contadores, numeraciones, idempotencia): un test
-    de `tests/Concurrency/`.
+    de `tests/Concurrency/`. **Si el módulo tiene datos por empresa** (`BelongsToTenant` / `tenant_id`):
+    prueba de aislamiento A/B en `tests/Feature/Tenancy/Aislamiento/` con la plantilla
+    `tests/Support/AssertsTenantIsolation.php` y registra el modelo en `CoberturaDeAislamientoTest`
+    (lo exige el meta-test); ver `docs/multi-tenancy.md` §«Cómo probar el aislamiento de un recurso nuevo».
 14. **Documentación** `docs/<modulo>.md` y enlace desde `AGENTS.md` si es una norma.
 15. **`make check`** (Pint + PHPStan nivel 6) y `make test`. Todo en Docker vía Make.
 

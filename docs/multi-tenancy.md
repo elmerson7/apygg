@@ -153,6 +153,35 @@ forget/has` y las búsquedas). Con la fachada `Cache` directa, prefija tú: `Cac
 `rememberUser`/`rememberEntity` no se prefijan (el usuario y las entidades globales no pertenecen a un tenant).
 Con `forgetPattern` incluye el segmento `t<id>:` si quieres limitar al tenant.
 
+## Cómo probar el aislamiento de un recurso nuevo
+
+Todo recurso multiempresa (modelo con `BelongsToTenant`, o tabla nueva con `tenant_id`) lleva su prueba en
+`tests/Feature/Tenancy/Aislamiento/<Recurso>AislamientoTest.php`. La plantilla es el trait
+[`tests/Support/AssertsTenantIsolation.php`](../tests/Support/AssertsTenantIsolation.php) (cópiate un archivo de ese
+directorio, p. ej. `WebhooksAislamientoTest.php`):
+
+```php
+uses(RefreshDatabase::class, InteractsWithTenancy::class, ActsWithHeaders::class, AssertsTenantIsolation::class);
+beforeEach(fn () => $this->bootIsolation());   // multiempresa activa, tenants $this->a y $this->b, $this->ctx
+```
+
+Cuatro casos obligatorios, con datos en A **y** en B:
+
+| Caso | Qué se comprueba | Ayuda |
+|---|---|---|
+| (a) Listado | desde A solo salen filas de A | `assertListIsolated()` |
+| (b) Id ajeno | ver/editar/borrar/acciones sobre un id de B desde A dan **404** (nunca 403: no confirma que exista) y la fila de B sigue intacta | `assertForeignIdNotFound()` |
+| (c) `tenant_id` del cuerpo | crear desde A con `tenant_id` de B queda en A | `assertBodyTenantIgnored()` |
+| (d) Modelo/consulta | dentro de `run(A)` no aparecen filas de B y sin contexto (multiempresa activa) lanza `MissingTenantContext` | `assertModelIsolated()` |
+
+Además: un usuario de A que declara `X-Tenant` de B recibe 403 (`ResolveTenant`: misma respuesta que un tenant
+inexistente; es el contrato, no una fuga). Si el recurso tiene jobs, caché o contadores, mira
+`JobsYCacheAislamientoTest` y `SecuenciasAislamientoTest`.
+
+**Meta-test** (`CoberturaDeAislamientoTest`): recorre `app/Models` y falla si un modelo usa `BelongsToTenant` sin
+estar en `AISLAMIENTO_MODELOS_CUBIERTOS`, o si una tabla tiene `tenant_id` sin estar cubierta
+(`AISLAMIENTO_TABLAS_CUBIERTAS`). Un modelo nuevo obliga a añadir su prueba y registrarla ahí.
+
 ## Huecos conocidos (léelos antes de activarlo)
 
 - `/users`, `/roles`, `/admin/*` son **de plataforma**: no usan el middleware `tenant`. Un usuario con
