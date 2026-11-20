@@ -104,6 +104,10 @@ help:
 	@printf "  %-20s %s\n" "test-concurrency" "Carreras con procesos reales"
 	@printf "  %-20s %s\n" "test-e2e" "Flujos de punta a punta (suite reservada)"
 	@printf "  %-20s %s\n" "e2e" "Suite E2E con su stack efímero (levanta, prueba, baja)"
+	@printf "  %-20s %s\n" "frontend-test" "Cliente de pruebas: typecheck + Vitest (docs/frontend-demo.md)" # module:frontend-demo
+	@printf "  %-20s %s\n" "frontend-build" "Cliente de pruebas: build de producción (Node efímero)" # module:frontend-demo
+	@printf "  %-20s %s\n" "frontend-dev" "Cliente de pruebas: servidor de desarrollo (VITE_API_URL=)" # module:frontend-demo
+	@printf "  %-20s %s\n" "frontend-e2e" "Playwright escritorio y móvil contra un stack temporal" # module:frontend-demo
 	@printf "  %-20s %s\n" "test-changed" "Solo tests con cambios (git --dirty)"
 	@printf "  %-20s %s\n" "ci" "Como el CI: check + cobertura mínima"
 	@printf "  %-20s %s\n" "test-filter" "Tests con filtro (filter=Nombre)"

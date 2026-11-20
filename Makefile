@@ -53,6 +53,7 @@ include make/openapi.mk
 include make/backup.mk
 include make/dev.mk
 include make/project.mk
+include make/frontend.mk # module:frontend-demo
 include make/modules.mk
 include make/load.mk # module:load-testing
 include make/deploy.mk

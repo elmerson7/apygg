@@ -306,6 +306,12 @@ remoto esos pasos se omiten. Los recorridos que necesitan multiempresa con alta 
 | `E2E_WEBHOOK_RECEIVER_URL` | URL del receptor de webhooks vista **desde el stack** (por defecto `http://app:9199`; en `make e2e`, el contenedor del runner: `http://<E2E_PROJECT>-runner:9199`) |
 | `E2E_APP_TITLE` | si se define, la ficha de `/` debe llevar exactamente ese título |
 
+### Recorridos de navegador: `make frontend-e2e`
+
+El cliente de pruebas (`frontend-demo/`) trae sus propios recorridos **Playwright** (escritorio y móvil) que reutilizan este
+mismo stack efímero (`docker-compose.e2e.yml` + `scripts/e2e-stack.sh`) y lo bajan con `down -v`. Cómo corre, qué recorre y
+cómo añadir uno: [`docs/frontend-demo.md`](frontend-demo.md).
+
 ### Contra el stack de desarrollo: `make test-e2e`
 
 `make setup` + `make test-e2e` sigue existiendo: corre Pest dentro del contenedor `app` del proyecto contra

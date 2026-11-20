@@ -31,3 +31,14 @@ case "$code" in
     200|204) echo "bucket ${S3_BUCKET}: política de lectura pública aplicada";;
     *) echo "política de ${S3_BUCKET}: fallo HTTP $code" >&2; exit 1;;
 esac
+
+# CORS: un cliente web (SPA) sube con PUT presignado y descarga desde el navegador. Abierto a cualquier origen
+# porque es un emulador de desarrollo/pruebas; en producción el CORS se fija en el bucket real.
+cors='<CORSConfiguration><CORSRule><AllowedOrigin>*</AllowedOrigin><AllowedMethod>GET</AllowedMethod><AllowedMethod>PUT</AllowedMethod><AllowedMethod>HEAD</AllowedMethod><AllowedHeader>*</AllowedHeader><ExposeHeader>ETag</ExposeHeader><MaxAgeSeconds>3000</MaxAgeSeconds></CORSRule></CORSConfiguration>'
+for bucket in "$S3_BUCKET" "$S3_PRIVATE_BUCKET"; do
+    code=$(req PUT "/${bucket}?cors" -H 'Content-Type: application/xml' --data "$cors")
+    case "$code" in
+        200|204) echo "bucket ${bucket}: CORS aplicado";;
+        *) echo "CORS de ${bucket}: fallo HTTP $code" >&2; exit 1;;
+    esac
+done
