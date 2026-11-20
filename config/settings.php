@@ -45,15 +45,6 @@ return [
             'group' => 'general',
             'description' => 'Tema visual por defecto',
         ],
-        'security.session_timeout_minutes' => [
-            'type' => 'int',
-            'default' => 60,
-            'min' => 5,
-            'max' => 1440,
-            'tenant' => true,
-            'group' => 'security',
-            'description' => 'Inactividad máxima antes de pedir sesión de nuevo',
-        ],
         'security.allow_public_sharing' => [
             'type' => 'bool',
             'default' => false,

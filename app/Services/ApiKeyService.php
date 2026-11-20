@@ -6,6 +6,7 @@ use App\Contracts\ApiKeyServiceInterface;
 use App\Contracts\PlanLimitsInterface;
 use App\Exceptions\BusinessLogicException;
 use App\Models\ApiKey;
+use App\Models\Blacklist;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Logging\SecurityLogger;
@@ -180,6 +181,23 @@ class ApiKeyService implements ApiKeyServiceInterface
         return $deleted;
     }
 
+    public function revokeAllForUser(int $userId): int
+    {
+        return TenantQuery::withoutTenant(function () use ($userId) {
+            $keys = ApiKey::query()->where('user_id', $userId)->get();
+
+            foreach ($keys as $apiKey) {
+                $this->clearKeyCache($apiKey->key);
+                $apiKey->delete();
+                LogService::logActivity('deleted', ApiKey::class, $apiKey->id, ['name' => $apiKey->name, 'reason' => 'blacklist']);
+            }
+
+            $this->clearUserCache($userId);
+
+            return $keys->count();
+        }, 'revocar las API keys de un usuario bloqueado');
+    }
+
     /**
      * Rotar una API Key (crear nueva y mantener antigua por período de gracia)
      *
@@ -264,6 +282,11 @@ class ApiKeyService implements ApiKeyServiceInterface
         // Falla cerrado: una key sin tenant, de un tenant no activo o de un usuario que ya no es
         // miembro no autentica.
         if ($apiKey && $user instanceof User && ! $this->bindTenant($apiKey, $user)) {
+            $user = null;
+        }
+
+        // Identidad bloqueada por un administrador: sus API keys dejan de autenticar.
+        if ($user instanceof User && Blacklist::blocksUser($user)) {
             $user = null;
         }
 

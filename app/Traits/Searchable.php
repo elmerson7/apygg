@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use App\Models\Model;
+use App\Support\Tenancy\TenantContext;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Laravel\Scout\Builder;
 use Laravel\Scout\Searchable as ScoutSearchable;
@@ -15,7 +16,9 @@ use Laravel\Scout\Searchable as ScoutSearchable;
  */
 trait Searchable
 {
-    use ScoutSearchable;
+    use ScoutSearchable {
+        search as protected scoutSearch;
+    }
 
     /**
      * Get the indexable data array for the model.
@@ -25,6 +28,11 @@ trait Searchable
     public function toSearchableArray(): array
     {
         $array = $this->toArray();
+
+        // Modelo multiempresa: el índice lleva `tenant_id` para poder filtrar por empresa.
+        if ($this->searchIsTenantScoped()) {
+            $array['tenant_id'] = $this->getAttribute('tenant_id');
+        }
 
         // Remover campos que no deben ser indexados
         $excludedFields = $this->getExcludedFromSearch();
@@ -60,7 +68,40 @@ trait Searchable
      */
     public function getFilterableAttributes(): array
     {
-        return [];
+        return $this->searchIsTenantScoped() ? ['tenant_id'] : [];
+    }
+
+    /**
+     * ¿Usa el modelo `BelongsToTenant`? Entonces el índice se indexa y se filtra por `tenant_id`.
+     * Un modelo que sobrescriba `toSearchableArray()` / `getFilterableAttributes()` debe incluir
+     * `tenant_id` (ver docs/multi-tenancy.md, «Búsqueda»).
+     */
+    public function searchIsTenantScoped(): bool
+    {
+        return in_array(BelongsToTenant::class, class_uses_recursive($this), true);
+    }
+
+    /**
+     * Búsqueda de Scout con el filtro del tenant del contexto (fail-closed: sin tenant y sin
+     * `withoutTenant()` lanza `MissingTenantContext`). Con multiempresa apagado no filtra.
+     *
+     * @param  string  $query
+     * @param  \Closure|null  $callback
+     * @return Builder<static>
+     */
+    public static function search($query = '', $callback = null)
+    {
+        $builder = static::scoutSearch($query, $callback);
+
+        if ($builder->model->searchIsTenantScoped()) {
+            $context = app(TenantContext::class);
+
+            if ($context->enforcing()) {
+                $builder->where('tenant_id', $context->requireId(static::class, 'search'));
+            }
+        }
+
+        return $builder;
     }
 
     /**

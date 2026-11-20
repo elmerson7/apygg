@@ -107,6 +107,8 @@ class FileController extends Controller
         $isPublic = $request->boolean('is_public', false);
         $uploadResult = null;
 
+        $this->files->assertVisibilityAllowed($isPublic);
+
         try {
             // El disco depende de la visibilidad, no de la categoría (ver config/files.php)
             $disk = $this->files->diskFor($isPublic);
@@ -179,6 +181,11 @@ class FileController extends Controller
 
         $data = $request->validated();
         $makePublic = array_key_exists('is_public', $data) ? (bool) $data['is_public'] : null;
+
+        // Solo hacerlo público exige el ajuste; dejarlo (o volverlo) privado siempre se permite.
+        if ($makePublic === true && ! $file->is_public) {
+            $this->files->assertVisibilityAllowed(true);
+        }
 
         try {
             $this->files->updateWithVisibility($file, $data, $makePublic);

@@ -149,6 +149,16 @@ final class TenantRoles
         });
     }
 
+    /**
+     * Nombres de los roles de Spatie que representan roles de tenant (`tenant-owner`...).
+     *
+     * @return list<string>
+     */
+    public static function spatieRoleNames(): array
+    {
+        return array_values(array_filter(array_map(self::spatieName(...), self::names())));
+    }
+
     private static function spatieName(string $role): ?string
     {
         $name = config("multi-tenancy.onboarding.roles.{$role}.spatie_role");

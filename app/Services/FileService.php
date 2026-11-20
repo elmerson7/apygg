@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Contracts\FileServiceInterface;
+use App\Contracts\SettingsRegistryInterface;
 use App\Exceptions\BusinessLogicException;
+use App\Exceptions\PublicSharingDisabledException;
 use App\Models\File;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Http\UploadedFile;
@@ -22,6 +24,8 @@ use Symfony\Component\Mime\MimeTypes;
 class FileService implements FileServiceInterface
 {
     protected const DEFAULT_DISK = 'public';
+
+    public function __construct(private readonly SettingsRegistryInterface $settings) {}
 
     /**
      * Subir archivo
@@ -94,6 +98,13 @@ class FileService implements FileServiceInterface
         }
 
         return 'tenants/'.$context->requireId(File::class, 'store').'/'.$path;
+    }
+
+    public function assertVisibilityAllowed(bool $isPublic): void
+    {
+        if ($isPublic && ! (bool) $this->settings->get('security.allow_public_sharing')) {
+            throw new PublicSharingDisabledException;
+        }
     }
 
     /**

@@ -96,6 +96,11 @@ Si no se indica, el `code` se deduce del `type` histórico y, en su defecto, del
 status (`App\Enums\ErrorCode::fromType()` / `fromStatus()`). Cada `case` del enum
 debe aparecer en esta tabla (lo verifica `tests/Unit/ErrorCodeDocsTest.php`).
 
+### Códigos propios del boilerplate (strings, fuera del enum)
+
+`public_sharing_disabled` (403, compartir archivos públicos apagado), `sequence_exhausted` (409, secuencia en su máximo),
+`plan_limit_unknown` (422, clave de límite no declarada), `plan_limit_reached` (403), `feature_unknown` (404).
+
 ### Códigos propios de un proyecto
 
 El enum es la base del boilerplate; un proyecto añade los suyos como string en su

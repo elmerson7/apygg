@@ -43,6 +43,13 @@ interface ApiKeyServiceInterface
     public function revoke(string $keyId): bool;
 
     /**
+     * Revocar TODAS las API Keys de un usuario, en todos sus tenants (p. ej. al bloquearlo).
+     *
+     * @return int Número de keys revocadas
+     */
+    public function revokeAllForUser(int $userId): int;
+
+    /**
      * Rotar una API Key (crear nueva y mantener antigua por período de gracia)
      *
      * @param  string  $keyId  ID de la key a rotar

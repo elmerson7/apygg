@@ -2,12 +2,14 @@
 
 use App\Contracts\PlanLimitsInterface;
 use App\Exceptions\PlanLimitReachedException;
+use App\Exceptions\PlanLimitUnknownException;
 use App\Models\ApiKey;
 use App\Models\Role;
 use App\Models\User;
 use App\Support\Tenancy\TenantContext;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
@@ -64,7 +66,7 @@ test('apagado o sin tenant no limita nada', function () {
 
     config(['plans.enabled' => true]);
     expect($this->limits->limit('max_api_keys'))->toBeNull();
-    expect(fn () => $this->limits->limit('clave_inventada'))->toThrow(InvalidArgumentException::class);
+    expect(fn () => $this->limits->limit('clave_inventada'))->toThrow(PlanLimitUnknownException::class);
 });
 
 test('ensureWithin lanza plan_limit_reached al pasarse y check informa', function () {
@@ -136,4 +138,18 @@ test('el tenant lee su plan y no el de otro', function () {
 
     $this->asHeaders($h)->getJson('/tenant/limits')->assertOk()->assertJsonPath('data.plan', 'free');
     $this->asHeaders(plHeaders($this, $this->a))->getJson('/tenant/limits')->assertForbidden();
+});
+
+test('una clave de limite inexistente es una excepcion de dominio 422 con code plan_limit_unknown', function () {
+    app('router')->get('/__limite-desconocido', fn () => app(PlanLimitsInterface::class)->limit('clave_inventada'));
+
+    $this->getJson('/__limite-desconocido')->assertStatus(422)->assertJsonPath('code', 'plan_limit_unknown');
+});
+
+test('clearOverride de un tenant inexistente lanza ModelNotFoundException y no borra nada', function () {
+    $this->limits->setOverride($this->a->id, 'max_api_keys', 5);
+
+    expect(fn () => $this->limits->clearOverride(999999, 'max_api_keys'))
+        ->toThrow(ModelNotFoundException::class);
+    expect($this->limits->limit('max_api_keys', $this->a->id))->toBe(5);
 });

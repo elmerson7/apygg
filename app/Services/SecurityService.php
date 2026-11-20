@@ -2,8 +2,12 @@
 
 namespace App\Services;
 
+use App\Contracts\ApiKeyServiceInterface;
 use App\Contracts\SecurityServiceInterface;
+use App\Models\Blacklist;
+use App\Models\User;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -16,6 +20,35 @@ use Illuminate\Support\Str;
  */
 class SecurityService implements SecurityServiceInterface
 {
+    public function __construct(private readonly ApiKeyServiceInterface $apiKeys) {}
+
+    public function blockIdentity(array $data, ?int $addedBy = null): Blacklist
+    {
+        $entry = DB::transaction(fn () => Blacklist::create([...$data, 'added_by' => $addedBy]));
+
+        $users = User::query()
+            ->where(function ($q) use ($entry) {
+                if ($entry->user_id !== null) {
+                    $q->orWhere('id', $entry->user_id);
+                }
+                if ($entry->email !== null) {
+                    $q->orWhereRaw('LOWER(email) = ?', [mb_strtolower($entry->email)]);
+                }
+                if ($entry->identity_document !== null) {
+                    $q->orWhere('identity_document', $entry->identity_document);
+                }
+            })
+            ->get();
+
+        foreach ($users as $user) {
+            $user->revokeAllTokens();
+            $this->apiKeys->revokeAllForUser($user->id);
+            Blacklist::forgetBlockCache($user->id);
+        }
+
+        return $entry;
+    }
+
     /**
      * Encriptar datos sensibles
      *

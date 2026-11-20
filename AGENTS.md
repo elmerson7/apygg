@@ -134,8 +134,8 @@ y middlewares reciben **la interfaz** por constructor o método. Nada de
   inyectar (accessor de un modelo, `Auth::viaRequest`, `failed()` de un job, un
   `JsonResource`) se usa `app(Interfaz::class)`, nunca la clase concreta.
 - **Octane**: prohibidas las propiedades estáticas mutables en `App\` (usa
-  constantes, `config()`, atributos de la petición o un binding). Única excepción
-  temporal: `Tenant::$currentTenant`.
+  constantes, `config()`, atributos de la petición o un binding). Sin excepciones: el
+  tenant activo vive en `TenantContext` (binding con scope), no en un estático.
 - Lo comprueban las reglas de `tests/Arch/ArchTest.php`: los controllers solo
   importan `App\Contracts`, cada servicio con interfaz la implementa y no hay
   estáticos mutables.

@@ -3,6 +3,7 @@
 namespace App\Contracts;
 
 use App\Exceptions\BusinessLogicException;
+use App\Exceptions\PublicSharingDisabledException;
 use App\Models\File;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\URL;
@@ -53,6 +54,14 @@ interface FileServiceInterface
      * @throws \Throwable
      */
     public function updateWithVisibility(File $file, array $data, ?bool $makePublic): void;
+
+    /**
+     * Aplica `security.allow_public_sharing`: hacer público un archivo exige que el ajuste esté activo
+     * (nivel tenant si lo hay, si no plataforma). Privado siempre se permite.
+     *
+     * @throws PublicSharingDisabledException
+     */
+    public function assertVisibilityAllowed(bool $isPublic): void;
 
     /**
      * URL temporal firmada para descargar un archivo privado.

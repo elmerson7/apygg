@@ -16,6 +16,8 @@ use Tests\Support\InteractsWithTenancy;
 uses(RefreshDatabase::class, InteractsWithTenancy::class, ActsWithHeaders::class);
 
 beforeEach(function () {
+    // Ajuste entero de prueba (ya no hay ningún `int` declarado de fábrica en config/settings.php).
+    config(['settings.definitions' => [...config('settings.definitions'), 'demo.timeout_minutes' => ['type' => 'int', 'default' => 60, 'min' => 5, 'max' => 1440, 'tenant' => true]]]);
     $this->seed([RoleSeeder::class, PermissionSeeder::class]);
     $this->enableTenancy();
     $this->a = $this->makeTenant('acme');
@@ -69,8 +71,8 @@ test('valida cada tipo con 422 y code estable', function (string $key, mixed $va
         ->assertStatus(422)->assertJsonPath('code', 'setting_invalid_value');
 })->with([
     'bool' => ['security.allow_public_sharing', 'quizás'],
-    'int fuera de rango' => ['security.session_timeout_minutes', 2],
-    'int no entero' => ['security.session_timeout_minutes', 'abc'],
+    'int fuera de rango' => ['demo.timeout_minutes', 2],
+    'int no entero' => ['demo.timeout_minutes', 'abc'],
     'enum' => ['general.theme', 'rosa'],
     'string con regla' => ['general.support_email', 'no-es-correo'],
     'json' => ['ui.branding', 'texto'],
@@ -78,11 +80,11 @@ test('valida cada tipo con 422 y code estable', function (string $key, mixed $va
 
 test('guarda cada tipo con su tipo PHP exacto', function () {
     $this->registry->setPlatform('security.allow_public_sharing', true);
-    $this->registry->setPlatform('security.session_timeout_minutes', '90');
+    $this->registry->setPlatform('demo.timeout_minutes', '90');
     $this->registry->setPlatform('ui.branding', ['color' => 'rojo']);
 
     expect($this->registry->get('security.allow_public_sharing'))->toBeTrue()
-        ->and($this->registry->get('security.session_timeout_minutes'))->toBe(90)
+        ->and($this->registry->get('demo.timeout_minutes'))->toBe(90)
         ->and($this->registry->get('ui.branding'))->toBe(['color' => 'rojo']);
 });
 
@@ -102,9 +104,9 @@ test('el CRUD genérico de settings valida las keys declaradas', function () {
     $this->asHeaders(ajAdmin())->postJson('/settings', ['key' => 'general.theme', 'value' => 'rosa', 'type' => 'string'])
         ->assertStatus(422)->assertJsonPath('code', 'setting_invalid_value');
 
-    $this->asHeaders(ajAdmin())->postJson('/settings', ['key' => 'security.session_timeout_minutes', 'value' => '30', 'type' => 'string'])
+    $this->asHeaders(ajAdmin())->postJson('/settings', ['key' => 'demo.timeout_minutes', 'value' => '30', 'type' => 'string'])
         ->assertCreated();
-    expect(Settings::where('key', 'security.session_timeout_minutes')->value('type'))->toBe('integer');
+    expect(Settings::where('key', 'demo.timeout_minutes')->value('type'))->toBe('integer');
 });
 
 test('el tenant escribe y lee sus ajustes por la API y el tenant B no los ve', function () {

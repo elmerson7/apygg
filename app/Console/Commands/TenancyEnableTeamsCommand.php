@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Tenant;
+use App\Support\Tenancy\PermissionTeams;
 use App\Support\Tenancy\PermissionTeamsSchema;
 use Illuminate\Console\Command;
 
@@ -15,6 +16,7 @@ class TenancyEnableTeamsCommand extends Command
 {
     protected $signature = 'tenancy:enable-teams
                             {--assign-to= : Tenant (id o slug) al que atribuir las asignaciones de roles existentes; los admin además siguen siendo admin de la plataforma. Sin él, quedan en la plataforma}
+                            {--resync-roles : Con PERMISSION_TEAMS=true ya puesto: rehace los roles `tenant-*` por tenant desde tenant_user.role}
                             {--revert : Deshace el esquema (DESTRUCTIVO: borra los roles propios de un tenant)}';
 
     protected $description = 'Añade el esquema de equipos de Spatie (roles y permisos por tenant)';
@@ -28,6 +30,18 @@ class TenancyEnableTeamsCommand extends Command
 
             PermissionTeamsSchema::down();
             $this->info('Esquema de equipos revertido. Pon PERMISSION_TEAMS=false.');
+
+            return self::SUCCESS;
+        }
+
+        if ($this->option('resync-roles')) {
+            if (! PermissionTeams::enabled()) {
+                $this->error('Pon PERMISSION_TEAMS=true (y permission:cache-reset) antes de resincronizar.');
+
+                return self::FAILURE;
+            }
+
+            $this->info(PermissionTeamsSchema::resyncTenantRoles().' membresías resincronizadas.');
 
             return self::SUCCESS;
         }
@@ -55,7 +69,7 @@ class TenancyEnableTeamsCommand extends Command
 
         PermissionTeamsSchema::up($assignTo);
 
-        $this->info('Esquema de equipos aplicado. Pon PERMISSION_TEAMS=true en el .env y ejecuta permission:cache-reset.');
+        $this->info('Esquema de equipos aplicado. Pon PERMISSION_TEAMS=true en el .env, ejecuta permission:cache-reset y luego `tenancy:enable-teams --resync-roles` (rehace los roles `tenant-*` por tenant desde tenant_user.role).');
 
         return self::SUCCESS;
     }

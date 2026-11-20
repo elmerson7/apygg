@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Exceptions\Tenancy\TenantInactiveForJob;
 use App\Models\Tenant;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Queue\Events\JobExceptionOccurred;
@@ -16,7 +17,7 @@ use Illuminate\Support\Facades\Context;
  * El `tenant_id` viaja en el `Context` oculto de Laravel (se serializa en el payload y se
  * hidrata en JobProcessing, antes que este listener). Sin `tenant_id` el job corre SIN tenant:
  * si toca un modelo con `BelongsToTenant`, falla con MissingTenantContext. Si el tenant ya no
- * existe, el job falla (no corre sin contexto).
+ * existe, o no está activo (suspendido/pendiente), el job falla (no corre sin contexto).
  *
  * La conexión `sync` se ignora: corre dentro de la petición, con su propio contexto.
  */
@@ -47,6 +48,13 @@ class RestoreTenantForJob
         }
 
         // Se relee del tenant: lanza ModelNotFoundException si ya no existe (el job falla).
-        $context->set(Tenant::query()->findOrFail((int) $id));
+        $tenant = Tenant::query()->findOrFail((int) $id);
+
+        // Un tenant suspendido o pendiente no consume cola: el job falla (queda en failed_jobs, reencolable).
+        if (! $tenant->isActive()) {
+            throw new TenantInactiveForJob((int) $tenant->getKey(), $tenant->status->value);
+        }
+
+        $context->set($tenant);
     }
 }

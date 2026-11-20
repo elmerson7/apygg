@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Security;
 
+use App\Contracts\SecurityServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Security\StoreBlacklistRequest;
 use App\Models\Blacklist;
@@ -15,6 +16,8 @@ use Illuminate\Http\Request;
  */
 class BlacklistController extends Controller
 {
+    public function __construct(private readonly SecurityServiceInterface $security) {}
+
     public function index(Request $request): JsonResponse
     {
         $entries = Blacklist::query()
@@ -33,10 +36,7 @@ class BlacklistController extends Controller
 
     public function store(StoreBlacklistRequest $request): JsonResponse
     {
-        $entry = Blacklist::create([
-            ...$request->validated(),
-            'added_by' => $request->user()->id,
-        ]);
+        $entry = $this->security->blockIdentity($request->validated(), $request->user()->id);
 
         return $this->sendSuccess(
             $entry->load(['user:id,name,email', 'addedBy:id,name']),
@@ -48,6 +48,10 @@ class BlacklistController extends Controller
     public function destroy(Blacklist $blacklist): JsonResponse
     {
         $blacklist->delete();
+
+        if ($blacklist->user_id !== null) {
+            Blacklist::forgetBlockCache($blacklist->user_id);
+        }
 
         return $this->sendSuccess(null, 'Bloqueo eliminado exitosamente');
     }

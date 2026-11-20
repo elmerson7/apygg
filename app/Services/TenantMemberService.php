@@ -55,10 +55,11 @@ class TenantMemberService implements TenantMemberServiceInterface
             }
 
             DB::table('tenant_user')->where('id', $target->id)->update(['role' => $role, 'updated_at' => now()]);
-        });
 
-        $member = User::query()->findOrFail($userId);
-        TenantRoles::sync($member, $tenant, $role);
+            // Dentro de la transacción y con el tenant bloqueado: dos cambios simultáneos se serializan y
+            // el rol de Spatie siempre refleja el último `tenant_user.role` confirmado.
+            TenantRoles::sync(User::query()->findOrFail($target->user_id), $tenant, $role);
+        });
 
         return $this->find($tenant, $userId);
     }

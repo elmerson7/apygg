@@ -2,8 +2,10 @@
 
 use App\Contracts\SequenceInterface;
 use App\Support\Sequences\SequenceExhausted;
+use App\Support\Tenancy\Exceptions\CrossTenantViolation;
 use App\Support\Tenancy\Exceptions\MissingTenantContext;
 use App\Support\Tenancy\TenantContext;
+use App\Support\Tenancy\TenantQuery;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -95,12 +97,35 @@ test('con multiempresa activo usa el tenant del contexto y cada tenant numera ap
     expect(DB::table('sequences')->where('tenant_id', $a->id)->value('next_value'))->toBe(4);
 });
 
-test('con multiempresa activo y sin tenant falla cerrado; un tenant explícito sí funciona', function () {
+test('con multiempresa activo y sin tenant falla cerrado; un tenant explícito solo vale dentro de withoutTenant', function () {
     $this->enableTenancy();
     $t = $this->makeTenant('seq-c');
 
     expect(fn () => seq()->next('inv'))->toThrow(MissingTenantContext::class);
-    expect(seq()->next('inv', $t->id))->toBe(1);
+    expect(fn () => seq()->next('inv', $t->id))->toThrow(MissingTenantContext::class);
+    expect(TenantQuery::withoutTenant(fn () => seq()->next('inv', $t->id), 'prueba'))->toBe(1);
+});
+
+test('con multiempresa activo un tenant explícito distinto del contexto lanza CrossTenantViolation y no consume número', function () {
+    $this->enableTenancy();
+    $a = $this->makeTenant('seq-x');
+    $b = $this->makeTenant('seq-y');
+    $ctx = app(TenantContext::class);
+
+    expect(fn () => $ctx->run($a, fn () => seq()->next('inv', $b->id)))->toThrow(CrossTenantViolation::class);
+    expect(fn () => $ctx->run($a, fn () => seq()->nextValue('inv', $b->id)))->toThrow(CrossTenantViolation::class);
+    expect(fn () => $ctx->run($a, fn () => seq()->peek('inv', $b->id)))->toThrow(CrossTenantViolation::class);
+    expect(DB::table('sequences')->where('tenant_id', $b->id)->count())->toBe(0);
+    // El propio tenant explícito (= contexto) sí se acepta.
+    expect($ctx->run($a, fn () => seq()->next('inv', $a->id)))->toBe(1);
+});
+
+test('SequenceExhausted es una excepción de dominio 409 con code sequence_exhausted', function () {
+    seq()->next('lim2', null, ['max' => 1]);
+
+    app('router')->get('/__seq-agotada', fn () => seq()->next('lim2', null, ['max' => 1]));
+
+    $this->getJson('/__seq-agotada')->assertStatus(409)->assertJsonPath('code', 'sequence_exhausted');
 });
 
 test('la restricción única impide dos filas globales con el mismo nombre', function () {

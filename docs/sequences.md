@@ -23,7 +23,7 @@ DB::transaction(function () {
 | `nextValue(...)` | siempre el `int` sin formato |
 | `peek(...)` | lo que daría `next()` ahora, **sin reservar ni crear**. Solo orientativo: otro proceso puede tomarlo |
 
-`SequenceExhausted` se lanza al superar `max` (y no consume número).
+`SequenceExhausted` (excepción de dominio, 409, `code` = `sequence_exhausted`) se lanza al superar `max` (y no consume número).
 
 ## Definición
 
@@ -49,7 +49,7 @@ es la secuencia global. Columnas: `prefix`, `padding`, `next_value`, `max_value`
 - Con `MULTI_TENANCY_ENABLED=true`, `tenantId = null` usa el tenant del `TenantContext`; **sin tenant en
   el contexto lanza `MissingTenantContext`** (fail-closed), salvo dentro de `TenantQuery::withoutTenant()`
   (secuencia global de plataforma). Cada tenant numera aparte.
-- Con multiempresa apagado, `null` es la secuencia global. Un `$tenantId` explícito siempre se respeta.
+- Con multiempresa apagado, `null` es la secuencia global. Un `$tenantId` explícito se respeta. Con aislamiento activo, un `$tenantId` distinto del del contexto lanza `CrossTenantViolation` (403); solo dentro de `TenantQuery::withoutTenant()` (plataforma) se puede numerar para otro tenant.
 
 ## Garantías y límites
 

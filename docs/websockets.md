@@ -50,7 +50,8 @@ broadcast(new MiEventoBroadcast($data));
 **Canales**:
 - `notifications` - Público (sin auth)
 - `private-user.{userId}` - Privado (requiere JWT)
-- `presence-online` - Presencia (requiere JWT)
+- `presence-tenant.{tenantId}` - Presencia por empresa (requiere JWT y ser miembro activo; con multiempresa activo). Payload `id` y `name`, sin correo. En Echo: `join('tenant.5')`
+- `presence-online` - Presencia de plataforma (solo con multiempresa apagado; sin correo). En Echo: `join('online')`
 
 **Eventos**: el boilerplate no trae eventos de broadcast; crea los tuyos (ver ejemplo arriba).
 
@@ -93,7 +94,7 @@ echo.channel('notifications').listen('.user.created', (e) => {...});
 echo.private(`private-user.${userId}`).listen('.notification.new', (e) => {...});
 
 // Presencia
-echo.join('presence-online')
+echo.join('tenant.' + tenantId) // o echo.join('online') sin multiempresa
     .here((users) => {...})
     .joining((user) => {...})
     .leaving((user) => {...});

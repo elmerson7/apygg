@@ -258,7 +258,7 @@ test('no se usa auth() ni Auth::id()/user()/check() sin guard explícito en App'
     expect($violaciones)->toBe([]);
 });
 
-test('el aislamiento por tenant solo se salta con TenantQuery::withoutTenant (no hay withoutGlobalScope de TenantScope suelto)', function () {
+test('el aislamiento por tenant solo se salta con TenantQuery::withoutTenant (ni withoutGlobalScope de TenantScope ni withoutGlobalScopes sueltos)', function () {
     $violaciones = [];
 
     foreach (archPhpFiles('app') as $file) {
@@ -266,7 +266,9 @@ test('el aislamiento por tenant solo se salta con TenantQuery::withoutTenant (no
             continue;
         }
 
-        if (preg_match('/withoutGlobalScope\(\s*(?:new\s+)?TenantScope/', file_get_contents(base_path($file)))) {
+        // `withoutGlobalScope(TenantScope...)` y `withoutGlobalScopes(` (quita TODOS los scopes, el de tenant incluido).
+        // Solo se admite quitar únicamente SoftDeletingScope: `withoutGlobalScopes([SoftDeletingScope::class])`.
+        if (preg_match('/withoutGlobalScope\(\s*(?:new\s+)?TenantScope|withoutGlobalScopes\s*\((?!\s*\[\s*SoftDeletingScope::class\s*\]\s*\))/', file_get_contents(base_path($file)))) {
             $violaciones[] = $file;
         }
     }

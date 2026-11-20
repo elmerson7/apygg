@@ -29,14 +29,19 @@ class TenantOnboardingService implements TenantOnboardingServiceInterface
         }
 
         $max = (int) ($config['max_tenants_per_user'] ?? 0);
-        if ($max > 0 && $this->ownedCount($owner) >= $max) {
-            throw TenantOnboardingException::tenantLimitReached();
-        }
 
         $trialDays = $config['trial_days'] ?? null;
 
         try {
-            $tenant = DB::transaction(function () use ($owner, $data, $config, $trialDays): Tenant {
+            $tenant = DB::transaction(function () use ($owner, $data, $config, $trialDays, $max): Tenant {
+                // El tope se cuenta DENTRO de la transacción y con la fila del usuario bloqueada: dos altas
+                // simultáneas del mismo usuario se serializan y la segunda ve a la primera.
+                User::query()->whereKey($owner->getKey())->lockForUpdate()->first();
+
+                if ($max > 0 && $this->ownedCount($owner) >= $max) {
+                    throw TenantOnboardingException::tenantLimitReached();
+                }
+
                 $tenant = Tenant::create([
                     'name' => $data['name'],
                     'slug' => $data['slug'],

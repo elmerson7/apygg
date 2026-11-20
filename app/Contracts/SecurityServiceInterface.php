@@ -2,6 +2,7 @@
 
 namespace App\Contracts;
 
+use App\Models\Blacklist;
 use Illuminate\Support\Facades\Hash;
 
 /**
@@ -104,4 +105,12 @@ interface SecurityServiceInterface
      * Registrar acción fallida
      */
     public function recordFailedAction(string $ip, string $action): void;
+
+    /**
+     * Bloquea una identidad (lista negra) y corta las sesiones vivas de las cuentas afectadas
+     * (por id, correo o documento): sube su `token_version` (JWT) y revoca sus API keys.
+     *
+     * @param  array<string, mixed>  $data  user_id, email, identity_document, name, reason
+     */
+    public function blockIdentity(array $data, ?int $addedBy = null): Blacklist;
 }

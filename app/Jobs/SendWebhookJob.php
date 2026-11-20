@@ -74,7 +74,7 @@ class SendWebhookJob extends Job
      * @template T
      *
      * @param  \Closure(): T  $callback
-     * @return T
+     * @return T|null null si el tenant no está activo (entrega descartada)
      */
     protected function inTenant(\Closure $callback): mixed
     {
@@ -89,6 +89,15 @@ class SendWebhookJob extends Job
         }
 
         if ($context->id() === $this->tenantId) {
+            if ($context->current() !== null && ! $context->current()->isActive()) {
+                $this->log('warning', 'Tenant no activo, entrega de webhook descartada', [
+                    'tenant_id' => $this->tenantId,
+                    'webhook_id' => $this->webhookId,
+                ]);
+
+                return null;
+            }
+
             return $callback();
         }
 
@@ -97,7 +106,20 @@ class SendWebhookJob extends Job
             throw CrossTenantViolation::foreignRecord(Webhook::class);
         }
 
-        return $context->run(Tenant::query()->findOrFail($this->tenantId), $callback);
+        $tenant = Tenant::query()->findOrFail($this->tenantId);
+
+        // Tenant suspendido o pendiente: no se entrega nada a su cuenta (se descarta con log).
+        if (! $tenant->isActive()) {
+            $this->log('warning', 'Tenant no activo, entrega de webhook descartada', [
+                'tenant_id' => $tenant->getKey(),
+                'tenant_status' => $tenant->status->value,
+                'webhook_id' => $this->webhookId,
+            ]);
+
+            return null;
+        }
+
+        return $context->run($tenant, $callback);
     }
 
     protected function deliver(WebhookServiceInterface $webhookService): void

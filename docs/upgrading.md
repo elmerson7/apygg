@@ -33,6 +33,20 @@ punto de partida compara: `git diff <tu-commit-base> HEAD -- database/migrations
 - `ApiKeyService` recibe `PlanLimitsInterface`. Los límites están **apagados** (`PLAN_LIMITS_ENABLED=false`): sin activarlos nada cambia.
 - El CRUD `/settings` valida y normaliza las keys declaradas en `config/settings.php`; la caché de `SettingsService` ya no lleva prefijo de tenant (son ajustes de plataforma).
 
+### Revisión de aislamiento 4.3-B (hallazgos)
+
+- **`security.allow_public_sharing` ahora se aplica** (por defecto `false`): subir o pasar a público un archivo (`is_public=true`) responde 403 `public_sharing_disabled` salvo que el ajuste esté activo (plataforma o tenant). Si tu proyecto usa archivos públicos, actívalo: `PUT /settings/registry/security.allow_public_sharing` o `SettingsRegistryInterface::setPlatform()`.
+- Se elimina `security.session_timeout_minutes` de `config/settings.php` (no tenía efecto). Si lo habías leído en tu código, defínelo en tu `config/settings.php`.
+- `FileService` recibe `SettingsRegistryInterface` por constructor; `SecurityService` recibe `ApiKeyServiceInterface`; `FileServiceInterface::assertVisibilityAllowed()`, `SecurityServiceInterface::blockIdentity()` y `ApiKeyServiceInterface::revokeAllForUser()` son métodos nuevos.
+- La lista negra corta sesiones: bloquear (endpoint o Filament) sube `token_version` y revoca las API keys de las cuentas afectadas; los guards JWT y de API key rechazan a un bloqueado (caché de 60 s).
+- Canales de broadcast: `presence-online` (global, con correo) se sustituye por `tenant.{tenantId}` (miembros activos, sin correo) y `online` (solo con multiempresa apagado, sin correo). Echo: `join('tenant.5')`.
+- `Sequence`: con aislamiento activo, un `$tenantId` explícito distinto del contexto lanza `CrossTenantViolation`; fuera de un tenant solo dentro de `withoutTenant()`. `SequenceExhausted` es ahora `ApiException` 409 `sequence_exhausted` (ya no `RuntimeException`).
+- Clave de límite inexistente en `PlanLimits`: `PlanLimitUnknownException` (422 `plan_limit_unknown`) en lugar de `InvalidArgumentException`.
+- Los jobs de tenants `suspended`/`pending` fallan con `TenantInactiveForJob`.
+- Con `Searchable` + `BelongsToTenant`: reindexa (`scout:flush`, `scout:import`) para que el índice lleve `tenant_id`.
+- Al activar equipos de Spatie: tras `PERMISSION_TEAMS=true`, ejecuta `php artisan tenancy:enable-teams --resync-roles` (rehace los roles `tenant-*` por tenant). `tenancy:assign-orphans` solo asigna filas de miembros activos del tenant destino (`--user`, `--dry-run` por dueño).
+- Nuevas reglas `App\Rules\TenantExists` / `TenantUnique`; `ArchTest` prohíbe `withoutGlobalScopes(` en `app/` salvo `[SoftDeletingScope::class]`.
+
 ### 1. Dependencias
 
 ```bash

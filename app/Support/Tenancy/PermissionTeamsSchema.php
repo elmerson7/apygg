@@ -2,6 +2,9 @@
 
 namespace App\Support\Tenancy;
 
+use App\Enums\TenantMembershipStatus;
+use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -94,6 +97,48 @@ final class PermissionTeamsSchema
         });
 
         self::forgetCache();
+
+        // Si los equipos ya estaban activos al aplicar el esquema, los roles de tenant se rehacen ya.
+        if (PermissionTeams::enabled()) {
+            self::resyncTenantRoles();
+        }
+    }
+
+    /**
+     * Tras activar equipos (`PERMISSION_TEAMS=true`): los roles `tenant-*` que existían como globales
+     * quedaron en el equipo de la plataforma (o en el de `--assign-to`) y darían permisos de tenant en
+     * todas partes. Se borran y se re-crean POR TENANT desde `tenant_user.role` (la fuente de verdad)
+     * con `TenantRoles::sync`. Idempotente. Devuelve cuántas membresías se resincronizaron.
+     *
+     * @throws \LogicException si los equipos no están activos (`permission.teams`)
+     */
+    public static function resyncTenantRoles(): int
+    {
+        if (! PermissionTeams::enabled()) {
+            throw new \LogicException('Activa PERMISSION_TEAMS=true antes de resincronizar los roles de tenant.');
+        }
+
+        $tables = config('permission.table_names');
+        $pivotRole = config('permission.column_names.role_pivot_key') ?: 'role_id';
+        $roleIds = DB::table($tables['roles'])->whereIn('name', TenantRoles::spatieRoleNames())->whereNull(self::teamKey())->pluck('id');
+
+        DB::table($tables['model_has_roles'])->whereIn($pivotRole, $roleIds)->where('model_type', (new User)->getMorphClass())->delete();
+
+        $count = 0;
+
+        DB::table('tenant_user')->where('status', TenantMembershipStatus::Active->value)->orderBy('id')->each(function (object $row) use (&$count): void {
+            $user = User::query()->find($row->user_id);
+            $tenant = Tenant::query()->find($row->tenant_id);
+
+            if ($user instanceof User && $tenant instanceof Tenant && TenantRoles::exists((string) $row->role)) {
+                TenantRoles::sync($user, $tenant, (string) $row->role);
+                $count++;
+            }
+        });
+
+        self::forgetCache();
+
+        return $count;
     }
 
     /**

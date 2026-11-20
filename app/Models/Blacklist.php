@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Blacklist Model
@@ -106,5 +107,31 @@ class Blacklist extends Model
                 }
             })
             ->first();
+    }
+
+    /** TTL (segundos) de la caché de «¿está bloqueado este usuario?» que consultan los guards. */
+    public const BLOCK_CACHE_TTL = 60;
+
+    /**
+     * ¿Está bloqueado este usuario (por id, correo o documento)? Barato: lo consultan los guards en
+     * cada petición, así que se cachea unos segundos; `forgetBlockCache()` lo invalida al bloquear.
+     */
+    public static function blocksUser(User $user): bool
+    {
+        return (bool) Cache::remember(
+            self::blockCacheKey($user->id),
+            self::BLOCK_CACHE_TTL,
+            fn () => self::isBlocked($user->email, $user->identity_document, $user->id),
+        );
+    }
+
+    public static function forgetBlockCache(int $userId): void
+    {
+        Cache::forget(self::blockCacheKey($userId));
+    }
+
+    protected static function blockCacheKey(int $userId): string
+    {
+        return "blacklist:user:{$userId}";
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Contracts;
 
 use App\Exceptions\PlanLimitReachedException;
+use App\Exceptions\PlanLimitUnknownException;
 
 /**
  * Límites por plan y por tenant (docs/settings-and-flags.md §Límites). Opt-in (`PLAN_LIMITS_ENABLED`)
@@ -21,7 +22,7 @@ interface PlanLimitsInterface
      * Límite vigente: override del tenant -> plan del tenant. `null` = ilimitado (también si los
      * límites están apagados o no hay tenant).
      *
-     * @throws \InvalidArgumentException si la clave no está declarada en `config/plans.php`
+     * @throws PlanLimitUnknownException (422 `plan_limit_unknown`) si la clave no está declarada en `config/plans.php`
      */
     public function limit(string $key, ?int $tenantId = null): ?int;
 

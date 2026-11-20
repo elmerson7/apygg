@@ -8,6 +8,7 @@ use Tests\Support\InteractsWithTenancy;
 uses(RefreshDatabase::class, InteractsWithTenancy::class, ActsWithHeaders::class, AssertsTenantIsolation::class);
 
 use App\Contracts\SequenceInterface;
+use App\Support\Tenancy\Exceptions\CrossTenantViolation;
 use App\Support\Tenancy\Exceptions\MissingTenantContext;
 use App\Support\Tenancy\TenantQuery;
 use Illuminate\Support\Facades\DB;
@@ -57,12 +58,19 @@ test('la secuencia global (sin tenant) solo existe dentro de withoutTenant y no 
 });
 
 /*
-| Caso documentado, no un fallo: `next()` acepta un $tenantId explícito (lo usan tareas de plataforma, como
-| ya hace withoutTenant). Dentro de run(A) con el id de B reserva en B: el llamante debe ser de confianza
-| y NUNCA pasar un id que venga de la petición. Se fija aquí el comportamiento para que un cambio sea consciente.
+| `next()` acepta un $tenantId explícito, pero con aislamiento activo uno distinto del contexto es otro
+| tenant: CrossTenantViolation y no se toca ningún contador. Solo las tareas de plataforma, dentro de
+| withoutTenant, pueden numerar para un tenant concreto.
 */
-test('un tenantId explícito manda sobre el contexto (API de plataforma, nunca con datos de la petición)', function () {
-    $this->ctx->run($this->a, fn () => $this->seq->nextValue('factura', $this->b->id));
+test('un tenantId explícito distinto del contexto lanza CrossTenantViolation y no reserva en B', function () {
+    expect(fn () => $this->ctx->run($this->a, fn () => $this->seq->nextValue('factura', $this->b->id)))
+        ->toThrow(CrossTenantViolation::class);
+
+    expect(DB::table('sequences')->where('name', 'factura')->exists())->toBeFalse();
+});
+
+test('dentro de withoutTenant un tenantId explícito sí numera para ese tenant (tarea de plataforma)', function () {
+    TenantQuery::withoutTenant(fn () => $this->seq->nextValue('factura', $this->b->id), 'prueba de plataforma');
 
     expect(DB::table('sequences')->where('name', 'factura')->where('tenant_id', $this->b->id)->value('next_value'))->toBe(2)
         ->and(DB::table('sequences')->where('name', 'factura')->where('tenant_id', $this->a->id)->exists())->toBeFalse();

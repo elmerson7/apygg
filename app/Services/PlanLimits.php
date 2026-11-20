@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Contracts\PlanLimitsInterface;
 use App\Exceptions\PlanLimitReachedException;
+use App\Exceptions\PlanLimitUnknownException;
 use App\Models\Tenant;
 use App\Models\TenantLimitOverride;
 use App\Support\Tenancy\TenantContext;
@@ -123,6 +124,7 @@ class PlanLimits implements PlanLimitsInterface
     public function clearOverride(int $tenantId, string $key): void
     {
         $this->assertDeclared($key);
+        Tenant::query()->findOrFail($tenantId);
 
         TenantLimitOverride::query()->where('tenant_id', $tenantId)->where('key', $key)->delete();
 
@@ -132,7 +134,7 @@ class PlanLimits implements PlanLimitsInterface
     private function assertDeclared(string $key): void
     {
         if (! array_key_exists($key, (array) config('plans.limits', []))) {
-            throw new \InvalidArgumentException("Límite no declarado en config/plans.php: {$key}");
+            throw PlanLimitUnknownException::forKey($key);
         }
     }
 

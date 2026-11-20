@@ -2,6 +2,8 @@
 
 namespace App\Auth;
 
+use App\Models\Blacklist;
+use App\Models\User;
 use PHPOpenSourceSaver\JWTAuth\JWTGuard;
 
 /**
@@ -13,7 +15,8 @@ use PHPOpenSourceSaver\JWTAuth\JWTGuard;
  * - Un refresh token (`type=refresh`) no autentica peticiones: solo sirve en
  *   `POST /auth/refresh`.
  * - El claim `tv` debe coincidir con `users.token_version`; al subir la versión
- *   (cambio/reset de contraseña) las sesiones anteriores dejan de valer.
+ *   (cambio/reset de contraseña, bloqueo) las sesiones anteriores dejan de valer.
+ * - Una identidad en la lista negra no autentica (consulta cacheada pocos segundos).
  */
 class ApiJwtGuard extends JWTGuard
 {
@@ -35,7 +38,10 @@ class ApiJwtGuard extends JWTGuard
         $versionToken = (int) ($payload->get('tv') ?? 0);
         $versionUsuario = (int) ($user->token_version ?? 0);
 
-        if ($esRefresh || $versionToken !== $versionUsuario) {
+        // Identidad bloqueada por un administrador: la sesión viva deja de valer (consulta cacheada).
+        $bloqueado = $user instanceof User && Blacklist::blocksUser($user);
+
+        if ($esRefresh || $versionToken !== $versionUsuario || $bloqueado) {
             $this->user = null;
 
             return null;

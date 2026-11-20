@@ -105,7 +105,7 @@ Va **después** de `auth:api`. Estrategias (config `resolution.strategies`): cab
 | Caso | Respuesta |
 |---|---|
 | Sin tenant y la ruta lo exige | 400 `tenant_required` |
-| Tenant inexistente o usuario sin membresía activa | 403 `tenant_forbidden` (misma respuesta: no revela qué tenants existen) |
+| Tenant inexistente o usuario sin membresía activa | 403 `code` `tenant_invalid` (`type` `tenant_forbidden`; misma respuesta: no revela qué tenants existen) |
 | Tenant no `active` (también para plataforma) | 403 `tenant_suspended` |
 | Sin autenticar | 401 (lo da `auth:api`) |
 
@@ -137,7 +137,7 @@ Al fijar el tenant, `TenantContext` escribe `tenant_id` en el `Context` oculto d
 (`Context::addHidden`). Laravel lo serializa en el payload de cada job encolado y lo hidrata en el
 worker; `RestoreTenantForJob` (JobProcessing) fija el `TenantContext` y lo limpia al terminar
 (`JobProcessed/JobFailed/JobExceptionOccurred`). Un job encolado **sin** tenant corre sin contexto y falla
-cerrado si toca un modelo con tenant; si el tenant ya no existe, el job falla. La conexión `sync` corre
+cerrado si toca un modelo con tenant; si el tenant ya no existe, el job falla. **Tenants no activos:** si el tenant está `suspended` o `pending`, `RestoreTenantForJob` lanza `TenantInactiveForJob` (403 `tenant_inactive`) y el job **no se ejecuta**: queda en `failed_jobs` y se reencola con `queue:retry` al reactivar el tenant. `SendWebhookJob` además descarta la entrega con un log `warning` si llega a ejecutarse con un tenant no activo (sin enviar nada a su cuenta). La conexión `sync` corre
 en la petición y conserva su contexto. Para encolar desde un comando: `->run($tenant, function () { Job::dispatch(); })`. **No devuelvas** el `PendingDispatch` desde el closure (`fn () => Job::dispatch()`): se encola al destruirse, ya fuera del tenant.
 
 ## Octane
@@ -182,6 +182,17 @@ inexistente; es el contrato, no una fuga). Si el recurso tiene jobs, caché o co
 estar en `AISLAMIENTO_MODELOS_CUBIERTOS`, o si una tabla tiene `tenant_id` sin estar cubierta
 (`AISLAMIENTO_TABLAS_CUBIERTAS`). Un modelo nuevo obliga a añadir su prueba y registrarla ahí.
 
+## Búsqueda (Scout / Meilisearch)
+
+Un modelo que usa `Searchable` **y** `BelongsToTenant` indexa `tenant_id` (`toSearchableArray()`), lo declara
+filtrable (`getFilterableAttributes()`) y `Model::search()` añade `where tenant_id = <contexto>` solo: la
+búsqueda no cruza empresas. Falla cerrado (`MissingTenantContext`) sin tenant en el contexto; dentro de
+`TenantQuery::withoutTenant()` (plataforma) no filtra. Un modelo que sobrescriba `toSearchableArray()` o
+`getFilterableAttributes()` **debe incluir `tenant_id`**. Con el motor `database` de Scout el filtro es una
+cláusula `where` sobre la columna. Los modelos sin tenant (p. ej. `User`) no cambian. Tras activar
+multiempresa en una instalación con índice previo: `scout:flush` + `scout:import` (el índice antiguo no
+trae `tenant_id`).
+
 ## Huecos conocidos (léelos antes de activarlo)
 
 - `/users`, `/roles`, `/admin/*` son **de plataforma**: no usan el middleware `tenant`. Un usuario con
@@ -197,6 +208,14 @@ estar en `AISLAMIENTO_MODELOS_CUBIERTOS`, o si una tabla tiene `tenant_id` sin e
 
 - No uses `Model::query()->update(['tenant_id' => ...])`, `insert()` ni `upsert()` con `tenant_id`: las
   operaciones masivas no pasan por los hooks del modelo (el scope de lectura sí filtra).
+- No uses `exists:`/`unique:` (ni `Rule::exists`/`Rule::unique`) sobre una tabla con `tenant_id` sin acotarla:
+  consultan TODAS las empresas y responden «ya existe» / «existe» para datos de otro tenant (oráculo entre
+  tenants) y producen colisiones falsas de unicidad. Usa `App\Rules\TenantExists` y `App\Rules\TenantUnique`
+  (añaden `where tenant_id = <contexto>`; combínalas con un índice único `(tenant_id, col)`).
+- No uses `withoutGlobalScopes()` (quita también el scope de tenant): `ArchTest` lo prohíbe fuera de
+  `app/Support/Tenancy` salvo `withoutGlobalScopes([SoftDeletingScope::class])`. Usa `TenantQuery::withoutTenant()`.
+- No numeres para otro tenant con `Sequence::next($name, $otroTenantId)` dentro de un tenant: con aislamiento
+  activo lanza `CrossTenantViolation`; solo vale dentro de `withoutTenant()`.
 - No guardes el tenant en estáticos, singletons ni propiedades de servicios.
 - No uses `DB::table('tabla_con_tenant')` ni query builder crudo sin `where tenant_id`: no hay scope.
 - No des `tenants.access-any` a roles de cliente; es para soporte de plataforma.

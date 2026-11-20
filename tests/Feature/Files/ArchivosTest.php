@@ -1,5 +1,6 @@
 <?php
 
+use App\Contracts\SettingsRegistryInterface;
 use App\Models\File;
 use App\Models\Role;
 use App\Models\User;
@@ -16,6 +17,8 @@ beforeEach(function () {
     $this->seed([RoleSeeder::class, PermissionSeeder::class]);
     Storage::fake('public');
     Storage::fake('local');
+    // Los tests de archivos públicos parten de compartir permitido (por defecto está apagado).
+    app(SettingsRegistryInterface::class)->setPlatform('security.allow_public_sharing', true);
 });
 
 function archivosCabecera(User $user): array
@@ -258,4 +261,35 @@ test('el listado solo muestra los archivos propios', function () {
 
 test('la ruta raiz sigue respondiendo la ficha de la API', function () {
     $this->getJson('/')->assertOk()->assertJsonPath('name', config('app.title'));
+});
+
+test('subir un archivo publico con compartir apagado responde 403 con code estable', function () {
+    app(SettingsRegistryInterface::class)->setPlatform('security.allow_public_sharing', false);
+
+    $this->withHeaders(archivosCabecera(archivosUsuario()))
+        ->postJson('/files', ['file' => archivoReal('foto.png', pngMinimo()), 'is_public' => true])
+        ->assertForbidden()->assertJsonPath('code', 'public_sharing_disabled');
+
+    expect(File::count())->toBe(0);
+});
+
+test('subir un archivo privado con compartir apagado sigue permitido', function () {
+    app(SettingsRegistryInterface::class)->setPlatform('security.allow_public_sharing', false);
+
+    $this->withHeaders(archivosCabecera(archivosUsuario()))
+        ->postJson('/files', ['file' => archivoReal('foto.png', pngMinimo()), 'is_public' => false])
+        ->assertCreated();
+});
+
+test('hacer publico un archivo con compartir apagado responde 403 y no cambia su visibilidad', function () {
+    $user = archivosUsuario();
+    $this->withHeaders(archivosCabecera($user))
+        ->postJson('/files', ['file' => archivoReal('foto.png', pngMinimo()), 'is_public' => false])->assertCreated();
+    $archivo = File::first();
+    app(SettingsRegistryInterface::class)->setPlatform('security.allow_public_sharing', false);
+
+    $this->withHeaders(archivosCabecera($user))->putJson("/files/{$archivo->id}", ['is_public' => true])
+        ->assertForbidden()->assertJsonPath('code', 'public_sharing_disabled');
+
+    expect($archivo->fresh()->is_public)->toBeFalse();
 });

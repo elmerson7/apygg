@@ -3,6 +3,7 @@
 namespace App\Support\Sequences;
 
 use App\Contracts\SequenceInterface;
+use App\Support\Tenancy\Exceptions\CrossTenantViolation;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
@@ -94,12 +95,18 @@ class Sequence implements SequenceInterface
     }
 
     /**
-     * Tenant explícito, o el del contexto con multiempresa activo (sin tenant: MissingTenantContext),
+     * Tenant explícito (con aislamiento activo debe ser el del contexto), o el del contexto con multiempresa activo (sin tenant: MissingTenantContext),
      * o null (secuencia global) con multiempresa apagado o dentro de `TenantQuery::withoutTenant()`.
      */
     private function resolveTenant(?int $explicit): ?int
     {
         if ($explicit !== null) {
+            // Con aislamiento activo, un tenant explícito distinto del contexto es otro tenant: solo se
+            // permite dentro de `TenantQuery::withoutTenant()` (plataforma), donde `enforcing()` es falso.
+            if ($this->tenants->enforcing() && $explicit !== $this->tenants->requireId('Sequence', 'reservar un número de')) {
+                throw CrossTenantViolation::foreignRecord('Sequence');
+            }
+
             return $explicit;
         }
 

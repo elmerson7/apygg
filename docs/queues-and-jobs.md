@@ -124,6 +124,12 @@ dentro de `DB::transaction()` (o tras crear la fila que el job va a leer).
 - Ejemplo correcto: `SendPasswordResetLinkJob` recibe solo `($email, $resetUrl)`; el token de
   reseteo se genera dentro del job (`PasswordServiceInterface`), nunca viaja en la carga.
 
+## Tenants no activos
+
+Con multiempresa, un job de un tenant `suspended` o `pending` **no se ejecuta**: `RestoreTenantForJob`
+lanza `TenantInactiveForJob` y el job queda en `failed_jobs` (reencolable con `queue:retry` al reactivar).
+Los webhooks (`SendWebhookJob`) descartan además la entrega con un log `warning`. Ver `docs/multi-tenancy.md`.
+
 ## Pruebas
 
 ```php
