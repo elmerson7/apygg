@@ -4933,6 +4933,165 @@
                 ]
             }
         },
+        "/admin/impersonate/stop": {
+            "post": {
+                "operationId": "impersonation.stop",
+                "tags": [
+                    "Impersonation"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/impersonate/{id}": {
+            "post": {
+                "operationId": "impersonation.start",
+                "tags": [
+                    "Impersonation"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StartImpersonationRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "access_token": {
+                                                    "type": "string"
+                                                },
+                                                "token_type": {
+                                                    "type": "string"
+                                                },
+                                                "expires_in": {
+                                                    "type": "integer"
+                                                },
+                                                "impersonating": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "user_id": {
+                                                            "type": "integer"
+                                                        },
+                                                        "impersonator_id": {
+                                                            "type": "integer"
+                                                        },
+                                                        "tenant_id": {
+                                                            "type": [
+                                                                "integer",
+                                                                "null"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "user_id",
+                                                        "impersonator_id",
+                                                        "tenant_id"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "access_token",
+                                                "token_type",
+                                                "expires_in",
+                                                "impersonating"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationFailed"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/admin/imports/users": {
             "post": {
                 "operationId": "admin.imports.users",
@@ -9703,6 +9862,302 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/NotFound"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/maintenance": {
+            "get": {
+                "operationId": "maintenance.show",
+                "tags": [
+                    "Maintenance"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "enabled": {
+                                                    "type": "boolean"
+                                                },
+                                                "state": {
+                                                    "type": [
+                                                        "object",
+                                                        "null"
+                                                    ],
+                                                    "properties": {
+                                                        "message": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "until": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "since": {
+                                                            "type": "string"
+                                                        },
+                                                        "source": {
+                                                            "type": "string"
+                                                        },
+                                                        "retry_after": {
+                                                            "type": "integer"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "message",
+                                                        "until",
+                                                        "since",
+                                                        "source",
+                                                        "retry_after"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "enabled",
+                                                "state"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "operationId": "maintenance.enable",
+                "tags": [
+                    "Maintenance"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EnableMaintenanceRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "enabled": {
+                                                    "type": "boolean"
+                                                },
+                                                "state": {
+                                                    "type": [
+                                                        "object",
+                                                        "null"
+                                                    ],
+                                                    "properties": {
+                                                        "message": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "until": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "since": {
+                                                            "type": "string"
+                                                        },
+                                                        "source": {
+                                                            "type": "string"
+                                                        },
+                                                        "retry_after": {
+                                                            "type": "integer"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "message",
+                                                        "until",
+                                                        "since",
+                                                        "source",
+                                                        "retry_after"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "enabled",
+                                                "state"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationFailed"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "operationId": "maintenance.disable",
+                "tags": [
+                    "Maintenance"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "enabled": {
+                                                    "type": "boolean"
+                                                },
+                                                "state": {
+                                                    "type": [
+                                                        "object",
+                                                        "null"
+                                                    ],
+                                                    "properties": {
+                                                        "message": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "until": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "since": {
+                                                            "type": "string"
+                                                        },
+                                                        "source": {
+                                                            "type": "string"
+                                                        },
+                                                        "retry_after": {
+                                                            "type": "integer"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "message",
+                                                        "until",
+                                                        "since",
+                                                        "source",
+                                                        "retry_after"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "enabled",
+                                                "state"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
                     },
                     "429": {
                         "$ref": "#/components/responses/RateLimited"
@@ -17558,6 +18013,26 @@
                 ],
                 "title": "DataImportResource"
             },
+            "EnableMaintenanceRequest": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 500
+                    },
+                    "until": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "title": "EnableMaintenanceRequest"
+            },
             "ErrorCode": {
                 "type": "string",
                 "description": "Códigos de error del boilerplate. Un proyecto puede añadir los suyos (string), por eso `ApiError.code` es un string abierto.",
@@ -19550,6 +20025,27 @@
                     "is_encrypted"
                 ],
                 "title": "SettingsResource"
+            },
+            "StartImpersonationRequest": {
+                "type": "object",
+                "properties": {
+                    "reason": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Obligatorio por `audit.reason_required` (impersonation.start); el servicio lo exige con 422 audit_reason_required.",
+                        "maxLength": 500
+                    },
+                    "tenant_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 1
+                    }
+                },
+                "title": "StartImpersonationRequest"
             },
             "StoreApiKeyRequest": {
                 "type": "object",
