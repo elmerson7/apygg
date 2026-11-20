@@ -96,6 +96,11 @@ class BillingException extends ApiException
         return new self('Ya estás en ese plan y precio.', 422, 'same_plan');
     }
 
+    public static function discrepancyNotFound(): self
+    {
+        return new self('Discrepancia no encontrada.', 404, 'discrepancy_not_found');
+    }
+
     public static function invoiceNotFound(): self
     {
         return new self('Factura no encontrada.', 404, 'not_found');

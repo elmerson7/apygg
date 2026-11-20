@@ -16,7 +16,7 @@ interface InboundWebhookServiceInterface
     /**
      * Mantenimiento: reencola recibos atascados y borra los procesados antiguos.
      *
-     * @return array{redispatched: int, pruned: int}
+     * @return array{redispatched: int, pruned: int} `redispatched` incluye los `failed` reencolados con backoff
      */
     public function sweep(int $stuckMinutes = 10): array;
 }

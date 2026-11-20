@@ -130,6 +130,12 @@ class StripePaymentGateway implements PaymentGatewayInterface
 
     public function findCharge(?string $customerId, string $idempotencyKey, int $sinceTimestamp): ?ChargeResult
     {
+        if ($customerId === null || $customerId === '') {
+            // Sin cliente no hay forma de acotar la búsqueda (listar TODOS los cobros de la cuenta mezclaría empresas e
+            // instalaciones). Un cobro siempre se crea con `customer`, así que sin cliente nunca se envió ninguno.
+            return null;
+        }
+
         $cursor = null;
 
         for ($page = 0; $page < self::LOOKUP_PAGES; $page++) {
@@ -277,11 +283,19 @@ class StripePaymentGateway implements PaymentGatewayInterface
             $client = $this->client();
 
             if ($idempotencyKey !== null) {
-                $client = $client->withHeaders(['Idempotency-Key' => $idempotencyKey]);
+                $client = $client->withHeaders(['Idempotency-Key' => $this->keyPrefix().$idempotencyKey]);
             }
 
             return $client->asForm()->post($this->url($path), $body);
         }, $cardErrorIsResult);
+    }
+
+    /** Prefijo de la instalación para las claves de idempotencia (`services.stripe.key_prefix`); vacío = ninguno. */
+    private function keyPrefix(): string
+    {
+        $prefix = (string) ($this->config['key_prefix'] ?? '');
+
+        return $prefix === '' ? '' : $prefix.'-';
     }
 
     /**

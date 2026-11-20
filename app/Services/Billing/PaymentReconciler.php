@@ -195,8 +195,9 @@ class PaymentReconciler implements PaymentReconcilerInterface
     {
         $since = now()->subHours((int) config('billing.reconcile.lookback_hours', 48))->getTimestamp();
         $cursor = null;
+        $maxPages = (int) config('billing.reconcile.max_pages', 20);
 
-        for ($page = 0; $page < (int) config('billing.reconcile.max_pages', 20); $page++) {
+        for ($page = 0; $page < $maxPages; $page++) {
             try {
                 $list = $this->gateway->recentCharges($since, $cursor, 100);
             } catch (IntegrationException $e) {
@@ -228,6 +229,10 @@ class PaymentReconciler implements PaymentReconcilerInterface
                 return;
             }
         }
+
+        // Quedaron cobros por revisar: no se corta en silencio (los más antiguos de la ventana no se cuadraron esta vez).
+        $this->count($counts, 'list_truncated');
+        LogService::error('billing: la conciliación se detuvo en max_pages con cobros sin revisar; sube billing.reconcile.max_pages o reduce lookback_hours', ['max_pages' => $maxPages], 'security');
     }
 
     private function resolveStale(int $paymentId): string
@@ -303,6 +308,7 @@ class PaymentReconciler implements PaymentReconcilerInterface
             PaymentOutcome::Declined => 'declined',
             PaymentOutcome::Voided => 'voided',
             PaymentOutcome::Pending, PaymentOutcome::RequiresAction, PaymentOutcome::InProgress => 'pending',
+            PaymentOutcome::OtherIntent => 'discrepancy',   // ya registrada por `settle` (bajo bloqueo)
             PaymentOutcome::Skipped => 'ignored',
         };
     }

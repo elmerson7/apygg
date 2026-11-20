@@ -64,7 +64,7 @@ class PaymentDiscrepancyService implements PaymentDiscrepancyServiceInterface
         $tenantId = TenantQuery::withoutTenant(fn () => DB::table('payment_discrepancies')->where('id', $id)->whereNull('deleted_at')->value('tenant_id'), 'resolver una discrepancia de pagos');
 
         if ($tenantId === null) {
-            throw BillingException::invoiceNotFound();
+            throw BillingException::discrepancyNotFound();
         }
 
         return $this->tenants->run(Tenant::query()->findOrFail($tenantId), fn () => DB::transaction(function () use ($id, $actor, $note): PaymentDiscrepancy {

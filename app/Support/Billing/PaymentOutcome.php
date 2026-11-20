@@ -22,4 +22,9 @@ enum PaymentOutcome: string
      * aplica): el cobro NO cuenta y se reembolsa (`PaymentProcessorInterface::refund`, al momento o en el siguiente `billing:renew`).
      */
     case Voided = 'voided';
+    /**
+     * El resultado es de OTRO PaymentIntent que el que ya tiene registrado este intento local (otro proceso o webhook lo
+     * fijó entre medias). No se aplica; si cobró, queda como discrepancia `duplicate_charge` para devolverlo.
+     */
+    case OtherIntent = 'other_intent';
 }

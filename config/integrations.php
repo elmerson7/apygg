@@ -104,6 +104,9 @@ return [
         // Reintentos del job por recibo y esperas (segundos) entre ellos.
         'tries' => 5,
         'backoff' => [30, 120, 600, 1800],
+        // Recibos `failed` tras agotar los reintentos del job: `webhooks:inbound-sweep` los reencola con backoff largo
+        // (after_minutes x 2^k hasta max_minutes) hasta `max_attempts` intentos en total (contando los del job).
+        'sweep_failed' => ['after_minutes' => 60, 'max_minutes' => 1440, 'max_attempts' => 20],
 
         /*
         | Por proveedor:

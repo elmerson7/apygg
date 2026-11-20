@@ -170,7 +170,9 @@ reintenta con backoff (`tries` 5; 30 s, 2 min, 10 min, 30 min); al funcionar pas
 `PermanentIntegrationError` deja `failed` sin reintentar. **El handler debe ser idempotente.**
 
 **Mantenimiento**: `php artisan webhooks:inbound-sweep` (programado cada 10 min) reencola recibos `received` atascados
-(p. ej. Redis caído al recibirlos: el webhook no se pierde) y borra los antiguos (`INBOUND_WEBHOOK_RETENTION_DAYS`, 30,
+(p. ej. Redis caído al recibirlos: el webhook no se pierde), **reencola también los `failed`** tras agotar los reintentos del job
+(backoff largo y creciente: `sweep_failed.after_minutes` 60 x 2^k hasta `max_minutes` 1440, hasta `max_attempts` 20 intentos en total;
+el último deja un error en el log; los `PermanentIntegrationError` no se reintentan) y borra los antiguos (`INBOUND_WEBHOOK_RETENTION_DAYS`, 30,
 porque el payload puede llevar datos personales).
 
 **Logs**: solo proveedor, id de entrega, IP y motivo. Nunca el secreto ni el payload.

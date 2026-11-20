@@ -3,6 +3,7 @@
 namespace App\Services\Billing;
 
 use App\Contracts\AuditServiceInterface;
+use App\Contracts\PaymentDiscrepancyServiceInterface;
 use App\Contracts\PaymentGatewayInterface;
 use App\Contracts\PaymentProcessorInterface;
 use App\Contracts\SubscriptionLifecycleInterface;
@@ -50,6 +51,7 @@ class PaymentProcessor implements PaymentProcessorInterface
         private readonly PaymentGatewayInterface $gateway,
         private readonly SubscriptionLifecycleInterface $lifecycle,
         private readonly AuditServiceInterface $audit,
+        private readonly PaymentDiscrepancyServiceInterface $discrepancies,
     ) {}
 
     public function collect(int $invoiceId, bool $customerPresent = false): PaymentOutcome
@@ -82,7 +84,7 @@ class PaymentProcessor implements PaymentProcessorInterface
         match ($outcome) {
             PaymentOutcome::Paid => null,
             PaymentOutcome::InProgress => throw BillingException::paymentInProgress(),
-            PaymentOutcome::Pending => throw BillingException::paymentPending(),
+            PaymentOutcome::Pending, PaymentOutcome::OtherIntent => throw BillingException::paymentPending(),
             PaymentOutcome::RequiresAction => throw $this->requiresAction($invoiceId),
             PaymentOutcome::Skipped => throw BillingException::invoiceNotOpen(),
             PaymentOutcome::Declined => throw $this->declined($invoiceId),
@@ -176,7 +178,7 @@ class PaymentProcessor implements PaymentProcessorInterface
         }
 
         try {
-            $result = $this->gateway->refund(new RefundRequest($payment->gateway_payment_id, $remaining, 'refund-'.$payment->id, 'invoice_void'));
+            $result = $this->gateway->refund(new RefundRequest($payment->gateway_payment_id, $remaining, $this->refundKey($payment, $remaining), 'invoice_void'));
         } catch (IntegrationException $e) {
             LogService::warning('billing: el reembolso falló y se reintentará', ['payment_id' => $payment->id, 'error' => $e::class], 'security');
 
@@ -202,6 +204,18 @@ class PaymentProcessor implements PaymentProcessorInterface
 
             return true;
         });
+    }
+
+    /**
+     * Clave de idempotencia del reembolso. Una misma clave con OTRO importe la rechaza la pasarela (`idempotency_error`) para
+     * siempre: si entre dos intentos alguien devolvió una parte desde el panel de Stripe, el importe pendiente cambia y el
+     * reembolso quedaría atascado. Con todo el importe pendiente (lo normal) la clave es `refund-<pago>`; con un resto, el
+     * importe va en la clave (`refund-<pago>-<importe>`), así que cada importe distinto es una operación distinta y el
+     * reintento con el mismo importe sigue siendo idempotente.
+     */
+    private function refundKey(Payment $payment, Money $remaining): string
+    {
+        return $remaining->amountMinor === $payment->amount->amountMinor ? 'refund-'.$payment->id : 'refund-'.$payment->id.'-'.$remaining->amountMinor;
     }
 
     /**
@@ -364,6 +378,17 @@ class PaymentProcessor implements PaymentProcessorInterface
             $subscription = Subscription::query()->whereKey(Invoice::query()->whereKey($payment->invoice_id)->value('subscription_id'))->lockForUpdate()->firstOrFail();
             $invoice = Invoice::query()->whereKey($payment->invoice_id)->lockForUpdate()->firstOrFail();
             $payment = Payment::query()->whereKey($paymentId)->lockForUpdate()->firstOrFail();
+
+            if ($result instanceof ChargeResult && $result->paymentId !== '' && $payment->gateway_payment_id !== null && $payment->gateway_payment_id !== $result->paymentId) {
+                // Comprobado YA con el pago bloqueado (la lectura previa del reconciliador o del cobro pudo quedarse vieja): otro
+                // proceso o webhook fijó un PaymentIntent distinto para este intento. Este resultado no se aplica; si cobró,
+                // es un doble cobro que una persona debe devolver. Mismo criterio que `PaymentReconciler::applyCharge`.
+                if ($result->succeeded) {
+                    $this->discrepancies->record('duplicate_charge', $this->gateway->name(), $result->paymentId, $payment, $result->amountMinor, $result->currency, ['kept' => $payment->gateway_payment_id]);
+                }
+
+                return PaymentOutcome::OtherIntent;
+            }
 
             if (! in_array($payment->status, [PaymentStatus::Pending, PaymentStatus::RequiresAction], true)) {
                 // Otro proceso ya lo registró (retomó el cobro tras vencer el arrendamiento).

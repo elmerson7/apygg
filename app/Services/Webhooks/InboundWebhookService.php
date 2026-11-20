@@ -110,12 +110,54 @@ class InboundWebhookService implements InboundWebhookServiceInterface
                 $redispatched++;
             });
 
+        $redispatched += $this->retryFailed();
+
         $pruned = InboundWebhookReceipt::query()
             ->whereIn('status', [InboundWebhookReceipt::STATUS_PROCESSED, InboundWebhookReceipt::STATUS_FAILED])
             ->where('created_at', '<', now()->subDays((int) config('integrations.inbound_webhooks.retention_days', 30)))
             ->delete();
 
         return ['redispatched' => $redispatched, 'pruned' => $pruned];
+    }
+
+    /**
+     * Recibos `failed` tras agotar los reintentos del job (p. ej. un reembolso que llegó antes que el cobro reflejado, o un
+     * fallo transitorio largo de la pasarela): se reencolan con un backoff largo y creciente (`after_minutes` x 2^k hasta
+     * `max_minutes`) hasta `max_attempts` intentos en total. El último intento deja un error en el log para que alguien mire.
+     * Los fallos permanentes (`PermanentIntegrationError`) no se reintentan: no cambiarían. El handler es idempotente.
+     */
+    private function retryFailed(): int
+    {
+        $after = max(1, (int) config('integrations.inbound_webhooks.sweep_failed.after_minutes', 60));
+        $cap = max($after, (int) config('integrations.inbound_webhooks.sweep_failed.max_minutes', 1440));
+        $maxAttempts = (int) config('integrations.inbound_webhooks.sweep_failed.max_attempts', 20);
+        $tries = max(1, (int) config('integrations.inbound_webhooks.tries', 5));
+        $count = 0;
+
+        InboundWebhookReceipt::query()
+            ->where('status', InboundWebhookReceipt::STATUS_FAILED)
+            ->where('attempts', '<', $maxAttempts)
+            ->where('updated_at', '<', now()->subMinutes($after))
+            ->where(fn ($q) => $q->whereNull('error')->orWhere('error', 'not like', 'PermanentIntegrationError%'))
+            ->orderBy('id')
+            ->limit(500)
+            ->get()
+            ->each(function (InboundWebhookReceipt $receipt) use (&$count, $after, $cap, $maxAttempts, $tries) {
+                $wait = min($cap, $after * (2 ** min(10, max(0, $receipt->attempts - $tries))));
+
+                if ($receipt->updated_at === null || $receipt->updated_at->gt(now()->subMinutes($wait))) {
+                    return;
+                }
+
+                if ($receipt->attempts + 1 >= $maxAttempts) {
+                    Log::error('Webhook entrante: último reintento del barrido; si vuelve a fallar queda para revisión manual', ['provider' => $receipt->provider, 'receipt_id' => $receipt->id, 'attempts' => $receipt->attempts]);
+                }
+
+                $this->dispatch($receipt);
+                $count++;
+            });
+
+        return $count;
     }
 
     /**

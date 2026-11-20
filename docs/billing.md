@@ -166,7 +166,7 @@ Pruebas con procesos reales en `tests/Concurrency/FacturacionConcurrenteTest.php
 ### Reembolso automático
 
 Si una factura queda `void` teniendo un cobro `succeeded` de la pasarela, `PaymentProcessor::refund()` devuelve al momento **lo que queda por devolver** (importe menos `refunded_amount_minor`, por si ya se devolvió una parte en Stripe) con clave
-de idempotencia `refund-<id del pago>`, pasa el pago a `refunded` (`refunded_at`, `refund_id`) y audita `billing.payment-refunded`. Si la pasarela falla (transitorio), el pago queda `succeeded` y `billing:renew` lo reintenta en cada ejecución con **la misma clave**
+de idempotencia `refund-<id del pago>` (con el importe si es parcial: ver §Conciliación 8), pasa el pago a `refunded` (`refunded_at`, `refund_id`) y audita `billing.payment-refunded`. Si la pasarela falla (transitorio), el pago queda `succeeded` y `billing:renew` lo reintenta en cada ejecución con **la misma clave**
 (`orphanedPayments()`), también para tenants no activos. Los pagos manuales nunca se reembolsan por la pasarela.
 
 ## Tenants no activos
@@ -233,11 +233,17 @@ El `client_secret` del PaymentIntent no se guarda en el recibo (`strip_payload`)
 |---|---|---|
 | Inciertos | Pagos `pending` con arrendamiento vencido hace más de `BILLING_RECONCILE_STALE_MINUTES` (10): consulta por id/clave y aplica el resultado. Si no existe, lo deja a `billing:renew` (reenvío seguro: ya está confirmado) | `stale_*` |
 | 3DS vencidos | `requires_action` pasados `BILLING_REQUIRES_ACTION_HOURS` (o con la factura ya cerrada): cancela el PaymentIntent y falla el intento `action_expired`; si Stripe dice que en realidad se cobró, se respeta el cobro | `action_*` |
-| Cobros recientes | Lista los PaymentIntents de las últimas `BILLING_RECONCILE_LOOKBACK_HOURS` (48) con nuestra clave y estado `succeeded` y los aplica: pendiente -> cobrado; sin intento local -> discrepancia. El tenant sale del pago local o, si no hay, de `metadata.tenant_id` **solo si el `customer` coincide** con la cuenta de esa empresa | `recent_*`, `foreign_charge`, `list_failed` |
+| Cobros recientes | Lista los PaymentIntents de las últimas `BILLING_RECONCILE_LOOKBACK_HOURS` (48) con nuestra clave y estado `succeeded` y los aplica: pendiente -> cobrado; sin intento local -> discrepancia. El tenant sale del pago local o, si no hay, de `metadata.tenant_id` **solo si el `customer` coincide** con la cuenta de esa empresa | `recent_*`, `foreign_charge`, `list_failed`, `list_truncated` |
 
 **Discrepancias** (`payment_discrepancies`, única por pasarela + referencia + tipo; alerta una sola vez en el log `security`): `succeeded_without_local`, `duplicate_charge` (otro PaymentIntent cobrado para el mismo intento), `succeeded_after_failure`, `data_mismatch`, `refunded_externally`, `dispute`. Plataforma (`billing.manage`): `GET /admin/billing/discrepancies?status=&tenant_id=` y `POST /admin/billing/discrepancies/{id}/resolve` `{note}` (auditado `billing.discrepancy-resolved`). No se reembolsa ni cancela nada automáticamente por una discrepancia: decide una persona.
 
-Límites: la conciliación no lista reembolsos ni disputas de Stripe (dependen del webhook; el recibo fallido se reintenta con backoff y `webhooks:inbound-sweep` reencola los atascados); un cliente de Stripe huérfano (si `createCustomer` tuvo éxito y la fila local falló más de 24 h después) es inofensivo (no cobra).
+4. *Claves de idempotencia por instalación.* Todo `Idempotency-Key` hacia Stripe (cobros, reembolsos, clientes) lleva el prefijo `services.stripe.key_prefix` (`PAYMENTS_KEY_PREFIX`; por defecto `APP_ENV` + id de instalación derivado de `APP_KEY`; fíjalo explícito en producción): staging y producción con la misma cuenta no comparten claves. La metadata y `payments.idempotency_key` conservan la clave local sin prefijo (es lo que usa la consulta por clave). `findCharge` va siempre acotado al `customer` (sin cliente no lista la cuenta entera).
+5. *El PaymentIntent se compara bajo bloqueo.* `PaymentProcessor::settle` (camino único de webhook, conciliación y respuesta síncrona) mira el `gateway_payment_id` DESPUÉS de bloquear suscripción -> factura -> pago. Si otro proceso fijó un PaymentIntent distinto, el resultado no se aplica (`PaymentOutcome::OtherIntent`) y, si cobró, queda `duplicate_charge` para devolverlo a mano.
+6. *Reembolsos y disputas que llegan antes que el cobro reflejado* fallan de forma reintentable; tras agotar los reintentos del job el recibo queda `failed` y `webhooks:inbound-sweep` lo reencola con backoff largo (60 min x 2^k, tope 24 h, hasta 20 intentos; el último deja un error en el log). Pasados esos intentos queda para revisión manual (recibo `failed` + error en el log `default`).
+7. *La conciliación no se corta en silencio*: si la lista de cobros recientes agota `billing.reconcile.max_pages` sin llegar al final cuenta `list_truncated` y deja un error en el log `security`. Sube `max_pages` o baja `lookback_hours`.
+8. *Reembolso con importe en la clave*: `refund-<pago>` (todo el importe) o `refund-<pago>-<importe>` (resto tras una devolución parcial); la misma clave nunca viaja con dos importes (Stripe la rechazaría para siempre).
+
+Límites: la conciliación no lista reembolsos ni disputas de Stripe (dependen del webhook; ver 6); un cliente de Stripe huérfano (si `createCustomer` tuvo éxito y la fila local falló más de 24 h después) es inofensivo (no cobra).
 
 ## Eventos de dominio
 
