@@ -53,6 +53,7 @@ return [
         'routes/api/billing.php',
         'tests/Feature/Billing',
         'tests/Concurrency/FacturacionConcurrenteTest.php',
+        'tests/Concurrency/CobrosConcurrentesTest.php',
         'tests/Support/InteractsWithBilling.php',
         'tests/Support/InteractsWithStripe.php',
         'tests/Support/StripeFake.php',
