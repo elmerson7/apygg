@@ -87,6 +87,9 @@ El status HTTP no cambia por el `code`; la columna indica el status habitual.
 | `tenant_inactive` | 403 | Tenant suspendido o inactivo |
 | `tenant_required` | 400 | La ruta exige indicar el tenant (cabecera `X-Tenant`, ruta o subdominio) |
 | `cross_tenant` | 403 | El recurso pertenece a otro tenant |
+| `idempotency_key_required` | 400 | La ruta exige la cabecera `Idempotency-Key` (o la clave es inválida) |
+| `idempotency_key_mismatch` | 422 | La misma `Idempotency-Key` se usó con otro método, ruta o cuerpo |
+| `idempotency_key_in_progress` | 409 | La primera petición con esa `Idempotency-Key` sigue ejecutándose |
 | `server_error` | 500 | Error interno |
 | `upstream_error` | 502/504 | Pasarela o servicio externo |
 | `service_unavailable` | 503 | Servicio no disponible |

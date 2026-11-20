@@ -139,6 +139,8 @@ Para pagos, envíos de SMS/WhatsApp o cualquier llamada con efecto externo:
 
 - Genera una **clave de idempotencia** propia por operación (uuid guardado antes de llamar) y
   envíala al proveedor (`Idempotency-Key`). Un reintento reutiliza la misma clave.
+- Para las **peticiones entrantes** de tus propios clientes (crear, cobrar, enviar) usa el middleware
+  `idempotent` / `idempotent:required`: implementación y semántica en `docs/idempotency.md`.
 - Guarda el estado local (`pending` → `succeeded`/`failed`) **antes** de llamar y reclámalo con
   un UPDATE atómico como `WebhookDelivery::claim()`.
 - La verdad del estado la da el webhook del proveedor (punto 5), no solo la respuesta síncrona.

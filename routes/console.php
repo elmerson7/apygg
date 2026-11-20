@@ -116,3 +116,11 @@ Schedule::command('cache:metrics --alert-threshold=70')
 //     ->after(function () {
 //         // Se ejecutaría después de migraciones si se configura así
 //     });
+
+// Limpieza de claves de idempotencia caducadas: cada hora
+Schedule::command('idempotency:clean')
+    ->hourly()
+    ->withoutOverlapping()
+    ->onFailure(function () {
+        Log::error('Falló la limpieza de claves de idempotencia');
+    });

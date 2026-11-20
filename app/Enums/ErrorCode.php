@@ -40,6 +40,9 @@ enum ErrorCode: string
     case TenantInactive = 'tenant_inactive';
     case TenantRequired = 'tenant_required';
     case CrossTenant = 'cross_tenant';
+    case IdempotencyKeyRequired = 'idempotency_key_required';
+    case IdempotencyKeyMismatch = 'idempotency_key_mismatch';
+    case IdempotencyKeyInProgress = 'idempotency_key_in_progress';
     case ServerError = 'server_error';
     case UpstreamError = 'upstream_error';
     case ServiceUnavailable = 'service_unavailable';

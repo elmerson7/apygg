@@ -59,7 +59,7 @@ Route::middleware(['auth:api', 'tenancy.enabled', 'tenant'])->prefix('tenant')->
         Route::get('/invitations', [TenantInvitationController::class, 'index'])->name('tenant.invitations.index');
 
         Route::post('/invitations', [TenantInvitationController::class, 'store'])
-            ->middleware('throttle:30,1')
+            ->middleware(['throttle:30,1', 'idempotent'])
             ->name('tenant.invitations.store');
 
         Route::post('/invitations/{id}/resend', [TenantInvitationController::class, 'resend'])

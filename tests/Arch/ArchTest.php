@@ -135,6 +135,7 @@ function archServiciosConInterfaz(): array
         'App\Services\PermissionService' => 'App\Contracts\PermissionServiceInterface',
         'App\Services\TokenService' => 'App\Contracts\TokenServiceInterface',
         'App\Services\ApiKeyService' => 'App\Contracts\ApiKeyServiceInterface',
+        'App\Services\IdempotencyService' => 'App\Contracts\IdempotencyInterface',
         'App\Services\WebhookService' => 'App\Contracts\WebhookServiceInterface',
         'App\Services\FileService' => 'App\Contracts\FileServiceInterface',
         'App\Services\SettingsService' => 'App\Contracts\SettingsServiceInterface',

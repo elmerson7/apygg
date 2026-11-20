@@ -10,6 +10,7 @@ use App\Contracts\DocsServiceInterface;
 use App\Contracts\FeatureFlagServiceInterface;
 use App\Contracts\FileServiceInterface;
 use App\Contracts\HostResolverInterface;
+use App\Contracts\IdempotencyInterface;
 use App\Contracts\LocaleResolverInterface;
 use App\Contracts\LocaleSettingsServiceInterface;
 use App\Contracts\MailAccountServiceInterface;
@@ -43,6 +44,7 @@ use App\Services\FeatureFlagService;
 use App\Services\FileService;
 use App\Services\I18n\LocaleResolver;
 use App\Services\I18n\LocaleSettingsService;
+use App\Services\IdempotencyService;
 use App\Services\Mail\MailAccountService;
 use App\Services\Mail\MailEventStatusService;
 use App\Services\Mail\MailSendPolicy;
@@ -120,6 +122,7 @@ class ContractServiceProvider extends ServiceProvider
         $this->app->bind(WebhookSignatureVerifierInterface::class, SvixSignatureVerifier::class);
         $this->app->bind(SecurityAuditServiceInterface::class, SecurityAuditService::class);
         $this->app->bind(SequenceInterface::class, Sequence::class);
+        $this->app->bind(IdempotencyInterface::class, IdempotencyService::class);
 
         $this->app->bind(LocaleResolverInterface::class, LocaleResolver::class);
         $this->app->bind(LocaleSettingsServiceInterface::class, LocaleSettingsService::class);

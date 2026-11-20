@@ -291,6 +291,7 @@ Una norma por documento; esos archivos son la fuente de verdad de cada tema:
 - [`docs/octane.md`](docs/octane.md) → código seguro con Octane/FrankenPHP (estado, bindings, guards, caché de permisos).
 - [`docs/queues-and-jobs.md`](docs/queues-and-jobs.md) → colas, base `Job`, reintentos, idempotencia, `afterCommit`.
 - [`docs/integrations.md`](docs/integrations.md) → integraciones externas con versión simulada y webhooks entrantes (pagos, WhatsApp, SMS, push…).
+- [`docs/idempotency.md`](docs/idempotency.md) → cabecera `Idempotency-Key`: middleware `idempotent`, reserva atómica por (tenant, actor, clave), repetición de respuestas y limpieza.
 - [`docs/migrations.md`](docs/migrations.md) → migraciones inmutables, expandir/contraer, `jsonb`, estados, pruebas.
 - [`docs/i18n.md`](docs/i18n.md) → idioma, zona horaria y moneda por usuario/tenant/instalación, `LocaleResolver`, `lang/` con paridad de claves y correos en el idioma del destinatario.
 - [`docs/money.md`](docs/money.md) → dinero: `Money` (entero en unidad menor + ISO 4217), `MoneyCast`, regla `MoneyAmount`, `config/currencies.php`. Nunca float.
