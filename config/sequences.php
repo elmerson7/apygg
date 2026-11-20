@@ -18,6 +18,8 @@
 return [
     'definitions' => [
         // 'invoice' => ['prefix' => 'F-{year}-', 'padding' => 6, 'reset' => 'yearly'],
+        // Facturas de suscripciones (docs/billing.md, `billing.invoice.sequence`): numeración por año natural, reservada dentro de la transacción de la factura (sin huecos)
+        'billing_invoice' => ['prefix' => 'F-{year}-', 'padding' => 6, 'start' => 1, 'max' => 999999, 'reset' => 'yearly'],
     ],
 
     // Valores para una secuencia sin definición.

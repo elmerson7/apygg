@@ -181,6 +181,13 @@ function archServiciosConInterfaz(): array
         'App\Services\Privacy\AccountDeletionService' => 'App\Contracts\AccountDeletionServiceInterface',
         'App\Services\ImpersonationService' => 'App\Contracts\ImpersonationServiceInterface',
         'App\Services\MaintenanceService' => 'App\Contracts\MaintenanceServiceInterface',
+        'App\Services\Billing\PlanCatalog' => 'App\Contracts\PlanCatalogInterface',
+        'App\Services\Billing\BillingAccountService' => 'App\Contracts\BillingAccountServiceInterface',
+        'App\Services\Billing\SubscriptionLifecycle' => 'App\Contracts\SubscriptionLifecycleInterface',
+        'App\Services\Billing\InvoiceService' => 'App\Contracts\InvoiceServiceInterface',
+        'App\Services\Billing\PaymentProcessor' => 'App\Contracts\PaymentProcessorInterface',
+        'App\Services\Billing\SubscriptionService' => 'App\Contracts\SubscriptionServiceInterface',
+        'App\Services\Billing\RenewalService' => 'App\Contracts\RenewalServiceInterface',
     ];
 }
 

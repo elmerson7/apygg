@@ -55,6 +55,16 @@ return [
     ],
 
     /*
+    | Pagos: PaymentGatewayInterface (docs/billing.md).
+    |   PAYMENTS_MODE=fake   FakePaymentGateway (determinista, sin red; por defecto)
+    |   PAYMENTS_MODE=null   NullPaymentGateway (sin pasarela: solo pago manual)
+    |   PAYMENTS_MODE=real   la pasarela real del proyecto (Stripe llega en la ola 6.2; ver docs/billing.md §Añadir una pasarela)
+    */
+    'payments' => [
+        'mode' => env('PAYMENTS_MODE', 'fake'),
+    ],
+
+    /*
     | Push: PushTransportInterface (docs/notifications.md).
     |   PUSH_MODE=fake   FakePushTransport (registra las llamadas, sin red; por defecto)
     |   PUSH_MODE=real   FcmPushTransport (Firebase Cloud Messaging HTTP v1, sin SDK)

@@ -22,6 +22,10 @@ const AISLAMIENTO_MODELOS_CUBIERTOS = [
     'App\Models\ApiKey' => 'ApiKeysAislamientoTest.php',
     'App\Models\TenantInvitation' => 'InvitacionesAislamientoTest.php',
     'App\Models\InboxNotification' => 'NotificacionesAislamientoTest.php',
+    'App\Models\Subscription' => 'FacturacionAislamientoTest.php',
+    'App\Models\Invoice' => 'FacturacionAislamientoTest.php',
+    'App\Models\Payment' => 'FacturacionAislamientoTest.php',
+    'App\Models\BillingAccount' => 'FacturacionAislamientoTest.php',
 ];
 
 /**

@@ -2,8 +2,11 @@
 
 namespace App\Providers;
 
+use App\Contracts\PaymentGatewayInterface;
 use App\Contracts\PushTransportInterface;
 use App\Contracts\SmsSenderInterface;
+use App\Integrations\Payments\FakePaymentGateway;
+use App\Integrations\Payments\NullPaymentGateway;
 use App\Integrations\Push\FakePushTransport;
 use App\Integrations\Push\FcmPushTransport;
 use App\Integrations\Push\LogPushTransport;
@@ -40,6 +43,13 @@ class IntegrationsServiceProvider extends ServiceProvider
                 'http' => new HttpSmsSender([...(array) config('integrations.sms.http'), 'from' => config('integrations.sms.from')]),
                 default => throw new InvalidArgumentException('SMS_DRIVER no válido: usa http o log'),
             },
+        ]);
+
+        // Pasarela de pago (docs/billing.md). La real (Stripe) llega en la ola 6.2: hasta entonces `real` falla claro al resolverla.
+        $this->bindByMode(PaymentGatewayInterface::class, 'payments', [
+            'fake' => fn () => new FakePaymentGateway,
+            'null' => fn () => new NullPaymentGateway,
+            'real' => fn () => throw new InvalidArgumentException('PAYMENTS_MODE=real: no hay pasarela real instalada; implementa PaymentGatewayInterface y regístrala aquí (docs/billing.md §Añadir una pasarela)'),
         ]);
 
         $this->bindByMode(PushTransportInterface::class, 'push', [

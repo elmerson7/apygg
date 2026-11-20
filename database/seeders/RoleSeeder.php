@@ -73,12 +73,12 @@ class RoleSeeder extends Seeder
             'tenant-owner' => [
                 'display_name' => 'Dueño de la empresa',
                 'description' => 'Gestiona miembros, invitaciones y ajustes de su empresa',
-                'permissions' => ['tenant-members.read', 'tenant-members.manage', 'tenant-members.export', 'tenant-invitations.manage', 'tenant-settings.read', 'tenant-settings.manage', 'tenant-audit.read'],
+                'permissions' => ['tenant-members.read', 'tenant-members.manage', 'tenant-members.export', 'tenant-invitations.manage', 'tenant-settings.read', 'tenant-settings.manage', 'tenant-audit.read', 'tenant-billing.read', 'tenant-billing.manage'],
             ],
             'tenant-admin' => [
                 'display_name' => 'Administrador de la empresa',
                 'description' => 'Gestiona miembros, invitaciones y ajustes de su empresa (sin superar su rango)',
-                'permissions' => ['tenant-members.read', 'tenant-members.manage', 'tenant-members.export', 'tenant-invitations.manage', 'tenant-settings.read', 'tenant-settings.manage', 'tenant-audit.read'],
+                'permissions' => ['tenant-members.read', 'tenant-members.manage', 'tenant-members.export', 'tenant-invitations.manage', 'tenant-settings.read', 'tenant-settings.manage', 'tenant-audit.read', 'tenant-billing.read', 'tenant-billing.manage'],
             ],
             'tenant-member' => [
                 'display_name' => 'Miembro de la empresa',

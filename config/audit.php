@@ -18,7 +18,7 @@ return [
     */
     'reason_required' => array_values(array_filter(array_map('trim', explode(',', (string) env(
         'AUDIT_REASON_REQUIRED',
-        'user.roles-change,user.block,user.unblock,impersonation.start',
+        'user.roles-change,user.block,user.unblock,impersonation.start,billing.manual-payment,billing.free-period,billing.plan-assigned',
     ))))),
 
     'reason_max_length' => 500,

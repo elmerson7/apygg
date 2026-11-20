@@ -1,0 +1,200 @@
+# Facturación y suscripciones
+
+Planes, suscripción del tenant, facturas, ciclo de cobro y pasarela de pago (simulada o nula). **Es dinero**: importes
+siempre enteros en unidad menor + moneda (`docs/money.md`), numeración con `SequenceInterface` (`docs/sequences.md`),
+cobros con clave de idempotencia (`docs/integrations.md` §6) y todo cambio de estado auditado (`docs/audit.md`).
+Genérico: ningún negocio concreto. Stripe, conciliación, bloqueo de escritura por estado y avisos de morosidad llegan en las olas 6.2.
+
+Módulo **quitable**: `app/Services/Billing/`, `app/Models/{Plan,PlanPrice,BillingAccount,Subscription,Invoice,InvoiceLine,Payment}.php`,
+`app/Integrations/Payments/`, `app/Events/Billing/`, `app/Http/*/Billing/`, `routes/api/billing.php`, `config/billing.php`, las
+migraciones `2026_11_20_0004xx` y los comandos `billing:*`. `PlanLimits` solo consulta la tabla `subscriptions`.
+
+## Modelo de datos
+
+| Tabla | Qué guarda | Notas |
+|---|---|---|
+| `plans` | código, nombre, `is_public`, `is_active`, `trial_days` | Global (sin `tenant_id`). Se declara en `config/billing.php` y se copia con `billing:sync-plans` |
+| `plan_prices` | precio por (plan, moneda, intervalo `month`/`year`) en `unit_amount_minor` | Único por (plan, moneda, intervalo) |
+| `billing_accounts` | cliente y método de pago por defecto del tenant en la pasarela | Un registro por tenant. **Nunca datos de tarjeta**: id de la pasarela + marca/últimos 4 |
+| `subscriptions` | estado, periodo actual, `cancel_at_period_end`, plan y **precio congelados** | Índice único parcial: **una sola suscripción viva por tenant** |
+| `invoices` + `invoice_lines` | factura con `subtotal/tax/total_minor`, número, estado, periodo | Inmutable tras emitirse. Único (subscription_id, period_start) para alta y ciclo |
+| `payments` | un intento de cobro (o un pago manual) de una factura | Única por (invoice_id, attempt); una sola `succeeded` y una sola `pending` por factura; estado `refunded` tras un reembolso |
+
+**Catálogo en config + BD** (y no solo BD con CRUD): el catálogo cambia con un deploy revisado y no con un clic, `billing:sync-plans`
+es idempotente (lo que sale de la config se desactiva, no se borra) y las filas existen para poder referenciarlas desde suscripciones y
+facturas. Los **límites** de cada plan siguen en `config/plans.php` bajo el mismo código. Un cambio de precio **no altera** lo que ya paga cada cliente: la
+suscripción copia plan, intervalo, moneda e importe al contratar.
+
+`GET /plans` (público, `throttle:60,1`) devuelve los planes públicos y activos con sus precios (`unit_amount_minor`). Un plan **privado**
+(`public => false`, acuerdos a medida) no sale y **el tenant no puede contratarlo ni cambiarse a él por sí mismo** (403 `plan_private`,
+aunque conozca el código; tampoco en `preview-change`): solo la plataforma lo asigna con `POST /admin/billing/tenants/{id}/plan`. Quien ya
+está en un precio privado puede seguir en él (p. ej. volver a él para cancelar una bajada programada).
+
+## Estados de la suscripción
+
+`SubscriptionStatus` es la **única** tabla de transiciones; `SubscriptionLifecycle::transition()` la aplica (y el modelo `Subscription` la vuelve a comprobar al guardar: ningún camino puede persistir una transición prohibida), audita
+(`billing.subscription-status-changed`), refresca los límites y, al terminar, despacha `SubscriptionCanceled`. Cualquier otra transición lanza
+409 `invalid_subscription_transition`.
+
+| Desde | Hacia | Cuándo |
+|---|---|---|
+| `incomplete` | `active` | el primer pago se cobra (o se marca pagado a mano) |
+| `incomplete` | `expired` | pasan `incomplete_expire_hours` (24) sin pagar (`billing:renew`) |
+| `incomplete` | `canceled` | el cliente desiste |
+| `trialing` | `active` | termina la prueba y se cobra |
+| `trialing` | `past_due` | termina la prueba y el cobro falla (o no hay método de pago) |
+| `trialing`, `active` | `canceled` | baja inmediata, o al llegar el fin del periodo con `cancel_at_period_end` |
+| `active` | `past_due` | una renovación se rechaza |
+| `past_due` | `active` | un reintento (o el cliente, o un pago manual) cobra la factura |
+| `past_due` | `canceled` / `expired` | reintentos agotados (`billing.dunning.final_status`) o baja |
+| `canceled`, `expired` | — | terminales: volver a suscribirse crea una fila nueva |
+
+Da acceso al plan (`grantsAccess`): `trialing`, `active` y `past_due` (gracia mientras duran los reintentos). `PlanLimits` lee el plan de la
+suscripción con acceso y, si no hay, cae a `tenants.plan` (compatibilidad: sin suscripciones todo funciona como antes).
+Cada cambio de estado refresca la caché de límites (`PlanLimitsInterface::refresh`).
+
+## Operaciones (rutas del tenant, `X-Tenant`)
+
+Permisos nuevos `tenant-billing.read` y `tenant-billing.manage` (`tenant-owner` y `tenant-admin`; el miembro raso **no** ve la facturación). Como
+con equipos de Spatie apagados el `permission:` de la ruta no basta, cada servicio vuelve a comprobar el rol del actor **en ese tenant**
+(`TenantRoles::actorRankFor`, `docs/tenant-onboarding.md`).
+
+| Ruta | Permiso | Qué hace |
+|---|---|---|
+| `GET /tenant/billing/subscription` | read | suscripción viva (o la última) |
+| `POST /tenant/billing/subscription` | manage | contratar: `{plan, interval, currency?, payment_token?}` |
+| `POST /tenant/billing/subscription/preview-change` | read | qué pasaría al cambiar (modo y prorrateo), sin hacerlo |
+| `POST /tenant/billing/subscription/change` | manage | cambiar de plan |
+| `POST /tenant/billing/subscription/cancel` | manage | `{immediately?}`; idempotente |
+| `POST /tenant/billing/subscription/resume` | manage | deshace una baja pendiente |
+| `GET|PUT /tenant/billing/payment-method` | read / manage | método de pago (solo marca y últimos 4) |
+| `GET /tenant/billing/invoices`, `GET .../{id}` | read | facturas paginadas en SQL (`?status=`) con líneas e intentos |
+| `POST /tenant/billing/invoices/{id}/pay` | manage | reintenta el cobro (p. ej. tras cambiar de tarjeta) |
+| `POST /admin/billing/invoices/{id}/mark-paid` | `billing.manage` | **pago manual**: `{reference, reason}` |
+| `POST /admin/billing/tenants/{id}/free-period` | `billing.manage` | **periodo gratis**: `{days, reason}` |
+| `POST /admin/billing/tenants/{id}/plan` | `billing.manage` | **asignar un plan** (también privado): `{plan, interval, currency?, reason}` |
+| `GET /tenant/billing/invoices/{id}/pdf` | read | PDF de la factura (`application/pdf`, descarga `attachment`) |
+
+Las POST de contratar, cambiar, pagar y asignar plan admiten `Idempotency-Key` (`docs/idempotency.md`).
+
+- **Contratar.** Con prueba (si el plan la tiene y el tenant no usó ya una; `trial_requires_payment_method` para exigir tarjeta) no cobra y queda `trialing`. Plan gratuito:
+  `active` sin factura. Plan de pago sin prueba: exige método de pago, emite la factura del alta y cobra; **si el banco rechaza, la
+  suscripción queda `incomplete`, la factura `open` y la respuesta es 402 `payment_failed`**; se recupera pagando la factura (otra tarjeta + `/pay`).
+- **Cambiar de plan.** Subida (misma moneda e intervalo y más cara) **inmediata**: se prorratea el resto del periodo en enteros
+  (crédito por lo no usado del plan actual, cargo por lo que queda al precio nuevo; cada línea se redondea una vez, mitad hacia fuera de cero; `net = cargo - crédito` exacto),
+  se emite una factura de ajuste (`subscription_update`) y el plan solo cambia **si se cobra**; si el cobro falla se anula el ajuste y nada cambia. Cualquier otro cambio (más barato, otro intervalo o moneda) se
+  **programa para el final del periodo** (`scheduled_plan_price_id`; volver al plan actual lo cancela). En prueba el cambio no cobra.
+- **Cancelar.** Al final del periodo (`cancel_at_period_end`; el estado no cambia hasta entonces) o inmediata. Una alta `incomplete` se cancela al instante;
+  las facturas abiertas pasan a `void` (alta) o `uncollectible` (renovación impagada).
+- **Pago manual** (plataforma): factura `open` o `uncollectible` -> `paid` con una fila `payments` `method=manual` (referencia, motivo, quién), con los mismos efectos que un cobro por
+  la pasarela (activa la suscripción, avanza el periodo). Motivo obligatorio (`billing.manual-payment` en `audit.reason_required`); 409 `payment_in_progress` si la pasarela está cobrando y 409 `payment_pending` si queda un intento a medias (corte o timeout): ese intento PUDO cobrar, así que no se da por fallido; `billing:renew` lo resuelve con su misma clave y, si no cobró, ya se puede pagar a mano.
+- **Asignar un plan** (plataforma): si el tenant no tiene suscripción viva, la contrata; si la tiene, le cambia el plan. Mismas reglas que
+  el tenant (prueba, prorrateo, cobro con SU método de pago: sin él, 422 `payment_method_required`), pero admite planes privados. Motivo
+  obligatorio (`billing.plan-assigned` en `audit.reason_required`), auditado en la misma transacción con el actor, el modo y el precio.
+- **Periodo gratis** (plataforma): alarga `current_period_end` N días (máx. `billing.free_period_max_days`) en una suscripción `trialing` o `active`; la nueva fecha pasa a ser el
+  ancla de cobro. Motivo obligatorio (`billing.free-period`).
+
+## Facturas
+
+- **Número** con `SequenceInterface` (secuencia `billing_invoice` de `config/sequences.php`, nombre en `billing.invoice.sequence`: `F-{year}-000001`, reinicio anual; nombre propio para no compartir contador con una secuencia `invoice` del proyecto derivado) **reservado en la misma transacción que la factura**: si se revierte, el número vuelve a estar libre (sin huecos).
+  `BILLING_INVOICE_SEQUENCE_SCOPE=global` (**por defecto**: quien emite es la plataforma, así que una sola serie para todas las empresas; serializa la emisión entre tenants durante la transacción, que es corta) o `tenant` (cada empresa cliente numera aparte).
+- **Importes** con `Money`: líneas (`unit_amount_minor` con signo, `amount_minor = quantity * unit`), subtotal, **impuesto simple** (`BILLING_TAX_RATE` como cadena, `"18"`, redondeado una vez sobre el subtotal; sin lógica fiscal de país) y total. CHECK en BD: `total = subtotal + tax`.
+- **Inmutable** una vez emitida: `Invoice` solo deja cambiar `status`, `paid_at` y `voided_at` (con transición válida de `InvoiceStatus`); no se borra; sus líneas no se editan (`409 invoice_immutable`). Los importes se guardan, no se recalculan.
+- Estados: `draft`, `open`, `paid`, `void`, `uncollectible`.
+- **PDF**: `GET /tenant/billing/invoices/{id}/pdf` (`tenant-billing.read` + rango en el tenant; la de otro tenant da 404) con `PdfRendererInterface` (dompdf) y la vista
+  `resources/views/billing/invoice-pdf.blade.php`: emisor = marca de la **plataforma** (`BrandResolverInterface` resuelto sin el ajuste del tenant, para que el cliente no pueda
+  cambiar al emisor), cliente = nombre del tenant, líneas, subtotal, impuesto y total formateados con `Money::format` en el idioma de la petición. Se genera al vuelo (no se guarda).
+
+## Ciclo de cobro: `billing:renew`
+
+Programado cada 15 minutos (`routes/console.php`, `withoutOverlapping`). `RenewalService::due()` busca (sin filtro de tenant, auditado) las suscripciones con algo que
+hacer y `renew()` procesa **cada una dentro de su tenant** (`TenantContext::run`):
+
+1. Fin de periodo (`trialing`/`active`): si hay baja pendiente -> `canceled`; si el importe es 0 -> el periodo avanza sin factura; si no, emite la factura del nuevo periodo (con el precio programado si lo hay) y la cobra.
+2. `past_due` con `next_retry_at` vencido: reintenta cobrar **la misma factura**.
+3. `incomplete` más viejo que `incomplete_expire_hours`: `expired` y factura `void`.
+4. Un cobro `pending` con el arrendamiento vencido (corte o error transitorio): se retoma con la misma clave, **también si la factura se cerró después** (baja, alta caducada): si la pasarela cobró, se reembolsa (factura `void`) o salda la deuda (factura `uncollectible` -> `paid`). Si el intento original nunca llegó a la pasarela, el reintento cobra y se reembolsa al momento.
+
+**Calendario de morosidad** (`BILLING_DUNNING_RETRY_DAYS=1,3,5`): fallo 1 -> `past_due` y reintento a +1 día; fallo 2 -> +3; fallo 3 -> +5; fallo 4 -> se agota: factura `uncollectible` y la suscripción pasa a
+`BILLING_DUNNING_FINAL_STATUS` (`canceled` o `expired`). Un reintento que cobra devuelve la suscripción a `active` con el periodo de esa factura. Un reintento manual del cliente que falla **no** consume reintentos.
+
+### Atomicidad e idempotencia (por qué no hay doble cobro ni dos facturas)
+
+| Riesgo | Defensa |
+|---|---|
+| Dos `billing:renew` sobre la misma suscripción | `SELECT ... FOR UPDATE SKIP LOCKED` en la fase 1: el segundo la salta (`locked`) |
+| Dos facturas del mismo periodo | índice único parcial `invoices_one_per_period` (subscription_id, period_start); si existe, se reutiliza |
+| Dos cobros de la misma factura | fila `payments` `pending` reservada **antes** de llamar a la pasarela, con arrendamiento (`lease_seconds`); un segundo proceso la ve y no cobra (`in_progress`). Índices únicos: una `pending` y una `succeeded` por factura |
+| Proceso que muere tras cobrar | el pago queda `pending`; al vencer el arrendamiento se retoma con **la misma clave** `inv-<factura>-a<intento>` y la pasarela devuelve el resultado original |
+| Error transitorio (timeout, 5xx, 429) | el intento sigue `pending`, se reintenta con la misma clave tras `transient_backoff_seconds`; tras `max_transient_tries` se da por fallido (`gateway_unavailable`) y entra en la morosidad |
+| Bloqueos durante la red | el cobro se hace **fuera de toda transacción**; reservar y registrar son transacciones cortas |
+| Interbloqueos | orden fijo de bloqueos en todo el módulo: suscripción -> factura -> pago |
+| Dos altas a la vez del mismo tenant | bloqueo de la fila del tenant + índice único parcial `subscriptions_one_live_per_tenant` |
+| Número de factura repetido o con hueco | `SequenceInterface` (fila bloqueada) dentro de la transacción de la factura |
+| Cliente duplicado en la pasarela | clave de idempotencia estable por tenant + `insertOrIgnore` sobre `billing_accounts.tenant_id` único |
+
+Pruebas con procesos reales en `tests/Concurrency/FacturacionConcurrenteTest.php`.
+
+## Cobros que vuelven con la factura ya cerrada
+
+- Factura **`void`** (baja inmediata o alta caducada mientras la pasarela cobraba, o ajuste de plan que ya no aplica porque la suscripción renovó entre medias): el cobro **no cuenta**. La operación síncrona (alta, cambio de plan, `/pay`) responde 409 `invoice_not_open` con `refund: refunded|pending` y la suscripción no se activa ni cambia.
+- Factura **`uncollectible`** (baja inmediata o morosidad agotada con un reintento en vuelo): la deuda quedó cobrada, así que pasa a `paid` (como un pago manual tardío); una suscripción terminada no revive.
+
+### Reembolso automático
+
+Si una factura queda `void` teniendo un cobro `succeeded` de la pasarela, `PaymentProcessor::refund()` lo devuelve al momento con clave
+de idempotencia `refund-<id del pago>`, pasa el pago a `refunded` (`refunded_at`, `refund_id`) y audita `billing.payment-refunded`. Si la pasarela falla (transitorio), el pago queda `succeeded` y `billing:renew` lo reintenta en cada ejecución con **la misma clave**
+(`orphanedPayments()`), también para tenants no activos. Los pagos manuales nunca se reembolsan por la pasarela.
+
+## Tenants no activos
+
+`billing:renew` **no factura a tenants suspendidos o pendientes**: los omite, lo cuenta en la salida (`skipped_inactive_tenant`) y lo registra en el log de seguridad. `BILLING_RENEW_INACTIVE_TENANTS=true` (`billing.renew_inactive_tenants`) lo desactiva.
+
+## Alcance de la numeración (`tenant` / `global`)
+
+Cada factura guarda el alcance con el que se numeró (`invoices.number_scope`). **No se puede cambiar `BILLING_INVOICE_SEQUENCE_SCOPE` con facturas ya emitidas**: repetiría números (`unique (tenant_id, number)`) o mezclaría series. Al emitir lanza 409
+`invoice_numbering_scope_changed` y `billing:renew` se niega a arrancar (FAILURE) con el mismo mensaje. Decídelo antes de la primera factura; si de verdad hay que migrar, hazlo con una migración explícita y auditada de `sequences` y `number_scope`.
+
+## Pasarela: `PaymentGatewayInterface`
+
+Crear cliente, adjuntar método de pago (por **token** que la pasarela da al front; nunca datos de tarjeta), cobrar con clave de idempotencia, reembolsar y consultar. Un **rechazo del banco no es una excepción**: vuelve en `ChargeResult(succeeded: false, failureCode)`.
+Los fallos de infraestructura son los errores tipados de integraciones (`docs/integrations.md` §4): `Transient`/`RateLimited` se reintentan con la misma clave; el resto no.
+
+`PAYMENTS_MODE` (`config/integrations.php`): `fake` (por defecto), `null` o `real`.
+
+- **`FakePaymentGateway`**: determinista, sin red ni reloj ni estado estático (binding `scoped`), registra llamadas (`calls('charge')`, `charges()`). Tokens: `tok_visa` y cualquier `tok_*` cobran; `tok_declined`, `tok_insufficient_funds` y
+  `tok_expired` son rechazados; `declineNext('card_declined', times: 2)` fuerza rechazos; `failNext(TransientIntegrationError::class)` simula una caída. Misma clave de idempotencia = mismo resultado sin repetir el cobro.
+- **`NullPaymentGateway`**: sin pasarela, solo pago manual. Todo cobro falla con un error permanente claro; las renovaciones caen en morosidad y un admin las recupera con el pago manual.
+- **`real`**: falla claro al resolverla hasta que el proyecto registre la suya.
+
+### Añadir una pasarela (p. ej. Stripe, ola 6.2)
+
+1. Clase en `app/Integrations/Payments/` que implemente `PaymentGatewayInterface`: usa `IntegrationHttp::client('payments')` (timeout explícito), traduce los errores a los cinco tipos y devuelve un rechazo del banco como `ChargeResult(false, ...)`. Pasa `amountMinor` tal cual (Stripe usa unidades menores) y la `idempotencyKey` como cabecera.
+2. Credenciales en `config/services.php` / `config/integrations.php` (+ `.env.example`), nunca con `env()` en el servicio.
+3. Sustituye la fábrica `real` de `IntegrationsServiceProvider` (`bindByMode(PaymentGatewayInterface::class, 'payments', [...])`).
+4. Webhook entrante del proveedor registrado en `integrations.inbound_webhooks.providers` (`docs/integrations.md` §7), con un handler **idempotente** que aplique el estado del pago (la verdad la da el webhook, no solo la respuesta síncrona).
+5. Tests con `Http::fake` para cada código HTTP -> error tipado y para el rechazo del banco.
+
+## Eventos de dominio
+
+Se despachan **después del commit** (`ShouldDispatchAfterCommit`), con solo ids y escalares (seguros para encolar; el listener abre el tenant con `TenantContext::run`):
+`SubscriptionStarted`, `SubscriptionRenewed`, `SubscriptionPlanChanged`, `SubscriptionCanceled` (`status` `canceled|expired`, `reason` `user|period_end|dunning_exhausted|incomplete_timeout`), `InvoiceIssued`, `InvoicePaid` (`method` `gateway|manual`) y `PaymentFailed` (`attempt`, `nextRetryAt`).
+Las olas siguientes (avisos 6.2-C, bloqueo 6.2-B) se enganchan aquí sin tocar el módulo.
+
+## Auditoría
+
+Todo cambio queda en `audit_logs` por tenant: `billing.subscription-started`, `billing.subscription-status-changed` (de/a/causa), `billing.subscription-plan-changed`, `billing.change-scheduled`, `billing.scheduled-change-canceled`,
+`billing.cancel-scheduled`, `billing.subscription-resumed`, `billing.invoice-issued`, `billing.manual-payment` y `billing.free-period` (estas dos con motivo obligatorio), `billing.stale-upgrade-payment`, `billing.payment-refunded`.
+
+## Errores con `code` estable
+
+`plan_not_found` 404 · `price_unavailable` 422 · `subscription_exists` 409 · `subscription_not_found` 404 · `subscription_not_active` 409 · `subscription_not_resumable` 409 · `invalid_subscription_transition` 409 ·
+`plan_private` 403 · `payment_method_required` 422 · `payment_failed` 402 (con `failure_code`) · `payment_pending` 409 · `payment_in_progress` 409 · `change_in_progress` 409 · `same_plan` 422 · `invoice_not_open` 409 · `invoice_immutable` 409 · `invoice_numbering_scope_changed` 409 · `invalid_free_period` 422 · `not_found` 404 (factura).
+
+## Límites conocidos
+
+- **Reembolsos parciales y notas de crédito** no existen (llegan con la conciliación, 6.2-A); solo hay el reembolso total automático de abajo.
+- Un ajuste por subida de plan cobrado por la pasarela cuando la suscripción ya cambió (una renovación entre medias) no aplica el cambio: la factura se anula, el cobro se reembolsa y queda `billing.stale-upgrade-payment` en la auditoría. Si ese ajuste se paga A MANO, solo queda la auditoría (revisión humana).
+- Sin lógica fiscal de país: un solo porcentaje sobre el subtotal; el PDF es un documento simple (sin datos fiscales del cliente ni logo remoto).
+- Cantidades por asiento y precios por uso no existen: una suscripción = un precio fijo por periodo.
+- `TENANT_TRIAL_DAYS` (`tenants.trial_ends_at`) sigue siendo un dato informativo del alta; la prueba que cobra es la del plan.

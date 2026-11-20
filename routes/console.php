@@ -186,3 +186,12 @@ Schedule::command('privacy:purge')
     ->onFailure(function () {
         Log::error('Falló la purga de privacidad');
     });
+
+// Facturación (docs/billing.md): renovaciones vencidas, reintentos de cobro, altas sin pagar y cobros interrumpidos.
+// Cada 15 minutos; seguro con varias instancias a la vez (bloqueo por suscripción + índices únicos).
+Schedule::command('billing:renew')
+    ->everyFifteenMinutes()
+    ->withoutOverlapping()
+    ->onFailure(function () {
+        Log::error('El ciclo de cobro (billing:renew) falló');
+    });

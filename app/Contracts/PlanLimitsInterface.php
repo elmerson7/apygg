@@ -66,4 +66,7 @@ interface PlanLimitsInterface
     public function setOverride(int $tenantId, string $key, ?int $value): void;
 
     public function clearOverride(int $tenantId, string $key): void;
+
+    /** Descarta la caché del plan/límites de un tenant (lo llama facturación al cambiar su suscripción). */
+    public function refresh(int $tenantId): void;
 }

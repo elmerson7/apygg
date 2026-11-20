@@ -26,6 +26,15 @@ punto de partida compara: `git diff <tu-commit-base> HEAD -- database/migrations
   `make art cmd="migrate:fresh --seed"`.
 - **Sanctum no existe.** Nunca estuvo instalado; si lo usabas, es tuyo.
 
+### Facturación y suscripciones (ola 6.1-A)
+
+- Migraciones nuevas `2026_11_20_000400`-`000405` (`make art cmd="migrate"`): `plans`, `plan_prices`, `billing_accounts`, `subscriptions`, `invoices`, `invoice_lines`, `payments`. `Subscription`, `Invoice`, `Payment` y `BillingAccount` llevan `BelongsToTenant` (pruebas registradas en `CoberturaDeAislamientoTest`).
+- Ejecuta `make art cmd="billing:sync-plans"` tras migrar y los seeders (`RoleSeeder` solo añade): permisos nuevos `tenant-billing.read|manage` (`tenant-owner`, `tenant-admin`) y `billing.manage` (plataforma).
+- `PlanLimitsInterface` gana `refresh(int $tenantId)`; el plan efectivo sale de la suscripción con acceso y, si no hay, de `tenants.plan` (sin suscripciones nada cambia). Si implementas la interfaz, añádelo.
+- `config/sequences.php` define ahora la secuencia `billing_invoice` (nombre propio: no comparte contador con una secuencia `invoice` de tu proyecto); `AUDIT_REASON_REQUIRED` por defecto incluye `billing.manual-payment,billing.free-period,billing.plan-assigned`.
+- La numeración de facturas es **global** por defecto (`BILLING_INVOICE_SEQUENCE_SCOPE=global`). Los planes privados (`public: false`) ya no los contrata el tenant: los asigna la plataforma (`POST /admin/billing/tenants/{id}/plan`).
+- Variables nuevas en `.env.example`: `PAYMENTS_MODE`, `BILLING_*` (incluye `BILLING_RENEW_INACTIVE_TENANTS`). Fija `BILLING_INVOICE_SEQUENCE_SCOPE` antes de la primera factura: después no se puede cambiar (409). Programa `billing:renew` (ya está en `routes/console.php`; cada 15 min).
+
 ### Despliegue (ola 8.1-A)
 
 - **`cd.yml` se reescribe**: desaparecen las estrategias cpanel, railway, blue-green, canary y rolling (nunca se

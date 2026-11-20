@@ -93,6 +93,11 @@ class PermissionSeeder extends Seeder
             ['name' => 'users.impersonate', 'display_name' => 'Impersonar Usuarios', 'description' => 'Permite actuar como otro usuario (soporte), con motivo obligatorio y auditado'],
             ['name' => 'maintenance.manage', 'display_name' => 'Gestionar Modo Mantenimiento', 'description' => 'Permite activar y desactivar el modo mantenimiento de la API'],
 
+            // Facturación y suscripciones (docs/billing.md)
+            ['name' => 'tenant-billing.read', 'display_name' => 'Ver Facturación del Tenant', 'description' => 'Permite ver la suscripción, el método de pago y las facturas de la empresa activa'],
+            ['name' => 'tenant-billing.manage', 'display_name' => 'Gestionar Facturación del Tenant', 'description' => 'Permite contratar, cambiar de plan, cancelar, reanudar, pagar facturas y cambiar el método de pago de la empresa activa'],
+            ['name' => 'billing.manage', 'display_name' => 'Gestionar Facturación de la Plataforma', 'description' => 'Permite marcar facturas como pagadas a mano y conceder periodos gratis a cualquier empresa'],
+
             // Back-office (Filament, opcional): ver docs/backoffice.md
             ['name' => 'backoffice.access', 'display_name' => 'Acceder al Back-office', 'description' => 'Permite entrar al panel interno (Filament); además exige MFA. Cada recurso pide sus propios permisos'],
 
