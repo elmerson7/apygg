@@ -1,7 +1,5 @@
 <?php
 
-use Illuminate\Http\Client\PendingRequest;
-use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
@@ -15,79 +13,9 @@ use Illuminate\Support\Facades\Storage;
 |   E2E_S3_ENDPOINT            endpoint S3 (opcional; comprueba que el privado está en el bucket)
 |   E2E_WEBHOOK_RECEIVER_URL   URL del receptor de webhooks VISTA DESDE el stack (por defecto http://app:9199)
 | Los tests van en orden y dependen unos de otros: si uno falla, los siguientes se omiten.
+| Los helpers e2e*() viven en tests/E2E/helpers.php (los comparten todos los recorridos).
 | Cómo levantar el stack y correrlo: docs/testing.md ("Pruebas E2E").
 */
-
-/** Estado compartido entre los pasos del recorrido (una sola ejecución por proceso). */
-function e2e(): ArrayObject
-{
-    static $estado;
-
-    return $estado ??= new ArrayObject([
-        'run' => bin2hex(random_bytes(4)),
-        'password' => 'E2e-Clave-'.bin2hex(random_bytes(6)).'!9',
-    ]);
-}
-
-function e2eApi(?string $token = null): PendingRequest
-{
-    $peticion = Http::baseUrl(rtrim((string) getenv('E2E_BASE_URL'), '/'))
-        ->acceptJson()
-        ->timeout(30);
-
-    return $token ? $peticion->withToken($token) : $peticion;
-}
-
-/**
- * Los endpoints de autenticación limitan a 5 por minuto y por IP: ante un 429 espera
- * el reinicio de la ventana y reintenta (acotado), para que la suite no sea frágil.
- *
- * @param  array<string, mixed>  $datos
- */
-function e2ePostAuth(string $ruta, array $datos): Response
-{
-    for ($intento = 0; $intento < 3; $intento++) {
-        $res = e2eApi()->post($ruta, $datos);
-        if ($res->status() !== 429) {
-            return $res;
-        }
-        sleep(max(1, min(65, (int) $res->header('Retry-After') ?: 61)));
-    }
-
-    return $res;
-}
-
-/** Espera (acotada) a que `$buscar` devuelva algo distinto de null. */
-function e2eEsperar(Closure $buscar, int $segundos = 30): mixed
-{
-    $limite = microtime(true) + $segundos;
-    do {
-        $valor = $buscar();
-        if ($valor !== null) {
-            return $valor;
-        }
-        usleep(500_000);
-    } while (microtime(true) < $limite);
-
-    return null;
-}
-
-function e2eRegistrar(string $nombre, string $email): Response
-{
-    $clave = e2e()['password'];
-
-    return e2ePostAuth('/auth/register', [
-        'name' => $nombre,
-        'email' => $email,
-        'password' => $clave,
-        'password_confirmation' => $clave,
-    ]);
-}
-
-function e2ePngMinimo(): string
-{
-    return base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==');
-}
 
 // ── 1. Salud y ficha ─────────────────────────────────────────────────────────
 
@@ -139,13 +67,15 @@ test('el correo de bienvenida llega a Mailpit por la cola', function () {
     }
 
     $email = e2e()['email'];
-    $mensaje = e2eEsperar(fn () => Http::timeout(10)
-        ->get(rtrim($mailpit, '/').'/api/v1/search', ['query' => 'to:'.$email])
-        ->json('messages.0'));
+    // Al registrarse salen DOS correos por la cola (bienvenida y verificación): se busca el de bienvenida.
+    $mensaje = e2eEsperar(function () use ($mailpit, $email) {
+        $mensajes = Http::timeout(10)->get(rtrim($mailpit, '/').'/api/v1/search', ['query' => 'to:'.$email])->json('messages') ?? [];
 
-    expect($mensaje)->not->toBeNull('el correo no llegó en 30 s: ¿Horizon está consumiendo la cola default?')
-        ->and($mensaje['To'][0]['Address'])->toBe($email)
-        ->and($mensaje['Subject'])->toStartWith('Bienvenido');
+        return collect($mensajes)->first(fn ($m) => str_starts_with((string) $m['Subject'], 'Bienvenido'));
+    });
+
+    expect($mensaje)->not->toBeNull('el correo de bienvenida no llegó en 30 s: ¿Horizon está consumiendo la cola default?')
+        ->and($mensaje['To'][0]['Address'])->toBe($email);
 })->depends('un usuario nuevo se registra y recibe tokens');
 
 // ── 4. Login, sesión y rotación de tokens ────────────────────────────────────
@@ -163,6 +93,15 @@ test('el login devuelve access y refresh y /auth/me identifica al usuario', func
     $me = e2eApi(e2e()['access'])->get('/auth/me');
     expect($me->status())->toBe(200)
         ->and($me->json('data.email'))->toBe(e2e()['email']);
+
+    // Con multiempresa activada (MULTI_TENANCY_ENABLED) los archivos y webhooks cuelgan de una empresa:
+    // se da de alta una y se declara con X-Tenant. Con multiempresa apagada responde 404 y se sigue sin tenant.
+    $empresa = e2eApi(e2e()['access'])->post('/tenants', ['name' => 'Base '.e2e()['run'], 'slug' => 'e2e-base-'.e2e()['run']]);
+    if ($empresa->status() === 201) {
+        e2e()['tenant'] = 'e2e-base-'.e2e()['run'];
+    } else {
+        expect($empresa->status())->toBeIn([403, 404], 'alta de empresa: '.$empresa->body());
+    }
 })->depends('un usuario nuevo se registra y recibe tokens');
 
 test('el login con clave incorrecta se rechaza', function () {
@@ -197,7 +136,7 @@ test('el refresh token no sirve como access token', function () {
 test('un archivo privado se sube y se descarga con autorizacion', function () {
     $png = e2ePngMinimo();
 
-    $res = e2eApi(e2e()['access'])
+    $res = e2eApi(e2e()['access'], e2e()['tenant'] ?? null)
         ->attach('file', $png, 'e2e.png', ['Content-Type' => 'image/png'])
         ->post('/files', ['is_public' => '0']);
 
@@ -208,7 +147,7 @@ test('un archivo privado se sube y se descarga con autorizacion', function () {
     e2e()['archivo'] = $res->json('data.id');
     e2e()['archivo_nombre'] = $res->json('data.filename');
 
-    $bajada = e2eApi(e2e()['access'])->get('/files/'.e2e()['archivo'].'/download');
+    $bajada = e2eApi(e2e()['access'], e2e()['tenant'] ?? null)->get('/files/'.e2e()['archivo'].'/download');
     expect($bajada->status())->toBe(200)
         ->and($bajada->body())->toBe($png);
 
@@ -237,7 +176,7 @@ test('la descarga sin token es 401 y con otro usuario es 403 o 404', function ()
     $otro = e2eRegistrar('Otro E2E', 'e2e-otro-'.e2e()['run'].'@example.test');
     expect($otro->status())->toBe(201);
 
-    expect(e2eApi($otro->json('data.access_token'))->get($ruta)->status())->toBeIn([403, 404]);
+    expect(e2eApi($otro->json('data.access_token'), e2e()['tenant'] ?? null)->get($ruta)->status())->toBeIn([403, 404]);
 })->depends('un archivo privado se sube y se descarga con autorizacion');
 
 // ── 6. Webhook: entrega firmada a un receptor real ───────────────────────────
@@ -251,7 +190,7 @@ test('un webhook entrega user.logged_in con firma valida', function () {
     $servidor = @stream_socket_server("tcp://0.0.0.0:{$puerto}", $errno, $error);
     expect($servidor)->not->toBeFalse("no se pudo abrir el receptor en :{$puerto}: {$error}");
 
-    $creado = e2eApi(e2e()['access'])->post('/webhooks', [
+    $creado = e2eApi(e2e()['access'], e2e()['tenant'] ?? null)->post('/webhooks', [
         'name' => 'e2e '.e2e()['run'],
         'url' => $url,
         'events' => ['user.logged_in'],
@@ -267,8 +206,13 @@ test('un webhook entrega user.logged_in con firma valida', function () {
     // Un login del dueño dispara user.logged_in; la entrega va por la cola `webhooks`.
     expect(e2ePostAuth('/auth/login', ['login' => e2e()['email'], 'password' => e2e()['password']])->status())->toBe(200);
 
+    // Con multiempresa un webhook solo recibe eventos ocurridos DENTRO de su tenant (docs/webhooks.md) y el login
+    // ocurre fuera de cualquiera: la prueba pasa a ser que NO se entrega nada (falla cerrado). Sin multiempresa,
+    // la entrega firmada llega.
+    $multiempresa = isset(e2e()['tenant']);
+
     $peticion = null;
-    $limite = microtime(true) + 45;
+    $limite = microtime(true) + ($multiempresa ? 8 : 45);
     while ($peticion === null && microtime(true) < $limite) {
         $lectura = [$servidor];
         $escritura = $excepcion = null;
@@ -312,6 +256,12 @@ test('un webhook entrega user.logged_in con firma valida', function () {
     }
     fclose($servidor);
 
+    if ($multiempresa) {
+        expect($peticion)->toBeNull('un evento sin tenant no debe entregarse a un webhook de un tenant');
+
+        return;
+    }
+
     expect($peticion)->not->toBeNull('no llegó ninguna entrega en 45 s: ¿Horizon consume la cola webhooks?');
 
     $marca = (int) ($peticion['headers']['x-webhook-timestamp'] ?? 0);
@@ -334,10 +284,10 @@ test('el logout invalida el access token', function () {
 
     // Limpieza: el webhook ya no hace falta (el logout también dispara un evento).
     if (isset(e2e()['webhook'])) {
-        expect(e2eApi($access)->delete('/webhooks/'.e2e()['webhook'])->status())->toBe(200);
+        expect(e2eApi($access, e2e()['tenant'] ?? null)->delete('/webhooks/'.e2e()['webhook'])->status())->toBe(200);
     }
     if (isset(e2e()['archivo'])) {
-        expect(e2eApi($access)->delete('/files/'.e2e()['archivo'])->status())->toBe(200);
+        expect(e2eApi($access, e2e()['tenant'] ?? null)->delete('/files/'.e2e()['archivo'])->status())->toBe(200);
     }
 
     expect(e2eApi($access)->get('/auth/me')->status())->toBe(200);

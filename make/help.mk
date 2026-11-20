@@ -101,6 +101,7 @@ help:
 	@printf "  %-20s %s\n" "test-contract" "Contrato público de la API"
 	@printf "  %-20s %s\n" "test-concurrency" "Carreras con procesos reales"
 	@printf "  %-20s %s\n" "test-e2e" "Flujos de punta a punta (suite reservada)"
+	@printf "  %-20s %s\n" "e2e" "Suite E2E con su stack efímero (levanta, prueba, baja)"
 	@printf "  %-20s %s\n" "test-changed" "Solo tests con cambios (git --dirty)"
 	@printf "  %-20s %s\n" "ci" "Como el CI: check + cobertura mínima"
 	@printf "  %-20s %s\n" "test-filter" "Tests con filtro (filter=Nombre)"

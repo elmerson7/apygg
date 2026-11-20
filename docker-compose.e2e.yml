@@ -1,0 +1,248 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Stack EFÍMERO para la suite E2E (tests/E2E). Lo gobierna scripts/e2e-stack.sh (`make e2e`).
+#
+# - Independiente del docker-compose.yml de desarrollo: nombre de proyecto propio (E2E_PROJECT),
+#   red, volúmenes y contenedores propios, SIN puertos publicados en el host (el runner de la
+#   suite entra por la red del stack). Se baja con `down -v` al terminar: no deja nada.
+# - Mínimo y con memoria acotada: app (Octane) + horizon + postgres + redis + mailpit + S3 local
+#   + el runner de Pest. Sin reverb ni scheduler (los recorridos lanzan `billing:renew` a mano).
+# - Pasarelas en modo fake y correo a Mailpit: sin red externa.
+# - Las variables de `x-e2e-env` pisan al `.env` (env_file). SOLO para este stack de pruebas:
+#   relajan el filtro SSRF de webhooks y los límites de peticiones. Nunca en producción.
+# Detalle: docs/testing.md ("Pruebas E2E").
+# ─────────────────────────────────────────────────────────────────────────────
+name: ${E2E_PROJECT:-apygg-e2e}
+
+x-e2e-env: &e2e-env
+  APP_ENV: dev
+  APP_DEBUG: "false"
+  APP_URL: http://app:8000
+  HOME: /tmp
+  XDG_CONFIG_HOME: /tmp/.config
+  XDG_DATA_HOME: /tmp/.local/share
+  DB_HOST: postgres
+  DB_PORT: "5432"
+  DB_DATABASE: ${DB_DATABASE:-apygg}
+  DB_USERNAME: ${DB_USERNAME:-apygg}
+  DB_PASSWORD: ${DB_PASSWORD:-secret}
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+  CACHE_STORE: redis
+  QUEUE_CONNECTION: redis
+  SESSION_DRIVER: array
+  BROADCAST_CONNECTION: "null"
+  SCOUT_DRIVER: "null"
+  # Correo a Mailpit
+  MAIL_MAILER: smtp
+  MAIL_HOST: mailpit
+  MAIL_PORT: "1025"
+  MAIL_SCHEME: ""
+  MAIL_BLOCK_RESERVED_DOMAINS: "false"
+  # Archivos en el S3 local (subida presignada y descarga reales)
+  FILE_DISK_PUBLIC: s3
+  FILE_DISK_PRIVATE: s3_private
+  AWS_ACCESS_KEY_ID: apygg-dev
+  AWS_SECRET_ACCESS_KEY: apygg-dev-secret
+  AWS_DEFAULT_REGION: us-east-1
+  AWS_BUCKET: apygg
+  AWS_PRIVATE_BUCKET: apygg-private
+  AWS_ENDPOINT: http://s3:9000
+  AWS_URL: http://s3:9000/apygg
+  AWS_USE_PATH_STYLE_ENDPOINT: "true"
+  # Webhooks hacia el receptor que abre el runner (http, red privada de Compose)
+  WEBHOOKS_ALLOW_HTTP: "true"
+  WEBHOOKS_ALLOWED_HOSTS: app,${E2E_PROJECT:-apygg-e2e}-runner
+  # Multiempresa, altas y facturación (pasarela simulada)
+  MULTI_TENANCY_ENABLED: "true"
+  TENANT_SIGNUP_ENABLED: "true"
+  TENANT_SIGNUP_REQUIRE_APPROVAL: "false"
+  PLAN_LIMITS_ENABLED: "true"
+  PAYMENTS_MODE: fake
+  BILLING_ENFORCEMENT_ENABLED: "true"
+  BILLING_NO_SUBSCRIPTION: allow
+  # Los recorridos hacen decenas de peticiones de auth/escritura desde una sola IP
+  RATE_LIMIT_AUTH_MAX: "1000"
+  RATE_LIMIT_READ_MAX: "5000"
+  RATE_LIMIT_WRITE_MAX: "5000"
+  RATE_LIMIT_ADMIN_MAX: "5000"
+  AUTH_LOGIN_MAX_ATTEMPTS: "1000"
+  AUTH_LOGIN_MAX_ATTEMPTS_PER_IDENTITY: "1000"
+
+x-e2e-app: &e2e-app
+  build:
+    context: .
+    dockerfile: docker/app/Dockerfile
+    args:
+      USER_ID: ${E2E_UID:-1000}
+      GROUP_ID: ${E2E_GID:-1000}
+  image: ${E2E_APP_IMAGE:-apygg-e2e-app:ci}
+  # Sin el wrapper de permisos de la imagen: se corre como el usuario dueño del checkout.
+  user: "${E2E_UID:-1000}:${E2E_GID:-1000}"
+  working_dir: /app
+  env_file: .env
+  environment: *e2e-env
+  volumes:
+    - ./:/app
+  networks:
+    - network
+
+services:
+  app:
+    <<: *e2e-app
+    container_name: ${E2E_PROJECT:-apygg-e2e}-app
+    command: ["php", "artisan", "octane:start", "--server=frankenphp", "--host=0.0.0.0", "--port=8000", "--workers=2", "--max-requests=500"]
+    mem_limit: 384m
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  horizon:
+    <<: *e2e-app
+    container_name: ${E2E_PROJECT:-apygg-e2e}-horizon
+    command: ["php", "artisan", "horizon"]
+    mem_limit: 768m
+    healthcheck:
+      test: ["CMD-SHELL", "php artisan horizon:status | grep -q running"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Runner de la suite: `docker compose run --rm e2e` (perfil propio, no arranca con `up`).
+  e2e:
+    <<: *e2e-app
+    profiles: ["runner"]
+    command: ["./vendor/bin/pest", "--testsuite=E2E"]
+    mem_limit: 192m
+    environment:
+      <<: *e2e-env
+      E2E_BASE_URL: http://app:8000
+      E2E_APP_TITLE: ${APP_TITLE:-}
+      E2E_MAIL_URL: http://mailpit:8025
+      E2E_S3_ENDPOINT: http://s3:9000
+      E2E_S3_KEY: apygg-dev
+      E2E_S3_SECRET: apygg-dev-secret
+      E2E_S3_PRIVATE_BUCKET: apygg-private
+      # `compose run` no registra el alias del servicio: el receptor se alcanza por el nombre del contenedor
+      # (scripts/e2e-stack.sh lo lanza con `run --name <E2E_PROJECT>-runner`).
+      E2E_WEBHOOK_RECEIVER_URL: http://${E2E_PROJECT:-apygg-e2e}-runner:9199
+      # Acceso al stack para los pasos que adelantan el reloj (BD) o lanzan comandos (artisan)
+      E2E_DB_DATABASE: ${DB_DATABASE:-apygg}
+      E2E_ARTISAN: "1"
+      E2E_MULTITENANT: "1"
+    depends_on:
+      app:
+        condition: service_healthy
+
+  postgres:
+    # Postgres estándar: las pruebas no necesitan PostGIS ni pgvector (los trae la imagen de desarrollo).
+    image: postgres:18-alpine
+    container_name: ${E2E_PROJECT:-apygg-e2e}-postgres
+    mem_limit: 256m
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-apygg}
+      POSTGRES_USER: ${DB_USERNAME:-apygg}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    command:
+      - "postgres"
+      - "-c"
+      - "jit=off"
+      - "-c"
+      - "shared_buffers=64MB"
+      - "-c"
+      - "max_connections=60"
+      - "-c"
+      - "fsync=off"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - network
+
+  redis:
+    image: redis:7-alpine
+    container_name: ${E2E_PROJECT:-apygg-e2e}-redis
+    mem_limit: 64m
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    command: ["redis-server", "--maxmemory", "48mb", "--maxmemory-policy", "allkeys-lru", "--requirepass", "${REDIS_PASSWORD:-}"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - network
+
+  mailpit:
+    image: axllent/mailpit:v1.34.0
+    container_name: ${E2E_PROJECT:-apygg-e2e}-mailpit
+    mem_limit: 48m
+    environment:
+      MP_MAX_MESSAGES: 500
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - network
+
+  s3:
+    image: rustfs/rustfs:1.0.6
+    container_name: ${E2E_PROJECT:-apygg-e2e}-s3
+    mem_limit: 192m
+    environment:
+      RUSTFS_ACCESS_KEY: apygg-dev
+      RUSTFS_SECRET_KEY: apygg-dev-secret
+      RUSTFS_ADDRESS: ":9000"
+      RUSTFS_CONSOLE_ENABLE: "false"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9000/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - network
+
+  s3-init:
+    image: curlimages/curl:8.11.1
+    container_name: ${E2E_PROJECT:-apygg-e2e}-s3-init
+    mem_limit: 32m
+    environment:
+      S3_ENDPOINT: http://s3:9000
+      S3_ACCESS_KEY: apygg-dev
+      S3_SECRET_KEY: apygg-dev-secret
+      S3_BUCKET: apygg
+      S3_PRIVATE_BUCKET: apygg-private
+    volumes:
+      - ./docker/s3/init.sh:/init.sh:ro
+    entrypoint: ["sh", "/init.sh"]
+    depends_on:
+      s3:
+        condition: service_healthy
+    networks:
+      - network
+    restart: "no"
+
+networks:
+  network:
+    name: ${E2E_PROJECT:-apygg-e2e}-network
+    driver: bridge

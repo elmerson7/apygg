@@ -28,22 +28,22 @@ return [
 
     'limits' => [
         'auth' => [
-            'max_attempts' => 5,
+            'max_attempts' => (int) env('RATE_LIMIT_AUTH_MAX', 5),
             'decay_minutes' => 1,
             'by' => 'ip', // Por IP para prevenir fuerza bruta
         ],
         'read' => [
-            'max_attempts' => 60,
+            'max_attempts' => (int) env('RATE_LIMIT_READ_MAX', 60),
             'decay_minutes' => 1,
             'by' => 'user', // Por usuario autenticado
         ],
         'write' => [
-            'max_attempts' => 30,
+            'max_attempts' => (int) env('RATE_LIMIT_WRITE_MAX', 30),
             'decay_minutes' => 1,
             'by' => 'user', // Por usuario autenticado
         ],
         'admin' => [
-            'max_attempts' => 10,
+            'max_attempts' => (int) env('RATE_LIMIT_ADMIN_MAX', 10),
             'decay_minutes' => 1,
             'by' => 'user', // Por usuario autenticado
         ],

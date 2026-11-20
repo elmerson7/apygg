@@ -26,7 +26,7 @@ Se ejecuta automáticamente en:
    - Composer audit (escaneo rápido de vulnerabilidades)
 
 4. **E2E (stack real)** — solo en push a `main` y a mano
-   - `make init` + `make setup` (Docker Compose, perfil dev) y `make test-e2e`
+   - `make init` + `make e2e` (stack efímero propio: `docker-compose.e2e.yml`, que se baja con `down -v` al terminar)
    - Ver `docs/testing.md`, sección "Pruebas E2E"
 
 5. **Docker Build**

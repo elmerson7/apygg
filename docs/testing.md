@@ -233,71 +233,105 @@ el formato de validación y sin exponer SQL ni valor.
 
 ## Pruebas E2E
 
-`tests/E2E/RecorridoBaseTest.php` habla por **HTTP real** (`Http::` de Laravel, nunca
-`$this->get()` del kernel) con un stack levantado: Octane de verdad, Horizon consumiendo
-la cola, Mailpit y S3. Es la única suite que prueba que las piezas funcionan *juntas*
-(el correo sale por la cola real, el webhook llega a un receptor real...). Es lenta
-y necesita infraestructura, por eso va aparte y **se omite** si no hay stack.
+`tests/E2E/` habla por **HTTP real** (`Http::` de Laravel, nunca `$this->get()` del kernel) con un stack
+levantado: Octane de verdad, Horizon consumiendo la cola, Mailpit y S3. Es la única suite que prueba que las
+piezas funcionan *juntas* (el correo sale por la cola real, el webhook llega a un receptor real, el cobro
+simulado activa la suscripción...). Es lenta y necesita infraestructura, por eso va aparte y **se omite** si
+no hay stack (`E2E_BASE_URL` sin definir).
 
-Recorrido (cada paso depende del anterior: si uno falla, los siguientes se omiten):
+Cada recorrido es **independiente y repetible**: crea sus propios usuarios y empresas con datos únicos por
+ejecución (`e2e-<alias>-<run>@example.test`), no depende de los demás ni exige limpiar nada. Dentro de un
+recorrido los pasos van en orden y dependen unos de otros (`->depends()`): si uno falla, los siguientes se omiten.
 
-1. `GET /health/ready` = ready (BD y Redis ok) y `GET /` devuelve la ficha con el título.
-2. Registro de un usuario nuevo (email único por ejecución) → 201 con tokens; el duplicado → 422.
-3. El correo de bienvenida llega a Mailpit (espera acotada de 30 s: va por la cola `default`).
-4. Login, `/auth/me`, el refresh rota y el viejo da 401; un refresh no sirve como access.
-5. Subida de un archivo privado y descarga por `/files/{id}/download`; sin token 401; otro usuario 403/404.
-   Con S3 activo comprueba además que el objeto está en el bucket privado.
-6. Webhook `user.logged_in` hacia un receptor que abre el propio test; la entrega llega por la
-   cola `webhooks` con la firma HMAC válida (`sha256=` + HMAC(secreto, `{timestamp}.{cuerpo}`)).
-7. Logout: el access y el refresh dejan de servir.
+| Archivo | Recorrido |
+|---|---|
+| `RecorridoBaseTest.php` | Salud, registro, correo de bienvenida (Mailpit), login/refresh rotado, archivo privado, webhook hacia un receptor real, logout. El webhook cuelga de una empresa: con multiempresa un evento sin tenant (el login) **no** se entrega (se comprueba que no llega nada); la entrega con firma HMAC se verifica en un stack sin multiempresa (`make test-e2e` sobre el stack de desarrollo) |
+| `EmpresaEquipoTest.php` | Alta de empresa A y B -> invitación con `Idempotency-Key` (el reintento no duplica) -> correo por la cola con el token -> aceptación (otro email 403, repetir 409) -> miembros -> aislamiento A/B por HTTP -> exportación de miembros por la cola |
+| `FacturacionTest.php` | Catálogo público -> plan con prueba -> método de pago -> fin de prueba y primer cobro (`billing:renew`) -> PDF y aviso en la bandeja -> renovación (cron repetido sin duplicar) -> rechazo del banco (`past_due`, escritura con `X-Subscription-Warning`) -> pasada la gracia 402 `payment_required` -> otra tarjeta y pago con `Idempotency-Key` -> desbloqueo -> baja inmediata 402 `subscription_inactive` -> recontratar |
+| `ArchivosTest.php` | Subida directa presignada al S3 local (intención con `Idempotency-Key`, `PUT` al bucket, completar) -> descarga, URL temporal y cuota -> tipo declarado falso rechazado -> aislamiento A/B |
+| `SesionesDosFactoresTest.php` | Dos sesiones, revocar una (su access muere al instante), 2FA con TOTP real (código malo, bueno, desafío de un solo uso, recuperación de un solo uso), desactivar, cambio de contraseña que invalida todo |
 
-### Levantar el stack y correrlo
+### Correr la suite completa: `make e2e`
 
 ```bash
-make init NAME=miapp        # si el proyecto aún no está inicializado
-make setup                  # perfil dev por defecto: + Mailpit y S3 (RustFS) con sus buckets
-make test-e2e
+make init NAME=miapp     # una vez: crea .env y compose.env
+make e2e                 # levanta el stack efímero, corre tests/E2E y lo baja con down -v
+make e2e ARGS="--filter=Facturacion"   # argumentos de Pest
 ```
 
-Para que el recorrido sea completo, el `.env` del stack necesita (cámbialo **antes** de
-`make setup`, o recrea los contenedores con `make up` después, porque `env_file` se lee al crearlos):
+`make e2e` (`scripts/e2e-stack.sh`) usa **su propio** `docker-compose.e2e.yml` y no toca el stack de desarrollo:
 
-```env
-FILE_DISK_PUBLIC=s3                  # archivos en el S3 local (si no, se comprueba solo el disco local)
-FILE_DISK_PRIVATE=s3_private
-WEBHOOKS_ALLOW_HTTP=true             # el receptor de prueba es http
-WEBHOOKS_ALLOWED_HOSTS=app           # y está en la red privada de Compose: WebhookUrlGuard lo bloquearía
-```
+- Nombre de proyecto único (`E2E_PROJECT`, por defecto `apygg-e2e-<carpeta>`), red y volúmenes propios y **sin
+  puertos publicados** en el host (el runner de Pest entra por la red del stack): no choca con nada.
+- Mínimo y acotado: app (Octane, 2 workers, 384 MB), Horizon (768 MB: master, supervisores y workers son procesos PHP), Postgres 18
+  (256 MB), Redis (64 MB), Mailpit (48 MB), S3 local RustFS (192 MB) y el runner (192 MB): **~1,9 GB** en total. Sin Reverb ni
+  scheduler (los recorridos lanzan el cron a mano).
+- Sin red externa: pasarela de pago `fake`, correo a Mailpit, archivos en el S3 local.
+- Al terminar (también si falla o se interrumpe) hace `down -v --remove-orphans`: no deja contenedores,
+  volúmenes ni redes. `E2E_KEEP=1` lo deja arriba para depurar (`make e2e-up`, `make e2e-down`,
+  `scripts/e2e-stack.sh test --filter=...`).
+- En un servidor compartido, `E2E_LOCK=<fichero>` hace que espere turno con `flock` antes de levantar nada, y
+  `E2E_REUSE_IMAGES=1` reutiliza la imagen local `apygg-app:latest` en vez de construirla.
 
-`make init` ya apunta el correo a Mailpit (`MAIL_MAILER=smtp`, `MAIL_HOST=mailpit`). **Estas
-variables relajan el filtro SSRF: solo para el stack de pruebas, nunca en producción.**
+Lo que el stack E2E cambia respecto al `.env` (variables de `x-e2e-env` en `docker-compose.e2e.yml`; **solo
+para este stack, nunca en producción**): `MULTI_TENANCY_ENABLED` y `TENANT_SIGNUP_ENABLED` (las empresas se
+dan de alta solas), `PLAN_LIMITS_ENABLED`, `PAYMENTS_MODE=fake`, `WEBHOOKS_ALLOW_HTTP` y
+`WEBHOOKS_ALLOWED_HOSTS` (el receptor de la prueba es http y está en la red privada: el filtro SSRF lo
+bloquearía) y los topes de peticiones por minuto (`RATE_LIMIT_*_MAX`, `AUTH_LOGIN_MAX_ATTEMPTS*`; en
+producción siguen los de `config/rate-limiting.php`).
 
-`make test-e2e` ejecuta Pest *dentro* del contenedor `app` (no hay PHP en el host), así que
-la API es `http://localhost:8000` (el `APP_URL` del `.env` es la vista del host) y los
-servicios se descubren desde el `.env` del contenedor. Variables que lee la suite
-(sin `E2E_BASE_URL` toda la suite se omite):
+### El reloj y el cron en los recorridos de facturación
+
+No se espera a que pase el tiempo: el runner del stack puede **adelantar el reloj de una empresa** y **lanzar el
+cron**, y son los únicos pasos que tocan el stack por dentro (ambos solo de pruebas, sin endpoint nuevo en la API):
+
+- `e2eViajar($tenantId, $dias)` retrocede esos días las fechas de la suscripción, facturas y cobros de ESA
+  empresa en la BD del stack (fin de prueba, periodo, reintentos, emisión), de modo que "ahora" queda días después.
+- `e2eArtisan('billing:renew')` ejecuta el comando contra el stack (devolviendo a cola/caché/correo reales lo que
+  `phpunit.xml` fuerza para los tests).
+
+Necesitan `E2E_ARTISAN=1` (lo pone el runner del stack temporal; el DB se toma de `E2E_DB_DATABASE`). Contra un stack
+remoto esos pasos se omiten. Los recorridos que necesitan multiempresa con alta libre se omiten sin
+`E2E_MULTITENANT=1`.
+
+### Variables que lee la suite
 
 | Variable | Qué es |
 |---|---|
-| `E2E_BASE_URL` | API bajo prueba (obligatoria; el target la fija) |
-| `E2E_MAIL_URL` | API de Mailpit (`http://mailpit:8025`); sin ella se omite el paso del correo |
-| `E2E_S3_ENDPOINT`, `E2E_S3_KEY`, `E2E_S3_SECRET`, `E2E_S3_PRIVATE_BUCKET` | S3 para comprobar el bucket privado; opcionales |
-| `E2E_WEBHOOK_RECEIVER_URL` | URL del receptor vista **desde el stack**; por defecto `http://app:9199` (el test abre el puerto 9199 en el contenedor `app`) |
+| `E2E_BASE_URL` | API bajo prueba (obligatoria; sin ella toda la suite se omite) |
+| `E2E_MULTITENANT` | `1` si el stack tiene multiempresa y alta libre; sin ella se omiten los recorridos de empresa, facturación y archivos |
+| `E2E_ARTISAN`, `E2E_DB_DATABASE` | `1` si el runner está dentro del stack (BD y artisan); necesarios para adelantar el reloj y lanzar `billing:renew` |
+| `E2E_MAIL_URL` | API de Mailpit (`http://mailpit:8025`); sin ella se omiten los pasos de correo |
+| `E2E_S3_ENDPOINT`, `E2E_S3_KEY`, `E2E_S3_SECRET`, `E2E_S3_PRIVATE_BUCKET` | S3 para la subida presignada y el bucket privado |
+| `E2E_WEBHOOK_RECEIVER_URL` | URL del receptor de webhooks vista **desde el stack** (por defecto `http://app:9199`; en `make e2e`, el contenedor del runner: `http://<E2E_PROJECT>-runner:9199`) |
 | `E2E_APP_TITLE` | si se define, la ficha de `/` debe llevar exactamente ese título |
 
-Para correrla contra una API remota o desde fuera del contenedor, define esas variables y
-lanza `./vendor/bin/pest --testsuite=E2E`; el receptor de webhooks tiene que ser alcanzable
-desde esa API (`E2E_WEBHOOK_RECEIVER_URL=http://<tu-host>:9199`).
+### Contra el stack de desarrollo: `make test-e2e`
+
+`make setup` + `make test-e2e` sigue existiendo: corre Pest dentro del contenedor `app` del proyecto contra
+`http://localhost:8000`. Solo ejecuta lo que ese stack permita (multiempresa y S3 si su `.env` los activa; el
+reloj y el cron no están disponibles ahí). Para que el recorrido base sea completo, el `.env` necesita
+`FILE_DISK_PUBLIC=s3`, `FILE_DISK_PRIVATE=s3_private`, `WEBHOOKS_ALLOW_HTTP=true` y `WEBHOOKS_ALLOWED_HOSTS=app`
+(se leen al crear los contenedores).
+
+### Escribir un recorrido nuevo
+
+1. Archivo `tests/E2E/<Tema>Test.php` con una constante de nombre de recorrido (`const E2E_XX = 'tema'`) y
+   `e2e(E2E_XX)` como estado compartido entre pasos.
+2. Usuarios con `e2eUsuario()`, empresas con `e2eEmpresa()`, clientes HTTP con `e2eApi($token, $slugEmpresa)`,
+   correo con `e2eCorreo()`, esperas acotadas con `e2eEsperar()` (nunca `sleep` a ciegas). Los helpers viven en
+   `tests/E2E/helpers.php`.
+3. Datos únicos por ejecución (el `run` de `e2e()`), sin depender de que la BD esté vacía.
+4. Cubre siempre el camino denegado y el aislamiento A/B, no solo el feliz.
 
 Notas:
 
-- Los endpoints de login y registro limitan a 5 por minuto y por IP; el recorrido usa 4 y
-  espera el reinicio de la ventana si recibe un 429. Si lo repites seguido, la segunda
-  ejecución puede tardar ~1 minuto más.
-- Cada ejecución crea usuarios nuevos (`e2e-<id>@example.test`) y borra el webhook y el
-  archivo; los usuarios y el correo de Mailpit quedan (`make mail-clear` vacía la bandeja).
-- En CI hay un job `e2e` opcional (manual con `workflow_dispatch` y en push a `main`) que levanta este
-  mismo stack: ver `.github/workflows/ci.yml`.
+- Los endpoints de autenticación limitan por minuto y por IP (5 por defecto): `e2ePostAuth` espera el reinicio
+  de la ventana ante un 429; el stack de `make e2e` sube el tope, así que no se espera.
+- Cada ejecución crea usuarios y empresas nuevos que quedan en la BD del stack; en `make e2e` desaparecen con el
+  `down -v`. En un stack permanente, `make mail-clear` vacía Mailpit.
+- En CI hay un job `e2e` opcional (manual con `workflow_dispatch` y en push a `main`) que ejecuta `make e2e`:
+  ver `.github/workflows/ci.yml`.
 
 ## La base de datos de tests
 

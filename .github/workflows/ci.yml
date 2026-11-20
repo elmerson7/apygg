@@ -391,8 +391,9 @@ jobs:
       - name: Suite restante
         run: ./vendor/bin/pest --ci
 
-  # Recorrido E2E por HTTP real (tests/E2E): levanta el stack del perfil dev con Docker Compose
-  # (app con Octane, Horizon, Postgres 18, Redis, Mailpit, S3/RustFS). Es lento y necesita Docker,
+  # Recorridos E2E por HTTP real (tests/E2E): levantan su propio stack con Docker Compose (docker-compose.e2e.yml:
+  # app con Octane, Horizon, Postgres 18, Redis, Mailpit, S3/RustFS) y cubren alta de empresa, invitaciones,
+  # facturación, bloqueo, archivos, sesiones y 2FA. Es lento y necesita Docker,
   # por eso solo corre en push a main y a mano (workflow_dispatch). No bloquea `ci-success`.
   e2e:
     name: E2E (stack real)
@@ -431,22 +432,11 @@ jobs:
       - name: Init project (compose.env y .env)
         run: make init NAME=ci PORT_BASE=8700 YES=1
 
-      # El receptor de webhooks de la prueba es http y vive en la red de Compose (host `app`):
-      # sin esto WebhookUrlGuard lo rechaza. Solo para este stack efímero. Archivos en S3 local.
-      - name: Configure E2E environment
-        run: |
-          sed -i 's/^FILE_DISK_PUBLIC=.*/FILE_DISK_PUBLIC=s3/; s/^FILE_DISK_PRIVATE=.*/FILE_DISK_PRIVATE=s3_private/' .env
-          printf 'WEBHOOKS_ALLOW_HTTP=true\nWEBHOOKS_ALLOWED_HOSTS=app\n' >> .env
-
-      - name: Start the stack (make setup)
-        run: make setup
-
-      - name: Run E2E suite
-        run: make test-e2e
-
-      - name: Dump container logs on failure
-        if: failure()
-        run: docker compose --profile dev --project-name ci --env-file compose.env logs --tail=200
+      # Stack efímero propio de la suite (docker-compose.e2e.yml): app con Octane, Horizon, Postgres, Redis,
+      # Mailpit y S3 local, con multiempresa, facturación fake y los filtros SSRF/límites relajados SOLO para
+      # este stack. `make e2e` lo levanta, migra, corre tests/E2E y lo baja con `down -v` (también si falla).
+      - name: Run E2E suite (stack efímero)
+        run: make e2e
 
   build:
     name: Docker Build

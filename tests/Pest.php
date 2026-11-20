@@ -18,6 +18,9 @@ use Tests\TestCase;
 uses(TestCase::class)->in('Feature', 'Unit', 'Arch', 'Contract', 'Concurrency', 'Integration');
 uses(E2ETestCase::class)->in('E2E');
 
+// Helpers e2e*() compartidos por los recorridos de tests/E2E.
+require_once __DIR__.'/E2E/helpers.php';
+
 /*
 |--------------------------------------------------------------------------
 | Expectations

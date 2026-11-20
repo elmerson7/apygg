@@ -207,6 +207,7 @@ Guía completa: `docs/testing.md`.
 - Cobertura: `make test-coverage` (pcov, apagado por defecto).
 - Mutación: `make test-mutate`. Paralelo: `make testdb-parallel` + `make test-parallel`.
 - Nunca `php artisan test` en el host.
+- E2E por HTTP real: `make e2e` (stack efímero propio con `docker-compose.e2e.yml`, sin puertos en el host, se baja solo; recorridos de empresa, facturación, archivos, sesiones/2FA). Ver `docs/testing.md` (Pruebas E2E).
 - Si la BD de tests queda con drift tras añadir migraciones: `make testdb-migrate`.
 - Nombres de test en español y en tercera persona, describiendo la conducta.
   Cubre siempre el camino denegado, no solo el feliz.

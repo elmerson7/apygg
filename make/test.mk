@@ -51,12 +51,26 @@ test-concurrency:
 test-e2e:
 	$(DC) exec -T app sh -c '\
 		export E2E_BASE_URL=$${E2E_BASE_URL:-http://localhost:8000} E2E_APP_TITLE="$$APP_TITLE"; \
+		if [ "$$MULTI_TENANCY_ENABLED" = true ] && [ "$$TENANT_SIGNUP_ENABLED" = true ]; then export E2E_MULTITENANT=1; fi; \
 		if [ "$$MAIL_HOST" = mailpit ]; then export E2E_MAIL_URL=$${E2E_MAIL_URL:-http://mailpit:8025}; fi; \
 		if [ "$$FILE_DISK_PRIVATE" = s3_private ]; then \
 			export E2E_S3_ENDPOINT=$${E2E_S3_ENDPOINT:-$$AWS_ENDPOINT} E2E_S3_KEY=$$AWS_ACCESS_KEY_ID \
 				E2E_S3_SECRET=$$AWS_SECRET_ACCESS_KEY E2E_S3_PRIVATE_BUCKET=$${AWS_PRIVATE_BUCKET:-$$AWS_BUCKET}; \
 		fi; \
 		exec ./vendor/bin/pest --testsuite=E2E'
+
+# Suite E2E COMPLETA con su propio stack efímero (docker-compose.e2e.yml: app, horizon, postgres, redis,
+# mailpit y S3, multiempresa y facturación fake; sin puertos en el host, ~1,9 GB): lo levanta, corre
+# tests/E2E y lo baja con `down -v`. No toca el stack de desarrollo. E2E_PROJECT=<nombre> si hay varios;
+# E2E_REUSE_IMAGES=1 reutiliza apygg-app:latest; `make e2e-up` / `e2e-down` para depurar. Ver docs/testing.md.
+e2e:
+	@bash scripts/e2e-stack.sh run $(ARGS)
+
+e2e-up:
+	@bash scripts/e2e-stack.sh up
+
+e2e-down:
+	@bash scripts/e2e-stack.sh down
 
 # Solo los tests con cambios sin commitear según Git (Pest --dirty): ciclo rápido al desarrollar
 test-changed:
