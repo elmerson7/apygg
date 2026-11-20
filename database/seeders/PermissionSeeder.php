@@ -33,6 +33,8 @@ class PermissionSeeder extends Seeder
             ['name' => 'users.update', 'display_name' => 'Actualizar Usuarios', 'description' => 'Permite editar los datos de otros usuarios'],
             ['name' => 'users.delete', 'display_name' => 'Eliminar Usuarios', 'description' => 'Permite eliminar usuarios'],
             ['name' => 'users.restore', 'display_name' => 'Restaurar Usuarios', 'description' => 'Permite restaurar usuarios eliminados'],
+            ['name' => 'users.export', 'display_name' => 'Exportar Usuarios', 'description' => 'Permite exportar usuarios a CSV/XLSX y consultar sus propias exportaciones'],
+            ['name' => 'users.import', 'display_name' => 'Importar Usuarios', 'description' => 'Permite importar usuarios desde CSV/XLSX con vista previa'],
             ['name' => 'users.manage-roles', 'display_name' => 'Gestionar Roles de Usuarios', 'description' => 'Permite asignar y quitar roles a usuarios'],
 
             // Roles
@@ -72,6 +74,7 @@ class PermissionSeeder extends Seeder
 
             ['name' => 'tenant-settings.manage', 'display_name' => 'Gestionar Ajustes del Tenant', 'description' => 'Permite cambiar los ajustes de la empresa activa (idioma, zona horaria y moneda por defecto)'],
             ['name' => 'tenant-members.read', 'display_name' => 'Ver Miembros del Tenant', 'description' => 'Permite listar los miembros de la empresa activa'],
+            ['name' => 'tenant-members.export', 'display_name' => 'Exportar Miembros del Tenant', 'description' => 'Permite exportar a CSV/XLSX los miembros de la empresa activa'],
             ['name' => 'tenant-members.manage', 'display_name' => 'Gestionar Miembros del Tenant', 'description' => 'Permite cambiar el rol, suspender, reactivar y quitar miembros de la empresa activa'],
             ['name' => 'tenant-invitations.manage', 'display_name' => 'Gestionar Invitaciones del Tenant', 'description' => 'Permite listar, crear, reenviar y revocar invitaciones a la empresa activa'],
             // Ajustes, flags y límites (docs/settings-and-flags.md)

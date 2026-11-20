@@ -29,9 +29,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
     && apt-get update \
     && apt-get install -y --no-install-recommends postgresql-client-18 \
-    && wget -O /tmp/wkhtmltox.deb https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-3/wkhtmltox_0.12.6.1-3.bookworm_amd64.deb \
-    && (dpkg -i /tmp/wkhtmltox.deb || apt-get install -y -f) \
-    && rm /tmp/wkhtmltox.deb \
     && install-php-extensions \
         pcntl \
         intl \

@@ -22,5 +22,13 @@ return [
             'title' => ':title',
             'body' => ':message',
         ],
+        'export_ready' => [
+            'title' => 'Exportación lista',
+            'body' => 'Tu exportación está lista para descargar.',
+        ],
+        'import_finished' => [
+            'title' => 'Importación terminada',
+            'body' => 'Tu importación terminó: :message',
+        ],
     ],
 ];

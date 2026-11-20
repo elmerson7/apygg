@@ -45,6 +45,6 @@ Revisado contra el código el 2026-11-19. Lo marcado como hecho está comprobado
 ### Menor
 
 - [ ] **Feature flags sin uso.** `config/features.php` define `advanced_search`, `export_users` y `two_factor_auth`, pero ninguna ruta usa el middleware `feature:`.
-- [ ] **Dependencias sin uso.** `setasign/fpdf`, `setasign/fpdi`, `barryvdh/laravel-snappy` y `spatie/laravel-query-builder` no aparecen en `app/`. Decidir si se quitan. `chillerlan/php-qrcode` se queda: lo exige Filament para el QR del MFA.
+- [ ] **Dependencias sin uso.** `spatie/laravel-query-builder` no aparece en `app/`. Decidir si se quita (las de PDF ya se quitaron en 5.3-C). `chillerlan/php-qrcode` se queda: lo exige Filament para el QR del MFA.
 - [ ] **Tabla `device_tokens`** sin modelo ni rutas (se dejó para no borrar datos de proyectos derivados). Retirarla con una migración si no se va a usar push.
 - [ ] **Failed login.** `LogAuthenticationEvents::handleFailed` existe, pero la API no dispara el evento `Failed` de Laravel (los fallos se registran con `LogService` y el bloqueo); valorar dispararlo desde `AuthService`.

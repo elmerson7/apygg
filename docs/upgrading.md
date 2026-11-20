@@ -82,6 +82,16 @@ punto de partida compara: `git diff <tu-commit-base> HEAD -- database/migrations
 - `TokenServiceInterface` añade `generateSessionTokens()` y `validateRefreshToken()`, y `generateRefreshToken()` acepta
   claims; `AuthService` recibe tres dependencias nuevas (si lo extiendes, ajusta el constructor).
 
+### Exportar, importar y PDF (ola 5.3-C)
+
+1. `composer update`: se quitan `barryvdh/laravel-snappy`, `setasign/fpdf` y `setasign/fpdi` (ningún código del boilerplate
+   los usaba) y se añaden `openspout/openspout` y `dompdf/dompdf`. Si tu proyecto usaba Snappy/FPDF, vuelve a añadir
+   la dependencia que necesites o migra a `App\Contracts\PdfRendererInterface` (dompdf, PHP puro).
+2. La imagen Docker ya no instala `wkhtmltopdf` (reconstruye con `make build`). Las librerías gráficas (`libx11`, `xfonts`...) siguen.
+3. `make art cmd="migrate"` (tablas `data_exports` y `data_imports`) y `make art cmd="db:seed --class=PermissionSeeder"` /
+   `RoleSeeder` (permisos `users.export`, `users.import`, `tenant-members.export`; este último va a `tenant-owner` y `tenant-admin`).
+4. Opcional: variables `EXPORT_*` e `IMPORT_*` de `config/export.php`; `exports:prune` ya queda programado.
+
 ### Ajustes, feature flags y límites (ola 4.2-B)
 
 - `Feature::enabled()` y el middleware `feature:` ahora pasan por `FeatureFlagServiceInterface` (BD + caché + overrides). Con tablas vacías el resultado es el de `config/features.php`, igual que antes. `CheckFeatureFlag` recibe la interfaz por constructor: si lo instancias a mano, pásasela.

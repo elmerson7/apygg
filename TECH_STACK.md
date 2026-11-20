@@ -30,12 +30,12 @@ Extensiones PHP instaladas en la imagen: `pcntl`, `intl`, `zip`, `opcache`, `gd`
 | `chillerlan/php-qrcode` | 5.0.5 | QR del MFA TOTP del back-office (Filament 5 exige `^5.0`) |
 | `spatie/laravel-permission` | 8.5.0 | RBAC (roles, permisos, middlewares `permission:`/`role:`); guard `api`, teams apagado. Ver `docs/permissions.md` |
 | `filament/filament` | 5.11.4 | Back-office interno opcional (`app/Filament`, panel `backoffice`); trae Livewire 4.4.8. Ver `docs/backoffice.md` |
+| `openspout/openspout` | 4.33.0 | Lectura y escritura de CSV/XLSX en streaming (exportar/importar). Ver `docs/export-import.md` |
+| `dompdf/dompdf` | 3.1.6 | Único motor de PDF (`PdfRendererInterface`), PHP puro sin binarios externos |
 
 Dependencias del `composer.json` sin uso en `app/`, `config/`, `routes/` ni `bootstrap/` (comprobado con grep):
 
 - `spatie/laravel-query-builder` (6.4.4).
-- `setasign/fpdf` (1.9.0) y `setasign/fpdi` (2.6.8).
-- `barryvdh/laravel-snappy` (1.0.5).
 
 ## Desarrollo y calidad
 

@@ -38,6 +38,9 @@ return [
         'security_alert' => ['channels' => ['mail', 'database', 'push'], 'mandatory' => true],
         'account_activity' => ['channels' => ['database', 'push']],
         'system_announcement' => ['channels' => ['database', 'mail']],
+        // Exportar/importar (docs/export-import.md)
+        'export_ready' => ['channels' => ['database', 'mail']],
+        'import_finished' => ['channels' => ['database', 'mail']],
     ],
 
     /**

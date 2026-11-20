@@ -163,3 +163,11 @@ Schedule::command('audit:prune')
     ->onFailure(function () {
         Log::error('Falló la retención de la auditoría');
     });
+
+// Exportar/importar: borra archivos caducados (docs/export-import.md)
+Schedule::command('exports:prune')
+    ->hourly()
+    ->withoutOverlapping()
+    ->onFailure(function () {
+        Log::error('Falló la limpieza de exportaciones e importaciones');
+    });
