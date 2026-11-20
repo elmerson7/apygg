@@ -190,6 +190,7 @@ function archServiciosConInterfaz(): array
         'App\Services\Billing\SubscriptionService' => 'App\Contracts\SubscriptionServiceInterface',
         'App\Services\Billing\RenewalService' => 'App\Contracts\RenewalServiceInterface',
         'App\Services\Billing\SubscriptionAccess' => 'App\Contracts\SubscriptionAccessInterface',
+        'App\Services\Billing\BillingNoticeService' => 'App\Contracts\BillingNoticeServiceInterface',
     ];
 }
 

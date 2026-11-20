@@ -42,5 +42,33 @@ return [
             'title' => 'Your account could not be deleted',
             'body' => ':reason',
         ],
+        'billing_trial_ending' => [
+            'title' => 'Your trial ends soon',
+            'body' => 'The :plan plan trial ends in :days day(s), on :date. The subscription will be charged afterwards.',
+        ],
+        'billing_renewal_upcoming' => [
+            'title' => 'Your subscription renews soon',
+            'body' => 'The :plan plan renews on :date for :amount.',
+        ],
+        'billing_invoice_paid' => [
+            'title' => 'Invoice paid',
+            'body' => 'We received the payment for invoice :number (:amount).',
+        ],
+        'billing_payment_failed' => [
+            'title' => 'We could not charge your subscription',
+            'body' => 'The payment for invoice :number (:amount) was declined. We will retry on :retry_date; you can pay it sooner.',
+        ],
+        'billing_final_warning' => [
+            'title' => 'Last notice before your subscription is canceled',
+            'body' => 'The payment for invoice :number (:amount) is still pending. The final retry is on :retry_date; if it fails, your subscription will end.',
+        ],
+        'billing_subscription_canceled' => [
+            'title' => 'Subscription canceled',
+            'body' => 'Your subscription to the :plan plan was canceled.',
+        ],
+        'billing_subscription_expired' => [
+            'title' => 'Subscription expired',
+            'body' => 'Your subscription to the :plan plan expired due to non-payment.',
+        ],
     ],
 ];

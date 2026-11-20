@@ -8,6 +8,7 @@ use App\Contracts\AuditServiceInterface;
 use App\Contracts\AuthServiceInterface;
 use App\Contracts\BackupServiceInterface;
 use App\Contracts\BillingAccountServiceInterface;
+use App\Contracts\BillingNoticeServiceInterface;
 use App\Contracts\BrandResolverInterface;
 use App\Contracts\ConsentServiceInterface;
 use App\Contracts\DeviceServiceInterface;
@@ -70,6 +71,7 @@ use App\Services\AuditService;
 use App\Services\AuthService;
 use App\Services\BackupService;
 use App\Services\Billing\BillingAccountService;
+use App\Services\Billing\BillingNoticeService;
 use App\Services\Billing\InvoiceService;
 use App\Services\Billing\PaymentProcessor;
 use App\Services\Billing\PlanCatalog;
@@ -209,6 +211,7 @@ class ContractServiceProvider extends ServiceProvider
         $this->app->bind(PaymentProcessorInterface::class, PaymentProcessor::class);
         $this->app->bind(SubscriptionServiceInterface::class, SubscriptionService::class);
         $this->app->bind(RenewalServiceInterface::class, RenewalService::class);
+        $this->app->bind(BillingNoticeServiceInterface::class, BillingNoticeService::class);
 
         $this->app->bind(LocaleResolverInterface::class, LocaleResolver::class);
         $this->app->bind(LocaleSettingsServiceInterface::class, LocaleSettingsService::class);

@@ -44,6 +44,14 @@ return [
         'data_export_ready' => ['channels' => ['mail', 'database'], 'mandatory' => true],
         'account_deletion_scheduled' => ['channels' => ['mail', 'database'], 'mandatory' => true],
         'account_deletion_blocked' => ['channels' => ['mail', 'database'], 'mandatory' => true],
+        // Facturación (docs/billing.md §Avisos): los de cobro fallido y fin de suscripción son obligatorios
+        'billing_trial_ending' => ['channels' => ['mail', 'database']],
+        'billing_renewal_upcoming' => ['channels' => ['mail', 'database']],
+        'billing_invoice_paid' => ['channels' => ['mail', 'database']],
+        'billing_payment_failed' => ['channels' => ['mail', 'database', 'push'], 'mandatory' => true],
+        'billing_final_warning' => ['channels' => ['mail', 'database', 'push'], 'mandatory' => true],
+        'billing_subscription_canceled' => ['channels' => ['mail', 'database'], 'mandatory' => true],
+        'billing_subscription_expired' => ['channels' => ['mail', 'database'], 'mandatory' => true],
     ],
 
     /**

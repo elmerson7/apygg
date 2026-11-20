@@ -73,6 +73,17 @@ return [
     // Suscripciones procesadas por ejecución de `billing:renew`.
     'renew_batch' => 200,
 
+    // Avisos a dueños/admins (docs/billing.md §Avisos). Las URL son del front (`{id}` = id de la factura).
+    'notices' => [
+        'recipient_roles' => ['owner', 'admin'],
+        'trial_ending_days' => (int) env('BILLING_NOTICE_TRIAL_DAYS', 3),
+        'renewal_upcoming_days' => (int) env('BILLING_NOTICE_RENEWAL_DAYS', 3),
+        'batch' => 500,
+        'billing_url' => env('BILLING_NOTICE_BILLING_URL', rtrim((string) env('FRONTEND_URL', env('APP_URL', 'http://localhost')), '/').'/billing'),
+        'invoice_url' => env('BILLING_NOTICE_INVOICE_URL', rtrim((string) env('FRONTEND_URL', env('APP_URL', 'http://localhost')), '/').'/billing/invoices/{id}'),
+        'pay_url' => env('BILLING_NOTICE_PAY_URL', rtrim((string) env('FRONTEND_URL', env('APP_URL', 'http://localhost')), '/').'/billing/invoices/{id}/pay'),
+    ],
+
     'plans' => [
         'free' => [
             'description' => 'Para empezar.',

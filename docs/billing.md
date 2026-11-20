@@ -202,7 +202,22 @@ Los fallos de infraestructura son los errores tipados de integraciones (`docs/in
 
 Se despachan **después del commit** (`ShouldDispatchAfterCommit`), con solo ids y escalares (seguros para encolar; el listener abre el tenant con `TenantContext::run`):
 `SubscriptionStarted`, `SubscriptionRenewed`, `SubscriptionPlanChanged`, `SubscriptionCanceled` (`status` `canceled|expired`, `reason` `user|period_end|dunning_exhausted|incomplete_timeout`), `InvoiceIssued`, `InvoicePaid` (`method` `gateway|manual`) y `PaymentFailed` (`attempt`, `nextRetryAt`).
-Las olas siguientes (avisos 6.2-C, bloqueo 6.2-B) se enganchan aquí sin tocar el módulo.
+Las olas siguientes (bloqueo 6.2-B; los avisos 6.2-C ya escuchan `InvoicePaid`, `PaymentFailed` y `SubscriptionCanceled`) se enganchan aquí sin tocar el módulo.
+
+## Avisos de facturación
+
+`BillingNoticeService` (escucha `InvoicePaid`, `PaymentFailed` y `SubscriptionCanceled` vía `SendBillingNotices`, y el comando `billing:notify`, cada hora) avisa por `NotificationServiceInterface::notify` **solo a dueños y administradores del tenant** (`billing.notices.recipient_roles`, membresía activa), nunca a todos los miembros.
+
+| Tipo | Cuándo | Obligatorio |
+|---|---|---|
+| `billing_trial_ending` | `billing:notify`: la prueba termina en <= `BILLING_NOTICE_TRIAL_DAYS` (3) | no |
+| `billing_renewal_upcoming` | `billing:notify`: renovación en <= `BILLING_NOTICE_RENEWAL_DAYS` (3); solo `active`, de pago y sin baja programada | no |
+| `billing_invoice_paid` | `InvoicePaid` (gasto > 0), con enlace a la factura | no |
+| `billing_payment_failed` | `PaymentFailed` de una renovación con reintentos pendientes (enlace para pagar) | si |
+| `billing_final_warning` | el fallo tras el que solo queda el último reintento | si |
+| `billing_subscription_canceled` / `billing_subscription_expired` | `SubscriptionCanceled` (`status` `canceled`/`expired`; incluye reintentos agotados) | si |
+
+Idempotencia: la tabla `billing_notices` tiene UNIQUE (`subscription_id`, `type`, `period_key`); el aviso se **reclama** con `insertOrIgnore` y se encola en la misma transacción (si encolar falla, el reclamo se revierte). Claves: `trial:<fin>`, `renewal:<fin de periodo>`, `paid:inv<id>`, `failed:inv<id>:a<intento>`, `final:inv<id>`, `ended:<estado>`. Sin destinatarios no se reclama nada. Los fallos de aviso se registran y **no** se propagan al cobro. El barrido omite tenants no activos. Los fallos del primer pago y de ajustes de plan no generan aviso de morosidad (el cliente ya recibe el error en la petición). Enlaces del front: `billing.notices.*_url`.
 
 ## Auditoría
 

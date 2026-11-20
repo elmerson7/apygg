@@ -42,5 +42,33 @@ return [
             'title' => 'No se pudo borrar tu cuenta',
             'body' => ':reason',
         ],
+        'billing_trial_ending' => [
+            'title' => 'Tu prueba termina pronto',
+            'body' => 'La prueba del plan :plan termina en :days día(s), el :date. Después se cobrará la suscripción.',
+        ],
+        'billing_renewal_upcoming' => [
+            'title' => 'Tu suscripción se renueva pronto',
+            'body' => 'El plan :plan se renovará el :date por :amount.',
+        ],
+        'billing_invoice_paid' => [
+            'title' => 'Factura pagada',
+            'body' => 'Recibimos el pago de la factura :number por :amount.',
+        ],
+        'billing_payment_failed' => [
+            'title' => 'No pudimos cobrar tu suscripción',
+            'body' => 'El cobro de la factura :number (:amount) fue rechazado. Lo reintentaremos el :retry_date; puedes pagarla antes.',
+        ],
+        'billing_final_warning' => [
+            'title' => 'Último aviso antes de cancelar tu suscripción',
+            'body' => 'El cobro de la factura :number (:amount) sigue sin completarse. El último reintento será el :retry_date; si falla, tu suscripción terminará.',
+        ],
+        'billing_subscription_canceled' => [
+            'title' => 'Suscripción cancelada',
+            'body' => 'Tu suscripción al plan :plan fue cancelada.',
+        ],
+        'billing_subscription_expired' => [
+            'title' => 'Suscripción vencida',
+            'body' => 'Tu suscripción al plan :plan venció por falta de pago.',
+        ],
     ],
 ];

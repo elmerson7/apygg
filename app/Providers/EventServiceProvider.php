@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Events\Billing\InvoicePaid;
+use App\Events\Billing\PaymentFailed;
+use App\Events\Billing\SubscriptionCanceled;
 use App\Events\PermissionGranted;
 use App\Events\PermissionRevoked;
 use App\Events\RoleAssigned;
@@ -12,6 +15,7 @@ use App\Events\UserLoggedIn;
 use App\Events\UserLoggedOut;
 use App\Events\UserRestored;
 use App\Events\UserUpdated;
+use App\Listeners\Billing\SendBillingNotices;
 use App\Listeners\InvalidatePermissionsCache;
 use App\Listeners\InvalidateUserCache;
 use App\Listeners\LogUserActivity;
@@ -74,6 +78,17 @@ class EventServiceProvider extends ServiceProvider
         PermissionRevoked::class => [
             InvalidatePermissionsCache::class,
             WebhookListener::class,
+        ],
+
+        // Avisos de facturación a dueños/admins (docs/billing.md §Avisos)
+        InvoicePaid::class => [
+            [SendBillingNotices::class, 'handleInvoicePaid'],
+        ],
+        PaymentFailed::class => [
+            [SendBillingNotices::class, 'handlePaymentFailed'],
+        ],
+        SubscriptionCanceled::class => [
+            [SendBillingNotices::class, 'handleSubscriptionCanceled'],
         ],
     ];
 

@@ -195,3 +195,11 @@ Schedule::command('billing:renew')
     ->onFailure(function () {
         Log::error('El ciclo de cobro (billing:renew) falló');
     });
+
+// Avisos de facturación con antelación (docs/billing.md §Avisos): fin de prueba y renovación próxima. Idempotente.
+Schedule::command('billing:notify')
+    ->hourly()
+    ->withoutOverlapping()
+    ->onFailure(function () {
+        Log::error('Los avisos de facturación (billing:notify) fallaron');
+    });
