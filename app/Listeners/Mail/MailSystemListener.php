@@ -46,6 +46,12 @@ class MailSystemListener
 
         $reason = $this->policy->denialReason($templateKey);
 
+        // Destinatarios vetados (dominio reservado, dirección suprimida): se quitan del mensaje y cada uno
+        // queda como `skipped` en el historial. Si no queda nadie, no se envía nada.
+        if ($reason === null && $this->dropDeniedRecipients($message, $templateKey, $event->data)) {
+            return false;
+        }
+
         // Cuenta forzada por quien envía (p. ej. "correo de prueba" de una
         // cuenta concreta); si no, la de la plantilla / predeterminada.
         $forcedId = $headers->has(AccountsTransport::HEADER_ACCOUNT)
@@ -109,6 +115,74 @@ class MailSystemListener
         }
 
         MailLog::query()->whereKey($logId)->update($values);
+    }
+
+    /**
+     * Quita del mensaje los destinatarios que la política veta y los registra como `skipped`.
+     * Devuelve true si no queda ningún destinatario (el envío debe cancelarse).
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function dropDeniedRecipients(Email $message, ?string $templateKey, array $data): bool
+    {
+        $fields = ['To' => $message->getTo(), 'Cc' => $message->getCc(), 'Bcc' => $message->getBcc()];
+        $all = [];
+
+        foreach ($fields as $addresses) {
+            foreach ($addresses as $address) {
+                $all[] = $address->getAddress();
+            }
+        }
+
+        $denied = $this->policy->deniedRecipients($all, $templateKey);
+
+        if ($denied === []) {
+            return false;
+        }
+
+        $remaining = 0;
+
+        foreach ($fields as $name => $addresses) {
+            $kept = array_values(array_filter($addresses, fn (Address $a) => ! isset($denied[$a->getAddress()])));
+            $remaining += count($kept);
+
+            if (count($kept) !== count($addresses)) {
+                match ($name) {
+                    'To' => $message->to(...$kept),
+                    'Cc' => $message->cc(...$kept),
+                    'Bcc' => $message->bcc(...$kept),
+                };
+            }
+        }
+
+        foreach ($denied as $address => $why) {
+            $this->createSkippedLog($address, $message, $data, $templateKey, $why);
+        }
+
+        Log::warning('Destinatarios descartados', ['template' => $templateKey, 'count' => count($denied)]);
+
+        return $remaining === 0;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function createSkippedLog(string $address, Email $message, array $data, ?string $templateKey, string $why): void
+    {
+        try {
+            MailLog::create([
+                'template_key' => $templateKey,
+                'to_email' => $address,
+                'subject' => (string) $message->getSubject(),
+                'status' => MailLog::STATUS_SKIPPED,
+                'error_message' => $why,
+                'metadata' => array_filter([
+                    'origin' => $data['__laravel_notification'] ?? $data['__laravel_mailable'] ?? null,
+                ]),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('No se pudo crear el registro de correo', ['error' => $e->getMessage()]);
+        }
     }
 
     /**

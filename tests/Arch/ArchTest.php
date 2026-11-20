@@ -154,6 +154,8 @@ function archServiciosConInterfaz(): array
         'App\Services\Mail\MailAccountService' => 'App\Contracts\MailAccountServiceInterface',
         'App\Services\Mail\MailEventStatusService' => 'App\Contracts\MailEventStatusServiceInterface',
         'App\Services\Mail\MailSendPolicy' => 'App\Contracts\MailSendPolicyInterface',
+        'App\Services\Mail\MailSuppressionService' => 'App\Contracts\MailSuppressionServiceInterface',
+        'App\Services\Mail\BrandResolver' => 'App\Contracts\BrandResolverInterface',
         'App\Services\Mail\SvixSignatureVerifier' => 'App\Contracts\WebhookSignatureVerifierInterface',
         'App\Services\Webhooks\InboundWebhookService' => 'App\Contracts\InboundWebhookServiceInterface',
         'App\Services\Webhooks\DnsHostResolver' => 'App\Contracts\HostResolverInterface',

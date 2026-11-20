@@ -4,6 +4,7 @@ use App\Http\Controllers\Mail\MailAccountController;
 use App\Http\Controllers\Mail\MailLogController;
 use App\Http\Controllers\Mail\MailProviderController;
 use App\Http\Controllers\Mail\MailSettingsController;
+use App\Http\Controllers\Mail\MailSuppressionController;
 use App\Http\Controllers\Mail\MailTemplateController;
 use Illuminate\Support\Facades\Route;
 
@@ -60,4 +61,13 @@ Route::middleware(['auth:api', 'permission:mail.logs,api'])
         Route::get('/logs', [MailLogController::class, 'index'])->name('mail.logs.index');
         Route::get('/logs/stats', [MailLogController::class, 'stats'])->name('mail.logs.stats');
         Route::get('/logs/{mailLog}', [MailLogController::class, 'show'])->name('mail.logs.show');
+    });
+
+// Lista de supresión (rebotes, quejas, manual): permiso propio
+Route::middleware(['auth:api', 'permission:mail.suppressions,api'])
+    ->prefix('admin/mail')
+    ->group(function () {
+        Route::get('/suppressions', [MailSuppressionController::class, 'index'])->name('mail.suppressions.index');
+        Route::post('/suppressions', [MailSuppressionController::class, 'store'])->name('mail.suppressions.store');
+        Route::delete('/suppressions/{mailSuppression}', [MailSuppressionController::class, 'destroy'])->name('mail.suppressions.destroy');
     });

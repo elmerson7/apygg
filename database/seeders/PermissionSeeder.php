@@ -53,6 +53,7 @@ class PermissionSeeder extends Seeder
 
             // Correo
             ['name' => 'mail.manage', 'display_name' => 'Gestionar Correo', 'description' => 'Permite administrar proveedores, cuentas, plantillas y ajustes de correo'],
+            ['name' => 'mail.suppressions', 'display_name' => 'Gestionar Supresión de Correo', 'description' => 'Permite ver, añadir y quitar direcciones de la lista de supresión (rebotes, quejas)'],
             ['name' => 'mail.logs', 'display_name' => 'Ver Historial de Correo', 'description' => 'Permite consultar el historial y las estadísticas de correos enviados'],
 
             // Seguridad

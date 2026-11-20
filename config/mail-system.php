@@ -56,4 +56,42 @@ return [
 
     'queue' => env('MAIL_QUEUE', 'default'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Lista de supresión
+    |--------------------------------------------------------------------------
+    |
+    | Direcciones a las que no se envía: rebote permanente o queja (llegan por el webhook de Resend) o
+    | puestas a mano (`/admin/mail/suppressions`). Se aplica al enviar, no al encolar.
+    |
+    | - critical_templates: claves de plantilla (HasMailTemplate) de correos críticos.
+    | - critical_ignore_reasons: motivos de supresión que esos correos ignoran. Por defecto un reset de
+    |   contraseña sale aunque la dirección rebotara (puede haberse arreglado), pero NO si se quejó.
+    |
+    */
+
+    'suppression' => [
+        'enabled' => env('MAIL_SUPPRESSION_ENABLED', true),
+        'critical_templates' => ['password_reset'],
+        'critical_ignore_reasons' => ['bounce'],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Dominios reservados
+    |--------------------------------------------------------------------------
+    |
+    | Nunca se envía a ellos (RFC 2606/6761): se registran como `skipped`. Evita rebotes que dañan la
+    | reputación del remitente con datos de prueba. Las entradas son dominios (incluye subdominios) o
+    | TLDs (`.test`). Desactívalo en entornos de prueba que envíen a `@example.com` (phpunit.xml lo hace).
+    |
+    */
+
+    'block_reserved_domains' => env('MAIL_BLOCK_RESERVED_DOMAINS', true),
+
+    'reserved_domains' => [
+        'example.com', 'example.org', 'example.net',
+        '.test', '.invalid', '.localhost', '.example',
+    ],
+
 ];

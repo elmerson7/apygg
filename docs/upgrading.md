@@ -412,3 +412,12 @@ make testdb-migrate && make test
 ## Redacción unificada de logs
 
 `config/logging.php`: `redact_keys` y `redact_key_fragments` pasan a `redact.keys` y `redact.key_fragments` (más `mode`, `patterns`, `max_depth`, `max_string`). Los canales llevan `tap => [RedactLogs::class]` y `config/sentry.php` define `before_send`/`before_breadcrumb`. Los emails en logs de BD quedan enmascarados (`a***@b***.com`). Ver `docs/logging.md`.
+
+## Correo: supresión, dominios reservados y marca
+
+- Migración `2026_11_20_000220` (`mail_suppressions`) y permiso `mail.suppressions` (`PermissionSeeder`; asígnalo a quien gestione correo).
+- **Dominios reservados**: ahora NUNCA se envía a `@example.com/.org/.net` ni `.test/.invalid/.localhost/.example`. Si tus tests envían correo a esas direcciones (las factories de usuario usan `@example.com`), añade `<env name="MAIL_BLOCK_RESERVED_DOMAINS" force="true" value="false"/>` a `phpunit.xml` o cambia el dominio. En local con Mailpit pon `MAIL_BLOCK_RESERVED_DOMAINS=false` si usas esas direcciones.
+- `MailSendPolicyInterface` gana `deniedRecipients()`; si tienes una implementación propia, añádela.
+- `ResendMailEventsHandler` recibe `MailSuppressionServiceInterface` en el constructor (resuelto por el contenedor).
+- Si publicaste tus propias plantillas `vendor/mail/*/message.blade.php`, adopta `BrandResolverInterface` (ver `docs/mail-system.md` §Marca) o seguirán mostrando `config('app.name')`.
+

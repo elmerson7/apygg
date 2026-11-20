@@ -244,6 +244,7 @@ Guía completa: `docs/testing.md`.
   aplican solos (transport `accounts` + listeners de `MessageSending`/`MessageSent`).
 - Para poder pausarlo desde el panel, implementa `App\Contracts\Mail\HasMailTemplate`.
 - ❌ No llames a `Mail::mailer('x')` a mano ni crees otro camino de envío.
+- Nunca se envía a direcciones suprimidas (rebote permanente/queja) ni a dominios reservados (`example.com`, `.test`...): lo hace el listener, no el código que envía. La marca de las plantillas sale de `BrandResolverInterface` (tenant -> plataforma -> `config/brand.php`), no de `config('app.name')`.
 - Detalle: `docs/mail-system.md`.
 
 ## Servicios de desarrollo (perfil `dev`)

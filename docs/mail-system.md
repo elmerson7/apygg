@@ -112,7 +112,7 @@ por defecto y deja el sistema sin pausas ni límites. Es idempotente.
 | `delivered` | Confirmado en el buzón (vía webhook) |
 | `bounced` | Rechazado de forma permanente o marcado como spam |
 | `failed` | Error de envío |
-| `skipped` | Cancelado por pausa global, plantilla pausada o límite diario |
+| `skipped` | Cancelado por pausa global, plantilla pausada, límite diario, destinatario suprimido o dominio reservado |
 
 ## Piezas
 
@@ -124,6 +124,7 @@ por defecto y deja el sistema sin pausas ni límites. Es idempotente.
 | `mail_settings` | `MailSetting` | Pausa global y límites de envío |
 | `mail_logs` | `MailLog` | Un registro por intento de correo |
 | `mail_events` | `MailEvent` | Eventos del proveedor recibidos por webhook |
+| `mail_suppressions` | `MailSuppression` | Direcciones a las que no se envía (rebote, queja, manual) |
 
 ## Pausa global, plantillas y límites
 
@@ -168,6 +169,51 @@ El estado se recalcula a partir del evento más reciente **por fecha de
 ocurrencia**, no por orden de llegada, y solo entre los del envío vigente: si un
 correo se reenvía, los eventos del intento anterior ya no lo mueven.
 
+## Lista de supresión
+
+Tabla global `mail_suppressions` (`email` normalizado en minúsculas, `reason` `bounce|complaint|manual`,
+`source`, `details`, `suppressed_at`): una dirección que rebota o se queja lo hace para toda la plataforma,
+no por tenant.
+
+- **Alta automática** (`ResendMailEventsHandler`, vía `POST /webhooks/inbound/resend`): `email.complained`
+  suprime siempre; `email.bounced` solo si `data.bounce.type` es `Permanent` (los rebotes blandos o
+  indeterminados quedan en el historial pero no suprimen). Es idempotente (restricción única): una queja
+  sustituye a un rebote; lo puesto a mano no se degrada.
+- **Aplicación** (`MailSystemListener` + `MailSendPolicy::deniedRecipients`), al enviar y no al encolar: los
+  destinatarios To/Cc/Bcc suprimidos se quitan del mensaje y cada uno queda en `mail_logs` como `skipped`
+  (`error_message`: «Destinatario suprimido (complaint)»). Si no queda nadie, no se envía.
+- **Correos críticos**: `config/mail-system.php` → `suppression.critical_templates` (por defecto
+  `password_reset`) ignoran los motivos de `suppression.critical_ignore_reasons` (por defecto `bounce`):
+  el reset sale aunque la dirección rebotara, pero no si se quejó. Vacía `critical_templates` para
+  respetar todo. `MAIL_SUPPRESSION_ENABLED=false` apaga la lista.
+- **Endpoints** (permiso `mail.suppressions`, aparte de `mail.manage`): `GET /admin/mail/suppressions`
+  (filtros `email`, `reason`, `source`), `POST /admin/mail/suppressions` (alta manual: `email`, `note`) y
+  `DELETE /admin/mail/suppressions/{id}`. Quitar una dirección permite volver a enviarle; si rebota otra vez,
+  se suprime de nuevo.
+
+## Dominios reservados
+
+Nunca se envía a `example.com/.org/.net` ni a los TLD `.test`, `.invalid`, `.localhost`, `.example`
+(RFC 2606/6761; incluye subdominios): se registran como `skipped` («Dominio reservado»). Evita rebotes con
+datos de prueba que dañan la reputación del remitente, y **no se salta ni en correos críticos**. Lista y
+interruptor en `config/mail-system.php` (`reserved_domains`, `MAIL_BLOCK_RESERVED_DOMAINS`). `phpunit.xml`
+lo apaga porque las factories usan `@example.com`; un proyecto derivado con sus propios tests debe hacer lo mismo
+o usar otros dominios.
+
+## Marca en las plantillas
+
+Las plantillas de Markdown mail (`resources/views/vendor/mail/{html,text}/message.blade.php`) leen la marca de
+`BrandResolverInterface::get()` en vez de `config('app.name')`: nombre, logo (cabecera), colores (botones,
+enlaces, fondo), dirección legal, correo de soporte y redes (pie).
+
+Resolución por clave: ajuste `brand.*` del **tenant activo** → ajuste de **plataforma** → `config/brand.php`
+(`BRAND_NAME`, `BRAND_LOGO_URL`, `BRAND_COLOR_PRIMARY`, `BRAND_LEGAL_ADDRESS`...). Ajustes declarados en
+`config/settings.php` con `tenant => true`: `brand.name`, `brand.logo_url` (https), `brand.primary_color`
+(`#rrggbb`), `brand.legal_address`, `brand.support_email`, `brand.social` (`{"twitter": "https://..."}`, solo https).
+Se editan con `PUT /tenant/settings/{key}` (tenant) y `PUT /admin/settings/...` (plataforma), como cualquier ajuste
+(`docs/settings-and-flags.md`). Un correo en cola sale con la marca del tenant que lo encoló (el contexto se
+restaura en el job). Para añadir un token, ponlo en `config/brand.php`, declara su ajuste y úsalo en el layout.
+
 ## Endpoints
 
 Todos bajo `/admin/mail`, con JWT. Gestión: permiso `mail.manage`.
@@ -188,6 +234,8 @@ Historial: permiso `mail.logs`.
 | GET | `/logs` | Historial (filtros: `status`, `template_key`, `to_email`, `from`, `to`) |
 | GET | `/logs/stats` | Resumen por estado y plantilla |
 | GET | `/logs/{id}` | Detalle con sus eventos |
+| GET/POST | `/suppressions` | Listar / añadir a la lista de supresión (`mail.suppressions`) |
+| DELETE | `/suppressions/{id}` | Quitar de la lista de supresión |
 | POST | `/webhooks/mail` | Webhook del proveedor (público, firmado) |
 
 ## Comandos
@@ -229,5 +277,7 @@ con la retención de `config/mail-system.php`.
 - `app/Services/Mail/MailSendPolicy.php` → reglas de pausa y límite
 - `app/Providers/MailSystemServiceProvider.php` → engancha todo a Laravel
 - `app/Services/MailService.php` → atajo para enviar una vista sin Mailable
-- `config/mail-system.php` → retención, cola, webhooks
+- `config/mail-system.php` → retención, cola, webhooks, supresión, dominios reservados
+- `config/brand.php` + `app/Services/Mail/BrandResolver.php` → marca de las plantillas
+- `app/Services/Mail/MailSuppressionService.php` → alta/baja de la lista de supresión
 - `docs/logging-file-structure.md` → dónde aterrizan los logs de la aplicación
