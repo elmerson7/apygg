@@ -382,6 +382,10 @@ añades una factory con una columna única, haz lo mismo.
 
 Equivalente local: `make ci` (check + cobertura mínima) y `make test-all` (todas las suites sin servicios extra).
 
+## Datos masivos
+
+`php artisan seed:load` (`make seed-load`) genera miles de empresas con facturas, pagos y archivos para pruebas de volumen y de carga; la suite lo prueba en pequeño (`tests/Feature/SeedLoad/`). Ver [seed-load.md](seed-load.md).
+
 ## Referencias
 
 - [testing-database.md](testing-database.md) → la BD aislada en detalle

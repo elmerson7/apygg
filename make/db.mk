@@ -42,3 +42,14 @@ scout:
 schema-dump:
 	$(DC) exec app php artisan db:schema-dump
 
+# Datos masivos de prueba (docs/seed-load.md): make seed-load [TENANTS=500 USERS_PER_TENANT=20 FILES=10 SEED=1 AS_OF=...]
+TENANTS ?= 500
+USERS_PER_TENANT ?= 20
+FILES ?= 10
+SEED ?= 1
+seed-load:
+	$(DC) exec -T -u appuser app php artisan seed:load --tenants=$(TENANTS) --users-per-tenant=$(USERS_PER_TENANT) --files-per-tenant=$(FILES) --seed=$(SEED) $(if $(AS_OF),--as-of=$(AS_OF),)
+
+# Borra lo que generó seed-load (nada más)
+seed-load-purge:
+	$(DC) exec -T -u appuser app php artisan seed:load:purge --force

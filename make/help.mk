@@ -80,6 +80,8 @@ help:
 	@printf "  %-20s %s\n" "migrate" "Migrar BD"
 	@printf "  %-20s %s\n" "scout" "Sincronizar settings e importar datos a Meilisearch"
 	@printf "  %-20s %s\n" "seed" "Seed BD"
+	@printf "  %-20s %s\n" "seed-load" "Datos masivos de prueba: TENANTS= USERS_PER_TENANT= FILES= SEED= (docs/seed-load.md)"
+	@printf "  %-20s %s\n" "seed-load-purge" "Borra los datos generados por seed-load"
 	@printf "  %-20s %s\n" "schema" "Exportar esquema"
 	@printf "  %-20s %s\n" "dbtest" "Probar conexión a la BD"
 	@printf "  %-20s %s\n" "redistest" "Probar conexión a Redis"
