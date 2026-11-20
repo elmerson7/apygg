@@ -202,6 +202,78 @@ jobs:
         run: composer audit
         continue-on-error: true
 
+  # Migraciones: linter de patrones peligrosos + aplicar las nuevas sobre el esquema de la versión
+  # anterior (base del PR o commit previo) y comprobar que son reversibles. docs/migrations.md §10.
+  migrations:
+    name: Migraciones (lint, upgrade y rollback)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: apygg_migrations
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    env:
+      APP_ENV: testing
+      APP_KEY: base64:Y2ktcGlwZWxpbmUta2V5LTMyLWJ5dGVzLWxvbmchISE=
+      DB_CONNECTION: pgsql
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_DATABASE: apygg_migrations
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+      JWT_SECRET: test-jwt-secret-for-ci-pipeline-only-must-be-at-least-32-characters-long-for-256-bits-minimum-requirement
+      BROADCAST_CONNECTION: log
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: pdo_pgsql, redis, gd, intl, zip, opcache, bcmath, pcntl
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Prepare Laravel application
+        run: |
+          cp .env.example .env || true
+          php artisan config:clear
+
+      - name: Lint de migraciones
+        run: php artisan migrations:lint
+
+      - name: Aplicar sobre la versión anterior y revertir
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+          else
+            BASE="${{ github.event.before }}"
+          fi
+          # Primer push de una rama o ref base inexistente: se usa el padre del commit.
+          git cat-file -e "$BASE^{commit}" 2>/dev/null || BASE="HEAD~1"
+          bash scripts/ci-migrations-check.sh "$BASE"
+
   # Recorrido E2E por HTTP real (tests/E2E): levanta el stack del perfil dev con Docker Compose
   # (app con Octane, Horizon, Postgres 18, Redis, Mailpit, S3/RustFS). Es lento y necesita Docker,
   # por eso solo corre en push a main y a mano (workflow_dispatch). No bloquea `ci-success`.
@@ -295,7 +367,7 @@ jobs:
   ci-success:
     name: CI Pipeline Success
     runs-on: ubuntu-latest
-    needs: [lint, test, security, build]
+    needs: [lint, test, security, build, migrations]
     if: always()
 
     steps:
@@ -304,7 +376,8 @@ jobs:
           if [ "${{ needs.lint.result }}" != "success" ] || \
              [ "${{ needs.test.result }}" != "success" ] || \
              [ "${{ needs.security.result }}" != "success" ] || \
-             [ "${{ needs.build.result }}" != "success" ]; then
+             [ "${{ needs.build.result }}" != "success" ] || \
+             [ "${{ needs.migrations.result }}" != "success" ]; then
             echo "❌ CI Pipeline failed"
             exit 1
           fi

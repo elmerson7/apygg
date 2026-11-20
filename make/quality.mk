@@ -14,6 +14,10 @@ phpstan:
 # Quality gate completo: formatea y analiza. Ejecútalo tras cualquier cambio PHP.
 check: pint phpstan
 
+# Linter de migraciones: patrones peligrosos para desplegar sin parada (docs/migrations.md §9)
+migrations-lint:
+	$(DC) exec app php artisan migrations:lint
+
 # Instalar los git hooks del repo (pre-commit + commit-msg)
 install-hooks:
 	@bash scripts/install-git-hooks.sh

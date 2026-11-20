@@ -136,3 +136,107 @@ idempotente cuando sea barato (`Schema::hasColumn` antes de tocar).
   copia de datos reales (`make restore-backup` en local), mide el tiempo antes de producción.
 - Prueba también que es **idempotente** si la escribiste así (`convert_json_columns_to_jsonb`
   se salta lo que ya está convertido).
+
+## 9. Cambios sin parada en PostgreSQL 18 y linter
+
+`php artisan migrations:lint` (o `make migrations-lint`) revisa el `up()` de las migraciones
+**posteriores** a la base permitida (`config/migration-lint.php` → `baseline`: las ya aplicadas en
+`main` no se vuelven a juzgar; `--all` las revisa todas). Corre en CI (job `migrations`) y falla con
+`archivo:línea [regla] motivo`. Reglas:
+
+| Regla | Qué detecta | Alternativa segura |
+|---|---|---|
+| `change-type` | `->change()` | columna nueva + copia + cambio de lectura + borrado |
+| `rename-column` | `renameColumn`, `RENAME COLUMN` | expandir/contraer (§2) |
+| `drop-column` | `dropColumn`, `dropIfExists`, `DROP COLUMN/TABLE` en `up()` | borrar en una entrega posterior a la que dejó de usarla (con marca de excepción) |
+| `index-not-concurrent` | `index/unique/fullText` en `Schema::table` o `CREATE INDEX` de una tabla de `large_tables` | `CREATE INDEX CONCURRENTLY` con `$withinTransaction = false` |
+| `not-null-no-default` | columna sin `nullable()`/`default()` añadida a tabla existente; `SET NOT NULL`; `ADD COLUMN ... NOT NULL` sin `DEFAULT` | nullable/default y `NOT NULL` en dos pasos |
+
+Lo seguro pasa sin marcas: `Schema::create` (tablas nuevas, con sus índices), columnas
+`nullable()` o con `default()`, índices en tablas que no son grandes.
+
+**Excepción explícita** (di siempre el motivo en la revisión):
+
+- Inline, en la línea de la sentencia o la anterior: `// migration-lint: ignore rename-column -- tabla vacía`.
+- Para todo el archivo: la misma marca antes de `return new class`.
+- Por lista: `config/migration-lint.php` → `exceptions` (`'2026_12_01_000010_x' => ['drop-column']`).
+- `large_tables` se ajusta por proyecto (`MIGRATION_LINT_LARGE_TABLES=a,b,c`).
+
+El linter es un análisis de texto: ayuda, no sustituye a la revisión (p. ej. no sabe si una tabla
+tiene filas ni si un `dropColumn` tuvo su fase previa).
+
+### Recetas
+
+**Columna nueva.** `->nullable()` o `->default(x)`: en PostgreSQL 11+ un `default` constante no
+reescribe la tabla. Hazla obligatoria después (receta de NOT NULL).
+
+**Índice sin bloquear escrituras.**
+
+```php
+public $withinTransaction = false; // CONCURRENTLY no cabe en una transacción
+
+public function up(): void
+{
+    DB::statement('CREATE INDEX CONCURRENTLY IF NOT EXISTS api_logs_user_id_idx ON api_logs (user_id)');
+}
+
+public function down(): void
+{
+    DB::statement('DROP INDEX CONCURRENTLY IF EXISTS api_logs_user_id_idx');
+}
+```
+
+Si falla a medias deja un índice `INVALID`: el `IF NOT EXISTS` no lo arregla; bórralo y reintenta.
+
+**NOT NULL en dos pasos** (evita el escaneo bajo bloqueo largo):
+
+```php
+// Entrega 1: restricción sin validar (no escanea) y backfill por lotes (receta siguiente)
+DB::statement('ALTER TABLE pedidos ADD CONSTRAINT pedidos_total_nn CHECK (total IS NOT NULL) NOT VALID');
+// Entrega 2: validar (bloqueo ligero, no frena escrituras)
+DB::statement('ALTER TABLE pedidos VALIDATE CONSTRAINT pedidos_total_nn');
+// Opcional: con el CHECK validado, SET NOT NULL en PG 12+ no reescanea; luego se puede quitar el CHECK.
+DB::statement('ALTER TABLE pedidos ALTER COLUMN total SET NOT NULL'); // migration-lint: ignore not-null-no-default -- CHECK validado
+```
+
+**Claves foráneas sobre tablas con datos:** `ALTER TABLE ... ADD CONSTRAINT ... FOREIGN KEY ... NOT VALID`
+y, en otra migración, `VALIDATE CONSTRAINT`.
+
+**Backfill por lotes:** nunca un `UPDATE` de toda la tabla en la migración. Despacha un job
+(`docs/queues-and-jobs.md`) que actualice por `chunkById` (con `DB::table`, no modelos) o hazlo en
+una migración de datos aparte (§7). Es idempotente: `WHERE col IS NULL`.
+
+**Renombrar:** añadir la nueva (nullable) → código escribe en ambas → backfill → código lee la
+nueva → entrega posterior que borra la vieja (con marca `ignore drop-column`).
+
+**Tiempos máximos.** Una migración que espera un bloqueo encola tras de sí a toda la aplicación.
+La clase base opcional `App\Support\Database\SafeMigration` fija `lock_timeout` (5 s) y `statement_timeout`
+(60 s) durante el bloque (`MIGRATION_LOCK_TIMEOUT`, `MIGRATION_STATEMENT_TIMEOUT`) y los restaura:
+
+```php
+return new class extends App\Support\Database\SafeMigration {
+    public function up(): void
+    {
+        $this->withTimeouts(fn () => Schema::table('pedidos', fn (Blueprint $t) => $t->string('nota')->nullable()));
+    }
+};
+```
+
+Si falla por `lock_timeout`, simplemente se reintenta el despliegue en un momento de menos tráfico.
+
+## 10. Prueba en CI: aplicar sobre la versión anterior y revertir
+
+El job `migrations` de `.github/workflows/ci.yml` ejecuta `scripts/ci-migrations-check.sh <ref-base>`
+(base del PR, o el commit previo en un push): migra el esquema del ref base (`migrate:fresh` con sus
+migraciones) y siembra, aplica las migraciones de la rama, lanza un humo (`migrate:status`,
+`db:table users`) y hace `migrate:rollback --step=<nuevas>` + `migrate` otra vez. Por eso cada
+migración nueva necesita un `down()` real. El seeder usado es el de la rama: si depende de tablas
+nuevas el paso avisa pero no bloquea. En local: `git stash` no hace falta, basta ejecutar el script
+con una BD vacía y `DB_DATABASE` apuntando a ella.
+
+## 11. Checklist de revisión de una migración
+
+`up()` compatible con el código anterior · `down()` real · pasa `migrations:lint` o tiene excepción
+justificada · índices de tablas grandes con `CONCURRENTLY` · backfill fuera de la migración de
+esquema · probada ida y vuelta (§8).
+

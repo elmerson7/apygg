@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Redacción unificada de datos personales y secretos en logs y Sentry: `Redactor` con claves, patrones (email, tarjeta/Luhn, teléfono, JWT, Bearer), modo `mask`/`remove` y límites; aplicado por processor de Monolog en todos los canales, modelos de log de BD, `before_send`/`before_breadcrumb` de Sentry y `Pretty::json()`. Ver `docs/logging.md`
 - Imagen base actualizada a `dunglas/frankenphp:1.13.6-php8.5.13-bookworm` (antes `1.11-php8.5-bookworm`: PHP 8.5.3, FrankenPHP 1.11.3). PHP 8.5.12 corrige dos vulnerabilidades críticas de ejecución remota sin autenticación (CVE-2026-109618 y CVE-2026-109619); 8.5.13 es la última 8.5.x. La etiqueta queda fijada a versión exacta para builds reproducibles. Proyectos derivados: ver `docs/upgrading.md` ("Actualizar la imagen por seguridad")
 
+### Added
+- Migraciones sin parada: guía en `docs/migrations.md` (§9-11), linter `php artisan migrations:lint` (`config/migration-lint.php`, `make migrations-lint`), clase base opcional `SafeMigration` (`lock_timeout`/`statement_timeout`) y job de CI `migrations` (aplica las nuevas sobre el esquema anterior y prueba el rollback)
+
 ### Changed
 - PDF: se quitan `barryvdh/laravel-snappy`, `setasign/fpdf` y `setasign/fpdi` (sin uso) y el binario `wkhtmltopdf` de la imagen Docker; el servicio único es `PdfRendererInterface` (dompdf). Ver `docs/upgrading.md`
 - `POST /webhooks/mail` (Resend) pasa al mecanismo de webhooks entrantes genérico: la URL no cambia, pero ahora responde 200 tras guardar el recibo y procesa en cola (`ResendMailEventsHandler`); `MailWebhookController` desaparece; las respuestas de error llevan `code` (`webhook_signature_invalid`...). `SvixSignatureVerifier` implementa también `InspectsWebhookSignatureInterface`

@@ -108,6 +108,7 @@ help:
 	@echo ""
 	@echo "Code Quality:"
 	@printf "  %-20s %s\n" "check" "pint + phpstan (obligatorio tras cambios PHP)"
+	@printf "  %-20s %s\n" "migrations-lint" "Linter de migraciones peligrosas (despliegue sin parada)"
 	@printf "  %-20s %s\n" "openapi" "Exportar el contrato OpenAPI a docs/openapi.json (tras cambiar rutas/respuestas)"
 	@printf "  %-20s %s\n" "openapi-check" "Falla si docs/openapi.json está desactualizado"
 	@printf "  %-20s %s\n" "types" "Tipos TypeScript para los fronts (docs/api-types.d.ts)"
