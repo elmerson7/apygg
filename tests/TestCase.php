@@ -11,6 +11,7 @@ use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\ParallelTesting;
 use Illuminate\Testing\TestResponse;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
@@ -89,10 +90,50 @@ abstract class TestCase extends BaseTestCase
      */
     protected function seedRolesAndPermissions(): void
     {
-        $this->seed([
-            RoleSeeder::class,
-            PermissionSeeder::class,
-        ]);
+        // La BD de pruebas suele venir sembrada (migrate --seed); comprobarlo cuesta 3 consultas,
+        // volver a sembrar ~100 por test. Si falta algo (catálogo o asignaciones nuevas), se siembra.
+        if ($this->rolesAndPermissionsAreSeeded()) {
+            return;
+        }
+
+        $this->seed(RoleSeeder::class); // llama a PermissionSeeder
+    }
+
+    /**
+     * ¿Están en la BD todos los permisos del catálogo y todas las asignaciones de los roles base?
+     */
+    private function rolesAndPermissionsAreSeeded(): bool
+    {
+        $catalog = array_column(PermissionSeeder::catalog(), 'name');
+        $existing = Permission::query()->where('guard_name', 'api')->pluck('name')->all();
+
+        if (array_diff($catalog, $existing) !== []) {
+            return false;
+        }
+
+        $assigned = [];
+        foreach (DB::table('role_has_permissions')
+            ->join('roles', 'roles.id', '=', 'role_has_permissions.role_id')
+            ->join('permissions', 'permissions.id', '=', 'role_has_permissions.permission_id')
+            ->where('roles.guard_name', 'api')
+            ->get(['roles.name as role', 'permissions.name as permission']) as $row) {
+            $assigned[$row->role][] = $row->permission;
+        }
+
+        foreach (RoleSeeder::definitions() as $role => $definition) {
+            if (! array_key_exists($role, $assigned) && $definition['permissions'] !== []) {
+                return false;
+            }
+
+            if (array_diff($definition['permissions'], $assigned[$role] ?? []) !== []) {
+                return false;
+            }
+        }
+
+        // Roles sin permisos (p. ej. `user`): basta con que existan.
+        $roles = DB::table('roles')->where('guard_name', 'api')->pluck('name')->all();
+
+        return array_diff(array_keys(RoleSeeder::definitions()), $roles) === [];
     }
 
     /**

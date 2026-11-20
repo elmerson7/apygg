@@ -27,11 +27,38 @@ class RoleSeeder extends Seeder
     {
         $this->call(PermissionSeeder::class);
 
-        $roles = [
+        $roles = self::definitions();
+        $roles['admin']['permissions'] = Permission::query()->pluck('name')->all();
+
+        foreach ($roles as $name => $definition) {
+            $role = Role::firstOrCreate(
+                ['name' => $name, 'guard_name' => 'api'],
+                ['display_name' => $definition['display_name'], 'description' => $definition['description']]
+            );
+
+            if ($definition['permissions'] !== []) {
+                $role->givePermissionTo($definition['permissions']);
+            }
+        }
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+        $this->command->info('Roles base: '.implode(', ', array_keys($roles)));
+    }
+
+    /**
+     * Roles base y sus permisos. `admin` recibe en `run()` TODOS los permisos de la BD (aquí, el catálogo).
+     * Lo usa también `Tests\TestCase` para saber si la BD de pruebas ya está sembrada.
+     *
+     * @return array<string, array{display_name: string, description: string, permissions: list<string>}>
+     */
+    public static function definitions(): array
+    {
+        return [
             'admin' => [
                 'display_name' => 'Administrador',
                 'description' => 'Super admin: acceso total al sistema',
-                'permissions' => Permission::query()->pluck('name')->all(),
+                'permissions' => array_column(PermissionSeeder::catalog(), 'name'),
             ],
             'manager' => [
                 'display_name' => 'Gerente',
@@ -64,20 +91,5 @@ class RoleSeeder extends Seeder
                 'permissions' => [],
             ],
         ];
-
-        foreach ($roles as $name => $definition) {
-            $role = Role::firstOrCreate(
-                ['name' => $name, 'guard_name' => 'api'],
-                ['display_name' => $definition['display_name'], 'description' => $definition['description']]
-            );
-
-            if ($definition['permissions'] !== []) {
-                $role->givePermissionTo($definition['permissions']);
-            }
-        }
-
-        app(PermissionRegistrar::class)->forgetCachedPermissions();
-
-        $this->command->info('Roles base: '.implode(', ', array_keys($roles)));
     }
 }
