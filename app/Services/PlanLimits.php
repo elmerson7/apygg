@@ -54,16 +54,16 @@ class PlanLimits implements PlanLimitsInterface
         return $limit === null || $current + $adding <= $limit;
     }
 
-    public function ensureWithin(string $key, int $current, int $adding = 1, ?int $tenantId = null): void
+    public function ensureWithin(string $key, int $current, int $adding = 1, ?int $tenantId = null, int $unit = 1): void
     {
         $limit = $this->limit($key, $tenantId);
 
-        if ($limit !== null && $current + $adding > $limit) {
-            throw new PlanLimitReachedException($key, $limit, $current);
+        if ($limit !== null && $current + $adding > $limit * $unit) {
+            throw new PlanLimitReachedException($key, $limit * $unit, $current);
         }
     }
 
-    public function guarded(string $key, \Closure $count, \Closure $create, int $adding = 1): mixed
+    public function guarded(string $key, \Closure $count, \Closure $create, int $adding = 1, int $unit = 1): mixed
     {
         $tenantId = $this->tenants->enforcing() ? $this->tenants->id() : null;
 
@@ -71,11 +71,11 @@ class PlanLimits implements PlanLimitsInterface
             return $create();
         }
 
-        return DB::transaction(function () use ($key, $count, $create, $adding, $tenantId) {
+        return DB::transaction(function () use ($key, $count, $create, $adding, $tenantId, $unit) {
             // Serializa las altas del mismo tenant: la segunda espera a que la primera confirme.
             Tenant::query()->whereKey($tenantId)->lockForUpdate()->first();
 
-            $this->ensureWithin($key, $count(), $adding, $tenantId);
+            $this->ensureWithin($key, $count(), $adding, $tenantId, $unit);
 
             return $create();
         });

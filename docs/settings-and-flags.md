@@ -74,8 +74,9 @@ $limits->ensureWithin('max_members', $current);   // o check() para solo consult
 Excede -> `PlanLimitReachedException`: 403 con `code` `plan_limit_reached` y `limit`, `current`, `limit_key`.
 **Estrategia anti-carrera**: `guarded()` abre una transacción y bloquea la fila del tenant (`SELECT ... FOR UPDATE`) antes de contar;
 las altas del mismo tenant se serializan y no pueden pasarse. Aplicado de verdad a **`max_api_keys`** (`ApiKeyService::create`; la
-rotación no se bloquea en el tope y la key antigua en gracia cuenta hasta que caduca). `max_members` y `max_storage_mb` están
-declarados para que los usen los módulos de miembros y archivos.
+rotación no se bloquea en el tope y la key antigua en gracia cuenta hasta que caduca). `max_storage_mb` y `max_file_mb` los aplica el módulo de archivos
+(`FileService::withStorageQuota`, ver `docs/files.md`; la unidad de la cuenta son bytes: `guarded(..., $adding, unit: 1048576)`); `max_members`
+está declarado para el módulo de miembros.
 
 | Endpoint | Permiso |
 |---|---|

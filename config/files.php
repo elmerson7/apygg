@@ -197,6 +197,33 @@ return [
     ],
 
     /*
+    |--------------------------------------------------------------------------
+    | Prefijo por entorno
+    |--------------------------------------------------------------------------
+    |
+    | Primer segmento de toda clave nueva en disco (`<prefijo>/tenants/<id>/<ruta>`), para que
+    | producción, staging y local puedan compartir un bucket sin pisarse. Por defecto `APP_ENV`;
+    | vacío = sin prefijo. Un solo segmento (letras, números, `.`, `_`, `-`). Los archivos ya
+    | guardados conservan su `path` en BD: cambiar el prefijo NO los mueve ni los rompe.
+    |
+    */
+    'prefix' => env('FILES_PREFIX', env('APP_ENV')),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Subida directa presignada (POST /files/uploads)
+    |--------------------------------------------------------------------------
+    |
+    | `intent_minutes`: validez de la URL PUT y de la intención (reserva de cuota incluida).
+    | `retention_days`: cuánto se conservan las intenciones completadas o abortadas antes de borrarse.
+    |
+    */
+    'direct_upload' => [
+        'intent_minutes' => (int) env('FILE_DIRECT_UPLOAD_MINUTES', 30),
+        'retention_days' => (int) env('FILE_DIRECT_UPLOAD_RETENTION_DAYS', 7),
+    ],
+
+    /*
     | Minutos de validez de las URLs temporales firmadas de archivos privados.
     */
     'temporary_url_minutes' => (int) env('FILE_TEMPORARY_URL_MINUTES', 15),

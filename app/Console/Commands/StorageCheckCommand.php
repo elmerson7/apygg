@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Contracts\FileServiceInterface;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Http;
@@ -59,7 +60,8 @@ class StorageCheckCommand extends Command
         ));
 
         $disk = Storage::disk($name);
-        $path = 'storage-check/'.Str::random(12).'.txt';
+        $prefix = app(FileServiceInterface::class)->storagePrefix();
+        $path = ($prefix !== '' ? $prefix.'/' : '').'storage-check/'.Str::random(12).'.txt';
         $content = 'storage:check '.now()->toIso8601String();
 
         try {
@@ -78,6 +80,10 @@ class StorageCheckCommand extends Command
             $this->info('  leer: ok');
 
             $this->checkUrl($disk, $path, $content, $private, ($config['driver'] ?? '') === 's3');
+
+            // Subida directa presignada (POST /files/uploads): solo informa, no es obligatoria.
+            $direct = $disk->providesTemporaryUploadUrls();
+            $direct ? $this->info('  subida directa presignada: disponible') : $this->warn('  subida directa presignada: no disponible en este disco');
         } catch (\Throwable $e) {
             $this->error('  error: '.$e->getMessage());
 

@@ -3,10 +3,15 @@
 namespace App\Services;
 
 use App\Contracts\FileServiceInterface;
+use App\Contracts\PlanLimitsInterface;
 use App\Contracts\SettingsRegistryInterface;
 use App\Exceptions\BusinessLogicException;
+use App\Exceptions\FileTooLargeForPlanException;
+use App\Exceptions\PlanLimitReachedException;
 use App\Exceptions\PublicSharingDisabledException;
+use App\Exceptions\StorageQuotaExceededException;
 use App\Models\File;
+use App\Models\FileUploadIntent;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +30,12 @@ class FileService implements FileServiceInterface
 {
     protected const DEFAULT_DISK = 'public';
 
-    public function __construct(private readonly SettingsRegistryInterface $settings) {}
+    private const BYTES_PER_MB = 1048576;
+
+    public function __construct(
+        private readonly SettingsRegistryInterface $settings,
+        private readonly PlanLimitsInterface $limits,
+    ) {}
 
     /**
      * Subir archivo
@@ -84,20 +94,96 @@ class FileService implements FileServiceInterface
     }
 
     /**
-     * Ruta de almacenamiento: con multiempresa activo la clave incluye el tenant
-     * (`tenants/<id>/<ruta>`), así un tenant nunca comparte carpeta con otro y se puede
-     * purgar, medir o respaldar por empresa. Sin tenant activo o con multiempresa apagado no cambia.
+     * Ruta de almacenamiento: `[<prefijo de entorno>/][tenants/<id>/]<ruta>`. El prefijo
+     * (`files.prefix`, por defecto `APP_ENV`) separa entornos que comparten bucket; con multiempresa
+     * activo la clave incluye además el tenant, así un tenant nunca comparte carpeta con otro y se
+     * puede purgar, medir o respaldar por empresa. Solo afecta a archivos NUEVOS: los ya guardados
+     * conservan su `path` en BD.
      */
     public function tenantStoragePath(string $path): string
     {
         $path = trim($path, '/');
         $context = app(TenantContext::class);
 
-        if (! $context->enabled()) {
-            return $path;
+        if ($context->enabled()) {
+            $path = 'tenants/'.$context->requireId(File::class, 'store').'/'.$path;
         }
 
-        return 'tenants/'.$context->requireId(File::class, 'store').'/'.$path;
+        $prefix = $this->storagePrefix();
+
+        return $prefix !== '' ? $prefix.'/'.$path : $path;
+    }
+
+    /**
+     * Prefijo de entorno saneado (un solo segmento seguro); vacío = sin prefijo.
+     */
+    public function storagePrefix(): string
+    {
+        return trim((string) preg_replace('/[^A-Za-z0-9._-]+/', '', (string) config('files.prefix', '')), '.');
+    }
+
+    public function ensureFileSizeAllowed(int $bytes): void
+    {
+        $limitMb = $this->limits->limit('max_file_mb');
+
+        if ($limitMb !== null && $bytes > $limitMb * self::BYTES_PER_MB) {
+            throw new FileTooLargeForPlanException($limitMb * self::BYTES_PER_MB, $bytes);
+        }
+    }
+
+    /**
+     * Bytes que el tenant en contexto ya usa: archivos vivos + reservas de subidas directas vigentes.
+     * Solo es fiable dentro de `withStorageQuota` (bajo el bloqueo del tenant).
+     */
+    public function usedStorageBytes(): int
+    {
+        return (int) File::query()->sum('size') + (int) FileUploadIntent::query()->reserving()->sum('size');
+    }
+
+    /**
+     * Ejecuta `$create` solo si `$bytes` caben en `max_storage_mb` del plan. Cuenta, comprueba y crea EN
+     * UNA TRANSACCIÓN con la fila del tenant bloqueada (`PlanLimits::guarded`): dos subidas simultáneas
+     * se serializan y no pueden pasarse de la cuota. Sin límites activos ejecuta `$create` tal cual.
+     * Ojo: el bloqueo dura lo que dure `$create`; en subidas normales incluye la escritura a disco.
+     *
+     * @template T
+     *
+     * @param  \Closure(): T  $create
+     * @return T
+     *
+     * @throws StorageQuotaExceededException
+     */
+    public function withStorageQuota(int $bytes, \Closure $create): mixed
+    {
+        try {
+            return $this->limits->guarded(
+                'max_storage_mb',
+                fn (): int => $this->usedStorageBytes(),
+                $create,
+                $bytes,
+                self::BYTES_PER_MB,
+            );
+        } catch (PlanLimitReachedException $e) {
+            throw new StorageQuotaExceededException($e->limit, $e->current, $bytes);
+        }
+    }
+
+    /**
+     * @return array{used_bytes: int, limit_bytes: int|null, remaining_bytes: int|null, max_file_bytes: int|null}
+     */
+    public function storageUsage(): array
+    {
+        $storageMb = $this->limits->limit('max_storage_mb');
+        $fileMb = $this->limits->limit('max_file_mb');
+        $used = $this->usedStorageBytes();
+        $limit = $storageMb === null ? null : $storageMb * self::BYTES_PER_MB;
+
+        return [
+            'used_bytes' => $used,
+            'limit_bytes' => $limit,
+            'remaining_bytes' => $limit === null ? null : max(0, $limit - $used),
+            'max_file_bytes' => $fileMb === null ? null : $fileMb * self::BYTES_PER_MB,
+        ];
     }
 
     public function assertVisibilityAllowed(bool $isPublic): void

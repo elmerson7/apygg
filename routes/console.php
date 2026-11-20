@@ -126,6 +126,14 @@ Schedule::command('idempotency:clean')
     });
 
 // Webhooks entrantes: reencola recibos atascados (Redis caído al recibirlos) y borra los antiguos
+// Intenciones de subida directa caducadas (objetos huérfanos y reservas de cuota): cada hora
+Schedule::command('files:purge-intents')
+    ->hourly()
+    ->withoutOverlapping()
+    ->onFailure(function () {
+        Log::error('Falló la limpieza de intenciones de subida directa');
+    });
+
 Schedule::command('webhooks:inbound-sweep')
     ->everyTenMinutes()
     ->withoutOverlapping()

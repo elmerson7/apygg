@@ -3,7 +3,9 @@
 namespace App\Contracts;
 
 use App\Exceptions\BusinessLogicException;
+use App\Exceptions\FileTooLargeForPlanException;
 use App\Exceptions\PublicSharingDisabledException;
+use App\Exceptions\StorageQuotaExceededException;
 use App\Models\File;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\URL;
@@ -31,6 +33,48 @@ interface FileServiceInterface
         ?string $filename = null,
         ?string $disk = null,
         bool $isPublic = true): array;
+
+    /**
+     * Ruta de almacenamiento de una clave nueva: `[<prefijo de entorno>/][tenants/<id>/]<ruta>`.
+     */
+    public function tenantStoragePath(string $path): string;
+
+    /**
+     * Prefijo de entorno saneado (`files.prefix`); vacío = sin prefijo.
+     */
+    public function storagePrefix(): string;
+
+    /**
+     * Rechaza un archivo mayor que `max_file_mb` del plan del tenant.
+     *
+     * @throws FileTooLargeForPlanException 413 `file_too_large_for_plan`
+     */
+    public function ensureFileSizeAllowed(int $bytes): void;
+
+    /**
+     * Ejecuta `$create` solo si `$bytes` caben en la cuota `max_storage_mb` del plan, contando y creando
+     * en una transacción con el tenant bloqueado (dos subidas simultáneas no pueden pasarse).
+     *
+     * @template T
+     *
+     * @param  \Closure(): T  $create
+     * @return T
+     *
+     * @throws StorageQuotaExceededException 403 `storage_quota_exceeded`
+     */
+    public function withStorageQuota(int $bytes, \Closure $create): mixed;
+
+    /**
+     * Bytes usados por el tenant en contexto (archivos + reservas vigentes). Fiable solo bajo `withStorageQuota`.
+     */
+    public function usedStorageBytes(): int;
+
+    /**
+     * Uso y límites de almacenamiento del tenant en contexto (`null` = ilimitado).
+     *
+     * @return array{used_bytes: int, limit_bytes: int|null, remaining_bytes: int|null, max_file_bytes: int|null}
+     */
+    public function storageUsage(): array;
 
     /**
      * Disco configurado para archivos públicos o privados.

@@ -18,7 +18,7 @@ Route::middleware(['auth:api', 'tenant'])->group(function () {
 
 Va **después** de `auth:api` y `tenant` (necesita saber quién actúa y en qué tenant). Solo vigila los
 métodos de `idempotency.methods` (`POST` y `PATCH`); el resto pasa de largo. Aplicado hoy a
-`POST /webhooks` y `POST /tenant/invitations` (opcional: los clientes actuales no cambian).
+`POST /webhooks`, `POST /tenant/invitations` y `POST /files/uploads` (opcional: los clientes actuales no cambian).
 
 ## Semántica
 

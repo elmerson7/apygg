@@ -2738,6 +2738,85 @@
                 ]
             }
         },
+        "/files/usage": {
+            "get": {
+                "operationId": "files.usage",
+                "description": "GET /files/usage",
+                "summary": "Uso y límites de almacenamiento del tenant",
+                "tags": [
+                    "File"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "used_bytes": {
+                                                    "type": "integer"
+                                                },
+                                                "limit_bytes": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "remaining_bytes": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "max_file_bytes": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "used_bytes",
+                                                "limit_bytes",
+                                                "remaining_bytes",
+                                                "max_file_bytes"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/files/{id}": {
             "get": {
                 "operationId": "files.show",
@@ -3082,6 +3161,192 @@
                     },
                     "500": {
                         "$ref": "#/components/responses/Error500"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/files/uploads": {
+            "post": {
+                "operationId": "files.uploads.store",
+                "description": "POST /files/uploads",
+                "summary": "Crear la intención y obtener la URL PUT presignada",
+                "tags": [
+                    "FileUpload"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreFileUploadRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Creado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string"
+                                                },
+                                                "status": {
+                                                    "type": "string"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "size": {
+                                                    "type": "integer"
+                                                },
+                                                "mime_type": {
+                                                    "type": "string"
+                                                },
+                                                "is_public": {
+                                                    "type": "boolean"
+                                                },
+                                                "expires_at": {
+                                                    "type": "string"
+                                                },
+                                                "upload": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "method": {
+                                                            "type": "string"
+                                                        },
+                                                        "url": {
+                                                            "type": "string"
+                                                        },
+                                                        "headers": {
+                                                            "type": "object",
+                                                            "additionalProperties": {}
+                                                        },
+                                                        "expires_at": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "method",
+                                                        "url",
+                                                        "headers",
+                                                        "expires_at"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "status",
+                                                "name",
+                                                "size",
+                                                "mime_type",
+                                                "is_public",
+                                                "expires_at",
+                                                "upload"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationFailed"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/files/uploads/{uuid}/complete": {
+            "post": {
+                "operationId": "files.uploads.complete",
+                "description": "POST /files/uploads/{uuid}/complete",
+                "summary": "Completar: verificar el objeto subido y crear el archivo",
+                "tags": [
+                    "FileUpload"
+                ],
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/FileResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
                     }
                 },
                 "security": [
@@ -16443,6 +16708,59 @@
                     "file"
                 ],
                 "title": "StoreFileRequest"
+            },
+            "StoreFileUploadRequest": {
+                "type": "object",
+                "description": "Intención de subida directa: lo que el cliente declara del archivo ANTES de subirlo.\nEl contenido real se verifica al completar.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "size": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "mime_type": {
+                        "type": "string",
+                        "maxLength": 191
+                    },
+                    "checksum_sha256": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^[A-Fa-f0-9]{64}$"
+                    },
+                    "category": {
+                        "type": "string",
+                        "enum": [
+                            "avatar",
+                            "document",
+                            "image",
+                            "video",
+                            "audio",
+                            "temporary",
+                            "default"
+                        ]
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 1000
+                    },
+                    "is_public": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "name",
+                    "size",
+                    "mime_type"
+                ],
+                "title": "StoreFileUploadRequest"
             },
             "StoreLlmAreaRequest": {
                 "type": "object",

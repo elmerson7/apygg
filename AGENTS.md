@@ -301,6 +301,7 @@ Una norma por documento; esos archivos son la fuente de verdad de cada tema:
 - [`docs/audit.md`](docs/audit.md) → auditoría de negocio por tenant: trait `Auditable` (diff sin secretos), acciones con motivo (`recordAction`/`requireReason`), `/tenant/audit` y export CSV, retención.
 - [`docs/settings-and-flags.md`](docs/settings-and-flags.md) → ajustes tipados por niveles (tenant -> plataforma -> default), feature flags en BD con porcentaje estable y límites por plan (`PlanLimits::guarded`).
 - [`docs/notifications.md`](docs/notifications.md) → avisos a usuarios: `NotificationServiceInterface::notify()` con tipos en `config/notifications.php`, canales mail/bandeja/push/sms, preferencias, horas de silencio, entregas idempotentes y dispositivos push.
+- [`docs/files.md`](docs/files.md) → archivos: prefijo de entorno + tenant, URL firmada de descarga, subida directa presignada con verificación del objeto real y cuotas por plan (`max_storage_mb`, `max_file_mb`) bajo bloqueo del tenant.
 
 ## Al añadir algo al boilerplate
 

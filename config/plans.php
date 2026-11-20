@@ -24,21 +24,22 @@ return [
     'limits' => [
         'max_members' => ['description' => 'Miembros activos o invitados del tenant'],
         'max_storage_mb' => ['description' => 'Almacenamiento de archivos del tenant (MB)'],
+        'max_file_mb' => ['description' => 'Tamaño máximo de un archivo del tenant (MB)'],
         'max_api_keys' => ['description' => 'API keys vigentes del tenant'],
     ],
 
     'plans' => [
         'free' => [
             'name' => 'Free',
-            'limits' => ['max_members' => 3, 'max_storage_mb' => 100, 'max_api_keys' => 2],
+            'limits' => ['max_members' => 3, 'max_storage_mb' => 100, 'max_file_mb' => 10, 'max_api_keys' => 2],
         ],
         'pro' => [
             'name' => 'Pro',
-            'limits' => ['max_members' => 25, 'max_storage_mb' => 5120, 'max_api_keys' => 20],
+            'limits' => ['max_members' => 25, 'max_storage_mb' => 5120, 'max_file_mb' => 100, 'max_api_keys' => 20],
         ],
         'enterprise' => [
             'name' => 'Enterprise',
-            'limits' => ['max_members' => null, 'max_storage_mb' => null, 'max_api_keys' => null],
+            'limits' => ['max_members' => null, 'max_storage_mb' => null, 'max_file_mb' => null, 'max_api_keys' => null],
         ],
     ],
 ];

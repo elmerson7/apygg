@@ -30,9 +30,12 @@ interface PlanLimitsInterface
     public function check(string $key, int $current, int $adding = 1, ?int $tenantId = null): bool;
 
     /**
+     * `$unit` convierte el límite a la unidad de `$current`/`$adding` (p. ej. 1048576 para comparar bytes
+     * contra un límite en MB); la excepción informa el límite ya en esa unidad.
+     *
      * @throws PlanLimitReachedException 403 `plan_limit_reached`
      */
-    public function ensureWithin(string $key, int $current, int $adding = 1, ?int $tenantId = null): void;
+    public function ensureWithin(string $key, int $current, int $adding = 1, ?int $tenantId = null, int $unit = 1): void;
 
     /**
      * Cuenta, comprueba y crea EN UNA TRANSACCIÓN con la fila del tenant bloqueada (`FOR UPDATE`):
@@ -47,7 +50,7 @@ interface PlanLimitsInterface
      *
      * @throws PlanLimitReachedException
      */
-    public function guarded(string $key, \Closure $count, \Closure $create, int $adding = 1): mixed;
+    public function guarded(string $key, \Closure $count, \Closure $create, int $adding = 1, int $unit = 1): mixed;
 
     /**
      * Plan, límites efectivos y de dónde sale cada uno, para un tenant.

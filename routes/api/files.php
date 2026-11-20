@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Files\FileController;
+use App\Http\Controllers\Files\FileUploadController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -26,6 +27,18 @@ Route::middleware(['auth:api', 'tenant'])->prefix('files')->group(function () {
     // Subir archivo
     Route::post('/', [FileController::class, 'store'])
         ->name('files.store');
+
+    // Uso y límites de almacenamiento del tenant (antes de /{id})
+    Route::get('/usage', [FileController::class, 'usage'])
+        ->name('files.usage');
+
+    // Subida directa presignada: intención (reserva cuota + URL PUT) y verificación al completar
+    Route::post('/uploads', [FileUploadController::class, 'store'])
+        ->middleware('idempotent')
+        ->name('files.uploads.store');
+    Route::post('/uploads/{uuid}/complete', [FileUploadController::class, 'complete'])
+        ->whereUuid('uuid')
+        ->name('files.uploads.complete');
 
     // Obtener archivo específico
     Route::get('/{id}', [FileController::class, 'show'])

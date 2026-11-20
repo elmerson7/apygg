@@ -38,6 +38,24 @@ punto de partida compara: `git diff <tu-commit-base> HEAD -- database/migrations
   `TenantMemberService`, `TenantInvitationService` y `TenantOnboardingService` también (si los extiendes, ajusta el constructor).
 - `ForceJsonResponse` deja intacto el `Content-Type` de las respuestas con `Content-Disposition: attachment`.
 
+### Archivos: prefijo de entorno, subida directa y cuotas (ola 5.2-C)
+
+- **Prefijo de entorno.** Las claves NUEVAS en disco pasan de `[tenants/<id>/]<ruta>` a `<FILES_PREFIX>/[tenants/<id>/]<ruta>`
+  (`FILES_PREFIX` por defecto `APP_ENV`). Los archivos existentes **no se mueven ni se rompen**: su `path` completo está en BD
+  y la descarga usa ese valor. Si quieres conservar las rutas de siempre para los nuevos, pon `FILES_PREFIX=` (vacío). Si tu
+  proyecto escribía `File::path` a mano o asumía que empieza por `tenants/`, revísalo.
+- **Migración nueva** `2026_11_20_000240_create_file_upload_intents_table`: `make art cmd="migrate"`. Añade el modelo `FileUploadIntent`
+  (con `BelongsToTenant`: su prueba de aislamiento ya está registrada en `CoberturaDeAislamientoTest`).
+- **Cuotas.** Con `PLAN_LIMITS_ENABLED=true` y multiempresa, `POST /files` y la subida directa aplican `max_storage_mb` (antes declarado
+  pero sin usar) y el nuevo límite `max_file_mb` de `config/plans.php`. Si tu `config/plans.php` está personalizado, añade `max_file_mb`
+  a `limits` y a cada plan (`null` = ilimitado). Una subida que supera la cuota responde 403 `storage_quota_exceeded`; si pasa del tamaño
+  por archivo, 413 `file_too_large_for_plan`. Con límites apagados (por defecto) nada cambia.
+- **`PlanLimitsInterface`**: `guarded()` y `ensureWithin()` ganan un parámetro final `int $unit = 1` (compatible hacia atrás). Si
+  implementas la interfaz tú mismo, añádelo.
+- **`FileServiceInterface`** gana `tenantStoragePath`, `storagePrefix`, `ensureFileSizeAllowed`, `withStorageQuota`, `usedStorageBytes` y `storageUsage`.
+  El constructor de `FileService` recibe también `PlanLimitsInterface` (se resuelve por contenedor).
+- Programa `files:purge-intents` (ya está en `routes/console.php`; si tienes tu propio scheduler, añádelo cada hora).
+
 ### Ajustes, feature flags y límites (ola 4.2-B)
 
 - `Feature::enabled()` y el middleware `feature:` ahora pasan por `FeatureFlagServiceInterface` (BD + caché + overrides). Con tablas vacías el resultado es el de `config/features.php`, igual que antes. `CheckFeatureFlag` recibe la interfaz por constructor: si lo instancias a mano, pásasela.

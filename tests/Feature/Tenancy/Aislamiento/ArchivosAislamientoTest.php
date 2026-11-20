@@ -1,6 +1,8 @@
 <?php
 
+use App\Contracts\DirectUploadServiceInterface;
 use App\Models\File;
+use App\Models\FileUploadIntent;
 use App\Support\Tenancy\Exceptions\MissingTenantContext;
 use App\Support\Tenancy\TenantQuery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -66,4 +68,40 @@ test('el modelo File solo ve las filas del tenant activo y falla cerrado sin con
     $this->ctx->run($this->b, fn () => expect(File::query()->pluck('name')->all())->toBe(['de-b.txt']));
     $this->ctx->clear();
     expect(fn () => File::query()->count())->toThrow(MissingTenantContext::class);
+});
+
+// ── Intenciones de subida directa (FileUploadIntent) ───────────────────────
+
+function aislamientoIntencion($test, array $headers)
+{
+    Storage::disk('local')->buildTemporaryUploadUrlsUsing(fn ($path) => ['url' => 'https://bucket.test/'.$path, 'headers' => []]);
+
+    return $test->withHeaders($headers)->postJson('/files/uploads', ['name' => 'a.txt', 'size' => 10, 'mime_type' => 'text/plain']);
+}
+
+test('el modelo FileUploadIntent solo ve las filas del tenant activo y falla cerrado sin contexto', function () {
+    Storage::disk('local')->buildTemporaryUploadUrlsUsing(fn ($path) => ['url' => 'https://bucket.test/'.$path, 'headers' => []]);
+
+    $this->assertModelIsolated(FileUploadIntent::class, fn ($tenant) => app(DirectUploadServiceInterface::class)->create(
+        $tenant->is($this->a) ? $this->userA : $this->userB,
+        ['name' => 'a.txt', 'size' => 3, 'mime_type' => 'text/plain'],
+    ));
+});
+
+test('una intención de subida de B no se puede completar desde A (404)', function () {
+    $res = aislamientoIntencion($this, $this->isoHeaders($this->userB, $this->b))->assertCreated();
+    $path = ltrim((string) parse_url($res->json('data.upload.url'), PHP_URL_PATH), '/');
+    Storage::disk('local')->put($path, 'contenido!');
+
+    $this->isoCall($this->isoHeaders($this->userA, $this->a), 'POST', '/files/uploads/'.$res->json('data.id').'/complete')->assertNotFound();
+    expect(TenantQuery::withoutTenant(fn () => File::count(), 'test'))->toBe(2); // solo los 2 de beforeEach
+});
+
+test('crear una intención de subida desde A ignora un tenant_id de B en el cuerpo', function () {
+    Storage::disk('local')->buildTemporaryUploadUrlsUsing(fn ($path) => ['url' => 'https://bucket.test/'.$path, 'headers' => []]);
+
+    $res = $this->withHeaders($this->isoHeaders($this->userA, $this->a))
+        ->postJson('/files/uploads', ['name' => 'a.txt', 'size' => 10, 'mime_type' => 'text/plain', 'tenant_id' => $this->b->id])->assertCreated();
+
+    expect(TenantQuery::withoutTenant(fn () => FileUploadIntent::where('uuid', $res->json('data.id'))->value('tenant_id'), 'test'))->toBe($this->a->id);
 });

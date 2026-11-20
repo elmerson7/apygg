@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Files;
 
 use App\Contracts\FileServiceInterface;
+use App\Exceptions\ApiException;
 use App\Exceptions\BusinessLogicException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Files\StoreFileRequest;
@@ -76,6 +77,16 @@ class FileController extends Controller
     }
 
     /**
+     * Uso y límites de almacenamiento del tenant
+     *
+     * GET /files/usage
+     */
+    public function usage(): JsonResponse
+    {
+        return $this->sendSuccess($this->files->storageUsage(), 'Uso de almacenamiento');
+    }
+
+    /**
      * Obtener archivo específico
      *
      * GET /api/files/{id}
@@ -105,6 +116,7 @@ class FileController extends Controller
         $uploadedFile = $request->file('file');
         $category = $request->input('category', 'default');
         $isPublic = $request->boolean('is_public', false);
+        /** @var array<string, mixed>|null $uploadResult */
         $uploadResult = null;
 
         $this->files->assertVisibilityAllowed($isPublic);
@@ -115,29 +127,42 @@ class FileController extends Controller
             $storagePath = config("files.storage_paths.{$category}", config('files.storage_paths.default'));
 
             // Valida el contenido real y guarda con nombre generado
-            $uploadResult = $this->files->upload($uploadedFile, $storagePath, null, $disk, $isPublic);
+            $size = (int) $uploadedFile->getSize();
+            $this->files->ensureFileSizeAllowed($size);
 
-            $retentionDays = config("files.retention_policies.{$category}");
-            $expiresAt = $retentionDays ? now()->addDays($retentionDays) : null;
+            // Cuota del plan: cuenta, comprueba y guarda bajo el bloqueo del tenant (sin carreras).
+            $file = $this->files->withStorageQuota($size, function () use ($uploadedFile, $storagePath, $disk, $isPublic, $category, $request, &$uploadResult) {
+                $uploadResult = $this->files->upload($uploadedFile, $storagePath, null, $disk, $isPublic);
 
-            $file = File::create([
-                'user_id' => $request->user()->id,
-                'name' => $this->cleanOriginalName($uploadedFile->getClientOriginalName()),
-                'filename' => $uploadResult['filename'],
-                'path' => $uploadResult['path'],
-                'url' => $uploadResult['url'],
-                'disk' => $uploadResult['disk'],
-                'mime_type' => $uploadResult['mime_type'],
-                'extension' => $uploadResult['extension'],
-                'size' => $uploadResult['size'],
-                'type' => $this->files->detectType($uploadResult['mime_type']),
-                'category' => $category,
-                'description' => $request->input('description'),
-                'is_public' => $isPublic,
-                'expires_at' => $expiresAt,
-            ]);
+                $retentionDays = config("files.retention_policies.{$category}");
+                $expiresAt = $retentionDays ? now()->addDays($retentionDays) : null;
+
+                return File::create([
+                    'user_id' => $request->user()->id,
+                    'name' => $this->cleanOriginalName($uploadedFile->getClientOriginalName()),
+                    'filename' => $uploadResult['filename'],
+                    'path' => $uploadResult['path'],
+                    'url' => $uploadResult['url'],
+                    'disk' => $uploadResult['disk'],
+                    'mime_type' => $uploadResult['mime_type'],
+                    'extension' => $uploadResult['extension'],
+                    'size' => $uploadResult['size'],
+                    'type' => $this->files->detectType($uploadResult['mime_type']),
+                    'category' => $category,
+                    'description' => $request->input('description'),
+                    'is_public' => $isPublic,
+                    'expires_at' => $expiresAt,
+                ]);
+            });
         } catch (BusinessLogicException $e) {
             return $this->sendError($e->getMessage(), 422);
+        } catch (ApiException $e) {
+            // Errores de dominio (cuota, tamaño del plan...): el handler global los convierte en 4xx.
+            if ($uploadResult !== null) {
+                $this->files->delete($uploadResult['path'], $uploadResult['disk']);
+            }
+
+            throw $e;
         } catch (\Throwable $e) {
             // Si el registro falló, no dejar el archivo huérfano en el disco
             if ($uploadResult !== null) {
@@ -319,7 +344,7 @@ class FileController extends Controller
         // Defensa en profundidad (multiempresa): la clave de almacenamiento lleva el tenant del
         // registro. Si no coincide, algo está mal en los datos y no se sirve el contenido.
         if (app(TenantContext::class)->enabled()
-            && preg_match('#^tenants/(\d+)/#', (string) $file->path, $m) === 1
+            && preg_match('#^(?:[A-Za-z0-9._-]+/)?tenants/(\d+)/#', (string) $file->path, $m) === 1
             && (int) $m[1] !== (int) $file->getAttribute('tenant_id')) {
             return $this->sendError('El archivo no existe en el almacenamiento', 404);
         }

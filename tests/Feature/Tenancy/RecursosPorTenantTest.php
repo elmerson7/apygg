@@ -80,6 +80,7 @@ function rtEn($test, $tenant, Closure $fn): mixed
 // ── Archivos ───────────────────────────────────────────────────────────────
 
 test('un archivo subido desde A queda en A con la clave de almacenamiento del tenant', function () {
+    config(['files.prefix' => '']); // el prefijo de entorno se prueba en SubidaDirectaYCuotasTest
     $res = $this->withHeaders(rtHeaders($this->user, $this->a))
         ->postJson('/files', ['file' => rtArchivo(), 'is_public' => false])
         ->assertCreated();
@@ -172,7 +173,7 @@ test('un archivo cuya ruta apunta a otro tenant no se sirve', function () {
 });
 
 test('con multiempresa apagada la clave de almacenamiento no lleva tenant', function () {
-    config(['multi-tenancy.enabled' => false]);
+    config(['multi-tenancy.enabled' => false, 'files.prefix' => '']);
 
     expect(app(FileService::class)->tenantStoragePath('uploads'))->toBe('uploads');
 });

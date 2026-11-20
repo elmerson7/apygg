@@ -16,6 +16,7 @@ uses(RefreshDatabase::class);
 /** Modelo con BelongsToTenant => archivo de tests/Feature/Tenancy/Aislamiento/ que lo cubre. */
 const AISLAMIENTO_MODELOS_CUBIERTOS = [
     'App\Models\File' => 'ArchivosAislamientoTest.php',
+    'App\Models\FileUploadIntent' => 'ArchivosAislamientoTest.php',
     'App\Models\Webhook' => 'WebhooksAislamientoTest.php',
     'App\Models\WebhookDelivery' => 'WebhooksAislamientoTest.php',
     'App\Models\ApiKey' => 'ApiKeysAislamientoTest.php',

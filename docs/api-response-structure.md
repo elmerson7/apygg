@@ -104,6 +104,11 @@ debe aparecer en esta tabla (lo verifica `tests/Unit/ErrorCodeDocsTest.php`).
 `public_sharing_disabled` (403, compartir archivos públicos apagado), `sequence_exhausted` (409, secuencia en su máximo),
 `plan_limit_unknown` (422, clave de límite no declarada), `plan_limit_reached` (403), `feature_unknown` (404).
 
+Archivos (`docs/files.md`): `storage_quota_exceeded` (403, cuota de almacenamiento del plan; `limit_bytes`, `used_bytes`, `adding_bytes`),
+`file_too_large_for_plan` (413, `max_file_mb` del plan; `limit_bytes`), `direct_upload_unsupported` (422, el disco no firma subidas),
+`upload_object_missing` (422, aún no hay objeto), `upload_size_mismatch`, `upload_mime_mismatch`, `upload_checksum_mismatch` (422, el objeto
+se borra y la intención se descarta), `upload_intent_expired` y `upload_intent_aborted` (422).
+
 ### Códigos propios de un proyecto
 
 El enum es la base del boilerplate; un proyecto añade los suyos como string en su
