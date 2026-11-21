@@ -1,0 +1,41 @@
+<?php
+
+// Manifiesto del módulo «offline-sync» (docs/modules.md): apps sin conexión (IDs del cliente, pull incremental,
+// ETag/If-Match y lotes idempotentes por operación). Reutiliza la tabla `idempotency_keys` del núcleo: sin tablas propias.
+return [
+    'description' => 'Sincronización offline: ID del cliente (UUID v7), cambios desde updated_since con borrados, ETag/If-Match y POST /sync/batch idempotente por operación.',
+    'core' => false,
+    'depends' => [],
+    'files' => [
+        'app/Contracts/OfflineSyncInterface.php',
+        'app/Contracts/OptimisticLockInterface.php',
+        'app/Exceptions/OfflineSync',
+        'app/Http/Controllers/Concerns/SyncsChanges.php',
+        'app/Http/Controllers/Sync',
+        'app/Http/Requests/Sync',
+        'app/Rules/ClientGeneratedUuid.php',
+        'app/Services/OfflineSync',
+        'app/Support/OfflineSync',
+        'app/Traits/ClientGeneratedId.php',
+        'config/offline-sync.php',
+        'docs/offline-sync.md',
+        'routes/api/sync.php',
+        'tests/Concurrency/SyncBatchConcurrenteTest.php',
+        'tests/Feature/OfflineSync',
+        'tests/Support/SyncDemoItem.php',
+        'tests/Support/SyncDemoPolicy.php',
+    ],
+    'migrations' => [],
+    'tables' => [],
+    'permissions' => [],
+    'env' => [
+        'OFFLINE_SYNC_ENABLED',
+        'OFFLINE_SYNC_CLIENT_ID_VERSIONS',
+        'OFFLINE_SYNC_MAX_OPERATIONS',
+        'OFFLINE_SYNC_REQUIRE_IDEMPOTENCY_KEY',
+        'OFFLINE_SYNC_PAGE_SIZE',
+        'OFFLINE_SYNC_MAX_PAGE_SIZE',
+        'OFFLINE_SYNC_CLOCK_SKEW_SECONDS',
+    ],
+    'packages' => [],
+];

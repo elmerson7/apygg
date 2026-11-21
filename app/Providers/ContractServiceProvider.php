@@ -21,8 +21,8 @@ use App\Contracts\FeatureFlagServiceInterface;
 use App\Contracts\FileServiceInterface;
 use App\Contracts\HostResolverInterface;
 use App\Contracts\IdempotencyInterface;
-use App\Contracts\ImpersonationServiceInterface;
-use App\Contracts\ImportServiceInterface;
+use App\Contracts\ImpersonationServiceInterface; // module:offline-sync
+use App\Contracts\ImportServiceInterface; // module:offline-sync
 use App\Contracts\InboundWebhookServiceInterface;
 use App\Contracts\InboxServiceInterface;
 use App\Contracts\InvoiceServiceInterface;
@@ -40,6 +40,8 @@ use App\Contracts\MultipartStorageInterface;
 use App\Contracts\NotificationDeliveryServiceInterface;
 use App\Contracts\NotificationPreferenceServiceInterface;
 use App\Contracts\NotificationServiceInterface;
+use App\Contracts\OfflineSyncInterface;
+use App\Contracts\OptimisticLockInterface;
 use App\Contracts\OtpLoginServiceInterface;
 use App\Contracts\PasswordServiceInterface;
 use App\Contracts\PaymentDiscrepancyServiceInterface;
@@ -102,8 +104,8 @@ use App\Services\FileService;
 use App\Services\I18n\LocaleResolver;
 use App\Services\I18n\LocaleSettingsService;
 use App\Services\IdempotencyService;
-use App\Services\ImpersonationService;
-use App\Services\ImportService;
+use App\Services\ImpersonationService; // module:offline-sync
+use App\Services\ImportService; // module:offline-sync
 use App\Services\LLM\LlmSecurityAnalysisProvider;
 use App\Services\Mail\BrandResolver;
 use App\Services\Mail\MailAccountService;
@@ -120,6 +122,8 @@ use App\Services\Notifications\InboxService;
 use App\Services\Notifications\NotificationDeliveryService;
 use App\Services\Notifications\NotificationPreferenceService;
 use App\Services\NotificationService;
+use App\Services\OfflineSync\OfflineSyncService;
+use App\Services\OfflineSync\OptimisticLockService;
 use App\Services\Otp\OtpLoginService;
 use App\Services\PasswordService;
 use App\Services\Pdf\DompdfRenderer;
@@ -223,6 +227,8 @@ class ContractServiceProvider extends ServiceProvider
         $this->app->bind(SecurityAuditServiceInterface::class, SecurityAuditService::class);
         $this->app->bind(SequenceInterface::class, Sequence::class);
         $this->app->bind(IdempotencyInterface::class, IdempotencyService::class);
+        $this->app->bind(OfflineSyncInterface::class, OfflineSyncService::class); // module:offline-sync
+        $this->app->bind(OptimisticLockInterface::class, OptimisticLockService::class); // module:offline-sync
 
         // Puntos de extensión con valor por defecto (sin módulo de facturación): el módulo `billing` los sustituye
         // con su propio `bind` más abajo (el último binding gana).

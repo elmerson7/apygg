@@ -104,6 +104,7 @@ Route::prefix(ApiPath::prefix())->group(function () {
     require __DIR__.'/api/impersonation.php'; // module:impersonation
     require __DIR__.'/api/maintenance.php'; // module:maintenance
     require __DIR__.'/api/billing.php'; // module:billing
+    require __DIR__.'/api/sync.php'; // module:offline-sync
     // ─────────────────────────────────────────────────────────────────────────────────
 });
 

@@ -21,3 +21,10 @@ parameters:
             message: '#^Trait App\\Traits\\HasUuid is used zero times and is not analysed\.$#'
             paths:
                 - app/Traits/HasUuid.php
+        # module:offline-sync:start
+        # Trait opt-in por modelo del proyecto (docs/offline-sync.md); en el boilerplate solo lo usan las pruebas.
+        -
+            message: '#^Trait App\\Traits\\ClientGeneratedId is used zero times and is not analysed\.$#'
+            paths:
+                - app/Traits/ClientGeneratedId.php
+        # module:offline-sync:end

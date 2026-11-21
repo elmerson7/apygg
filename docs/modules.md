@@ -42,6 +42,7 @@ aislamiento y migraciones del núcleo tocan sus tablas), `inbound-webhooks` y
 | `metrics` | `GET /metrics` en formato Prometheus (peticiones, latencia, colas, jobs fallidos, BD); ver `docs/metrics.md` | — | — | `METRICS_ENABLED=false` (por defecto) |
 | `social-login` | Login OAuth2/OIDC (Google, GitHub, cualquier proveedor de Socialite) para apps móviles/SPA; ver `docs/social-login.md` | — | `social_accounts` | `SOCIAL_LOGIN_ENABLED=false` (por defecto) |
 | `otp-login` | Login sin contraseña por código de un solo uso (correo/SMS); ver `docs/otp-login.md` | — | `login_otps` | `OTP_LOGIN_ENABLED=false` (por defecto) |
+| `offline-sync` | Apps offline: ID del cliente (UUID v7), pull `updated_since` con borrados, ETag/If-Match y `POST /sync/batch` idempotente por operación; ver `docs/offline-sync.md` | — | — (usa `idempotency_keys`) | `OFFLINE_SYNC_ENABLED=false` (por defecto) |
 | `frontend-demo` | Cliente web de pruebas (Vite + React + TypeScript, tipos de `docs/openapi.json`) y recorridos Playwright; ver `docs/frontend-demo.md` | — | — | Se quita borrando `frontend-demo/` (sin código PHP) |
 
 Las dependencias duras son `docs-assistant → llm`, `seed-load → billing` y `load-testing → seed-load`:

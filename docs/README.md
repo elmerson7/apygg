@@ -24,6 +24,7 @@ documentos vigentes; un test (`DocsIndiceTest`) falla si falta alguno. Además: 
 - [multi-tenancy.md](multi-tenancy.md) · [tenant-onboarding.md](tenant-onboarding.md) · [settings-and-flags.md](settings-and-flags.md) · [features-usage-examples.md](features-usage-examples.md)
 - [audit.md](audit.md) · [security-audit.md](security-audit.md) · [privacy.md](privacy.md) · [logging.md](logging.md)
 - [social-login.md](social-login.md): login con Google/GitHub (módulo `social-login`) · [otp-login.md](otp-login.md): login con código por correo/SMS (módulo `otp-login`)
+- [offline-sync.md](offline-sync.md): sincronización offline para apps (módulo `offline-sync`: UUID del cliente, If-Match/412, `POST /sync/batch`)
 - [jwt-keys.md](jwt-keys.md): JWT asimétrico (RS256/ES256) con `kid` y rotación
 
 ## Funcionalidad

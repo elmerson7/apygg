@@ -137,6 +137,8 @@ function archServiciosConInterfaz(): array
         'App\Services\TokenService' => 'App\Contracts\TokenServiceInterface',
         'App\Services\ApiKeyService' => 'App\Contracts\ApiKeyServiceInterface',
         'App\Services\IdempotencyService' => 'App\Contracts\IdempotencyInterface',
+        'App\Services\OfflineSync\OfflineSyncService' => 'App\Contracts\OfflineSyncInterface', // module:offline-sync
+        'App\Services\OfflineSync\OptimisticLockService' => 'App\Contracts\OptimisticLockInterface', // module:offline-sync
         'App\Services\WebhookService' => 'App\Contracts\WebhookServiceInterface',
         'App\Services\FileService' => 'App\Contracts\FileServiceInterface',
         'App\Services\DirectUploadService' => 'App\Contracts\DirectUploadServiceInterface',
