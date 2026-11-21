@@ -13,8 +13,8 @@ use RuntimeException;
  */
 final class ProductionConfigGuard
 {
-    /** Valores que nunca deben llegar a producción (compose.env.example, .env.example, Meilisearch). */
-    private const WEAK_VALUES = ['', 'secret', 'password', 'changeme', 'masterkey', 'apygg', 'redissecure2024!'];
+    /** Valores que nunca deben llegar a producción (compose.env.example, .env.example, Meilisearch). El slug del proyecto (`app.slug`) también cuenta como débil. */
+    private const WEAK_VALUES = ['', 'secret', 'password', 'changeme', 'masterkey', 'redissecure2024!'];
 
     /** Comandos de construcción que corren sin el entorno real del servidor. */
     private const BUILD_COMMANDS = [
@@ -34,23 +34,23 @@ final class ProductionConfigGuard
             $problems[] = 'APP_DEBUG=true: expone trazas y configuración (pon APP_DEBUG=false)';
         }
 
-        if (str_starts_with((string) $config->get('jwt.algo', 'HS256'), 'HS') && self::isWeak((string) $config->get('jwt.secret'), 32)) {
+        if (str_starts_with((string) $config->get('jwt.algo', 'HS256'), 'HS') && self::isWeak($config, (string) $config->get('jwt.secret'), 32)) {
             $problems[] = 'JWT_SECRET vacío, por defecto o con menos de 32 caracteres';
         }
 
         $dbConnection = (string) $config->get('database.default');
         $dbPassword = (string) $config->get("database.connections.{$dbConnection}.password", '');
-        if ($dbConnection !== 'sqlite' && self::isWeak($dbPassword)) {
+        if ($dbConnection !== 'sqlite' && self::isWeak($config, $dbPassword)) {
             $problems[] = 'DB_PASSWORD vacía o por defecto';
         }
 
         $redisPassword = $config->get('database.redis.default.password');
-        if (is_string($redisPassword) && $redisPassword !== '' && in_array(strtolower($redisPassword), self::WEAK_VALUES, true)) {
+        if (is_string($redisPassword) && $redisPassword !== '' && self::isWeak($config, $redisPassword)) {
             $problems[] = 'REDIS_PASSWORD por defecto (la de compose.env.example)';
         }
 
         if ($config->get('scout.driver') === 'meilisearch'
-            && in_array(strtolower((string) $config->get('scout.meilisearch.key')), self::WEAK_VALUES, true)) {
+            && self::isWeak($config, (string) $config->get('scout.meilisearch.key'))) {
             $problems[] = 'MEILISEARCH_KEY vacía o por defecto (masterKey)';
         }
 
@@ -90,8 +90,10 @@ final class ProductionConfigGuard
         }
     }
 
-    private static function isWeak(string $value, int $minLength = 1): bool
+    private static function isWeak(Repository $config, string $value, int $minLength = 1): bool
     {
-        return in_array(strtolower($value), self::WEAK_VALUES, true) || strlen($value) < $minLength;
+        $weak = [...self::WEAK_VALUES, strtolower((string) $config->get('app.slug', ''))];
+
+        return in_array(strtolower($value), $weak, true) || strlen($value) < $minLength;
     }
 }

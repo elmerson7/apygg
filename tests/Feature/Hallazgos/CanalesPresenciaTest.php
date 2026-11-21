@@ -1,9 +1,11 @@
 <?php
 
 use App\Enums\TenantMembershipStatus;
+use App\Http\Controllers\Auth\BroadcastAuthController;
 use App\Models\User;
 use Illuminate\Broadcasting\Broadcasters\Broadcaster;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
 use Tests\Support\InteractsWithTenancy;
 
@@ -67,4 +69,29 @@ test('con multiempresa apagado el canal de plataforma admite al usuario sin corr
     $user = User::factory()->create();
 
     expect(autorizarCanal($user, 'online'))->toBe(['id' => $user->id, 'name' => $user->name]);
+});
+
+test('no hay canales públicos registrados: los antiguos notifications y test-messages ya no existen', function () {
+    $driver = Broadcast::driver();
+    require base_path('routes/channels.php');
+
+    $canales = array_keys((new ReflectionProperty(Broadcaster::class, 'channels'))->getValue($driver));
+
+    expect($canales)->not->toContain('notifications')
+        ->and($canales)->not->toContain('test-messages')
+        ->and($canales)->toContain('private-user.{userId}', 'tenant.{tenantId}');
+});
+
+test('la autenticación de canales no devuelve el mensaje de la excepción interna', function () {
+    $user = User::factory()->create();
+
+    Broadcast::shouldReceive('auth')->andThrow(new RuntimeException('SQLSTATE[08006] host=10.0.0.5 secreto'));
+
+    $request = Request::create('/broadcasting/auth', 'POST', ['channel_name' => 'private-user.1', 'socket_id' => '123.456']);
+    $request->setUserResolver(fn () => $user);
+
+    $res = app(BroadcastAuthController::class)->authenticate($request);
+
+    expect($res->getStatusCode())->toBe(403)
+        ->and($res->getContent())->not->toContain('SQLSTATE')->not->toContain('10.0.0.5');
 });

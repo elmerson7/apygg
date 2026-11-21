@@ -22,11 +22,6 @@ class CacheService
     protected array $tags = [];
 
     /**
-     * Prefijo por defecto para todas las keys
-     */
-    protected const PREFIX = 'apygg';
-
-    /**
      * TTLs por defecto (en segundos)
      */
     protected const DEFAULT_TTLS = [
@@ -236,7 +231,7 @@ class CacheService
     {
         $metrics = [
             'driver' => config('cache.default'),
-            'prefix' => self::PREFIX,
+            'prefix' => self::prefix(),
             'hit_rate' => 0,
             'memory_used' => '0MB',
             'keys_count' => 0,
@@ -323,11 +318,19 @@ class CacheService
     }
 
     /**
+     * Prefijo de todas las keys propias: el slug de la instalación (`app.slug`).
+     */
+    public static function prefix(): string
+    {
+        return (string) config('app.slug', 'app');
+    }
+
+    /**
      * Construir key completa con prefijo
      */
     protected static function buildKey(string $key): string
     {
-        return self::PREFIX.':'.self::tenantSegment().$key;
+        return self::prefix().':'.self::tenantSegment().$key;
     }
 
     /**

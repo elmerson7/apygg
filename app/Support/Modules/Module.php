@@ -3,7 +3,7 @@
 namespace App\Support\Modules;
 
 /**
- * Un módulo de APYGG tal como lo describe su manifiesto `modules/<nombre>.php` (docs/modules.md).
+ * Un módulo del boilerplate tal como lo describe su manifiesto `modules/<nombre>.php` (docs/modules.md).
  *
  * Valor inmutable: sin estado ni acceso a disco (eso es de `ModuleRegistry`).
  */

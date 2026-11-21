@@ -28,6 +28,29 @@ impacto en un proyecto existente están en `CHANGELOG.md`.
 - Hook `pre-commit`: usa el `PROJECT` de `compose.env` (contenedor `<PROJECT>-app`) y avisa si no hay contenedor; reinstala con `make install-hooks`.
 - Se eliminan docs obsoletas (`docs/archive/PLAN_ACCION_2025.md`, `api-only-considerations.md`, `frankenphp-compression-test.md`,
   `features-migration-to-database.md`) y se añade `docs/README.md` (índice).
+### Limpieza de código y seguridad (ola 9, `limpieza-codigo`)
+
+- **Documento de identidad opcional.** `identity_document` deja de ser obligatorio y sin formato de país en el alta de
+  usuarios (`POST /users`): `nullable`, único si viene. Tu regla (p. ej. DNI) va en `USERS_IDENTITY_DOCUMENT_REGEX`
+  (`config/users.php`, regex con delimitadores; vacío = sin formato). La columna ya era `nullable` en la migración consolidada.
+- **Canales públicos eliminados.** `notifications` y `test-messages` (`routes/channels.php`) ya no existen: cualquiera
+  podía suscribirse sin autenticar. Si tu front los escuchaba, emite por `private-user.{id}` o `tenant.{id}` (`docs/websockets.md`).
+  `POST /broadcasting/auth` ya no devuelve el texto de la excepción.
+- **`ETagMiddleware` borrado** (no estaba registrado). Si lo usabas, recupéralo de git.
+- **Nombre de la instalación fuera del código.** Nueva `app.slug` (`APP_SLUG`, por defecto el slug de `APP_NAME`). De ella salen
+  el prefijo de las claves de `CacheService` (antes literal `apygg:`), los prefijos de las API keys (`<slug>_live_`/`<slug>_test_`,
+  antes `apygg_live_`/`apygg_test_`), el User-Agent de los webhooks (`WEBHOOKS_USER_AGENT`, antes `APYGG-Webhook/1.0`) y el
+  `format` del manifiesto de la exportación de datos personales. **Para no invalidar nada en un proyecto en marcha**, fija
+  `APP_SLUG=apygg` (o `API_KEYS_PREFIX_LIVE=apygg_live_` y `API_KEYS_PREFIX_TEST=apygg_test_`): las API keys ya emitidas se validan por hash,
+  así que siguen valiendo con cualquier prefijo, pero la caché propia se reconstruirá. Arreglado de paso: `ApiKeyObserver` y
+  `WebhookObserver` invalidaban `apygg:apygg:...` (doble prefijo) y no borraban nada.
+- **Lista negra de JWT en store propio.** Con `CACHE_STORE=redis`, `JWT_BLACKLIST_STORE` vale `jwt_blacklist` (BD Redis `REDIS_JWT_DB`, 3).
+  **Al desplegar, los tokens revocados antes quedan fuera de la lista nueva** (siguen en la caché general, que ya no se consulta) y
+  volverían a valer hasta caducar: revoca sesiones críticas (`User::revokeAllTokens()`) o fija `JWT_BLACKLIST_STORE=` (vacío) para
+  seguir con la caché general. Ver `docs/sessions-and-2fa.md`.
+- Nuevo middleware `deprecated:<sunset>[,<url>]` (cabeceras `Deprecation`/`Sunset`/`Link`; `docs/api-routes-conventions.md`).
+- Los logs de refresh token ya no incluyen `token_preview` (50 caracteres del JWT) sino `token_fingerprint` (hash corto). Si
+  tenías alertas sobre ese campo, cámbialas.
 
 ### Prefijo de versión opcional `API_PREFIX` (no rompe: opt-in)
 

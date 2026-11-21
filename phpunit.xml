@@ -44,6 +44,7 @@
         <!-- Caché en memoria: Redis persiste entre tests y RefreshDatabase no lo
              revierte, así que un test podría leer datos cacheados por otro. -->
         <env name="CACHE_STORE" force="true" value="array"/>
+        <env name="APP_TITLE" force="true" value="APYGG API"/> <!-- título fijo del contrato OpenAPI (docs/openapi.json) -->
         <env name="SCOUT_DRIVER" force="true" value="null"/> <!-- module:search -->
         <env name="MAIL_MAILER" force="true" value="array"/>
         <env name="MAIL_BLOCK_RESERVED_DOMAINS" force="true" value="false"/>

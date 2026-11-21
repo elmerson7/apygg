@@ -38,7 +38,7 @@ return [
          * Description rendered on the home page of the API documentation (`/docs/api`).
          */
         'description' => <<<'MD'
-            API REST de APYGG. Cada respuesta usa un envelope estable (detalle en `docs/api-response-structure.md`).
+            API REST. Cada respuesta usa un envelope estable (detalle en `docs/api-response-structure.md`).
 
             **Éxito**: `{ "success": true, "message": "...", "data": ... }`. Los listados paginados devuelven
             `data` (array), `meta` (`current_page`, `per_page`, `total`, `last_page`, `from`, `to`) y `links`;

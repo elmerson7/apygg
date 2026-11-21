@@ -39,7 +39,7 @@ return [
         // cobro de la otra). Por defecto: APP_ENV + 8 hex de un hash de APP_KEY (id de instalación). Fíjalo EXPLÍCITO en
         // producción (PAYMENTS_KEY_PREFIX=acme-prod): cambiarlo con cobros en vuelo reenvía con otra clave (la consulta por
         // clave previa al reenvío evita el doble cobro, pero no lo cambies sin necesidad). Vacío = sin prefijo.
-        'key_prefix' => env('PAYMENTS_KEY_PREFIX') ?? (string) env('APP_ENV', 'production').'-'.substr(hash('sha256', (string) env('APP_KEY', 'apygg')), 0, 8),
+        'key_prefix' => env('PAYMENTS_KEY_PREFIX') ?? (string) env('APP_ENV', 'production').'-'.substr(hash('sha256', (string) env('APP_KEY', 'app')), 0, 8),
     ],
 
     'ses' => [

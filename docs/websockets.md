@@ -27,14 +27,14 @@ php artisan reverb:start --host=0.0.0.0 --port=8080
 ## Backend - Crear Eventos
 
 ```php
-use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 
 class MiEventoBroadcast implements ShouldBroadcast
 {
     public function broadcastOn(): array
     {
-        return [new Channel('notifications')]; // o 'private-user.{userId}'
+        return [new PrivateChannel('private-user.'.$this->userId)]; // nunca `Channel` (público)
     }
     
     public function broadcastAs(): string
@@ -48,7 +48,7 @@ broadcast(new MiEventoBroadcast($data));
 ```
 
 **Canales**:
-- `notifications` - Público (sin auth)
+- No hay canales públicos: los antiguos `notifications` y `test-messages` se eliminaron (cualquiera podía suscribirse). Todo canal exige JWT
 - `private-user.{userId}` - Privado (requiere JWT)
 - `presence-tenant.{tenantId}` - Presencia por empresa (requiere JWT y ser miembro activo; con multiempresa activo). Payload `id` y `name`, sin correo. En Echo: `join('tenant.5')`
 - `presence-online` - Presencia de plataforma (solo con multiempresa apagado; sin correo). En Echo: `join('online')`
@@ -82,14 +82,6 @@ const echo = new Echo({
 
 **Escuchar**:
 ```javascript
-// Canal público de pruebas
-echo.channel('test-messages').listen('.test.message', (e) => {
-    console.log('Mensaje:', e.message, 'Hora:', e.time);
-});
-
-// Público
-echo.channel('notifications').listen('.user.created', (e) => {...});
-
 // Privado
 echo.private(`private-user.${userId}`).listen('.notification.new', (e) => {...});
 
@@ -114,7 +106,7 @@ VITE_REVERB_SCHEME=http
 
 ## Autenticación
 
-Endpoint: `POST /broadcasting/auth` (Laravel Echo lo usa automáticamente)
+Endpoint: `POST /broadcasting/auth` (Laravel Echo lo usa automáticamente). Deniega con 403 y un mensaje genérico (nunca el texto de la excepción); el detalle va al log. La presencia expone solo `id` y `name`.
 
 ---
 

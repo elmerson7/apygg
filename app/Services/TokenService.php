@@ -344,6 +344,15 @@ class TokenService implements TokenServiceInterface
     }
 
     /**
+     * Huella corta (SHA-256) para correlacionar un fallo en los logs sin escribir ningún trozo del
+     * token: un fragmento del JWT (cabecera + inicio del payload) sí identifica y ayuda a falsificar.
+     */
+    private static function fingerprint(string $token): string
+    {
+        return substr(hash('sha256', $token), 0, 12);
+    }
+
+    /**
      * Valida un refresh token SIN consumirlo: tipo, firma, caducidad, usuario, versión de
      * tokens y lista negra. Devuelve sus claims y el usuario.
      *
@@ -369,7 +378,7 @@ class TokenService implements TokenServiceInterface
             } catch (TokenExpiredException $e) {
                 LogService::warning('Refresh token expirado al parsear', [
                     'error' => $e->getMessage(),
-                    'token_preview' => substr($refreshToken, 0, 50).'...',
+                    'token_fingerprint' => self::fingerprint($refreshToken),
                 ], 'auth');
 
                 throw $e;
@@ -377,7 +386,7 @@ class TokenService implements TokenServiceInterface
                 LogService::error('Refresh token inválido al parsear', [
                     'error' => $e->getMessage(),
                     'class' => get_class($e),
-                    'token_preview' => substr($refreshToken, 0, 50).'...',
+                    'token_fingerprint' => self::fingerprint($refreshToken),
                 ], 'auth');
 
                 throw $e;
@@ -385,7 +394,7 @@ class TokenService implements TokenServiceInterface
                 LogService::error('Error al parsear refresh token', [
                     'error' => $e->getMessage(),
                     'class' => get_class($e),
-                    'token_preview' => substr($refreshToken, 0, 50).'...',
+                    'token_fingerprint' => self::fingerprint($refreshToken),
                 ], 'auth');
 
                 throw new TokenInvalidException('Token inválido: '.$e->getMessage());

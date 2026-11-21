@@ -3,7 +3,7 @@
     "info": {
         "title": "APYGG API",
         "version": "1.0.0",
-        "description": "API REST de APYGG. Cada respuesta usa un envelope estable (detalle en `docs/api-response-structure.md`).\n\n**Éxito**: `{ \"success\": true, \"message\": \"...\", \"data\": ... }`. Los listados paginados devuelven\n`data` (array), `meta` (`current_page`, `per_page`, `total`, `last_page`, `from`, `to`) y `links`;\nse piden con `?page=` y `?per_page=` (con máximo por endpoint).\n\n**Errores**: toda respuesta 4xx/5xx lleva `code` (estable, ramifica por él, no por `message`) y\n`request_id` (igual que la cabecera `X-Request-ID`). La validación (422) añade `errors` por campo.\n\n**Autenticación**: JWT (`Authorization: Bearer`) obtenido en `POST /auth/login`, o API Key\n(`X-API-Key`) en las rutas de integración. Las rutas sin candado son públicas."
+        "description": "API REST. Cada respuesta usa un envelope estable (detalle en `docs/api-response-structure.md`).\n\n**Éxito**: `{ \"success\": true, \"message\": \"...\", \"data\": ... }`. Los listados paginados devuelven\n`data` (array), `meta` (`current_page`, `per_page`, `total`, `last_page`, `from`, `to`) y `links`;\nse piden con `?page=` y `?per_page=` (con máximo por endpoint).\n\n**Errores**: toda respuesta 4xx/5xx lleva `code` (estable, ramifica por él, no por `message`) y\n`request_id` (igual que la cabecera `X-Request-ID`). La validación (422) añade `errors` por campo.\n\n**Autenticación**: JWT (`Authorization: Bearer`) obtenido en `POST /auth/login`, o API Key\n(`X-API-Key`) en las rutas de integración. Las rutas sin candado son públicas."
     },
     "servers": [
         {
@@ -1443,7 +1443,7 @@
                                                 "type": "string",
                                                 "description": "Email o username del usuario",
                                                 "examples": [
-                                                    "admin@apygg.com"
+                                                    "admin@example.com"
                                                 ],
                                                 "minLength": 1
                                             },
@@ -22403,8 +22403,11 @@
                         "minLength": 8
                     },
                     "identity_document": {
-                        "type": "string",
-                        "pattern": "^[0-9]{8,12}$"
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 50
                     },
                     "role_ids": {
                         "type": "array",
@@ -22420,7 +22423,6 @@
                     "username",
                     "email",
                     "password",
-                    "identity_document",
                     "role_ids"
                 ],
                 "title": "StoreUserRequest"
@@ -23905,7 +23907,7 @@
                             "string",
                             "null"
                         ],
-                        "pattern": "^[0-9]{8,12}$"
+                        "maxLength": 50
                     },
                     "role_ids": {
                         "type": "string"

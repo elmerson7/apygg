@@ -1,5 +1,10 @@
 <?php
 
+use Illuminate\Support\Str;
+
+// Prefijo identificable de la instalación (APP_SLUG, o APP_NAME en slug), con `_` en lugar de `-`.
+$slug = str_replace('-', '_', env('APP_SLUG', Str::slug((string) env('APP_NAME', 'app'))) ?: 'app');
+
 return [
 
     /*
@@ -22,8 +27,8 @@ return [
     */
 
     'prefixes' => [
-        'live' => 'apygg_live_',
-        'test' => 'apygg_test_',
+        'live' => env('API_KEYS_PREFIX_LIVE', $slug.'_live_'),
+        'test' => env('API_KEYS_PREFIX_TEST', $slug.'_test_'),
     ],
 
     /*
@@ -43,7 +48,7 @@ return [
     | Keys de prueba en producción
     |--------------------------------------------------------------------------
     |
-    | Las keys `apygg_test_` solo se crean y se aceptan fuera de producción.
+    | Las keys de prueba (`<slug>_test_`) solo se crean y se aceptan fuera de producción.
     | Pon API_KEYS_ALLOW_TEST_IN_PRODUCTION=true solo para un entorno de staging
     | que corra con APP_ENV=production.
     |

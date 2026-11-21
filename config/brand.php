@@ -13,7 +13,7 @@
 */
 
 return [
-    'name' => env('BRAND_NAME', env('APP_NAME', 'APYGG')),
+    'name' => env('BRAND_NAME', env('APP_NAME', 'App')),
     'logo_url' => env('BRAND_LOGO_URL'),
     'url' => env('BRAND_URL'),   // por defecto APP_URL
 

@@ -114,7 +114,7 @@ test('valida datos requeridos al crear usuario', function () {
     $response->assertStatus(422)
         ->assertJsonValidationErrors([
             'first_name', 'last_name', 'username', 'email', 'password',
-            'identity_document', 'role_ids',
+            'role_ids',
         ]);
 });
 

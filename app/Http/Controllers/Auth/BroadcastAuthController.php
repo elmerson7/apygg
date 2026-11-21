@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
  * BroadcastAuthController
@@ -45,8 +46,13 @@ class BroadcastAuthController extends Controller
             $response = Broadcast::auth($request);
 
             return $response;
-        } catch (\Exception $e) {
-            return $this->sendError('Error al autenticar canal: '.$e->getMessage(), 403);
+        } catch (AccessDeniedHttpException) {
+            return $this->sendError('No autorizado para este canal', 403);
+        } catch (\Throwable $e) {
+            // Sin el mensaje de la excepción: puede traer rutas, SQL o datos internos.
+            report($e);
+
+            return $this->sendError('No se pudo autenticar el canal', 403);
         }
     }
 }

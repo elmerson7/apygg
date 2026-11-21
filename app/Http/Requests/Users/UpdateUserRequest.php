@@ -5,6 +5,7 @@ namespace App\Http\Requests\Users;
 use App\Http\Requests\BaseFormRequest;
 use App\Models\User;
 use App\Rules\StrongPassword;
+use App\Traits\ValidatesIdentityDocument;
 use Illuminate\Validation\Rule;
 
 /**
@@ -16,6 +17,8 @@ use Illuminate\Validation\Rule;
  */
 class UpdateUserRequest extends BaseFormRequest
 {
+    use ValidatesIdentityDocument;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -53,12 +56,7 @@ class UpdateUserRequest extends BaseFormRequest
             'password' => $isSelf
                 ? ['prohibited']
                 : ['sometimes', 'string', 'min:8', StrongPassword::basic()],
-            'identity_document' => [
-                'sometimes',
-                'nullable',
-                'regex:/^[0-9]{8,12}$/',
-                Rule::unique('users', 'identity_document')->ignore($userId),
-            ],
+            'identity_document' => $this->identityDocumentRules($userId),
             'role_ids' => ['prohibited'],
         ];
     }
@@ -85,7 +83,7 @@ class UpdateUserRequest extends BaseFormRequest
             'email.unique' => 'El email ya está en uso',
             'password.min' => 'La contraseña debe tener al menos 8 caracteres',
             'identity_document.unique' => 'El documento de identidad ya está registrado',
-            'identity_document.regex' => 'El documento de identidad debe tener entre 8 y 12 dígitos numéricos',
+            'identity_document.regex' => 'El documento de identidad no tiene un formato válido',
         ];
     }
 

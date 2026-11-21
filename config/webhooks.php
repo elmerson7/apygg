@@ -10,8 +10,12 @@ use App\Events\UserLoggedIn;
 use App\Events\UserLoggedOut;
 use App\Events\UserRestored;
 use App\Events\UserUpdated;
+use Illuminate\Support\Str;
 
 return [
+
+    // User-Agent de las entregas salientes (por defecto `<slug>-Webhook/1.0`).
+    'user_agent' => env('WEBHOOKS_USER_AGENT', (env('APP_SLUG', Str::slug((string) env('APP_NAME', 'app'))) ?: 'app').'-Webhook/1.0'),
 
     /*
     |--------------------------------------------------------------------------

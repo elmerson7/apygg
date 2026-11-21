@@ -59,6 +59,6 @@ class ApiKeyObserver
         }
 
         // Invalidar cache de validación de API Keys (patrón masivo)
-        CacheService::forgetPattern('apygg:api-key:*');
+        CacheService::forgetPattern('api-key:*');
     }
 }

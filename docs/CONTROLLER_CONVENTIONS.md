@@ -612,7 +612,7 @@ class AuthController extends Controller
     /**
      * Autenticar usuario y generar tokens.
      */
-    #[BodyParameter('identity_document', 'Documento de identidad', required: true, example: '12345678')]
+    #[BodyParameter('login', 'Email o username', required: true, example: 'admin@example.com')]
     #[BodyParameter('password', 'Contraseña', required: true, example: 'password123')]
     public function login(LoginRequest $request): JsonResponse
     {

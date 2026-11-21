@@ -384,7 +384,7 @@ class PaymentReconciler implements PaymentReconcilerInterface
                 return (int) $id;
             }
 
-            // Sin intento local: la metadata la puso APYGG, pero solo se acepta si el cliente de la pasarela es el de esa empresa.
+            // Sin intento local: la metadata la puso la app, pero solo se acepta si el cliente de la pasarela es el de esa empresa.
             $claimed = $charge->metadata['tenant_id'] ?? null;
 
             if ($claimed === null || ! ctype_digit($claimed) || $charge->customerId === null) {

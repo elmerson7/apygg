@@ -87,7 +87,7 @@ class ApiKeyService implements ApiKeyServiceInterface
         $this->validateScopes($scopes);
 
         // Generar key completa con prefijo
-        $prefix = config('api-keys.prefixes.'.$environment, 'apygg_live_');
+        $prefix = config('api-keys.prefixes.'.$environment) ?? config('api-keys.prefixes.live');
         $randomKey = Str::random(config('api-keys.key_length', 64));
         $fullKey = $prefix.$randomKey;
 
@@ -360,7 +360,7 @@ class ApiKeyService implements ApiKeyServiceInterface
     protected function validateKey(string $key): ?ApiKey
     {
         // Una key de prueba no vale en producción
-        if (! $this->testKeysAllowed() && str_starts_with($key, (string) config('api-keys.prefixes.test', 'apygg_test_'))) {
+        if (! $this->testKeysAllowed() && str_starts_with($key, (string) config('api-keys.prefixes.test'))) {
             return null;
         }
 

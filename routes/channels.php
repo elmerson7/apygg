@@ -15,15 +15,8 @@ use Illuminate\Support\Facades\Broadcast;
 |
 */
 
-// Canal público para notificaciones generales (sin autenticación)
-Broadcast::channel('notifications', function () {
-    return true;
-});
-
-// Canal público para pruebas (sin autenticación)
-Broadcast::channel('test-messages', function () {
-    return true;
-});
+// No hay canales públicos: todo canal exige autenticación (JWT en POST /broadcasting/auth). Los eventos propios
+// de cada proyecto van por `private-user.{id}`, `tenant.{id}` (presencia) o canales privados nuevos aquí.
 
 // Canal privado por usuario (requiere autenticación JWT)
 Broadcast::channel('private-user.{userId}', function ($user, $userId) {

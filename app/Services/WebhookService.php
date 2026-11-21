@@ -226,7 +226,7 @@ class WebhookService implements WebhookServiceInterface
     protected function prepareHeaders(string $body, int $timestamp, Webhook $webhook): array
     {
         $headers = [
-            'User-Agent' => 'APYGG-Webhook/1.0',
+            'User-Agent' => (string) config('webhooks.user_agent'),
             'X-Webhook-Id' => $webhook->id,
             config('webhooks.security.timestamp_header', 'X-Webhook-Timestamp') => $timestamp,
         ];

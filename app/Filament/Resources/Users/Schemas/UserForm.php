@@ -29,9 +29,9 @@ class UserForm
                     ->unique('users', 'email', ignoreRecord: true)
                     ->disabled(fn (?User $record): bool => $record !== null && ! self::canChangeCredentials($record)),
                 TextInput::make('identity_document')->label('Documento de identidad')
-                    ->required(fn (?User $record): bool => $record === null)
-                    ->regex('/^[0-9]{8,12}$/')
-                    ->validationMessages(['regex' => 'Debe tener entre 8 y 12 dígitos numéricos'])
+                    ->maxLength((int) config('users.identity_document.max', 50))
+                    ->regex(config('users.identity_document.regex') ?: null)
+                    ->validationMessages(['regex' => 'No tiene un formato válido'])
                     ->unique('users', 'identity_document', ignoreRecord: true),
                 TextInput::make('password')->label('Contraseña')->password()->revealable()
                     ->required(fn (?User $record): bool => $record === null)

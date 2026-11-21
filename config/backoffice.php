@@ -29,7 +29,7 @@ return [
     /*
     | Nombre que se muestra en la cabecera del panel.
     */
-    'brand' => env('BACKOFFICE_BRAND', env('APP_NAME', 'APYGG').' · Back-office'),
+    'brand' => env('BACKOFFICE_BRAND', env('APP_NAME', 'App').' · Back-office'),
 
     /*
     | Permiso que da acceso al panel (guard `api`, como el resto de permisos).

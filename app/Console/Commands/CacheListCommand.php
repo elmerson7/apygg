@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Services\CacheService;
 use Illuminate\Console\Command;
 use Illuminate\Redis\Connections\Connection;
 use Illuminate\Support\Facades\Redis;
@@ -101,11 +102,11 @@ class CacheListCommand extends Command
 
             // Si el patrón ya tiene *, usarlo directamente
             if (str_contains($patternStr, '*')) {
-                return '*apygg:'.$patternStr;
+                return '*'.CacheService::prefix().':'.$patternStr;
             }
 
             // Si no tiene *, buscar en cualquier parte del nombre
-            return '*apygg:*'.$patternStr.'*';
+            return '*'.CacheService::prefix().':*'.$patternStr.'*';
         }
 
         // Buscar todas las keys (Redis agregará su prefijo automáticamente)
@@ -128,11 +129,11 @@ class CacheListCommand extends Command
 
         foreach ($allKeys as $key) {
             // Filtrar keys de tags de Laravel y entries (no son datos reales)
-            // Incluir todas las keys que contengan 'apygg:' (datos reales)
+            // Incluir todas las keys que contengan el prefijo propio (`app.slug`) (datos reales)
             // Las keys con tags pueden no existir directamente pero son válidas
             if (! str_contains($key, ':tag:') &&
                 ! str_contains($key, ':entries') &&
-                str_contains($key, 'apygg:')) {
+                str_contains($key, CacheService::prefix().':')) {
                 $keys[] = $key;
                 $count++;
 
@@ -188,8 +189,8 @@ class CacheListCommand extends Command
      */
     protected function extractType(string $key): string
     {
-        // Buscar apygg: en la key
-        if (preg_match('/apygg:([^:]+)/', $key, $matches)) {
+        // Buscar el prefijo propio en la key
+        if (preg_match('/'.preg_quote(CacheService::prefix(), '/').':([^:]+)/', $key, $matches)) {
             return $matches[1];
         }
 
@@ -268,8 +269,8 @@ class CacheListCommand extends Command
      */
     protected function formatKey(string $key): string
     {
-        // Extraer solo la parte después de apygg:
-        if (preg_match('/apygg:([^:]+(?::.+)?)/', $key, $matches)) {
+        // Extraer solo la parte después del prefijo propio
+        if (preg_match('/'.preg_quote(CacheService::prefix(), '/').':([^:]+(?::.+)?)/', $key, $matches)) {
             $key = $matches[1];
         }
 
@@ -337,7 +338,7 @@ class CacheListCommand extends Command
     protected function extractCacheKey(string $fullKey): string
     {
         // Remover prefijos de Redis y Laravel
-        $key = preg_replace('/^.*apygg:/', '', $fullKey);
+        $key = preg_replace('/^.*'.preg_quote(CacheService::prefix(), '/').':/', '', $fullKey);
 
         return $key;
     }

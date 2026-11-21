@@ -13,7 +13,6 @@ return [
         'app/Http/Middleware/AdaptiveRateLimitingMiddleware.php',
         'app/Http/Middleware/CompressionMiddleware.php',
         'app/Http/Middleware/CorsMiddleware.php',
-        'app/Http/Middleware/ETagMiddleware.php',
         'app/Http/Middleware/ForceJsonResponse.php',
         'app/Http/Middleware/IpWhitelistMiddleware.php',
         'app/Http/Middleware/ResolveClientIpMiddleware.php',

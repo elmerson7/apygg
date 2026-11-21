@@ -125,7 +125,7 @@ return [
      * this will refresh permissions on every TickTerminated, TaskTerminated and RequestTerminated
      * NOTE: This should not be needed in most cases, but an Octane/Vapor combination benefited from it.
      */
-    // APYGG: ACTIVO. Bajo Octane el PermissionRegistrar (singleton) guarda los permisos en memoria del
+    // Boilerplate: ACTIVO. Bajo Octane el PermissionRegistrar (singleton) guarda los permisos en memoria del
     // worker; sin este listener, un cambio de roles hecho en otro worker no se vería hasta reiniciarlo.
     // Con el listener se relee de la caché compartida (Redis) en cada petición. Ver docs/permissions.md.
     'register_octane_reset_listener' => (bool) env('PERMISSION_OCTANE_RESET', true),
@@ -151,7 +151,7 @@ return [
      * (view the latest version of this package's migration file)
      */
 
-    // APYGG: APAGADO. Para encenderlo (multiempresa) ver docs/permissions.md, sección Teams.
+    // Boilerplate: APAGADO. Para encenderlo (multiempresa) ver docs/permissions.md, sección Teams.
     'teams' => (bool) env('PERMISSION_TEAMS', false),
 
     /*

@@ -87,6 +87,9 @@ return [
         'X-RateLimit-Remaining',
         'X-RateLimit-Reset',
         'X-Subscription-Warning',
+        'Deprecation',
+        'Sunset',
+        'Link',
     ],
 
     /*

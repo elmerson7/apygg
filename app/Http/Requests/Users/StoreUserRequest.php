@@ -5,6 +5,7 @@ namespace App\Http\Requests\Users;
 use App\Http\Requests\BaseFormRequest;
 use App\Models\User;
 use App\Rules\StrongPassword;
+use App\Traits\ValidatesIdentityDocument;
 
 /**
  * StoreUserRequest
@@ -14,6 +15,8 @@ use App\Rules\StrongPassword;
  */
 class StoreUserRequest extends BaseFormRequest
 {
+    use ValidatesIdentityDocument;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -35,11 +38,7 @@ class StoreUserRequest extends BaseFormRequest
             'username' => ['required', 'string', 'max:50', 'min:3', 'unique:users,username'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8', StrongPassword::basic()],
-            'identity_document' => [
-                'required',
-                'regex:/^[0-9]{8,12}$/',
-                'unique:users,identity_document',
-            ],
+            'identity_document' => $this->identityDocumentRules(),
             'role_ids' => ['required', 'array', 'min:1'],
             'role_ids.*' => ['required', 'integer', 'exists:roles,id'],
         ];
@@ -73,8 +72,7 @@ class StoreUserRequest extends BaseFormRequest
             'password.required' => 'La contraseña es requerida',
             'password.string' => 'La contraseña debe ser texto',
             'password.min' => 'La contraseña debe tener al menos 8 caracteres',
-            'identity_document.required' => 'El documento de identidad es requerido',
-            'identity_document.regex' => 'El documento de identidad debe tener entre 8 y 12 dígitos numéricos',
+            'identity_document.regex' => 'El documento de identidad no tiene un formato válido',
             'identity_document.unique' => 'Este documento de identidad ya está registrado',
             'role_ids.required' => 'Debe asignar al menos un rol',
             'role_ids.array' => 'Los roles deben ser un array',

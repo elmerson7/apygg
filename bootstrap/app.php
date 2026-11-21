@@ -130,6 +130,8 @@ return Application::configure(basePath: dirname(__DIR__))
             // Correo verificado (403 `email_not_verified`) y versión mínima de app (426); ver docs/sessions-and-2fa.md
             'verified' => \App\Http\Middleware\EnsureEmailVerified::class,
             'app-version' => \App\Http\Middleware\EnsureMinimumAppVersion::class,
+            // Ruta deprecada: cabeceras `Deprecation`, `Sunset` y `Link` (docs/api-routes-conventions.md)
+            'deprecated' => \App\Http\Middleware\MarkDeprecated::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

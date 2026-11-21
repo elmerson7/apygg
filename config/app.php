@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Str;
+
 return [
 
     /*
@@ -17,6 +19,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Application Slug
+    |--------------------------------------------------------------------------
+    |
+    | Identificador corto en minúsculas de ESTA instalación (derivado de APP_NAME; fíjalo con APP_SLUG).
+    | Lo usan el prefijo de las claves de caché propias, los prefijos de las API keys y el User-Agent de los
+    | webhooks: ningún literal del boilerplate queda en el código (lo vigila `SinLiteralDelBoilerplateTest`).
+    |
+    */
+
+    'slug' => env('APP_SLUG', Str::slug((string) env('APP_NAME', 'app')) ?: 'app'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Title
     |--------------------------------------------------------------------------
     |
@@ -25,7 +40,7 @@ return [
     |
     */
 
-    'title' => env('APP_TITLE', 'APYGG API'),
+    'title' => env('APP_TITLE', env('APP_NAME', 'App').' API'),
 
     /*
     |--------------------------------------------------------------------------

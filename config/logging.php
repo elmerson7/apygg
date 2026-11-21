@@ -232,7 +232,7 @@ return [
         'mode' => env('LOG_REDACT_MODE', 'mask'),
         'keys' => [
             'password', 'current_password', 'new_password', 'password_confirmation',
-            'token', 'access_token', 'refresh_token', 'api_token', 'remember_token',
+            'token', 'access_token', 'refresh_token', 'api_token', 'remember_token', 'token_preview', 'id_token',
             'secret', 'new_secret', 'client_secret', 'api_key', 'authorization',
             'cookie', 'key', 'credit_card', 'cvv', 'cvc', 'ssn', 'iban', 'pin', 'otp',
         ],

@@ -48,3 +48,25 @@ test('un token inválido se registra como inválido', function () {
 test('un token expirado se registra como expirado', function () {
     expect(mensajeAvisadoAlValidar(new TokenExpiredException))->toBe('Token expirado');
 });
+
+test('un refresh token que falla al parsear no escribe ningún fragmento suyo en los logs', function () {
+    $refresh = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMiLCJ0eXBlIjoicmVmcmVzaCJ9.firmaSecretaDelToken';
+    $contextos = [];
+
+    $canal = Mockery::mock();
+    $canal->shouldReceive('error', 'warning')->andReturnUsing(function (string $texto, array $contexto = []) use (&$contextos) {
+        $contextos[] = $contexto;
+    });
+    Log::shouldReceive('channel')->with('auth')->andReturn($canal);
+
+    expect(fn () => tokenServiceQueLanza(new TokenInvalidException('mal formado'))->validateRefreshToken($refresh))
+        ->toThrow(TokenInvalidException::class);
+
+    expect($contextos)->not->toBeEmpty();
+
+    $volcado = json_encode($contextos);
+
+    expect($volcado)->not->toContain('eyJhbGci')
+        ->and($volcado)->not->toContain('token_preview')
+        ->and($volcado)->toContain('token_fingerprint');
+});

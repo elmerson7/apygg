@@ -38,6 +38,20 @@ otra petición (o reintenta con su último `refresh_token` guardado). `AUTH_REFR
 gracia (toda reutilización revoca). Aun así conviene serializar los refresh en el cliente.
 Pruebas: `SesionesDispositivosTest` y, con procesos reales, `tests/Concurrency/RefreshRotadoConcurrenteTest.php`.
 
+## Lista negra de JWT (store propio)
+
+Los tokens revocados (logout, refresh rotado, `revokeAllTokens`) se guardan en la lista negra de `jwt-auth`. Vive en
+un **store de caché propio** (`jwt.blacklist_store`, `App\Auth\JwtBlacklistStorage`), no en la caché general: un
+`php artisan cache:clear` o un `Cache::flush()` ya no la vacía ni resucita tokens revocados.
+
+- Con `CACHE_STORE=redis` el defecto es el store `jwt_blacklist` (`config/cache.php`) sobre la conexión Redis `jwt`
+  (BD `REDIS_JWT_DB`, 3 por defecto; `config/database.php`). Otro store: `JWT_BLACKLIST_STORE=<store>`.
+- Sin Redis (`database`, `file`, `array`) el defecto es el store por defecto (comportamiento anterior).
+- Redis del compose usa `allkeys-lru`: bajo presión de memoria puede expulsar claves. En producción, para esta BD
+  usa una instancia con `noeviction` o `volatile-lru` (las claves de la lista negra llevan TTL).
+- Las sesiones por dispositivo (`user_sessions`, en BD) siguen revocando por `sid` aunque la lista negra se perdiera.
+- Prueba: `tests/Feature/Auth/ListaNegraStorePropioTest.php`.
+
 ## 2FA TOTP (opcional por usuario)
 
 - Reutiliza las columnas cifradas del back-office (`app_authentication_secret`, `app_authentication_recovery_codes`):

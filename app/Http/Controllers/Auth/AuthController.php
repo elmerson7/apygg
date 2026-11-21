@@ -28,7 +28,7 @@ class AuthController extends Controller
     /**
      * Login de usuario
      */
-    #[BodyParameter('login', 'Email o username del usuario', required: true, example: 'admin@apygg.com')]
+    #[BodyParameter('login', 'Email o username del usuario', required: true, example: 'admin@example.com')]
     #[BodyParameter('password', 'Contraseña del usuario (mínimo 8 caracteres)', required: true, example: 'password')]
     public function login(LoginRequest $request): JsonResponse
     {

@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Decide a qué empresa pertenece un evento de Stripe, SOLO a partir de lo que APYGG guardó localmente (el payload ya está
+ * Decide a qué empresa pertenece un evento de Stripe, SOLO a partir de lo que la app guardó localmente (el payload ya está
  * firmado, pero los ids son lo único fiable): 1) el pago local con ese PaymentIntent, 2) el pago local con la clave de
  * idempotencia de la metadata (la pusimos nosotros), 3) la cuenta de facturación con ese `customer`.
  * Devuelve null si el evento no corresponde a nada nuestro (el handler lo ignora).

@@ -1,5 +1,6 @@
 <?php
 
+use App\Auth\JwtBlacklistStorage;
 use PHPOpenSourceSaver\JWTAuth\Providers\Auth\Illuminate;
 use PHPOpenSourceSaver\JWTAuth\Providers\JWT\Lcobucci;
 
@@ -224,6 +225,19 @@ return [
     'blacklist_enabled' => env('JWT_BLACKLIST_ENABLED', true),
 
     /*
+    |--------------------------------------------------------------------------
+    | Blacklist Store
+    |--------------------------------------------------------------------------
+    |
+    | Store de caché (config/cache.php) donde vive la lista negra. Por defecto, con CACHE_STORE=redis,
+    | el store propio `jwt_blacklist` (BD Redis aparte, REDIS_JWT_DB): `cache:clear` no revoca la revocación.
+    | Fíjalo con JWT_BLACKLIST_STORE; sin valor y sin Redis usa el store por defecto de la caché.
+    |
+    */
+
+    'blacklist_store' => env('JWT_BLACKLIST_STORE', env('CACHE_STORE') === 'redis' ? 'jwt_blacklist' : null),
+
+    /*
     | -------------------------------------------------------------------------
     | Blacklist Grace Period
     | -------------------------------------------------------------------------
@@ -319,6 +333,6 @@ return [
         |
         */
 
-        'storage' => PHPOpenSourceSaver\JWTAuth\Providers\Storage\Illuminate::class,
+        'storage' => JwtBlacklistStorage::class,
     ],
 ];

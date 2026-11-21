@@ -74,6 +74,8 @@ return [
         'app/Http/Controllers/Controller.php',
         'app/Http/Controllers/Health',
         'app/Http/Middleware/EnsureMinimumAppVersion.php',
+        'app/Http/Middleware/MarkDeprecated.php',
+        'tests/Feature/Hallazgos/SinLiteralDelBoilerplateTest.php',
         'app/Http/Requests/BaseFormRequest.php',
         'app/Http/Resources/BaseResource.php',
         'app/Integrations/Concerns',

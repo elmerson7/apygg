@@ -240,6 +240,21 @@ mantenimiento, versión mínima, impersonación, consentimientos...) se escriben
 3. **Cambio imposible de hacer compatible**: monta `/v2` como otro grupo en `routes/api.php`
    (`Route::prefix('v2')->group(...)` con sus controllers/Resources) y deja `/v1` vivo hasta retirarlo con el punto 2.
 
+### Deprecar una ruta: cabeceras `Deprecation` y `Sunset`
+
+Al deprecar (punto 2) avisa también **en la respuesta**, para que clientes y proxies lo detecten sin leer la documentación:
+
+```php
+Route::get('/informes', [InformeController::class, 'index'])
+    ->middleware(['auth:api', 'permission:informes.read,api', 'deprecated:2027-03-01,https://docs.acme.test/migrar-informes']);
+```
+
+`deprecated:<fecha-sunset>[,<url>]` añade `Deprecation: true` (draft-ietf-httpapi-deprecation-header), `Sunset: Mon, 01 Mar 2027
+00:00:00 GMT` (RFC 8594, fecha ISO 8601 o `YYYY-MM-DD` en UTC) y, si se da la URL, `Link: <url>; rel="deprecation"`. La ruta sigue
+funcionando igual (el middleware solo avisa; `Sunset` es una promesa, quitarla es otro PR). Las tres cabeceras están en
+`cors.exposed_headers`. Marca además el método del controller con `@deprecated` en su docblock para que Scramble ponga
+`deprecated: true` en `docs/openapi.json`. Prueba: `tests/Feature/Routing/RutasDeprecadasTest.php`.
+
 ### Comprobación automática: `oasdiff`
 
 CI (job `openapi-breaking`) compara `docs/openapi.json` del PR con el de la rama destino (en push, con el commit anterior)

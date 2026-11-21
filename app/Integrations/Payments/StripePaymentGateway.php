@@ -174,7 +174,7 @@ class StripePaymentGateway implements PaymentGatewayInterface
     }
 
     /**
-     * Importe de APYGG (unidad menor ISO 4217) -> `amount` de Stripe.
+     * Importe de la app (unidad menor ISO 4217) -> `amount` de Stripe.
      *
      * @throws PermanentIntegrationError si Stripe no puede representar el importe (tres decimales que no acaban en 0)
      */
@@ -189,7 +189,7 @@ class StripePaymentGateway implements PaymentGatewayInterface
         return $money->amountMinor * (self::STRIPE_FACTOR[$currency] ?? 1);
     }
 
-    /** `amount` de Stripe (PaymentIntent, `amount_refunded`...) -> unidad menor ISO 4217 de APYGG. */
+    /** `amount` de Stripe (PaymentIntent, `amount_refunded`...) -> unidad menor ISO 4217 de la app. */
     public static function fromStripeAmount(int $amount, string $currency): int
     {
         return intdiv($amount, self::STRIPE_FACTOR[strtoupper($currency)] ?? 1);

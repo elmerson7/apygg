@@ -87,7 +87,7 @@ class PersonalDataExportService implements PersonalDataExportServiceInterface
             $zip->addFromString('manifest.json', $this->json([
                 'generated_at' => now()->toIso8601String(),
                 'user_id' => $user->getKey(),
-                'format' => 'apygg-personal-data-v1',
+                'format' => config('app.slug').'-personal-data-v1',
                 'files' => array_map(fn (string $k) => "{$k}.json", $keys),
             ]));
             $zip->close();

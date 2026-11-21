@@ -78,6 +78,15 @@ return [
             'lock_connection' => env('REDIS_CACHE_LOCK_CONNECTION', 'default'),
         ],
 
+        // Lista negra de JWT: conexión Redis propia (BD `REDIS_JWT_DB`) para que `cache:clear` no la vacíe.
+        // Con `maxmemory-policy allkeys-lru` Redis puede expulsar claves bajo presión de memoria: en producción
+        // usa una instancia/política `noeviction` o `volatile-lru` para esta BD (docs/sessions-and-2fa.md).
+        'jwt_blacklist' => [
+            'driver' => 'redis',
+            'connection' => env('REDIS_JWT_CONNECTION', 'jwt'),
+            'lock_connection' => env('REDIS_CACHE_LOCK_CONNECTION', 'default'),
+        ],
+
         'dynamodb' => [
             'driver' => 'dynamodb',
             'key' => env('AWS_ACCESS_KEY_ID'),

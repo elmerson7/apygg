@@ -62,6 +62,6 @@ class WebhookObserver
         CacheService::forget("webhook:{$webhook->id}");
 
         // Invalidar cache de webhooks activos (usado en warming)
-        CacheService::forgetPattern('apygg:webhook:*');
+        CacheService::forgetPattern('webhook:*');
     }
 }
