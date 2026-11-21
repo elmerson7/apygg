@@ -34,7 +34,7 @@ como single-tenant. Diseño: base de datos única, columna `tenant_id`, aislamie
 | Correo, LLM, docs, menú, lista negra, escáner de seguridad | **plataforma** | Infraestructura compartida; si tu proyecto necesita cuentas de correo o cuotas LLM por empresa, añade `BelongsToTenant` ahí |
 
 Las columnas `tenant_id` de `files`, `webhooks`, `webhook_deliveries` y `api_keys` son **NULLABLE**
-(migración `2026_11_19_000060`) para no romper instalaciones sin multiempresa. **Con multiempresa activo los
+(migraciones de creación de cada tabla) para no romper instalaciones sin multiempresa. **Con multiempresa activo los
 registros nuevos siempre la llevan** (`BelongsToTenant` la rellena o falla). Las filas anteriores (NULL) quedan
 invisibles para todos los tenants hasta asignarlas: `php artisan tenancy:assign-orphans <tenant> [--dry-run]`.
 Los logs (`000061`) llevan la columna con índice y sin FK (solo-añadir, alto volumen).

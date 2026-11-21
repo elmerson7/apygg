@@ -12,7 +12,7 @@ JSON son siempre `jsonb`; (3) necesitamos actor `api_key`/`system`, `request_id`
 (4) ampliar `ActivityLog` mezclaría un log técnico con retención de `logs:clean` con un registro de negocio
 inmutable. Los dos conviven: `ActivityLog` no cambia.
 
-## Qué se guarda (`audit_logs`, migración `2026_11_20_000260`)
+## Qué se guarda (`audit_logs`, migración `create_audit_logs_table`)
 
 `tenant_id` (nullable, sin FK: el rastro sobrevive al tenant), `event` (`created|updated|deleted|restored` o el
 nombre de una acción: `user.roles-change`), `auditable_type`/`auditable_id`, `actor_type` (`user|api_key|system`) y

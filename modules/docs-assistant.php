@@ -22,7 +22,7 @@ return [
         'docs/docs-assistant.md',
     ],
     'migrations' => [
-        'database/migrations/2026_09_12_000007_create_docs_tables.php',
+        'database/migrations/2026_01_01_000270_create_docs_tables.php',
     ],
     'tables' => [
         'doc_chunks',

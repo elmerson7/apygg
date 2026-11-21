@@ -28,7 +28,8 @@ return new class extends Migration
             ]);
             $table->string('ip_address', 45)->nullable();
             $table->string('user_agent', 500)->nullable();
-            $table->json('details')->nullable();
+            $table->jsonb('details')->nullable();
+            $table->unsignedBigInteger('tenant_id')->nullable(); // sin FK: un log no debe bloquearse si se borra el tenant
             $table->timestamps();
 
             $table->index('trace_id');
@@ -36,6 +37,7 @@ return new class extends Migration
             $table->index('event_type');
             $table->index('created_at');
             $table->index(['event_type', 'created_at']);
+            $table->index('tenant_id');
         });
     }
 

@@ -16,12 +16,19 @@ return new class extends Migration
             $table->string('name');
             $table->string('slug')->unique();
             $table->string('domain')->nullable()->unique();
-            $table->json('settings')->nullable();
-            $table->boolean('is_active')->default(true);
+            $table->string('status')->default('active');
+            $table->foreignId('parent_id')->nullable()->constrained('tenants')->nullOnDelete();
+            $table->string('plan', 50)->nullable(); // NULL = plan por defecto (config/plans.php)
+            $table->jsonb('settings')->nullable();
+            $table->timestamp('trial_ends_at')->nullable();
+            // Preferencias regionales con herencia: NULL = heredar de la instalación (docs/i18n.md)
+            $table->string('locale', 10)->nullable();
+            $table->string('timezone', 64)->nullable();
+            $table->string('currency', 3)->nullable();
             $table->timestamps();
             $table->softDeletes();
 
-            $table->index(['is_active', 'slug']);
+            $table->index('status');
             $table->index('domain');
         });
     }

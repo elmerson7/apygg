@@ -9,7 +9,7 @@ return [
     // Las migraciones con nombre <= a este quedan como base permitida (ya aplicadas en main).
     // No se toca: una migración posterior que necesite saltarse una regla usa la marca inline
     // `// migration-lint: ignore <regla> -- motivo` o la lista `exceptions` de abajo.
-    'baseline' => env('MIGRATION_LINT_BASELINE', '2026_11_20_000280_create_user_sessions_table'),
+    'baseline' => env('MIGRATION_LINT_BASELINE', '0001_01_01_000002_create_jobs_table'),
 
     // Excepciones por archivo: 'nombre_sin_extension' => ['regla', ...] (o ['*'] para todas).
     'exceptions' => [

@@ -19,7 +19,7 @@ return [
         'app/Models/InboundWebhookReceipt.php',
         'app/Services/Webhooks/DnsHostResolver.php',
         'app/Services/Webhooks/InboundWebhookService.php',
-        'database/migrations/2026_11_20_000120_create_inbound_webhook_receipts_table.php',
+        'database/migrations/2026_01_01_000310_create_inbound_webhook_receipts_table.php',
         'routes/api/inbound-webhooks.php',
         'tests/Support/FakeHostResolver.php',
         'tests/Support/RecordingInboundHandler.php',

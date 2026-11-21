@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -22,6 +23,9 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
         });
+
+        // Los webhooks y la conciliación buscan al cliente por el id que da la pasarela.
+        DB::statement('CREATE INDEX billing_accounts_gateway_customer_idx ON billing_accounts (gateway, gateway_customer_id) WHERE gateway_customer_id IS NOT NULL');
     }
 
     public function down(): void

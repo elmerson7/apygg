@@ -33,7 +33,7 @@ return [
         'config/octane.php',
         'config/rate-limiting.php',
         'config/security.php',
-        'database/migrations/2026_09_12_000006_create_security_scans_table.php',
+        'database/migrations/2026_01_01_000260_create_security_scans_table.php',
         'docs/cors-configuration.md',
         'docs/octane.md',
         'routes/api/security.php',

@@ -15,6 +15,7 @@ return new class extends Migration
             $table->foreignId('subscription_id')->constrained('subscriptions')->restrictOnDelete();
             $table->foreignId('plan_price_id')->nullable()->constrained('plan_prices')->nullOnDelete(); // precio facturado
             $table->string('number', 64)->nullable();               // de SequenceInterface, asignado al emitir
+            $table->string('number_scope', 8)->default('global');   // alcance de la numeración al emitir: cambiarlo con facturas emitidas repetiría números
             $table->string('status', 16);                           // draft|open|paid|void|uncollectible
             $table->string('billing_reason', 32);                   // subscription_create|subscription_cycle|subscription_update
             $table->char('currency', 3);
@@ -36,6 +37,7 @@ return new class extends Migration
             $table->unique(['tenant_id', 'number']);
             $table->index(['tenant_id', 'status']);
             $table->index(['subscription_id', 'status']);
+            $table->index('number_scope');
         });
 
         DB::statement("ALTER TABLE invoices ADD CONSTRAINT invoices_status_valid CHECK (status IN ('draft','open','paid','void','uncollectible'))");

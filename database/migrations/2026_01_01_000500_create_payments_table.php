@@ -18,7 +18,7 @@ return new class extends Migration
             $table->unsignedSmallInteger('attempt');
             $table->string('method', 16);                           // gateway | manual
             $table->string('gateway', 32)->nullable();
-            $table->string('status', 16);                           // pending|succeeded|failed
+            $table->string('status', 16);                           // pending|requires_action|succeeded|failed|refunded
             $table->bigInteger('amount_minor');
             $table->char('currency', 3);
             $table->string('idempotency_key', 128)->unique();
@@ -31,6 +31,15 @@ return new class extends Migration
             $table->unsignedSmallInteger('tries')->default(0);      // llamadas a la pasarela (errores transitorios)
             $table->timestamp('claimed_until')->nullable();         // arrendamiento: quién cobra ahora
             $table->timestamp('processed_at')->nullable();
+            // Reembolso automático de un cobro cuya factura quedó anulada (docs/billing.md §Reembolsos).
+            $table->timestamp('refunded_at')->nullable();
+            $table->string('refund_id')->nullable();
+            // El cliente estaba presente al cobrar (puede completar 3DS). Se fija al crear el intento: reintentar con la
+            // misma clave de idempotencia debe enviar EXACTAMENTE los mismos parámetros (Stripe rechaza lo contrario).
+            $table->boolean('customer_present')->default(false);
+            $table->bigInteger('refunded_amount_minor')->default(0);
+            $table->string('dispute_id', 64)->nullable();
+            $table->timestamp('disputed_at')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
@@ -38,14 +47,17 @@ return new class extends Migration
             $table->index(['status', 'claimed_until']);
         });
 
-        DB::statement("ALTER TABLE payments ADD CONSTRAINT payments_status_valid CHECK (status IN ('pending','succeeded','failed'))");
+        DB::statement("ALTER TABLE payments ADD CONSTRAINT payments_status_valid CHECK (status IN ('pending','requires_action','succeeded','failed','refunded'))");
         DB::statement("ALTER TABLE payments ADD CONSTRAINT payments_method_valid CHECK (method IN ('gateway','manual'))");
         DB::statement("ALTER TABLE payments ADD CONSTRAINT payments_currency_format CHECK (currency ~ '^[A-Z]{3}\$')");
         DB::statement('ALTER TABLE payments ADD CONSTRAINT payments_amount_nonneg CHECK (amount_minor >= 0)');
         // Una factura solo puede tener UN pago exitoso (la red de seguridad contra el doble cobro).
         DB::statement("CREATE UNIQUE INDEX payments_one_success_per_invoice ON payments (invoice_id) WHERE status = 'succeeded'");
-        // Y un solo intento en curso a la vez.
-        DB::statement("CREATE UNIQUE INDEX payments_one_pending_per_invoice ON payments (invoice_id) WHERE status = 'pending'");
+        // Y un solo intento en curso a la vez: también cuenta el que espera al cliente (3DS/SCA); si no, se abriría un segundo cobro.
+        DB::statement("CREATE UNIQUE INDEX payments_one_pending_per_invoice ON payments (invoice_id) WHERE status IN ('pending','requires_action')");
+        DB::statement('ALTER TABLE payments ADD CONSTRAINT payments_refunded_amount_valid CHECK (refunded_amount_minor >= 0 AND refunded_amount_minor <= amount_minor)');
+        // Los webhooks y la conciliación buscan el pago por el id que da la pasarela.
+        DB::statement('CREATE INDEX payments_gateway_payment_idx ON payments (gateway, gateway_payment_id) WHERE gateway_payment_id IS NOT NULL');
     }
 
     public function down(): void

@@ -277,7 +277,7 @@ return new class extends Migration
 - **PostgreSQL exclusivamente**: `$table->jsonb()` en lugar de `json()` (un test
   falla si queda una columna `json`), `ILIKE` en lugar de `LIKE` para búsquedas
   insensibles, nada de sintaxis MySQL. Una migración ya aplicada no se reescribe:
-  crea otra (ver `2026_11_19_000040_convert_json_columns_to_jsonb`).
+  crea otra (las migraciones de creación ya usan `jsonb()`).
 - `constrained()` con `cascadeOnDelete()` o `restrictOnDelete()` explícito.
 - `softDeletes()` si el modelo hereda del `Model` base.
 - Índices en las columnas por las que se filtra u ordena.

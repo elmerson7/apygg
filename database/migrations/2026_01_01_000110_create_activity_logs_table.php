@@ -17,9 +17,10 @@ return new class extends Migration
             $table->string('model_type', 255);
             $table->unsignedBigInteger('model_id');
             $table->enum('action', ['created', 'updated', 'deleted', 'restored']);
-            $table->json('old_values')->nullable();
-            $table->json('new_values')->nullable();
+            $table->jsonb('old_values')->nullable();
+            $table->jsonb('new_values')->nullable();
             $table->string('ip_address', 45)->nullable();
+            $table->unsignedBigInteger('tenant_id')->nullable(); // sin FK: un log no debe bloquearse si se borra el tenant
             $table->timestamps();
 
             $table->index('user_id');
@@ -27,6 +28,7 @@ return new class extends Migration
             $table->index('action');
             $table->index('created_at');
             $table->index(['user_id', 'created_at']);
+            $table->index('tenant_id');
         });
     }
 

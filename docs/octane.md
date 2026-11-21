@@ -89,7 +89,7 @@ Déjalo activo.
 
 Lo que **no** se invalida solo: los seeders y migraciones corren sin eventos de modelo.
 Llama a mano a `app(PermissionRegistrar::class)->forgetCachedPermissions()` (lo hacen
-`PermissionSeeder`, `RoleSeeder` y la migración `adapt_rbac_tables_for_spatie_permission`) o
+`PermissionSeeder`, `RoleSeeder` y la migración `create_permission_pivot_tables`) o
 ejecuta `permission:cache-reset`. Los tests también lo hacen cuando cambian permisos a mano
 (`BackofficeAccessTest`).
 

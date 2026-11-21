@@ -115,16 +115,15 @@ solo al cambiar roles/permisos con su API o con los modelos (eventos de modelo).
 Tablas (nombres de `config/permission.php`): `roles`, `permissions` (con `guard_name`,
 único `name + guard_name`), `model_has_roles`, `model_has_permissions`, `role_has_permissions`.
 
-Las migraciones originales no se tocaron. Dos nuevas llevan el esquema propio al de Spatie:
+Tres migraciones de creación (el RBAC propio anterior ya no existe; se consolidó antes de v1.0.0):
 
-1. `2026_11_19_000002_adapt_rbac_tables_for_spatie_permission`: añade `guard_name` (los datos existentes
-   quedan en `api`), cambia la unicidad, crea las tres tablas y **copia** `user_role` → `model_has_roles`,
-   `user_permission` → `model_has_permissions` y `role_permission` → `role_has_permissions`.
-2. `2026_11_19_000003_drop_legacy_rbac_pivot_tables`: borra las tres pivotes antiguas. Su `down()` las
-   recrea y copia los datos de vuelta.
+1. `create_roles_table` y `create_permissions_table`: las tablas del paquete con `guard_name`, único
+   `name + guard_name` y los campos propios (`display_name`, `description`, `resource`, `action`, `deleted_at`).
+2. `create_permission_pivot_tables`: `model_has_permissions`, `model_has_roles` y `role_has_permissions`.
 
-Antes de desplegar en un proyecto con datos: **haz backup** (`make backup`) y revisa la sección de riesgos
-del PR. Después de migrar: `make art cmd="permission:cache-reset"`.
+Con `PERMISSION_TEAMS=true` al migrar, `roles` y las dos pivotes `model_has_*` nacen con la columna de equipo
+(`tenant_id`); en una instalación ya migrada se añade con `tenancy:enable-teams` (`PermissionTeamsSchema`).
+Después de migrar: `make art cmd="permission:cache-reset"`.
 
 ## Teams (multiempresa): implementado, apagado por defecto
 

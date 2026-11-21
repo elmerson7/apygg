@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('files', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id')->nullable();
+            $table->foreignId('tenant_id')->nullable()->constrained('tenants')->restrictOnDelete();
             $table->string('name');
             $table->string('filename');
             $table->string('path');
@@ -22,7 +23,7 @@ return new class extends Migration
             $table->enum('type', ['image', 'document', 'video', 'audio', 'archive', 'other'])->default('other');
             $table->string('category')->nullable();
             $table->text('description')->nullable();
-            $table->json('metadata')->nullable();
+            $table->jsonb('metadata')->nullable();
             $table->boolean('is_public')->default(false);
             $table->timestamp('expires_at')->nullable();
             $table->timestamps();
@@ -30,6 +31,7 @@ return new class extends Migration
             $table->unsignedBigInteger('deleted_by')->nullable();
 
             $table->index('user_id');
+            $table->index('tenant_id');
             $table->index('type');
             $table->index('category');
             $table->index('created_at');

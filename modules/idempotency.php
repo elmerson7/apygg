@@ -13,7 +13,7 @@ return [
         'app/Services/IdempotencyService.php',
         'app/Support/Idempotency',
         'config/idempotency.php',
-        'database/migrations/2026_11_20_000100_create_idempotency_keys_table.php',
+        'database/migrations/2026_01_01_000300_create_idempotency_keys_table.php',
         'docs/idempotency.md',
     ],
     'migrations' => [],

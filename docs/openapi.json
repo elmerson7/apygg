@@ -18650,6 +18650,12 @@
                     "user_id": {
                         "type": "integer"
                     },
+                    "tenant_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
                     "name": {
                         "type": "string"
                     },
@@ -18694,25 +18700,19 @@
                             "null"
                         ],
                         "format": "date-time"
-                    },
-                    "tenant_id": {
-                        "type": [
-                            "integer",
-                            "null"
-                        ]
                     }
                 },
                 "required": [
                     "id",
                     "user_id",
+                    "tenant_id",
                     "name",
                     "scopes",
                     "last_used_at",
                     "expires_at",
                     "created_at",
                     "updated_at",
-                    "deleted_at",
-                    "tenant_id"
+                    "deleted_at"
                 ],
                 "title": "ApiKey"
             },
@@ -20813,6 +20813,9 @@
                     "name": {
                         "type": "string"
                     },
+                    "guard_name": {
+                        "type": "string"
+                    },
                     "display_name": {
                         "type": [
                             "string",
@@ -20857,22 +20860,19 @@
                             "null"
                         ],
                         "format": "date-time"
-                    },
-                    "guard_name": {
-                        "type": "string"
                     }
                 },
                 "required": [
                     "id",
                     "name",
+                    "guard_name",
                     "display_name",
                     "resource",
                     "action",
                     "description",
                     "created_at",
                     "updated_at",
-                    "deleted_at",
-                    "guard_name"
+                    "deleted_at"
                 ],
                 "title": "Permission"
             },
@@ -21247,6 +21247,9 @@
                     "name": {
                         "type": "string"
                     },
+                    "guard_name": {
+                        "type": "string"
+                    },
                     "display_name": {
                         "type": [
                             "string",
@@ -21279,20 +21282,17 @@
                             "null"
                         ],
                         "format": "date-time"
-                    },
-                    "guard_name": {
-                        "type": "string"
                     }
                 },
                 "required": [
                     "id",
                     "name",
+                    "guard_name",
                     "display_name",
                     "description",
                     "created_at",
                     "updated_at",
-                    "deleted_at",
-                    "guard_name"
+                    "deleted_at"
                 ],
                 "title": "Role"
             },
@@ -22665,12 +22665,52 @@
                             "null"
                         ]
                     },
+                    "status": {
+                        "$ref": "#/components/schemas/TenantStatus"
+                    },
+                    "parent_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "plan": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
                     "settings": {
                         "type": [
                             "object",
                             "null"
                         ],
                         "additionalProperties": {}
+                    },
+                    "trial_ends_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "locale": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "timezone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "currency": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     },
                     "created_at": {
                         "type": [
@@ -22692,46 +22732,6 @@
                             "null"
                         ],
                         "format": "date-time"
-                    },
-                    "status": {
-                        "$ref": "#/components/schemas/TenantStatus"
-                    },
-                    "parent_id": {
-                        "type": [
-                            "integer",
-                            "null"
-                        ]
-                    },
-                    "trial_ends_at": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "format": "date-time"
-                    },
-                    "plan": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
-                    },
-                    "locale": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
-                    },
-                    "timezone": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
-                    },
-                    "currency": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
                     }
                 },
                 "required": [
@@ -22739,17 +22739,17 @@
                     "name",
                     "slug",
                     "domain",
-                    "settings",
-                    "created_at",
-                    "updated_at",
-                    "deleted_at",
                     "status",
                     "parent_id",
-                    "trial_ends_at",
                     "plan",
+                    "settings",
+                    "trial_ends_at",
                     "locale",
                     "timezone",
-                    "currency"
+                    "currency",
+                    "created_at",
+                    "updated_at",
+                    "deleted_at"
                 ],
                 "title": "Tenant"
             },
@@ -24000,6 +24000,12 @@
                             "null"
                         ]
                     },
+                    "locale": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
                     "preferences": {
                         "type": [
                             "object",
@@ -24012,6 +24018,9 @@
                             "string",
                             "null"
                         ]
+                    },
+                    "token_version": {
+                        "type": "integer"
                     },
                     "created_at": {
                         "type": "string",
@@ -24033,15 +24042,6 @@
                             "string",
                             "null"
                         ]
-                    },
-                    "token_version": {
-                        "type": "integer"
-                    },
-                    "locale": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
                     }
                 },
                 "required": [
@@ -24051,14 +24051,14 @@
                     "email_verified_at",
                     "username",
                     "timezone",
+                    "locale",
                     "preferences",
                     "identity_document",
+                    "token_version",
                     "created_at",
                     "updated_at",
                     "deleted_at",
-                    "deleted_by",
-                    "token_version",
-                    "locale"
+                    "deleted_by"
                 ],
                 "title": "User"
             },
@@ -24561,6 +24561,12 @@
                             "null"
                         ]
                     },
+                    "tenant_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
                     "name": {
                         "type": "string"
                     },
@@ -24637,17 +24643,12 @@
                             "null"
                         ],
                         "format": "date-time"
-                    },
-                    "tenant_id": {
-                        "type": [
-                            "integer",
-                            "null"
-                        ]
                     }
                 },
                 "required": [
                     "id",
                     "user_id",
+                    "tenant_id",
                     "name",
                     "url",
                     "secret_rotated_at",
@@ -24662,8 +24663,7 @@
                     "failure_count",
                     "created_at",
                     "updated_at",
-                    "deleted_at",
-                    "tenant_id"
+                    "deleted_at"
                 ],
                 "title": "Webhook"
             },

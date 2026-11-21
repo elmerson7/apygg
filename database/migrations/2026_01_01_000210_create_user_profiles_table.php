@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('state', 100)->nullable();
             $table->string('country', 100)->nullable();
             $table->string('postal_code', 20)->nullable();
-            $table->json('social_links')->nullable();
+            $table->jsonb('social_links')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

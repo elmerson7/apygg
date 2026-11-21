@@ -36,10 +36,10 @@ return [
         'app/Filament/Resources/Data/Pages/ListPersonalDataExports.php',
     ],
     'migrations' => [
-        'database/migrations/2026_11_20_000320_create_legal_documents_table.php',
-        'database/migrations/2026_11_20_000321_create_user_consents_table.php',
-        'database/migrations/2026_11_20_000322_create_personal_data_exports_table.php',
-        'database/migrations/2026_11_20_000323_create_account_deletion_requests_table.php',
+        'database/migrations/2026_01_01_000420_create_legal_documents_table.php',
+        'database/migrations/2026_01_01_000430_create_user_consents_table.php',
+        'database/migrations/2026_01_01_000440_create_personal_data_exports_table.php',
+        'database/migrations/2026_01_01_000450_create_account_deletion_requests_table.php',
     ],
     'tables' => [
         'legal_documents',

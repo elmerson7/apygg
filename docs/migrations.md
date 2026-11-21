@@ -3,6 +3,16 @@
 PostgreSQL 18 exclusivamente. Plantilla y reglas básicas: `docs/CODING_STANDARDS.md` →
 «Migración». Aquí, las normas de fondo.
 
+> **Consolidación previa a v1.0.0.** Mientras ningún proyecto derivado existía, las 73 migraciones
+> históricas del boilerplate se reescribieron en 54 migraciones de creación (`create_<tabla>_table`,
+> prefijo `2026_01_01_*`, más `0001_01_01_*` de Laravel): cada una crea su tabla completa y en su forma
+> final, sin `add_*`/`alter`/`drop_*` ni tablas creadas para borrarse (el esquema resultante es idéntico).
+> **A partir de ahora la regla de inmutabilidad de este documento (no reescribir, expandir/contraer)
+> aplica a los proyectos derivados y al boilerplate tras la v1.0.0**, porque los derivados reciben las
+> migraciones por merge (`docs/upgrading-from-boilerplate.md`). La consolidación **no es un ejemplo a
+> imitar** en un proyecto derivado. Los nombres históricos que aparecen más abajo (p. ej.
+> `convert_json_columns_to_jsonb`) ya no existen como archivo: ilustran el patrón correcto.
+
 ## 1. Nunca edites una migración ya publicada
 
 Una migración que ya corrió en algún entorno (producción, el entorno de otro compañero, un
@@ -17,8 +27,8 @@ Resultado: no hay migración de conversión; una BD creada con 1.0.0 (IDs uuid) 
 actualizar con `migrate`, y los proyectos derivados tienen que rehacer la base. Está anotado
 en `docs/upgrading.md` → «0. Antes de merge». Es un coste que no se debe repetir.
 
-**Cómo se hace bien:** `2026_11_19_000040_convert_json_columns_to_jsonb` convierte las columnas
-`json` antiguas **sin reescribir** las migraciones que las crearon; `2026_11_19_000001_add_token_version_to_users_table`
+**Cómo se hace bien** (patrón; esas migraciones se consolidaron antes de v1.0.0): `convert_json_columns_to_jsonb` convertía las columnas
+`json` antiguas **sin reescribir** las migraciones que las crearon; `add_token_version_to_users_table`
 añade una columna a `users` en una migración propia.
 
 Excepción: una migración que **aún no se ha mergeado** a `main` ni desplegado en ningún sitio
@@ -45,13 +55,12 @@ el código que deja de usarla, rompe a los workers que aún corren el código vi
 Índices en tablas grandes: `CREATE INDEX CONCURRENTLY` (fuera de transacción:
 `public $withinTransaction = false;` en la migración) para no bloquear escrituras. Una migración
 que **reescribe** una tabla grande (`ALTER COLUMN ... TYPE`, como la de `jsonb`) va en ventana
-de mantenimiento y se avisa en su docblock, como hace la `convert_json_columns_to_jsonb`.
+de mantenimiento y se avisa en su docblock, como lo hacía la antigua `convert_json_columns_to_jsonb`.
 
 ## 3. `jsonb`, siempre
 
 `$table->jsonb('metadata')`, nunca `json()`. `tests/Feature/JsonbColumnsTest.php` falla si
-queda una columna `json` en la BD. Las migraciones originales (`api_logs`, `webhooks`…) siguen
-declarando `json()` en su archivo, pero la `…000040_convert_json_columns_to_jsonb` las convierte.
+queda una columna `json` en la BD. Las migraciones de creación ya declaran `jsonb()` directamente.
 Para búsquedas dentro del JSON usa operadores de jsonb y, si se filtra, un índice GIN.
 
 ## 4. Estados: `string` (y enum PHP), no `enum()` de la BD
@@ -92,7 +101,7 @@ entero «mágico» ni como booleanos múltiples (`is_paid`, `is_sent`…).
 ## 6. Reversibles: `down()` siempre
 
 Las 35 migraciones del repo tienen `down()`. Debe deshacer exactamente lo que hizo `up()`
-(`dropColumn`, `dropIfExists`, o la conversión inversa como en `convert_json_columns_to_jsonb`).
+(`dropColumn`, `dropIfExists`, o la conversión inversa, como hacía la antigua `convert_json_columns_to_jsonb`).
 Si una migración **no se puede** revertir sin perder datos (borrado de columna), dilo en el
 docblock y haz que `down()` recree la estructura aunque no pueda recuperar los datos. Hazla
 idempotente cuando sea barato (`Schema::hasColumn` antes de tocar).
@@ -110,7 +119,7 @@ idempotente cuando sea barato (`Schema::hasColumn` antes de tocar).
 - Tablas grandes: procesa por lotes (`chunkById`) y no en una sola sentencia.
 - Si cambias roles o permisos, vacía la caché de Spatie
   (`app(PermissionRegistrar::class)->forgetCachedPermissions()`, como hace la migración
-  `…000002_adapt_rbac_tables_for_spatie_permission`).
+  `create_permission_pivot_tables`).
 
 ## 8. Cómo probar una migración
 
@@ -134,8 +143,8 @@ idempotente cuando sea barato (`Schema::hasColumn` antes de tocar).
 
   (Esquema orientativo; `JsonbColumnsTest` es el ejemplo de test de esquema del repo.) En una
   copia de datos reales (`make restore-backup` en local), mide el tiempo antes de producción.
-- Prueba también que es **idempotente** si la escribiste así (`convert_json_columns_to_jsonb`
-  se salta lo que ya está convertido).
+- Prueba también que es **idempotente** si la escribiste así (la antigua `convert_json_columns_to_jsonb`
+  se saltaba lo que ya estaba convertido).
 
 ## 9. Cambios sin parada en PostgreSQL 18 y linter
 

@@ -4,6 +4,11 @@ Qué rompe o exige acción al pasar un proyecto creado desde APYGG a una versió
 más reciente. Cada sección empieza por la versión de origen. Los cambios sin
 impacto en un proyecto existente están en `CHANGELOG.md`.
 
+> **Nombres de migración históricos.** Antes de v1.0.0 las migraciones del boilerplate se consolidaron en
+> creaciones limpias (`docs/migrations.md`): los nombres `2026_11_19_*`/`2026_11_20_*` de las secciones de abajo
+> describen el historial y ya no existen como archivo. Ningún proyecto derivado existía entonces; a partir de
+> v1.0.0 las migraciones son inmutables y los cambios se anotan aquí.
+
 > Cómo traer los cambios del boilerplate a tu proyecto (remoto `upstream`, merge, conflictos): `docs/upgrading-from-boilerplate.md`.
 
 > Antes de empezar: **backup de la BD** (`make backup`) y una rama aparte.

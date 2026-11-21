@@ -47,7 +47,7 @@ Toda respuesta a una petición impersonada lleva `X-Impersonating: <id de quien 
 ## Auditoría
 
 - `impersonation.start` (actor = soporte, sujeto = objetivo, motivo) y `impersonation.stop`.
-- Migración `2026_11_20_000340`: `audit_logs.impersonator_id`. **Toda** entrada de auditoría escrita durante una
+- `audit_logs.impersonator_id` (columna del núcleo, creada con `create_audit_logs_table`; inerte si se quita el módulo). **Toda** entrada de auditoría escrita durante una
   petición impersonada (modelos `Auditable`, `recordAction`) lleva `actor_id` = usuario suplantado e
   `impersonator_id` = quien lo hace de verdad. Sale en los listados y en el CSV (última columna).
 - `App\Support\Impersonation::actorId()` da el impersonador dentro de una petición (para logs propios).

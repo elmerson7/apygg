@@ -23,7 +23,7 @@ return [
         'docs/llm.md',
     ],
     'migrations' => [
-        'database/migrations/2026_09_12_000002_create_llm_tables.php',
+        'database/migrations/2026_01_01_000230_create_llm_tables.php',
     ],
     'tables' => [
         'llm_areas',

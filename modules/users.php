@@ -32,7 +32,6 @@ return [
         'app/Services/UserService.php',
         'app/Traits/SoftDeletesWithUser.php',
         'database/factories/UserFactory.php',
-        'database/migrations/2026_11_19_000140_add_locale_settings_to_users_and_tenants.php',
         'database/seeders/AdminUserSeeder.php',
         'routes/api/users.php',
         'tests/Feature/Controllers/PerfilUsuarioTest.php',

@@ -34,9 +34,8 @@ return [
         'docs/webhooks.md',
     ],
     'migrations' => [
-        'database/migrations/2024_01_01_000015_create_webhooks_table.php',
-        'database/migrations/2026_01_27_144348_create_webhook_deliveries_table.php',
-        'database/migrations/2026_11_19_000020_add_deleted_at_to_webhook_deliveries_table.php',
+        'database/migrations/2026_01_01_000160_create_webhooks_table.php',
+        'database/migrations/2026_01_01_000170_create_webhook_deliveries_table.php',
     ],
     'tables' => [],
     'permissions' => [],

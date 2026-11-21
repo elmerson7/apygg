@@ -14,9 +14,10 @@ return new class extends Migration
         Schema::create('api_keys', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
+            $table->foreignId('tenant_id')->nullable()->constrained('tenants')->cascadeOnDelete();
             $table->string('name');
             $table->string('key', 64)->unique();
-            $table->json('scopes')->nullable();
+            $table->jsonb('scopes')->nullable();
             $table->timestamp('last_used_at')->nullable();
             $table->timestamp('expires_at')->nullable();
             $table->timestamps();
@@ -25,6 +26,7 @@ return new class extends Migration
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
 
             $table->index('user_id');
+            $table->index('tenant_id');
             $table->index('key');
             $table->index('created_at');
             $table->index('expires_at');

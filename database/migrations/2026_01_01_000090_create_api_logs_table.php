@@ -17,14 +17,15 @@ return new class extends Migration
             $table->unsignedBigInteger('user_id')->nullable();
             $table->string('request_method', 10);
             $table->string('request_path', 500);
-            $table->json('request_query')->nullable();
-            $table->json('request_body')->nullable();
-            $table->json('request_headers')->nullable();
+            $table->jsonb('request_query')->nullable();
+            $table->jsonb('request_body')->nullable();
+            $table->jsonb('request_headers')->nullable();
             $table->integer('response_status');
-            $table->json('response_body')->nullable();
+            $table->jsonb('response_body')->nullable();
             $table->integer('response_time_ms')->nullable();
             $table->string('user_agent', 500)->nullable();
             $table->string('ip_address', 45)->nullable();
+            $table->unsignedBigInteger('tenant_id')->nullable(); // sin FK: un log no debe bloquearse si se borra el tenant
             $table->timestamps();
 
             $table->index('trace_id');
@@ -32,6 +33,7 @@ return new class extends Migration
             $table->index('created_at');
             $table->index(['request_method', 'request_path']);
             $table->index('response_status');
+            $table->index('tenant_id');
         });
     }
 

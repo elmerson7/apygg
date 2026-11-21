@@ -39,8 +39,8 @@ return [
         'app/Filament/Resources/Data/Pages/ListDataImports.php',
     ],
     'migrations' => [
-        'database/migrations/2026_11_20_000300_create_data_exports_table.php',
-        'database/migrations/2026_11_20_000301_create_data_imports_table.php',
+        'database/migrations/2026_01_01_000400_create_data_exports_table.php',
+        'database/migrations/2026_01_01_000410_create_data_imports_table.php',
     ],
     'tables' => [
         'data_exports',

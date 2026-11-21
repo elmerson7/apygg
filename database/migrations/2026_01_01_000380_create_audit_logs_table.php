@@ -23,6 +23,8 @@ return new class extends Migration
             // user | api_key | system
             $table->string('actor_type', 20);
             $table->string('actor_id', 64)->nullable();
+            // Impersonación (docs/impersonation.md): quien actúa de verdad cuando `actor_id` es el usuario suplantado.
+            $table->string('impersonator_id', 64)->nullable();
             $table->jsonb('old_values')->nullable();
             $table->jsonb('new_values')->nullable();
             $table->text('reason')->nullable();
@@ -34,6 +36,7 @@ return new class extends Migration
             $table->index(['tenant_id', 'auditable_type', 'auditable_id']);
             $table->index(['actor_type', 'actor_id']);
             $table->index('event');
+            $table->index('impersonator_id');
             $table->index('created_at');
         });
     }
