@@ -111,6 +111,7 @@ Archivos (`docs/files.md`): `storage_quota_exceeded` (403, cuota de almacenamien
 `file_too_large_for_plan` (413, `max_file_mb` del plan; `limit_bytes`), `direct_upload_unsupported` (422, el disco no firma subidas),
 `upload_object_missing` (422, aún no hay objeto), `upload_size_mismatch`, `upload_mime_mismatch`, `upload_checksum_mismatch` (422, el objeto
 se borra y la intención se descarta), `upload_intent_expired` y `upload_intent_aborted` (422).
+Subida por partes: `multipart_unsupported` (422, apagada o disco no S3), `upload_parts_missing` (422, faltan partes; reintentable), `upload_part_mismatch` (422, parte de tamaño distinto o número fuera de rango), `upload_intent_completed` (409, ya completada) y `upload_storage_error` (502, el proveedor falló; reintentable).
 
 ### Códigos propios de un proyecto
 

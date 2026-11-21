@@ -178,6 +178,7 @@ punto de partida compara: `git diff <tu-commit-base> HEAD -- database/migrations
 - **`FileServiceInterface`** gana `tenantStoragePath`, `storagePrefix`, `ensureFileSizeAllowed`, `withStorageQuota`, `usedStorageBytes` y `storageUsage`.
   El constructor de `FileService` recibe también `PlanLimitsInterface` (se resuelve por contenedor).
 - Programa `files:purge-intents` (ya está en `routes/console.php`; si tienes tu propio scheduler, añádelo cada hora).
+- **Subida por partes (S3 multipart)**: migración nueva `2026_11_21_000400_create_file_multipart_uploads_table` (`make art cmd="migrate"`), rutas `POST /files/uploads/multipart`, `POST|GET /files/uploads/{id}/parts` y `DELETE /files/uploads/{id}`, y variables `FILE_MULTIPART_*` (opcionales). `DirectUploadService` recibe también `MultipartStorageInterface` (se resuelve por contenedor) y `DirectUploadServiceInterface` gana `createMultipart`, `presignParts`, `listParts` y `abort`: si la implementas tú, añádelos. `files:purge-intents` ahora aborta en el proveedor las subidas por partes caducadas. Cambio aditivo.
 
 ### Sesiones, 2FA y verificación de correo (ola 5.3-A)
 

@@ -39,6 +39,20 @@ Route::middleware(['auth:api', 'tenant'])->prefix('files')->group(function () {
     Route::post('/uploads/{uuid}/complete', [FileUploadController::class, 'complete'])
         ->whereUuid('uuid')
         ->name('files.uploads.complete');
+    Route::delete('/uploads/{uuid}', [FileUploadController::class, 'abort'])
+        ->whereUuid('uuid')
+        ->name('files.uploads.abort');
+
+    // Subida por partes (S3 multipart) para archivos grandes: misma intención, reserva de cuota y complete
+    Route::post('/uploads/multipart', [FileUploadController::class, 'storeMultipart'])
+        ->middleware('idempotent')
+        ->name('files.uploads.multipart.store');
+    Route::post('/uploads/{uuid}/parts', [FileUploadController::class, 'presignParts'])
+        ->whereUuid('uuid')
+        ->name('files.uploads.parts.presign');
+    Route::get('/uploads/{uuid}/parts', [FileUploadController::class, 'parts'])
+        ->whereUuid('uuid')
+        ->name('files.uploads.parts.index');
 
     // Obtener archivo específico
     Route::get('/{id}', [FileController::class, 'show'])

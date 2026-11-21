@@ -5005,6 +5005,389 @@
                 ]
             }
         },
+        "/files/uploads/{uuid}": {
+            "delete": {
+                "operationId": "files.uploads.abort",
+                "description": "DELETE /files/uploads/{uuid}",
+                "summary": "Abortar la subida y liberar la cuota reservada",
+                "tags": [
+                    "FileUpload"
+                ],
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/files/uploads/multipart": {
+            "post": {
+                "operationId": "files.uploads.multipart.store",
+                "description": "POST /files/uploads/multipart",
+                "summary": "Crear una intención de subida por partes (archivos grandes, S3)",
+                "tags": [
+                    "FileUpload"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreFileUploadRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Creado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string"
+                                                },
+                                                "status": {
+                                                    "type": "string"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "size": {
+                                                    "type": "integer"
+                                                },
+                                                "mime_type": {
+                                                    "type": "string"
+                                                },
+                                                "is_public": {
+                                                    "type": "boolean"
+                                                },
+                                                "expires_at": {
+                                                    "type": "string"
+                                                },
+                                                "part_size": {
+                                                    "type": "integer"
+                                                },
+                                                "parts_count": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "status",
+                                                "name",
+                                                "size",
+                                                "mime_type",
+                                                "is_public",
+                                                "expires_at",
+                                                "part_size",
+                                                "parts_count"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationFailed"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/files/uploads/{uuid}/parts": {
+            "post": {
+                "operationId": "files.uploads.parts.presign",
+                "description": "POST /files/uploads/{uuid}/parts",
+                "summary": "URLs PUT prefirmadas de las partes pedidas",
+                "tags": [
+                    "FileUpload"
+                ],
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PresignUploadPartsRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "part_size": {
+                                                    "type": "integer"
+                                                },
+                                                "parts_count": {
+                                                    "type": "integer"
+                                                },
+                                                "expires_at": {
+                                                    "type": "string"
+                                                },
+                                                "parts": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "part_number": {
+                                                                "type": "integer"
+                                                            },
+                                                            "url": {
+                                                                "type": "string"
+                                                            },
+                                                            "headers": {
+                                                                "type": "object",
+                                                                "additionalProperties": {}
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "part_number",
+                                                            "url",
+                                                            "headers"
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "part_size",
+                                                "parts_count",
+                                                "expires_at",
+                                                "parts"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationFailed"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "get": {
+                "operationId": "files.uploads.parts.index",
+                "description": "GET /files/uploads/{uuid}/parts",
+                "summary": "Partes ya subidas (para reanudar)",
+                "tags": [
+                    "FileUpload"
+                ],
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "part_size": {
+                                                    "type": "integer"
+                                                },
+                                                "parts_count": {
+                                                    "type": "integer"
+                                                },
+                                                "parts": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "part_number": {
+                                                                "type": "integer"
+                                                            },
+                                                            "size": {
+                                                                "type": "integer"
+                                                            },
+                                                            "etag": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "part_number",
+                                                            "size",
+                                                            "etag"
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "part_size",
+                                                "parts_count",
+                                                "parts"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/health": {
             "get": {
                 "operationId": "health.check",
@@ -21404,6 +21787,26 @@
                     "prices"
                 ],
                 "title": "PlanResource"
+            },
+            "PresignUploadPartsRequest": {
+                "type": "object",
+                "description": "Partes de una subida multipart para las que se piden URLs prefirmadas.",
+                "properties": {
+                    "part_numbers": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 10000
+                        },
+                        "minItems": 1,
+                        "maxItems": 100
+                    }
+                },
+                "required": [
+                    "part_numbers"
+                ],
+                "title": "PresignUploadPartsRequest"
             },
             "ProfileResource": {
                 "type": "object",

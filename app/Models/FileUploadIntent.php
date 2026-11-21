@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 /**
@@ -61,6 +62,16 @@ class FileUploadIntent extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Datos de la subida por partes (solo si la intención es multipart).
+     *
+     * @return HasOne<FileMultipartUpload, $this>
+     */
+    public function multipart(): HasOne
+    {
+        return $this->hasOne(FileMultipartUpload::class, 'file_upload_intent_id');
     }
 
     /**

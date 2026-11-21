@@ -224,6 +224,28 @@ return [
     ],
 
     /*
+    |--------------------------------------------------------------------------
+    | Subida por partes (S3 multipart) para archivos grandes
+    |--------------------------------------------------------------------------
+    |
+    | `POST /files/uploads/multipart`: el cliente sube cada parte con su URL prefirmada y completa al final.
+    | Reutiliza la intención de subida directa (reserva de cuota, caducidad, purga). Solo discos S3.
+    | `part_size_mb` es el tamaño base (mínimo 5, límite de S3); si el archivo necesitaría más de `max_parts`
+    | (tope de S3: 10000) el servidor agranda la parte. `max_size_mb` sustituye aquí al tope por tipo de
+    | `max_sizes`; el `max_file_mb` del plan sigue mandando.
+    |
+    */
+    'multipart' => [
+        'enabled' => (bool) env('FILE_MULTIPART_ENABLED', true),
+        'part_size_mb' => (int) env('FILE_MULTIPART_PART_MB', 16),
+        'max_parts' => (int) env('FILE_MULTIPART_MAX_PARTS', 10000),
+        'max_size_mb' => (int) env('FILE_MULTIPART_MAX_MB', 5120),
+        'intent_minutes' => (int) env('FILE_MULTIPART_MINUTES', 1440),
+        'url_minutes' => (int) env('FILE_MULTIPART_URL_MINUTES', 60),
+        'max_urls_per_request' => (int) env('FILE_MULTIPART_MAX_URLS', 100),
+    ],
+
+    /*
     | Minutos de validez de las URLs temporales firmadas de archivos privados.
     */
     'temporary_url_minutes' => (int) env('FILE_TEMPORARY_URL_MINUTES', 15),
