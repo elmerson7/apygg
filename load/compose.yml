@@ -12,8 +12,9 @@ x-env: &env
     LOG_STACK: single
     TELESCOPE_ENABLED: "false"
     SENTRY_LARAVEL_DSN: ""
-    DB_HOST: postgres
-    DB_PORT: "5432"
+    # Con LOAD_DB_HOST=pgbouncer LOAD_DB_PORT=6432 la API pasa por PgBouncer (perfil `pgbouncer`).
+    DB_HOST: ${LOAD_DB_HOST:-postgres}
+    DB_PORT: ${LOAD_DB_PORT:-5432}
     DB_DATABASE: load
     DB_USERNAME: load
     DB_PASSWORD: load
@@ -81,6 +82,31 @@ services:
       interval: 3s
       timeout: 3s
       retries: 20
+    networks: [net]
+
+  # Opcional (perfil `pgbouncer`): PgBouncer en modo transaction delante de PostgreSQL, para comparar con y sin pooler
+  # (docs/performance-baseline.md). No se levanta por defecto: load/stack.sh up-pgbouncer.
+  pgbouncer:
+    profiles: ["pgbouncer"]
+    image: ${LOAD_PGBOUNCER_IMAGE:-pgbouncer/pgbouncer:latest}
+    container_name: ${LOAD_PROJECT:-apygg-load}-pgbouncer
+    environment:
+      DATABASES_HOST: postgres
+      DATABASES_PORT: "5432"
+      DATABASES_USER: load
+      DATABASES_PASSWORD: load
+      DATABASES_DBNAME: load
+      PGBOUNCER_POOL_MODE: transaction
+      PGBOUNCER_AUTH_TYPE: scram-sha-256
+      PGBOUNCER_AUTH_FILE: /etc/pgbouncer/userlist.txt
+      PGBOUNCER_MAX_CLIENT_CONN: "200"
+      PGBOUNCER_DEFAULT_POOL_SIZE: "${LOAD_PGBOUNCER_POOL:-20}"
+      PGBOUNCER_IGNORE_STARTUP_PARAMETERS: extra_float_digits
+    volumes:
+      - ./pgbouncer-userlist.txt:/etc/pgbouncer/userlist.txt:ro
+    mem_limit: 64m
+    depends_on:
+      postgres: { condition: service_healthy }
     networks: [net]
 
   app:

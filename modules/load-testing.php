@@ -10,6 +10,7 @@ return [
         'make/load.mk',
         'tests/Unit/Load',
         'docs/load-testing.md',
+        'docs/performance-baseline.md',
     ],
     'migrations' => [],
     'tables' => [],

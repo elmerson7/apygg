@@ -53,6 +53,15 @@ test('el stack temporal de carga limita la memoria a 2 GB en total', function ()
     $yml = file_get_contents(base_path('load/compose.yml'));
     preg_match_all('/mem_limit:\s*(\d+)m/', $yml, $m);
 
-    expect($m[1])->toHaveCount(3)
+    // PostgreSQL, Redis, la API y el PgBouncer opcional (perfil `pgbouncer`).
+    expect($m[1])->toHaveCount(4)
         ->and(array_sum(array_map('intval', $m[1])))->toBeLessThanOrEqual(2048);
+});
+
+test('el PgBouncer del stack de carga es opcional (perfil) y la campaña de rendimiento está documentada', function () {
+    $yml = file_get_contents(base_path('load/compose.yml'));
+
+    expect($yml)->toContain('profiles: ["pgbouncer"]')
+        ->and(file_exists(base_path('load/campaign.sh')))->toBeTrue()
+        ->and(file_get_contents(base_path('docs/performance-baseline.md')))->toContain('load/campaign.sh');
 });

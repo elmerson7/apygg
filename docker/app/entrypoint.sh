@@ -96,7 +96,8 @@ else
             --server=frankenphp \
             --host=0.0.0.0 \
             --port=$PORT \
-            --workers=auto || {
+            --workers="${OCTANE_WORKERS:-auto}" \
+            --max-requests="${OCTANE_MAX_REQUESTS:-500}" || {
             echo "Octane falló, usando servidor PHP integrado..."
             exec php -S 0.0.0.0:$PORT -t public public/index.php
         }

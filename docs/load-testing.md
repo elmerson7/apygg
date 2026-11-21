@@ -76,6 +76,13 @@ contenedores, volumen y red aunque algo falle (`trap`). En un servidor compartid
 LOAD_PROJECT=apygg-k6 LOAD_PORT=18010 flock /home/ubuntu/dev/apygg-wt/.verify.lock load/verify.sh
 ```
 
+## Campaña y línea base
+
+`load/campaign.sh` encadena el stack temporal, la siembra y los escenarios con muestreo de memoria/conexiones y candado, y `load/stack.sh app pgbouncer`
+mide con PgBouncer delante. Las cifras medidas y cómo repetirlas están en [`performance-baseline.md`](performance-baseline.md).
+Para una resistencia limpia usa `LOAD_WRITE_RATIO=0.05`: con las escrituras por defecto el flujo de invitaciones agota el tope de invitaciones pendientes de la empresa
+(`422 invitation_limit_reached`).
+
 ## Cómo leer un resultado
 
 - Un umbral rojo señala **qué** falló (`http_req_duration{kind:write}`...): mira primero la etiqueta `endpoint` en el JSON de `load/results/`.
