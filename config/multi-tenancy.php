@@ -78,7 +78,8 @@ return [
         'invitations' => [
             'ttl_hours' => (int) env('TENANT_INVITATION_TTL_HOURS', 168),
             'max_pending' => (int) env('TENANT_INVITATION_MAX_PENDING', 50),
-            'accept_url' => env('TENANT_INVITATION_URL', rtrim((string) env('FRONTEND_URL', env('APP_URL', 'http://localhost')), '/').'/invitations/accept?token={token}'),
+            // `?:` y no el default de env(): .env.example trae `TENANT_INVITATION_URL=` vacío y un valor vacío no activa el default.
+            'accept_url' => env('TENANT_INVITATION_URL') ?: rtrim((string) (env('FRONTEND_URL') ?: env('APP_URL', 'http://localhost')), '/').'/invitations/accept?token={token}',
             // false: el email del usuario que acepta debe ser el invitado (comparación en minúsculas).
             'allow_email_mismatch' => (bool) env('TENANT_INVITATION_ALLOW_EMAIL_MISMATCH', false),
         ],

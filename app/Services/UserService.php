@@ -19,6 +19,7 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
@@ -411,7 +412,9 @@ class UserService implements UserServiceInterface
             if ($meilisearchAvailable) {
                 // 1. Meilisearch: typo tolerance para name, email, username
                 // `search()` lo aporta el módulo `search` (trait Searchable de Scout); solo se llega aquí si está activo.
-                $matchedIds = collect(call_user_func([User::class, 'search'], $searchTerm)->get())->pluck('id');
+                /** @var Collection<int, User> $found */
+                $found = call_user_func([User::class, 'search'], $searchTerm)->get();
+                $matchedIds = $found->pluck('id');
 
                 // 2. SQL ILIKE: substring matching para identity_document
                 //    (Meilisearch no soporta %substring%)

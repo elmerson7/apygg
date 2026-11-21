@@ -43,6 +43,8 @@ setup:
 	@echo "→ Migraciones y datos base..."
 	$(DC) exec -T -u appuser app php artisan migrate --force
 	$(DC) exec -T -u appuser app php artisan db:seed --force
+	@echo "→ Contrato OpenAPI con el título de tu proyecto (docs/openapi.json; commitéalo)..."
+	$(DC) exec -T -u appuser app php artisan openapi:export
 	@echo "→ BD de tests..."
 	@bash ./create_testdb.sh --migrate
 	$(DC) exec -T -u appuser app php artisan storage:link --force

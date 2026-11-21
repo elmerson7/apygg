@@ -221,7 +221,11 @@ class AccountDeletionService implements AccountDeletionServiceInterface
         try {
             CacheService::forget('user:'.$userId);
             CacheService::forget('user:list');
-            User::withTrashed()->find($userId)?->unsearchable();
+            // `unsearchable()` lo aporta el módulo `search` (trait Searchable, referido por nombre para que compile sin el módulo); sin él no hay índice que limpiar.
+            $erased = User::withTrashed()->find($userId);
+            if ($erased !== null && in_array('App\\Traits\\Searchable', class_uses_recursive($erased), true)) {
+                call_user_func([$erased, 'unsearchable']);
+            }
         } catch (\Throwable $e) {
             report($e);
         }
