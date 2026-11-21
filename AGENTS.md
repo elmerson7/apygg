@@ -34,6 +34,7 @@ modelo de Claude**, solo lo consulta.
   Nunca copies `compose.env.example` a mano con `PROJECT=apygg`: colisiona con otros stacks.
 - `make doctor` diagnostica el entorno; `make upgrade-check` lista lo que trae `upstream`.
 - Para trabajar en el boilerplate con varios worktrees: `make wt-env NAME=<tarea>`.
+- Recibir mejoras del boilerplate (`upstream`, `make upgrade-check`, merge, conflictos): `docs/upgrading-from-boilerplate.md`.
 - Guía completa: `docs/new-project.md`. Nombres Docker (`<PROJECT>-<servicio>`) y puertos: `docs/new-project.md#nomenclatura-y-puertos`.
 
 ## Comandos — TODO va por Docker vía Make (NUNCA en el host)

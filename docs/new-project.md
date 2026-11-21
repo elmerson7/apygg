@@ -136,7 +136,7 @@ copia `compose.env.bak-<fecha>` y `.env.bak-<fecha>`) y pide confirmación. Con 
 Hace, en orden: valida `compose.env` → build → arranca postgres, redis y app → espera salud
 → espera a que la app instale `vendor/` la primera vez → `composer install` → arranca el
 resto de servicios (reverb, horizon, scheduler y, con dev, Mailpit y S3) → `migrate` y
-`db:seed` → BD de tests (`make testdb-migrate`) → `storage:link` → buckets S3 locales →
+`db:seed` → `openapi:export` (regenera `docs/openapi.json` con el título de tu proyecto: sale de `APP_TITLE`, y el test del contrato exige que coincida; **commitea ese cambio**) → BD de tests (`make testdb-migrate`) → `storage:link` → buckets S3 locales →
 espera `/health`. Al final imprime las URLs y las credenciales del admin:
 
 ```
@@ -200,6 +200,8 @@ rompe y qué acción exige) y `CHANGELOG.md`, y corre `make composer cmd=install
 `make migrate`, `make check`, `make test` y `make doctor`. Haz `make backup` antes.
 
 Variables nuevas de `.env.example`: añádelas a tu `.env` (no se sobrescribe solo).
+
+Guía completa (conflictos típicos, módulos quitados, versionado por etiquetas): `docs/upgrading-from-boilerplate.md`.
 
 ## 6. Desarrollar el propio boilerplate con varios worktrees
 

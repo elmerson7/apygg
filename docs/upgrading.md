@@ -4,6 +4,8 @@ Qué rompe o exige acción al pasar un proyecto creado desde APYGG a una versió
 más reciente. Cada sección empieza por la versión de origen. Los cambios sin
 impacto en un proyecto existente están en `CHANGELOG.md`.
 
+> Cómo traer los cambios del boilerplate a tu proyecto (remoto `upstream`, merge, conflictos): `docs/upgrading-from-boilerplate.md`.
+
 > Antes de empezar: **backup de la BD** (`make backup`) y una rama aparte.
 > Aplica los pasos en este orden. Los comandos son los de Make del repo
 > (nunca `php artisan` en el host).

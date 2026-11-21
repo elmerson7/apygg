@@ -180,6 +180,7 @@ return [
         'docs/sessions-and-2fa.md',
         'docs/testing-database.md',
         'docs/testing.md',
+        'docs/upgrading-from-boilerplate.md',
         'docs/upgrading.md',
         'lang/en/auth.php',
         'lang/en/messages.php',
