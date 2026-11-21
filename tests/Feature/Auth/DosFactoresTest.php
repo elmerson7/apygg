@@ -98,7 +98,9 @@ test('un codigo incorrecto responde 401 two_factor_invalid y no abre sesion', fu
 
 test('el mismo codigo TOTP no vale dos veces', function () {
     $user = usuarioCon2fa();
-    $codigo = totp(SECRETO_2FA, -1);
+    // Ventana ACTUAL (offset 0): si el reloj cruza el límite de 30 s entre calcular el código y verificarlo, pasa a ser el offset -1,
+    // que sigue dentro de la tolerancia (`auth.two_factor.window` = 1). Con -1 el cruce lo dejaba en -2: fuera de ventana (intermitente).
+    $codigo = totp(SECRETO_2FA);
 
     $c1 = loginPaso1($user)->json('data.challenge_token');
     $this->postJson('/auth/2fa/verify', ['challenge_token' => $c1, 'code' => $codigo])->assertOk();
@@ -111,7 +113,7 @@ test('un desafio resuelto no se puede reutilizar', function () {
     $user = usuarioCon2fa();
     $challenge = loginPaso1($user)->json('data.challenge_token');
 
-    $this->postJson('/auth/2fa/verify', ['challenge_token' => $challenge, 'code' => totp(SECRETO_2FA, -1)])->assertOk();
+    $this->postJson('/auth/2fa/verify', ['challenge_token' => $challenge, 'code' => totp(SECRETO_2FA)])->assertOk();
     $this->postJson('/auth/2fa/verify', ['challenge_token' => $challenge, 'code' => totp(SECRETO_2FA, 1)])
         ->assertStatus(401)->assertJsonPath('code', 'two_factor_invalid');
 });

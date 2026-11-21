@@ -212,8 +212,13 @@ test('el webhook, la conciliación y el cobro síncrono aplicando a la vez el mi
         expect($r['ok'])->toBeTrue($r['error'] ?? '');
     }
 
-    // Todos ven el cobro reflejado (idempotente), pero el efecto ocurre una sola vez: un pago, una factura pagada, un solo avance de periodo.
-    expect(collect($results)->pluck('result')->every(fn ($o) => $o === 'applied'))->toBeTrue(json_encode($results))
+    // Todos ven el cobro reflejado (idempotente): quien espera el bloqueo de otro devuelve `applied` (ve la factura ya pagada) y quien
+    // llega cuando el primero ya confirmó devuelve `already_applied`; cuál sale depende del orden de arranque de los procesos, no de un
+    // fallo. Lo que NO puede variar: nadie falla ni descarta el cobro, y el efecto ocurre una sola vez (un pago, una factura pagada,
+    // un solo avance de periodo).
+    $salidas = collect($results)->pluck('result');
+    expect($salidas->every(fn ($o) => in_array($o, ['applied', 'already_applied'], true)))->toBeTrue(json_encode($results))
+        ->and($salidas->contains('applied'))->toBeTrue(json_encode($results))
         ->and(DB::table('subscriptions')->where('id', $sid)->value('current_period_start'))->toBe($finAnterior)
         ->and(DB::table('payments')->where('id', $pago->id)->value('status'))->toBe('succeeded')
         ->and(DB::table('invoices')->where('id', $pago->invoice_id)->value('status'))->toBe('paid')
