@@ -105,7 +105,7 @@ debe aparecer en esta tabla (lo verifica `tests/Unit/ErrorCodeDocsTest.php`).
 ### Códigos propios del boilerplate (strings, fuera del enum)
 
 `public_sharing_disabled` (403, compartir archivos públicos apagado), `sequence_exhausted` (409, secuencia en su máximo),
-`plan_limit_unknown` (422, clave de límite no declarada), `plan_limit_reached` (403), `feature_unknown` (404).
+`plan_limit_unknown` (422, clave de límite no declarada), `plan_limit_reached` (403), `feature_unknown` (404), `invalid_query` (400, filtro, orden o `include` fuera de la lista blanca del listado; `docs/api-routes-conventions.md`).
 
 Archivos (`docs/files.md`): `storage_quota_exceeded` (403, cuota de almacenamiento del plan; `limit_bytes`, `used_bytes`, `adding_bytes`),
 `file_too_large_for_plan` (413, `max_file_mb` del plan; `limit_bytes`), `direct_upload_unsupported` (422, el disco no firma subidas),

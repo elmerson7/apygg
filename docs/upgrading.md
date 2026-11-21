@@ -51,6 +51,13 @@ impacto en un proyecto existente están en `CHANGELOG.md`.
 - Nuevo middleware `deprecated:<sunset>[,<url>]` (cabeceras `Deprecation`/`Sunset`/`Link`; `docs/api-routes-conventions.md`).
 - Los logs de refresh token ya no incluyen `token_preview` (50 caracteres del JWT) sino `token_fingerprint` (hash corto). Si
   tenías alertas sobre ese campo, cámbialas.
+### Filtros, orden e include estándar (cambio menor de comportamiento)
+
+- `GET /users`, `GET /files` y `GET /admin/logs/{activity,api,security}` aceptan `filter[campo]`, `sort=-campo,otro` e `include=` (aditivo; los parámetros de antes siguen valiendo).
+- Un `sort`, `sort_by`, `include` o `filter[...]` **fuera de la lista blanca** ahora responde **400 `invalid_query`**; antes `sort`/`include` desconocidos caían en silencio al valor por defecto. Si un cliente enviaba uno inválido, corrígelo.
+- `GET /users` ahora respeta `?page=` (antes el servicio fijaba la página 1).
+- Se quita `spatie/laravel-query-builder` de `composer.json` (no se usaba). Si tu proyecto sí lo usaba, vuelve a requerirlo.
+- Listados propios: declara `#[Listing]` y llama a `$this->listing()` (`docs/api-routes-conventions.md`).
 
 ### Prefijo de versión opcional `API_PREFIX` (no rompe: opt-in)
 

@@ -58,9 +58,16 @@ test('el listado de usuarios se ordena por nombre ascendente', function () {
     expect($nombres->all())->toBe(['Alfa Prueba', 'Medio Prueba', 'Zeta Prueba']);
 });
 
-test('un campo de orden que no existe no rompe el listado', function () {
+test('un campo de orden que no existe responde 400 invalid_query (lista blanca, ya no cae en silencio)', function () {
     $this->withHeaders(usuariosCabeceras(usuariosCon('users.read')))
         ->getJson('/users?sort=password&order=sinsentido')
+        ->assertStatus(400)
+        ->assertJsonPath('code', 'invalid_query');
+});
+
+test('un order sin sentido con un campo de orden válido se ignora', function () {
+    $this->withHeaders(usuariosCabeceras(usuariosCon('users.read')))
+        ->getJson('/users?sort=name&order=sinsentido')
         ->assertOk()
         ->assertJsonPath('success', true);
 });

@@ -4145,8 +4145,41 @@
                 ],
                 "parameters": [
                     {
+                        "name": "filter[user_id]",
+                        "in": "query",
+                        "description": "Filtro del endpoint.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[type]",
+                        "in": "query",
+                        "description": "Igualdad; varios valores separados por comas (`a,b`) = cualquiera de ellos.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[category]",
+                        "in": "query",
+                        "description": "Igualdad; varios valores separados por comas (`a,b`) = cualquiera de ellos.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[is_public]",
+                        "in": "query",
+                        "description": "`true` o `false`.",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
                         "name": "user_id",
                         "in": "query",
+                        "description": "Alias de `filter[user_id]` (se mantiene por compatibilidad).",
                         "schema": {
                             "type": "string"
                         }
@@ -4154,6 +4187,7 @@
                     {
                         "name": "type",
                         "in": "query",
+                        "description": "Alias de `filter[type]` (se mantiene por compatibilidad).",
                         "schema": {
                             "type": "string"
                         }
@@ -4161,6 +4195,7 @@
                     {
                         "name": "category",
                         "in": "query",
+                        "description": "Alias de `filter[category]` (se mantiene por compatibilidad).",
                         "schema": {
                             "type": "string"
                         }
@@ -4168,14 +4203,48 @@
                     {
                         "name": "is_public",
                         "in": "query",
+                        "description": "Alias de `filter[is_public]` (se mantiene por compatibilidad).",
                         "schema": {
-                            "type": "boolean",
-                            "default": false
+                            "type": "boolean"
                         }
                     },
                     {
                         "name": "sort_by",
                         "in": "query",
+                        "description": "Alias de `sort` (compatibilidad): un solo campo.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "order",
+                        "in": "query",
+                        "description": "Alias (compatibilidad): `asc` o `desc` para un único criterio de `sort`.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "description": "Alias de `order` (compatibilidad).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Orden: campos separados por comas, `-` delante = descendente (`-created_at` por defecto). Permitidos: created_at, name, size, type.",
+                        "schema": {
+                            "type": "string",
+                            "default": "-created_at"
+                        }
+                    },
+                    {
+                        "name": "include",
+                        "in": "query",
+                        "description": "Relaciones a incluir, separadas por comas. Permitidas: user.",
                         "schema": {
                             "type": "string"
                         }
@@ -4204,7 +4273,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Correcto",
+                        "description": "Correcto. Con `?cursor=` o `?pagination=cursor` la paginación es por cursor (`meta.next_cursor`, sin totales).",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -4236,6 +4305,9 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
                     },
                     "401": {
                         "$ref": "#/components/responses/Unauthenticated"
@@ -7805,7 +7877,7 @@
         "/admin/logs/activity": {
             "get": {
                 "operationId": "logs.activity",
-                "summary": "GET /admin/logs/activity\nLista activity logs con filtros",
+                "summary": "GET /admin/logs/activity\nLista activity logs con filtros (`filter[...]`, `sort`; los nombres sueltos de antes siguen valiendo)",
                 "tags": [
                     "Logs"
                 ],
@@ -7939,6 +8011,97 @@
                         }
                     },
                     {
+                        "name": "filter[user_id]",
+                        "in": "query",
+                        "description": "Igualdad; varios valores separados por comas (`a,b`) = cualquiera de ellos.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "filter[action]",
+                        "in": "query",
+                        "description": "Igualdad; varios valores separados por comas (`a,b`) = cualquiera de ellos.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[model_type]",
+                        "in": "query",
+                        "description": "Contiene el texto (sin distinguir mayúsculas).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[from]",
+                        "in": "query",
+                        "description": "Desde (inclusive), fecha ISO 8601.",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "filter[to]",
+                        "in": "query",
+                        "description": "Hasta (inclusive), fecha ISO 8601.",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "filter[tenant_id]",
+                        "in": "query",
+                        "description": "Igualdad; varios valores separados por comas (`a,b`) = cualquiera de ellos.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "tenant_id",
+                        "in": "query",
+                        "description": "Alias de `filter[tenant_id]` (se mantiene por compatibilidad).",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Alias de `sort` (compatibilidad): un solo campo.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "order",
+                        "in": "query",
+                        "description": "Alias (compatibilidad): `asc` o `desc` para un único criterio de `sort`.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "description": "Alias de `order` (compatibilidad).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Orden: campos separados por comas, `-` delante = descendente (`-created_at` por defecto). Permitidos: created_at.",
+                        "schema": {
+                            "type": "string",
+                            "default": "-created_at"
+                        }
+                    },
+                    {
                         "name": "page",
                         "in": "query",
                         "description": "Número de página (empieza en 1).",
@@ -7962,7 +8125,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Correcto",
+                        "description": "Correcto. Con `?cursor=` o `?pagination=cursor` la paginación es por cursor (`meta.next_cursor`, sin totales).",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -7994,6 +8157,9 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
                     },
                     "401": {
                         "$ref": "#/components/responses/Unauthenticated"
@@ -8198,6 +8364,105 @@
                         }
                     },
                     {
+                        "name": "filter[user_id]",
+                        "in": "query",
+                        "description": "Igualdad; varios valores separados por comas (`a,b`) = cualquiera de ellos.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "filter[method]",
+                        "in": "query",
+                        "description": "Filtro del endpoint.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[status_code]",
+                        "in": "query",
+                        "description": "Igualdad; varios valores separados por comas (`a,b`) = cualquiera de ellos.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "filter[endpoint]",
+                        "in": "query",
+                        "description": "Contiene el texto (sin distinguir mayúsculas).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[from]",
+                        "in": "query",
+                        "description": "Desde (inclusive), fecha ISO 8601.",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "filter[to]",
+                        "in": "query",
+                        "description": "Hasta (inclusive), fecha ISO 8601.",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "filter[tenant_id]",
+                        "in": "query",
+                        "description": "Igualdad; varios valores separados por comas (`a,b`) = cualquiera de ellos.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "tenant_id",
+                        "in": "query",
+                        "description": "Alias de `filter[tenant_id]` (se mantiene por compatibilidad).",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Alias de `sort` (compatibilidad): un solo campo.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "order",
+                        "in": "query",
+                        "description": "Alias (compatibilidad): `asc` o `desc` para un único criterio de `sort`.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "description": "Alias de `order` (compatibilidad).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Orden: campos separados por comas, `-` delante = descendente (`-created_at` por defecto). Permitidos: created_at, status_code, response_time_ms.",
+                        "schema": {
+                            "type": "string",
+                            "default": "-created_at"
+                        }
+                    },
+                    {
                         "name": "page",
                         "in": "query",
                         "description": "Número de página (empieza en 1).",
@@ -8221,7 +8486,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Correcto",
+                        "description": "Correcto. Con `?cursor=` o `?pagination=cursor` la paginación es por cursor (`meta.next_cursor`, sin totales).",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -8253,6 +8518,9 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
                     },
                     "401": {
                         "$ref": "#/components/responses/Unauthenticated"
@@ -8457,6 +8725,97 @@
                         }
                     },
                     {
+                        "name": "filter[event_type]",
+                        "in": "query",
+                        "description": "Igualdad; varios valores separados por comas (`a,b`) = cualquiera de ellos.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[user_id]",
+                        "in": "query",
+                        "description": "Igualdad; varios valores separados por comas (`a,b`) = cualquiera de ellos.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "filter[ip_address]",
+                        "in": "query",
+                        "description": "Igualdad; varios valores separados por comas (`a,b`) = cualquiera de ellos.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[from]",
+                        "in": "query",
+                        "description": "Desde (inclusive), fecha ISO 8601.",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "filter[to]",
+                        "in": "query",
+                        "description": "Hasta (inclusive), fecha ISO 8601.",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "filter[tenant_id]",
+                        "in": "query",
+                        "description": "Igualdad; varios valores separados por comas (`a,b`) = cualquiera de ellos.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "tenant_id",
+                        "in": "query",
+                        "description": "Alias de `filter[tenant_id]` (se mantiene por compatibilidad).",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Alias de `sort` (compatibilidad): un solo campo.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "order",
+                        "in": "query",
+                        "description": "Alias (compatibilidad): `asc` o `desc` para un único criterio de `sort`.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "description": "Alias de `order` (compatibilidad).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Orden: campos separados por comas, `-` delante = descendente (`-created_at` por defecto). Permitidos: created_at.",
+                        "schema": {
+                            "type": "string",
+                            "default": "-created_at"
+                        }
+                    },
+                    {
                         "name": "page",
                         "in": "query",
                         "description": "Número de página (empieza en 1).",
@@ -8480,7 +8839,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Correcto",
+                        "description": "Correcto. Con `?cursor=` o `?pagination=cursor` la paginación es por cursor (`meta.next_cursor`, sin totales).",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -8512,6 +8871,9 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
                     },
                     "401": {
                         "$ref": "#/components/responses/Unauthenticated"
@@ -17103,14 +17465,72 @@
         "/users": {
             "get": {
                 "operationId": "users.index",
+                "description": "`filter[search|role|exclude_roles|name|email|username|identity_document]`, `sort=-created_at,name`, `include=permissions`.\n`?search=`, `?role=`, `?email=`, `?sort=` + `?order=` siguen funcionando como alias.",
                 "summary": "Display a listing of users",
                 "tags": [
                     "User"
                 ],
                 "parameters": [
                     {
+                        "name": "filter[search]",
+                        "in": "query",
+                        "description": "Filtro del endpoint.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[role]",
+                        "in": "query",
+                        "description": "Filtro del endpoint.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[exclude_roles]",
+                        "in": "query",
+                        "description": "Filtro del endpoint.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[name]",
+                        "in": "query",
+                        "description": "Contiene el texto (sin distinguir mayúsculas).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[email]",
+                        "in": "query",
+                        "description": "Contiene el texto (sin distinguir mayúsculas).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[username]",
+                        "in": "query",
+                        "description": "Contiene el texto (sin distinguir mayúsculas).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[identity_document]",
+                        "in": "query",
+                        "description": "Contiene el texto (sin distinguir mayúsculas).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
                         "name": "search",
                         "in": "query",
+                        "description": "Alias de `filter[search]` (se mantiene por compatibilidad).",
                         "schema": {
                             "type": "string"
                         }
@@ -17118,6 +17538,7 @@
                     {
                         "name": "role",
                         "in": "query",
+                        "description": "Alias de `filter[role]` (se mantiene por compatibilidad).",
                         "schema": {
                             "type": "string"
                         }
@@ -17125,6 +17546,31 @@
                     {
                         "name": "email",
                         "in": "query",
+                        "description": "Alias de `filter[email]` (se mantiene por compatibilidad).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Alias de `sort` (compatibilidad): un solo campo.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "order",
+                        "in": "query",
+                        "description": "Alias (compatibilidad): `asc` o `desc` para un único criterio de `sort`.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "description": "Alias de `order` (compatibilidad).",
                         "schema": {
                             "type": "string"
                         }
@@ -17132,17 +17578,18 @@
                     {
                         "name": "sort",
                         "in": "query",
+                        "description": "Orden: campos separados por comas, `-` delante = descendente (`-created_at` por defecto). Permitidos: name, email, username, identity_document, created_at, updated_at, email_verified_at.",
                         "schema": {
                             "type": "string",
-                            "default": "created_at"
+                            "default": "-created_at"
                         }
                     },
                     {
-                        "name": "order",
+                        "name": "include",
                         "in": "query",
+                        "description": "Relaciones a incluir, separadas por comas. Permitidas: roles, profile, permissions.",
                         "schema": {
-                            "type": "string",
-                            "default": "desc"
+                            "type": "string"
                         }
                     },
                     {
@@ -17201,6 +17648,9 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
                     },
                     "401": {
                         "$ref": "#/components/responses/Unauthenticated"
@@ -24905,6 +25355,16 @@
             },
             "NotFound": {
                 "description": "El recurso o la ruta no existe (`code`: `not_found`).",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/ApiError"
+                        }
+                    }
+                }
+            },
+            "BadRequest": {
+                "description": "Solicitud malformada.",
                 "content": {
                     "application/json": {
                         "schema": {

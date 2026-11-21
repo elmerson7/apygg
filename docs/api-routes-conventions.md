@@ -191,6 +191,47 @@ GET /users?page=2&per_page=50&sort=name&order=asc
 
 ---
 
+## Filtros, orden e include
+
+Todo listado con parámetros declara su lista blanca con el atributo `#[Listing(...)]` sobre el método del controller
+(`App\Support\Listing\Listing`) y responde con `$this->listing($request, $query)` (trait `ListsResources`, ya en el
+`Controller` base). Esa declaración es la única fuente de verdad: `ListingQuery` la aplica en ejecución y la extensión de
+OpenAPI documenta de ella `filter[campo]`, `sort` e `include` (más el 400). No se usa `spatie/laravel-query-builder`: se
+quitó de composer (no encaja con listados que pasan por un servicio y su 400 no llevaba `code`).
+
+```php
+#[Listing(
+    filters: ['status' => 'exact', 'name' => 'partial', 'from' => 'from:created_at', 'to' => 'to:created_at', 'owner_id' => 'int'],
+    sorts: ['created_at', 'name'],
+    includes: ['user'],
+    legacy: ['status'],          // `?status=x` sigue valiendo como `filter[status]=x`
+)]
+public function index(Request $request): JsonResponse
+{
+    return $this->listing($request, Thing::query()->where(...));   // la consulta ya acotada (permisos, tenant)
+}
+```
+
+| Parámetro | Forma | Notas |
+|---|---|---|
+| Filtro | `filter[campo]=valor` | tipos `exact` (con `a,b` = IN), `int`, `bool`, `partial` (ILIKE escapado), `from`/`to` (ISO 8601), `custom` (callback del controller) |
+| Orden | `sort=-campo,otro` | `-` = descendente; máx. 5 criterios; desempate por clave primaria (offset y cursor estables). Alias: `sort_by` + `order`/`sort_order` |
+| Include | `include=rel,otra` | solo relaciones declaradas; se cargan con `with` (sin N+1) |
+| Páginas | `page`, `per_page` | SQL (`paginate`); el máximo lo fija `maxPerPage` |
+| Cursor | `pagination=cursor` o `cursor=<opaco>` | `cursorPaginate`, sin `COUNT`; respuesta de `sendCursorPaginated` |
+
+- Un filtro, orden o include **fuera de la lista**, o un valor mal formado (`filter[status_code]=abc`), responde **400**
+  con `code: invalid_query` y `errors` que dice qué parámetro falló. Nunca se ordena ni filtra por una columna no declarada.
+- Los parámetros de listados anteriores (`?search=`, `?role=`, `?sort=` + `?order=`, `?sort_by=`) siguen funcionando como alias
+  (`legacy`): el cambio de contrato es aditivo. Novedad de comportamiento: un `sort`/`include` desconocido ya no cae
+  en silencio al valor por defecto, responde 400 (ver `docs/upgrading.md`).
+- Aplicado en `GET /users`, `GET /files` y `GET /admin/logs/{activity,api,security}`. No se aplicó a `/admin/audit`
+  ni `/tenant/audit`: comparten filtros con su export CSV y ya validan con `ListAuditRequest`; se migrarán cuando haga falta orden libre.
+- Listados que pasan por un servicio (usuarios): `$this->listingQuery($request)` devuelve el `ListingQuery` validado y el
+  servicio llama a `->apply($query, handled: [...])`.
+- Un proyecto nuevo con un listado propio solo declara `#[Listing]` y llama a `listing()`; el test mínimo cubre filtro
+  permitido, no permitido (400), orden, include y aislamiento entre tenants (`tests/Feature/Listing/ListadosEstandarTest.php`).
+
 ## Versiones y apps móviles
 
 Una app web se actualiza al recargar; una app móvil publicada **no**: hay versiones viejas en la calle meses.

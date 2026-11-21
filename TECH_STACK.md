@@ -35,7 +35,6 @@ Extensiones PHP instaladas en la imagen: `pcntl`, `intl`, `zip`, `opcache`, `gd`
 
 Dependencias del `composer.json` sin uso en `app/`, `config/`, `routes/` ni `bootstrap/` (comprobado con grep):
 
-- `spatie/laravel-query-builder` (6.4.4).
 
 ## Desarrollo y calidad
 

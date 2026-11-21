@@ -3,6 +3,7 @@
 namespace App\OpenApi\Extensions;
 
 use App\OpenApi\ApiErrorSchemas;
+use App\Support\Listing\Listing;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Parameter;
@@ -45,6 +46,7 @@ class ApiContractOperationExtension extends OperationExtension
 
         $this->documentSecurity($operation, $middleware);
         $this->documentErrors($operation, $routeInfo, $middleware);
+        $this->documentListing($operation, $routeInfo);
 
         $responses = [];
         foreach ($operation->responses ?? [] as $response) {
@@ -54,6 +56,130 @@ class ApiContractOperationExtension extends OperationExtension
         }
 
         $operation->responses = $this->sortedUniqueByStatus($responses);
+    }
+
+    /**
+     * Listados con `#[Listing]`: documenta `filter[campo]`, `sort` e `include` con la lista blanca real del endpoint
+     * (la misma que aplica `ListingQuery`), más el 400 `invalid_query`.
+     */
+    private function documentListing(Operation $operation, RouteInfo $routeInfo): void
+    {
+        $attribute = $routeInfo->reflectionMethod()?->getAttributes(Listing::class)[0] ?? null;
+        if ($attribute === null) {
+            return;
+        }
+
+        $spec = $attribute->newInstance();
+        $params = [];
+
+        foreach ($spec->filters as $name => $definition) {
+            [$type] = $spec->filterDefinition($name);
+            $schema = match ($type) {
+                'bool' => new BooleanType,
+                'int' => new IntegerType,
+                'from', 'to' => (new StringType)->format('date-time'),
+                default => new StringType,
+            };
+            $description = match ($type) {
+                'exact', 'int' => 'Igualdad; varios valores separados por comas (`a,b`) = cualquiera de ellos.',
+                'partial' => 'Contiene el texto (sin distinguir mayúsculas).',
+                'from' => 'Desde (inclusive), fecha ISO 8601.',
+                'to' => 'Hasta (inclusive), fecha ISO 8601.',
+                'bool' => '`true` o `false`.',
+                default => 'Filtro del endpoint.',
+            };
+            $params['filter['.$name.']'] = [$schema, $description];
+        }
+
+        // Alias de listados anteriores (`?role=x` = `filter[role]=x`): se mantienen documentados (el contrato no los quita).
+        $existing = array_map(fn ($p) => $p instanceof Parameter && $p->in === 'query' ? $p->name : null, $operation->parameters);
+        foreach ($spec->legacy as $name) {
+            // Si el Form Request ya lo documenta (con su enum, formato...), se respeta tal cual.
+            if (isset($spec->filters[$name]) && ! in_array($name, $existing, true)) {
+                $params[$name] = [$params['filter['.$name.']'][0], 'Alias de `filter['.$name.']` (se mantiene por compatibilidad).'];
+            }
+        }
+
+        $sorts = array_keys($spec->sortColumns());
+        if ($sorts !== [] && $spec->legacy !== []) {
+            $params['sort_by'] = [new StringType, 'Alias de `sort` (compatibilidad): un solo campo.'];
+            $params['order'] = [new StringType, 'Alias (compatibilidad): `asc` o `desc` para un único criterio de `sort`.'];
+            $params['sort_order'] = [new StringType, 'Alias de `order` (compatibilidad).'];
+        }
+
+        if ($sorts !== []) {
+            $params['sort'] = [(new StringType)->default($spec->defaultSort), 'Orden: campos separados por comas, `-` delante = descendente (`'.$spec->defaultSort.'` por defecto). Permitidos: '.implode(', ', $sorts).'.'];
+        }
+
+        if ($spec->includes !== []) {
+            $params['include'] = [new StringType, 'Relaciones a incluir, separadas por comas. Permitidas: '.implode(', ', $spec->includes).'.'];
+        }
+
+        // Un parámetro que el contrato ya publicaba conserva su valor por defecto documentado (solo documentación:
+        // el comportamiento real sigue siendo el de `#[Listing]`).
+        $defaults = [];
+        foreach ($operation->parameters as $p) {
+            if ($p instanceof Parameter && $p->in === 'query' && isset($params[$p->name]) && $p->schema?->type->default !== null) {
+                $defaults[$p->name] = $p->schema->type->default;
+            }
+        }
+
+        $operation->parameters = array_values(array_filter(
+            $operation->parameters,
+            fn ($p) => ! ($p instanceof Parameter && $p->in === 'query' && isset($params[$p->name]))
+        ));
+
+        foreach ($params as $name => [$type, $description]) {
+            if (isset($defaults[$name])) {
+                $type->default($defaults[$name]);
+            }
+
+            $parameter = Parameter::make($name, 'query');
+            $parameter->description = $description;
+            $parameter->schema = Schema::fromType($type);
+            $operation->parameters[] = $parameter;
+        }
+
+        if (! $this->hasStatus($operation, 400)) {
+            $operation->addResponse(ApiErrorSchemas::response($this->openApiTransformer->getComponents(), 400));
+        }
+
+        $this->ensurePaginatedResponse($operation);
+    }
+
+    /**
+     * `ListsResources::listing()` elige entre `sendPaginated` y `sendCursorPaginated` en ejecución y Scramble no
+     * puede inferir el 200 de esa mezcla: se declara el envelope de listado (por páginas; el cursor se documenta
+     * en `description`) y `normalizeResponse` lo completa con el `$resource` del controller.
+     */
+    private function ensurePaginatedResponse(Operation $operation): void
+    {
+        foreach ($operation->responses ?? [] as $response) {
+            $resolved = $response instanceof Reference ? $response->resolve() : $response;
+            if ($resolved instanceof Response && (int) $resolved->code === 200) {
+                $schema = $resolved->content['application/json'] ?? null;
+                $type = $schema instanceof Schema ? $schema->type : null;
+                if ($type instanceof ObjectType && $type->hasProperty('links')) {
+                    return;
+                }
+            }
+        }
+
+        $envelope = (new ObjectType)
+            ->addProperty('success', new BooleanType)
+            ->addProperty('data', new ArrayType)
+            ->addProperty('meta', new ObjectType)
+            ->addProperty('links', (new ObjectType)->addProperty('first', new StringType));
+
+        $operation->responses = array_values(array_filter(
+            $operation->responses ?? [],
+            fn ($r) => ! (($r instanceof Reference ? $r->resolve() : $r) instanceof Response && (int) ($r instanceof Reference ? $r->resolve() : $r)->code === 200)
+        ));
+        $operation->addResponse(
+            Response::make(200)
+                ->setDescription('Correcto. Con `?cursor=` o `?pagination=cursor` la paginación es por cursor (`meta.next_cursor`, sin totales).')
+                ->setContent('application/json', Schema::fromType($envelope))
+        );
     }
 
     /**

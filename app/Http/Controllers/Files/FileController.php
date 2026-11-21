@@ -12,7 +12,9 @@ use App\Http\Resources\Files\FileResource;
 use App\Models\File;
 use App\Models\Tenant;
 use App\Services\LogService;
+use App\Support\Listing\Listing;
 use App\Support\Tenancy\TenantContext;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -38,42 +40,25 @@ class FileController extends Controller
      *
      * GET /api/files
      */
+    #[Listing(
+        filters: ['user_id' => 'custom', 'type' => 'exact', 'category' => 'exact', 'is_public' => 'bool'],
+        sorts: ['created_at', 'name', 'size', 'type'],
+        includes: ['user'],
+        legacy: ['user_id', 'type', 'category', 'is_public'],
+    )]
     public function index(Request $request): JsonResponse
     {
         $query = File::query();
 
-        // Filtrar por usuario autenticado (solo sus archivos)
-        if (! $request->user()->can('files.manage')) {
+        // Filtrar por usuario autenticado (solo sus archivos); quien gestiona puede filtrar por usuario.
+        $canManage = $request->user()->can('files.manage');
+        if (! $canManage) {
             $query->where('user_id', $request->user()->id);
-        } elseif ($request->has('user_id')) {
-            $query->where('user_id', $request->input('user_id'));
         }
 
-        // Filtros
-        if ($request->has('type')) {
-            $query->ofType($request->input('type'));
-        }
-
-        if ($request->has('category')) {
-            $query->ofCategory($request->input('category'));
-        }
-
-        if ($request->has('is_public')) {
-            $query->where('is_public', $request->boolean('is_public'));
-        }
-
-        // Ordenamiento
-        $sortBy = in_array($request->input('sort_by'), ['created_at', 'name', 'size', 'type'], true)
-            ? $request->input('sort_by')
-            : 'created_at';
-        $sortOrder = $request->input('sort_order') === 'asc' ? 'asc' : 'desc';
-        $query->orderBy($sortBy, $sortOrder);
-
-        // Paginación
-        $perPage = $this->perPage($request);
-        $files = $query->paginate($perPage);
-
-        return $this->sendPaginated($files);
+        return $this->listing($request, $query, [
+            'user_id' => fn (Builder $q, string $v) => $canManage ? $q->where('user_id', (int) $v) : null,
+        ]);
     }
 
     /**

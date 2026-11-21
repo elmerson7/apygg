@@ -7,6 +7,8 @@ use App\Http\Requests\Logs\ListLogsRequest;
 use App\Models\Logs\ActivityLog;
 use App\Models\Logs\ApiLog;
 use App\Models\Logs\SecurityLog;
+use App\Support\Listing\Listing;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -21,107 +23,50 @@ class LogsController extends Controller
 {
     /**
      * GET /admin/logs/activity
-     * Lista activity logs con filtros.
+     * Lista activity logs con filtros (`filter[...]`, `sort`; los nombres sueltos de antes siguen valiendo).
      */
+    #[Listing(
+        filters: ['user_id' => 'int', 'action' => 'exact', 'model_type' => 'partial', 'from' => 'from:created_at', 'to' => 'to:created_at', 'tenant_id' => 'int'],
+        sorts: ['created_at'],
+        legacy: ['user_id', 'action', 'model_type', 'from', 'to', 'tenant_id'],
+        defaultPerPage: 20,
+    )]
     public function activity(ListLogsRequest $request): JsonResponse
     {
-        $query = ActivityLog::query()->latest();
-
-        if ($request->filled('user_id')) {
-            $query->where('user_id', $request->input('user_id'));
-        }
-        if ($request->filled('action')) {
-            $query->where('action', $request->input('action'));
-        }
-        if ($request->filled('model_type')) {
-            $query->where('model_type', 'like', '%'.$request->input('model_type').'%');
-        }
-        if ($request->filled('from')) {
-            $query->where('created_at', '>=', $request->input('from'));
-        }
-        if ($request->filled('to')) {
-            $query->where('created_at', '<=', $request->input('to'));
-        }
-
         // Multiempresa: la plataforma ve todo; `tenant_id` filtra por empresa (docs/multi-tenancy.md)
-        if ($request->filled('tenant_id')) {
-            $query->where('tenant_id', (int) $request->input('tenant_id'));
-        }
-
-        $perPage = $this->perPage($request, 20);
-
-        return $this->sendPaginated($query->paginate($perPage));
+        return $this->listing($request, ActivityLog::query());
     }
 
     /**
      * GET /admin/logs/api
      * Lista api logs con filtros.
      */
+    #[Listing(
+        filters: ['user_id' => 'int', 'method' => 'custom', 'status_code' => 'int:response_status', 'endpoint' => 'partial:request_path', 'from' => 'from:created_at', 'to' => 'to:created_at', 'tenant_id' => 'int'],
+        sorts: ['created_at', 'status_code' => 'response_status', 'response_time_ms'],
+        legacy: ['user_id', 'method', 'status_code', 'endpoint', 'from', 'to', 'tenant_id'],
+        defaultPerPage: 20,
+    )]
     public function api(ListLogsRequest $request): JsonResponse
     {
-        $query = ApiLog::query()->latest();
-
-        if ($request->filled('user_id')) {
-            $query->where('user_id', $request->input('user_id'));
-        }
-        if ($request->filled('method')) {
-            $query->where('request_method', strtoupper((string) $request->input('method')));
-        }
-        if ($request->filled('status_code')) {
-            $query->where('response_status', (int) $request->input('status_code'));
-        }
-        if ($request->filled('endpoint')) {
-            $query->where('request_path', 'like', '%'.$request->input('endpoint').'%');
-        }
-        if ($request->filled('from')) {
-            $query->where('created_at', '>=', $request->input('from'));
-        }
-        if ($request->filled('to')) {
-            $query->where('created_at', '<=', $request->input('to'));
-        }
-
-        // Multiempresa: la plataforma ve todo; `tenant_id` filtra por empresa (docs/multi-tenancy.md)
-        if ($request->filled('tenant_id')) {
-            $query->where('tenant_id', (int) $request->input('tenant_id'));
-        }
-
-        $perPage = $this->perPage($request, 20);
-
-        return $this->sendPaginated($query->paginate($perPage));
+        return $this->listing($request, ApiLog::query(), [
+            'method' => fn (Builder $q, string $v) => $q->where('request_method', strtoupper($v)),
+        ]);
     }
 
     /**
      * GET /admin/logs/security
      * Lista security logs con filtros.
      */
+    #[Listing(
+        filters: ['event_type' => 'exact', 'user_id' => 'int', 'ip_address' => 'exact', 'from' => 'from:created_at', 'to' => 'to:created_at', 'tenant_id' => 'int'],
+        sorts: ['created_at'],
+        legacy: ['event_type', 'user_id', 'ip_address', 'from', 'to', 'tenant_id'],
+        defaultPerPage: 20,
+    )]
     public function security(ListLogsRequest $request): JsonResponse
     {
-        $query = SecurityLog::query()->latest();
-
-        if ($request->filled('event_type')) {
-            $query->where('event_type', $request->input('event_type'));
-        }
-        if ($request->filled('user_id')) {
-            $query->where('user_id', $request->input('user_id'));
-        }
-        if ($request->filled('ip_address')) {
-            $query->where('ip_address', $request->input('ip_address'));
-        }
-        if ($request->filled('from')) {
-            $query->where('created_at', '>=', $request->input('from'));
-        }
-        if ($request->filled('to')) {
-            $query->where('created_at', '<=', $request->input('to'));
-        }
-
-        // Multiempresa: la plataforma ve todo; `tenant_id` filtra por empresa (docs/multi-tenancy.md)
-        if ($request->filled('tenant_id')) {
-            $query->where('tenant_id', (int) $request->input('tenant_id'));
-        }
-
-        $perPage = $this->perPage($request, 20);
-
-        return $this->sendPaginated($query->paginate($perPage));
+        return $this->listing($request, SecurityLog::query());
     }
 
     /**

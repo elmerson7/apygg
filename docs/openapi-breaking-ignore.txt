@@ -8,3 +8,10 @@
 # identity_document pasa de obligatorio a opcional (nullable) en el alta de usuarios: relaja la petición, ningún cliente
 # publicado deja de funcionar (oasdiff marca el cambio de tipo string -> string|null). Ola 9 limpieza-codigo, 2026-11-21, aprobado por el dueño del boilerplate.
 POST /users the 'identity_document' request property type/format changed from 'string'/'' to 'string, null'/''
+# Ola 9 «filtros» (2026-11-21): estos tres avisos son solo de DOCUMENTACIÓN. Scramble inferia los valores por defecto de
+# `$request->get('sort', 'created_at')`/`get('order', 'desc')` y de `is_public`; ahora el listado se declara con #[Listing]
+# y el comportamiento real es idéntico (sin `sort`: `created_at` descendente; sin `is_public`: sin filtro). `order` y
+# `is_public` siguen aceptándose como alias. Aprobado por el orquestador de la ola; quitar la línea cuando esté en main.
+GET /files for the 'query' request parameter 'is_public', default value 'false' was removed
+GET /users for the 'query' request parameter 'sort', default value was changed from 'created_at' to '-created_at'
+GET /users for the 'query' request parameter 'order', default value 'desc' was removed

@@ -17,6 +17,7 @@ use App\Models\Logs\ActivityLog;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use App\Support\Listing\ListingQuery;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -363,7 +364,8 @@ class UserService implements UserServiceInterface
      * Listar usuarios con paginación y filtros.
      * Carga roles, state por defecto; permissions solo si se solicita en include.
      *
-     * @param  array<string, mixed>  $filters  ['search', 'per_page', 'page', 'include', 'role', 'exclude_roles']
+     * @param  array<string, mixed>  $filters  ['search', 'per_page', 'page', 'include', 'role', 'exclude_roles', 'sort', 'order'];
+     *                                         `listing` (ListingQuery ya validado) sustituye a `sort`/`order`/`include` y añade los filtros por columna
      * @return LengthAwarePaginator<int, User>
      */
     public function list(array $filters = []): LengthAwarePaginator
@@ -390,6 +392,7 @@ class UserService implements UserServiceInterface
             }
         }
 
+        $listing = ($filters['listing'] ?? null) instanceof ListingQuery ? $filters['listing'] : null;
         $query = User::with($relations);
 
         if ($role && trim((string) $role) !== '') {
@@ -437,6 +440,11 @@ class UserService implements UserServiceInterface
                     ->orWhereHas('roles', fn ($r) => $r->where('name', 'ILIKE', $searchPattern))
                 );
             }
+        }
+
+        if ($listing !== null) {
+            // `search`, `role` y `exclude_roles` ya se aplicaron arriba (Meilisearch + ILIKE, relaciones).
+            return $listing->apply($query, handled: ['search', 'role', 'exclude_roles'])->paginate($perPage, ['*'], 'page', $page);
         }
 
         return $query->orderBy($sort, $order)->paginate($perPage, ['*'], 'page', $page);

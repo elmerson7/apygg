@@ -12,6 +12,7 @@ use App\Http\Resources\Users\UserDetailResource;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Role;
 use App\Models\User;
+use App\Support\Listing\Listing;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -38,21 +39,35 @@ class UserController extends Controller
 
     /**
      * Display a listing of users.
+     *
+     * `filter[search|role|exclude_roles|name|email|username|identity_document]`, `sort=-created_at,name`, `include=permissions`.
+     * `?search=`, `?role=`, `?email=`, `?sort=` + `?order=` siguen funcionando como alias.
      */
+    #[Listing(
+        filters: [
+            'search' => 'custom', 'role' => 'custom', 'exclude_roles' => 'custom',
+            'name' => 'partial', 'email' => 'partial', 'username' => 'partial', 'identity_document' => 'partial',
+        ],
+        sorts: ['name', 'email', 'username', 'identity_document', 'created_at', 'updated_at', 'email_verified_at'],
+        includes: ['roles', 'profile', 'permissions'],
+        legacy: ['search', 'role', 'email'],
+        defaultPerPage: 15,
+        maxPerPage: 500,
+    )]
     public function index(Request $request): JsonResponse
     {
         $this->authorize('viewAny', User::class);
 
-        $filters = [
-            'search' => $request->get('search'),
-            'role' => $request->get('role'),
-            'email' => $request->get('email'),
-            'per_page' => $request->get('per_page', 15),
-            'sort' => $request->get('sort', 'created_at'),
-            'order' => $request->get('order', 'desc'),
-        ];
+        $listing = $this->listingQuery($request);
 
-        $users = $this->userService->list($filters);
+        $users = $this->userService->list([
+            'search' => $listing->filter('search'),
+            'role' => $listing->filter('role'),
+            'exclude_roles' => $listing->filter('exclude_roles'),
+            'per_page' => $request->get('per_page', 15),
+            'page' => $request->get('page', 1),
+            'listing' => $listing,
+        ]);
 
         return $this->sendPaginated($users);
     }

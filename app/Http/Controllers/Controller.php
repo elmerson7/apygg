@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ListsResources;
 use App\Http\Controllers\Concerns\RespondsWithApi;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
@@ -22,5 +23,5 @@ use Illuminate\Foundation\Validation\ValidatesRequests;
  */
 abstract class Controller
 {
-    use AuthorizesRequests, RespondsWithApi, ValidatesRequests;
+    use AuthorizesRequests, ListsResources, RespondsWithApi, ValidatesRequests;
 }
