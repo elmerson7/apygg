@@ -165,8 +165,7 @@ tests/                  # Unit/ (incluye Arch), Feature/ e Integration/ (servici
 - [docs/upgrading.md](./docs/upgrading.md): notas de actualización para proyectos derivados (qué rompe y qué hacer).
 - [CONTRIBUTING.md](./CONTRIBUTING.md): cómo contribuir.
 - [CHANGELOG.md](./CHANGELOG.md): cambios por versión.
-- [docs/](./docs/): documentación por tema (caché, backups, correo, LLM, WebSockets, etc.).
-- [docs/archive/PLAN_ACCION_2025.md](./docs/archive/PLAN_ACCION_2025.md): plan inicial, histórico.
+- [docs/README.md](./docs/README.md): índice de toda la documentación vigente por tema (caché, backups, correo, LLM, WebSockets, etc.).
 
 ## Licencia
 

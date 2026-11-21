@@ -57,7 +57,7 @@ Una flag no declarada está apagada.
 | `PUT|DELETE /admin/feature-flags/{key}`, `PUT|DELETE .../{key}/tenants/{id}`, `.../{key}/users/{id}` | `feature-flags.manage` |
 | `GET /tenant/features` (flags evaluadas para el tenant y usuario) | `tenant-settings.read` |
 
-`features-migration-to-database.md` queda como histórico: la migración ya está hecha.
+La migración de las flags a BD ya está hecha (el documento histórico se eliminó).
 
 ## 3. Límites por plan
 

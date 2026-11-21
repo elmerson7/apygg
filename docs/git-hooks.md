@@ -37,9 +37,10 @@ Se ejecuta automáticamente antes de cada commit y realiza las siguientes valida
 
 #### Comportamiento con Docker
 
-- Los hooks detectan automáticamente si Docker está corriendo
-- Si el contenedor no está activo, los hooks se saltan automáticamente
-- Los comandos PHP se ejecutan dentro del contenedor Docker
+- El nombre del contenedor sale de `PROJECT` en `compose.env` (el mismo que usa el Makefile): `<PROJECT>-app`
+- Los comandos PHP se ejecutan dentro de ese contenedor
+- Si Docker o el contenedor no están disponibles, el hook **avisa en voz alta de que el commit no se ha validado**
+  (no pasa en silencio) y deja continuar; con `HOOKS_REQUIRE_DOCKER=true` bloquea el commit en su lugar
 
 #### Ejemplos de Uso
 
@@ -184,7 +185,8 @@ make install-hooks
 ### Variables de Entorno
 
 - `SKIP_TESTS=true`: Saltar ejecución de tests en pre-commit
-- `ENV=dev`: Especificar perfil de Docker (por defecto: dev)
+- `HOOKS_REQUIRE_DOCKER=true`: bloquear el commit si no hay Docker/contenedor (por defecto solo avisa)
+- `PROJECT=<nombre>`: forzar el proyecto Docker (por defecto el de `compose.env`)
 
 ### Git Config
 
@@ -209,18 +211,18 @@ git config hooks.skip-commit-msg-validation false
 
 1. Verificar que el hook está instalado:
    ```bash
-   ls -la .git/hooks/pre-commit
+   ls -la "$(git rev-parse --git-path hooks)/pre-commit"   # también en worktrees
    ```
 
 2. Verificar permisos de ejecución:
    ```bash
-   chmod +x .git/hooks/pre-commit
+   chmod +x "$(git rev-parse --git-path hooks)/pre-commit"
    ```
 
 ### Docker no está corriendo
 
 - Los hooks detectan automáticamente si Docker está corriendo
-- Si el contenedor no está activo, los hooks se saltan con una advertencia
+- Si el contenedor `<PROJECT>-app` no está activo, el hook avisa de que el commit queda sin validar (o lo bloquea con `HOOKS_REQUIRE_DOCKER=true`)
 - Para ejecutar validaciones, asegúrate de que Docker esté corriendo:
   ```bash
   make up

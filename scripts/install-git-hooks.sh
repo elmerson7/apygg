@@ -14,14 +14,15 @@ NC='\033[0m' # No Color
 # Directorios
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-GIT_HOOKS_DIR="$PROJECT_ROOT/.git/hooks"
+GIT_HOOKS_DIR="$(git -C "$PROJECT_ROOT" rev-parse --git-path hooks 2>/dev/null || echo "$PROJECT_ROOT/.git/hooks")"
+case "$GIT_HOOKS_DIR" in /*) ;; *) GIT_HOOKS_DIR="$PROJECT_ROOT/$GIT_HOOKS_DIR" ;; esac
 HOOKS_SOURCE_DIR="$PROJECT_ROOT/scripts/git-hooks"
 
 echo -e "${GREEN}🔧 Instalando Git Hooks...${NC}"
 echo ""
 
 # Verificar que existe .git
-if [ ! -d "$PROJECT_ROOT/.git" ]; then
+if ! git -C "$PROJECT_ROOT" rev-parse --git-dir >/dev/null 2>&1; then
     echo -e "${YELLOW}⚠️  No se encontró directorio .git. Este proyecto no es un repositorio Git.${NC}"
     exit 1
 fi
@@ -62,7 +63,7 @@ if [ $INSTALLED -gt 0 ]; then
     echo -e "  ${GREEN}git commit --no-verify${NC}"
     echo ""
     echo -e "${YELLOW}Para desinstalar hooks:${NC}"
-    echo -e "  ${GREEN}rm .git/hooks/pre-commit .git/hooks/commit-msg${NC}"
+    echo -e "  ${GREEN}rm "$(git rev-parse --git-path hooks)"/{pre-commit,commit-msg}${NC}"
 else
     echo -e "${YELLOW}⚠️  No se instaló ningún hook${NC}"
     exit 1

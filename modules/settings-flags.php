@@ -62,7 +62,6 @@ return [
         'database/migrations/2026_01_01_000290_create_feature_flags_table.php',
         'database/seeders/MenuSeeder.php',
         'docs/archive/despliegue-plantillas',
-        'docs/features-migration-to-database.md',
         'docs/features-usage-examples.md',
         'docs/i18n.md',
         'docs/menu-system.md',

@@ -9,6 +9,8 @@
 
 ## Contexto
 
+> Registro histórico (Fase 1, con Laravel 12): el proyecto ya está en Laravel 13; no describe el código actual.
+
 La Fase 1 establece la base del proyecto APYGG Laravel 12, incluyendo la configuración de Docker, instalación de Laravel, estructura de directorios modular, configuración de entornos e instalación de dependencias esenciales. Este ADR documenta todas las decisiones arquitectónicas nuevas tomadas durante la implementación de la Fase 1 que no estaban explícitamente definidas en el PLAN_ACCION.md.
 
 ## Decisiones Arquitectónicas por Subfase

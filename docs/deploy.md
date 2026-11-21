@@ -44,6 +44,13 @@ En `DEPLOY_PATH` (p. ej. `/srv/miapp`) crea **solo** el `.env` de Laravel de pro
   VPS usa `host.docker.internal` (ya mapeado) y que escuchen en la interfaz del bridge de Docker.
 - El `app` publica `127.0.0.1:${APP_PORT:-8000}`: pon delante tu proxy TLS (Caddy/nginx). Reverb es opcional:
   `COMPOSE_PROFILES_EXTRA=reverb`.
+- **`.env` de producción**: parte de `.env.production.example` (`APP_DEBUG=false`, `LOG_LEVEL=warning`, Sentry a tasa baja,
+  sin claves por defecto). No dupliques variables: lo que no está ahí se toma de `.env.example`.
+- **Validación de arranque** (`App\Support\Security\ProductionConfigGuard`, desde `AppServiceProvider::boot`): con
+  `APP_ENV=production` la app **se niega a arrancar** (excepción con la lista de problemas) si hay `APP_DEBUG=true`,
+  `JWT_SECRET` vacío/corto/por defecto, `DB_PASSWORD`, `REDIS_PASSWORD` o `MEILISEARCH_KEY` por defecto (`secret`,
+  `masterKey`, la de `compose.env.example`...) o Sentry con DSN y muestreo de trazas/perfiles a 1.0 (100 %). No actúa en
+  comandos de construcción (`optimize`, `package:discover`...). Apagado de emergencia: `PRODUCTION_GUARD=false` (no lo dejes).
 - Servicios: `app` (Octane), `horizon`, `scheduler`, `reverb` (perfil) y `migrate` (perfil `tools`, un solo uso).
 
 ## 3. Variables (`.env.deploy`, plantilla `.env.deploy.example`; no se versiona)

@@ -67,6 +67,10 @@ Puertos por servicio (host; valor del boilerplate → proyecto con `PORT_BASE=81
 | `S3_PORT` | S3 local (API) | 8018 | 8108 |
 | `S3_CONSOLE_PORT` | S3 local (consola) | 8019 | 8109 |
 
+Los puertos publicados de `app`, `reverb`, `pgbouncer` y `meilisearch` escuchan **solo en `127.0.0.1`** por defecto (como
+Postgres, Redis, Mailpit y S3). Para abrirlos a la red pon `BIND_HOST=0.0.0.0` en `compose.env` y protégelos con firewall.
+`make e2e`, `frontend-e2e` y `load` no se ven afectados (usan su propio compose o `127.0.0.1`).
+
 Como cada proyecto tiene su `PROJECT` y su bloque de puertos, **varios proyectos conviven en el
 mismo servidor sin chocar** (ni contenedores, ni volúmenes, ni red, ni puertos). Cambiar `PROJECT`
 a mano sin cambiar los puertos sí colisiona. `make validate` comprueba que `compose.env` sea

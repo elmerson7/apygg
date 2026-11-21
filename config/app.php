@@ -53,6 +53,9 @@ return [
 
     'debug' => (bool) env('APP_DEBUG', false),
 
+    // Validación de arranque en producción (App\Support\Security\ProductionConfigGuard). Solo desactivar a conciencia.
+    'production_guard' => (bool) env('PRODUCTION_GUARD', true),
+
     /*
     |--------------------------------------------------------------------------
     | Application URL

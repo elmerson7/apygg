@@ -11,6 +11,7 @@ use App\Models\Webhook;
 use App\Observers\ApiKeyObserver;
 use App\Observers\WebhookObserver;
 use App\OpenApi\ApiDocs;
+use App\Support\Security\ProductionConfigGuard;
 use App\Support\Tenancy\PermissionTeamsSchema;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
@@ -56,6 +57,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Producción: rechaza APP_DEBUG, claves por defecto y Sentry al 100 % (docs/deploy.md)
+        ProductionConfigGuard::assertSafe(
+            $this->app['config'],
+            (string) $this->app->environment(),
+            $this->app->runningInConsole() ? (string) ($_SERVER['argv'][1] ?? '') : null,
+        );
+
         // Registrar Observers para invalidación automática de cache
         if (class_exists(ApiKey::class)) {
             ApiKey::observe(ApiKeyObserver::class);

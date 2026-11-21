@@ -470,6 +470,10 @@ docker compose logs scheduler
 | Backup BD | `db:backup --compress` | Diario | 03:00 |
 | Sincronización Búsqueda | `search:sync-indexes` | Cada hora | :00 |
 | Health Check | `health:check` | Cada 5 min | */5 |
+| Secretos antiguos de webhooks | `webhooks:cleanup-old-secrets` | Diario | 02:15 |
+
+Todo comando de limpieza o retención (`clean`, `prune`, `purge`, `sweep`) debe estar en `routes/console.php`:
+`ScheduleLimpiezaTest` falla si se añade uno sin programar (los manuales, como `seed:load:purge`, van en su lista de excepciones).
 
 ---
 

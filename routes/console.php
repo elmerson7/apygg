@@ -145,6 +145,14 @@ Schedule::command('webhooks:inbound-sweep')
         Log::error('Barrido de webhooks entrantes falló');
     });
 
+// Webhooks salientes: borra los secretos antiguos tras el período de gracia (rotación de secret)
+Schedule::command('webhooks:cleanup-old-secrets')
+    ->dailyAt('02:15')
+    ->withoutOverlapping()
+    ->onFailure(function () {
+        Log::error('Falló la limpieza de secretos antiguos de webhooks');
+    });
+
 // Notificaciones: entregas atascadas (cada 10 min) y retención (a diario)
 Schedule::command('notifications:sweep')
     ->everyTenMinutes()

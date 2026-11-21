@@ -321,5 +321,5 @@ class UserControllerTest extends TestCase
 
 ## Referencias
 
-- [Documentación de migración a BD](./features-migration-to-database.md)
+- [Flags en BD, porcentaje y límites por plan](./settings-and-flags.md)
 - [TASKS.md - Fase 8](../../TASKS.md#fase-8-feature-flags-semana-7)

@@ -341,5 +341,4 @@ kubectl get --raw "/api/namespaces/default/pods/<pod-name>/proxy/metrics"
 ## Referencias
 
 - [Kubernetes Liveness, Readiness and Startup Probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/)
-- [Health Check Endpoints Documentation](./api-only-considerations.md)
 - [Docker Health Checks](../docker-compose.yml)

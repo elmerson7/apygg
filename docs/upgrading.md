@@ -17,6 +17,18 @@ impacto en un proyecto existente están en `CHANGELOG.md`.
 
 ## De 1.0.0 a la versión actual (Unreleased)
 
+### Puertos en 127.0.0.1, validación de arranque en producción y `.env.production.example`
+
+- **`docker-compose.yml`**: `app`, `reverb`, `pgbouncer` y `meilisearch` publican en `127.0.0.1` (variable `BIND_HOST`, por
+  defecto `127.0.0.1`). Si accedías a ellos desde otra máquina en desarrollo, pon `BIND_HOST=0.0.0.0` en `compose.env`.
+  En producción (`deploy/compose.prod.yml`) no cambia nada.
+- **`ProductionConfigGuard`**: con `APP_ENV=production` la app no arranca con `APP_DEBUG=true`, claves por defecto o Sentry al
+  100 %. Revisa tu `.env` de producción contra `.env.production.example` antes de desplegar (`docs/deploy.md`).
+- `webhooks:cleanup-old-secrets` queda programado a diario (`routes/console.php`; si tienes el schedule personalizado, añádelo).
+- Hook `pre-commit`: usa el `PROJECT` de `compose.env` (contenedor `<PROJECT>-app`) y avisa si no hay contenedor; reinstala con `make install-hooks`.
+- Se eliminan docs obsoletas (`docs/archive/PLAN_ACCION_2025.md`, `api-only-considerations.md`, `frankenphp-compression-test.md`,
+  `features-migration-to-database.md`) y se añade `docs/README.md` (índice).
+
 ### Prefijo de versión opcional `API_PREFIX` (no rompe: opt-in)
 
 Con `API_PREFIX` sin definir (por defecto) todo funciona exactamente igual. Lo que aporta a un derivado:
