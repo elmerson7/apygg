@@ -2,6 +2,7 @@
 
 namespace App\Contracts;
 
+use App\Exceptions\AccountBlockedException;
 use App\Models\User;
 
 /**
@@ -19,6 +20,17 @@ interface AuthServiceInterface
      * @return array<string, mixed>|null ['user' => User, 'tokens' => array], o ['user' => User, 'two_factor' => ['challenge_token', 'expires_in']] si tiene 2FA; null si falla
      */
     public function authenticate(array $credentials, ?string $ipAddress = null): ?array;
+
+    /**
+     * Abre sesión a un usuario cuya identidad YA verificó otro mecanismo (login social, código de un solo uso...).
+     * Aplica lo mismo que el login con contraseña salvo la contraseña: lista negra, 2FA (devuelve el desafío),
+     * sesión por dispositivo, evento y registro de seguridad. `$method` solo etiqueta el registro (`social:google`, `otp:mail`).
+     *
+     * @return array<string, mixed> ['user' => User, 'tokens' => array] o ['user' => User, 'two_factor' => ['challenge_token', 'expires_in']]
+     *
+     * @throws AccountBlockedException
+     */
+    public function authenticateVerified(User $user, string $method, ?string $ipAddress = null): array;
 
     /**
      * Segundo paso del login con 2FA: resuelve el desafío con un código y abre la sesión.

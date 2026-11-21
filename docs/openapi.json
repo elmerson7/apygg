@@ -11980,6 +11980,165 @@
                 ]
             }
         },
+        "/auth/otp/request": {
+            "post": {
+                "operationId": "auth.otp.request",
+                "description": "Responde siempre lo mismo, tenga o no cuenta el destino.",
+                "summary": "Pedir un código de acceso",
+                "tags": [
+                    "OtpLogin"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OtpRequestRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "const": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "expires_in": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "expires_in"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationFailed"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": []
+            }
+        },
+        "/auth/otp/verify": {
+            "post": {
+                "operationId": "auth.otp.verify",
+                "description": "Con 2FA activo responde el desafío (`two_factor_required`) igual que `POST /auth/login`.",
+                "summary": "Canjear el código por la sesión",
+                "tags": [
+                    "OtpLogin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OtpVerifyRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "success": {
+                                                    "type": "boolean"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Login exitoso"
+                                                },
+                                                "data": {
+                                                    "$ref": "#/components/schemas/AuthResource"
+                                                }
+                                            },
+                                            "required": [
+                                                "success",
+                                                "message",
+                                                "data"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "success": {
+                                                    "type": "boolean"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Verificación en dos pasos requerida"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "two_factor_required": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "challenge_token": {
+                                                            "type": "string"
+                                                        },
+                                                        "expires_in": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "two_factor_required",
+                                                        "challenge_token",
+                                                        "expires_in"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "success",
+                                                "message",
+                                                "data"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationFailed"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": []
+            }
+        },
         "/auth/forgot-password": {
             "post": {
                 "operationId": "password.forgotPassword",
@@ -14957,6 +15116,114 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        },
+        "/auth/social/{provider}": {
+            "post": {
+                "operationId": "auth.social.login",
+                "description": "Con 2FA activo responde el desafío (`two_factor_required`) igual que `POST /auth/login`.",
+                "summary": "Canjear el id_token (o access_token) de un proveedor por la sesión de la API",
+                "tags": [
+                    "SocialLogin"
+                ],
+                "parameters": [
+                    {
+                        "name": "provider",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SocialLoginRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "success": {
+                                                    "type": "boolean"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Login exitoso"
+                                                },
+                                                "data": {
+                                                    "$ref": "#/components/schemas/AuthResource"
+                                                }
+                                            },
+                                            "required": [
+                                                "success",
+                                                "message",
+                                                "data"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "success": {
+                                                    "type": "boolean"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Verificación en dos pasos requerida"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "two_factor_required": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "challenge_token": {
+                                                            "type": "string"
+                                                        },
+                                                        "expires_in": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "two_factor_required",
+                                                        "challenge_token",
+                                                        "expires_in"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "success",
+                                                "message",
+                                                "data"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationFailed"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": []
             }
         },
         "/tenants": {
@@ -21501,6 +21768,56 @@
                 ],
                 "title": "MenuItemResource"
             },
+            "OtpRequestRequest": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "email",
+                        "maxLength": 255
+                    },
+                    "phone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "E.164: +34600000000 (canal SMS, si está activo)",
+                        "pattern": "^\\+[1-9][\\d\\s().-]{6,20}$"
+                    }
+                },
+                "title": "OtpRequestRequest"
+            },
+            "OtpVerifyRequest": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "email",
+                        "maxLength": 255
+                    },
+                    "phone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^\\+[1-9][\\d\\s().-]{6,20}$"
+                    },
+                    "code": {
+                        "type": "string",
+                        "pattern": "^\\d{6,12}$"
+                    }
+                },
+                "required": [
+                    "code"
+                ],
+                "title": "OtpVerifyRequest"
+            },
             "PaginationLinks": {
                 "type": "object",
                 "properties": {
@@ -22600,6 +22917,35 @@
                     "is_encrypted"
                 ],
                 "title": "SettingsResource"
+            },
+            "SocialLoginRequest": {
+                "type": "object",
+                "properties": {
+                    "id_token": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "OIDC (Google, Apple...): id_token. OAuth2 sin id_token (GitHub...): access_token. Con uno basta.",
+                        "maxLength": 8192
+                    },
+                    "access_token": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 2048
+                    },
+                    "nonce": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "El mismo valor que la app envió al proveedor al iniciar el flujo (va dentro del id_token).",
+                        "maxLength": 255
+                    }
+                },
+                "title": "SocialLoginRequest"
             },
             "StartImpersonationRequest": {
                 "type": "object",

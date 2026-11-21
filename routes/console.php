@@ -236,3 +236,13 @@ Schedule::command('payments:reconcile')
         Log::error('La conciliación de pagos (payments:reconcile) falló');
     });
 // module:billing:end
+
+// module:otp-login:start
+// Login por código: borra los códigos ya usados o caducados (docs/otp-login.md)
+Schedule::command('otp-login:clean')
+    ->dailyAt('04:10')
+    ->withoutOverlapping()
+    ->onFailure(function () {
+        Log::error('Falló la limpieza de códigos de login (otp-login:clean)');
+    });
+// module:otp-login:end

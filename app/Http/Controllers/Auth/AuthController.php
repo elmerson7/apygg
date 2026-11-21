@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Contracts\AuthServiceInterface;
+use App\Http\Controllers\Auth\Concerns\RespondsWithSession;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
-use App\Http\Resources\Auth\AuthResource;
 use App\Models\User;
 use App\Services\LogService;
 use Dedoc\Scramble\Attributes\BodyParameter;
@@ -23,6 +23,8 @@ use Illuminate\Support\Facades\Auth;
  */
 class AuthController extends Controller
 {
+    use RespondsWithSession;
+
     public function __construct(protected AuthServiceInterface $authService) {}
 
     /**
@@ -48,19 +50,7 @@ class AuthController extends Controller
             );
         }
 
-        // Con 2FA activo no hay tokens todavía: el cliente completa en POST /auth/2fa/verify.
-        if (isset($result['two_factor'])) {
-            return $this->sendSuccess([
-                'two_factor_required' => true,
-                'challenge_token' => $result['two_factor']['challenge_token'],
-                'expires_in' => $result['two_factor']['expires_in'],
-            ], 'Verificación en dos pasos requerida');
-        }
-
-        return $this->sendSuccess(
-            $this->authPayload($result['user'], $result['tokens']),
-            'Login exitoso'
-        );
+        return $this->sessionResponse($result);
     }
 
     /**
@@ -157,21 +147,5 @@ class AuthController extends Controller
             'created_at' => $user->created_at->toIso8601String(),
             'updated_at' => $user->updated_at->toIso8601String(),
         ], 'Usuario obtenido exitosamente');
-    }
-
-    /**
-     * Payload común de las respuestas con sesión (usuario + tokens).
-     *
-     * @param  array{access_token: string, refresh_token: string}  $tokens
-     */
-    private function authPayload(User $user, array $tokens): AuthResource
-    {
-        return new AuthResource([
-            'user' => $user,
-            'access_token' => $tokens['access_token'],
-            'refresh_token' => $tokens['refresh_token'],
-            'token_type' => 'bearer',
-            'expires_in' => $this->authService->getTokenExpiration(),
-        ]);
     }
 }

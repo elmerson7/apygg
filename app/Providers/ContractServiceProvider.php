@@ -40,6 +40,7 @@ use App\Contracts\MultipartStorageInterface;
 use App\Contracts\NotificationDeliveryServiceInterface;
 use App\Contracts\NotificationPreferenceServiceInterface;
 use App\Contracts\NotificationServiceInterface;
+use App\Contracts\OtpLoginServiceInterface;
 use App\Contracts\PasswordServiceInterface;
 use App\Contracts\PaymentDiscrepancyServiceInterface;
 use App\Contracts\PaymentProcessorInterface;
@@ -59,6 +60,8 @@ use App\Contracts\SequenceInterface;
 use App\Contracts\SessionServiceInterface;
 use App\Contracts\SettingsRegistryInterface;
 use App\Contracts\SettingsServiceInterface;
+use App\Contracts\SocialIdentityResolverInterface;
+use App\Contracts\SocialLoginServiceInterface;
 use App\Contracts\SubscriptionAccessInterface;
 use App\Contracts\SubscriptionLifecycleInterface;
 use App\Contracts\SubscriptionPlanSourceInterface;
@@ -117,6 +120,7 @@ use App\Services\Notifications\InboxService;
 use App\Services\Notifications\NotificationDeliveryService;
 use App\Services\Notifications\NotificationPreferenceService;
 use App\Services\NotificationService;
+use App\Services\Otp\OtpLoginService;
 use App\Services\PasswordService;
 use App\Services\Pdf\DompdfRenderer;
 use App\Services\PermissionService;
@@ -130,6 +134,7 @@ use App\Services\SecurityService;
 use App\Services\SessionService;
 use App\Services\SettingsRegistry;
 use App\Services\SettingsService;
+use App\Services\Social\SocialLoginService;
 use App\Services\TenantAdminService;
 use App\Services\TenantInvitationService;
 use App\Services\TenantMemberService;
@@ -152,6 +157,7 @@ use App\Support\Privacy\PersonalDataRegistry;
 use App\Support\Privacy\TwoFactorDeletionSecondFactor;
 use App\Support\Security\NullSecurityAnalysisProvider;
 use App\Support\Sequences\Sequence;
+use App\Support\Social\ProviderIdentityResolver;
 use App\Support\Tenancy\NullSubscriptionAccess;
 use App\Support\Tenancy\NullSubscriptionPlanSource;
 use App\Support\Tenancy\TenantContext;
@@ -273,6 +279,11 @@ class ContractServiceProvider extends ServiceProvider
         ], 'privacy.contributors');
         // module:privacy:end
         $this->app->bind(PersonalDataRegistry::class, fn ($app) => new PersonalDataRegistry($app->tagged('privacy.contributors'))); // module:privacy
+
+        // Login externo (módulos opcionales; docs/social-login.md, docs/otp-login.md)
+        $this->app->bind(SocialLoginServiceInterface::class, SocialLoginService::class); // module:social-login
+        $this->app->bind(SocialIdentityResolverInterface::class, ProviderIdentityResolver::class); // module:social-login
+        $this->app->bind(OtpLoginServiceInterface::class, OtpLoginService::class); // module:otp-login
 
         $this->app->singleton(HostResolverInterface::class, DnsHostResolver::class);
 

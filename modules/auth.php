@@ -21,6 +21,7 @@ return [
         'app/Http/Controllers/ApiKeys',
         'app/Http/Controllers/Auth/.gitkeep',
         'app/Http/Controllers/Auth/AuthController.php',
+        'app/Http/Controllers/Auth/Concerns',
         'app/Http/Controllers/Auth/EmailVerificationController.php',
         'app/Http/Controllers/Auth/PasswordController.php',
         'app/Http/Controllers/Auth/SessionController.php',

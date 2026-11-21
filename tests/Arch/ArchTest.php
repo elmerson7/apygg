@@ -196,6 +196,8 @@ function archServiciosConInterfaz(): array
         'App\Services\Billing\SubscriptionAccess' => 'App\Contracts\SubscriptionAccessInterface', // module:billing
         'App\Services\Billing\SubscriptionPlanSource' => 'App\Contracts\SubscriptionPlanSourceInterface', // module:billing
         'App\Services\Billing\BillingNoticeService' => 'App\Contracts\BillingNoticeServiceInterface', // module:billing
+        'App\Services\Social\SocialLoginService' => 'App\Contracts\SocialLoginServiceInterface', // module:social-login
+        'App\Services\Otp\OtpLoginService' => 'App\Contracts\OtpLoginServiceInterface', // module:otp-login
     ];
 }
 

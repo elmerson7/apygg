@@ -59,6 +59,8 @@ Route::prefix(ApiPath::prefix())->group(function () {
     require __DIR__.'/api/search.php'; // module:search
     require __DIR__.'/api/webhooks.php';
     require __DIR__.'/api/mail.php';
+    require __DIR__.'/api/social-login.php'; // module:social-login
+    require __DIR__.'/api/otp-login.php'; // module:otp-login
 });
 
 // Webhooks entrantes: fuera del prefijo (los llaman los proveedores y su URL se configura en su panel).

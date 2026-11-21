@@ -171,6 +171,42 @@ class AuthService implements AuthServiceInterface
     }
 
     /**
+     * Abre sesión a un usuario ya verificado por otro mecanismo (social, OTP): misma puerta que el login con
+     * contraseña (lista negra, 2FA, sesión, eventos), sin la contraseña.
+     *
+     * @return array<string, mixed>
+     *
+     * @throws AccountBlockedException
+     */
+    public function authenticateVerified(User $user, string $method, ?string $ipAddress = null): array
+    {
+        if (Blacklist::isBlocked(
+            email: $user->email,
+            identityDocument: $user->identity_document,
+            userId: $user->id
+        )) {
+            LogService::warning('Login denegado: usuario en lista negra', [
+                'user_id' => $user->id,
+                'method' => $method,
+                'ip' => $ipAddress,
+            ], 'security');
+
+            throw new AccountBlockedException;
+        }
+
+        if ($this->twoFactor->isEnabled($user)) {
+            LogService::info('Login pendiente de 2FA', ['user_id' => $user->id, 'method' => $method, 'ip' => $ipAddress], 'security');
+
+            return [
+                'user' => $user,
+                'two_factor' => $this->twoFactor->startChallenge($user),
+            ];
+        }
+
+        return $this->completeLogin($user, $method, $ipAddress);
+    }
+
+    /**
      * Segundo paso del login con 2FA: resuelve el desafío con un código y abre la sesión.
      *
      * @return array<string, mixed> ['user' => User, 'tokens' => array]
