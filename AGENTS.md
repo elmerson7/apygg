@@ -326,6 +326,8 @@ Una norma por documento; esos archivos son la fuente de verdad de cada tema:
 - [`docs/notifications.md`](docs/notifications.md) → avisos a usuarios: `NotificationServiceInterface::notify()` con tipos en `config/notifications.php`, canales mail/bandeja/push/sms, preferencias, horas de silencio, entregas idempotentes y dispositivos push.
 - [`docs/files.md`](docs/files.md) → archivos: prefijo de entorno + tenant, URL firmada de descarga, subida directa presignada con verificación del objeto real y cuotas por plan (`max_storage_mb`, `max_file_mb`) bajo bloqueo del tenant.
 - [`docs/sessions-and-2fa.md`](docs/sessions-and-2fa.md) → sesiones por dispositivo (`sid`, revocación), refresh rotado con detección de reutilización, 2FA TOTP de la API, verificación de correo (`verified`) y versión mínima de app (426).
+- [`docs/metrics.md`](docs/metrics.md) → métricas Prometheus (módulo opcional `metrics`, apagado por defecto): `GET /metrics` con token o IP, contadores en Redis, alertas sugeridas.
+- [`docs/jwt-keys.md`](docs/jwt-keys.md) → JWT asimétrico (RS256/ES256), cabecera `kid` y rotación de claves; HS256 sigue siendo el defecto.
 - [`docs/export-import.md`](docs/export-import.md) → exportar/importar CSV y XLSX en streaming (exportadores e importadores declarativos, vista previa, idempotencia, por tenant) y el único servicio PDF (`PdfRendererInterface`, dompdf).
 
 ## Al añadir algo al boilerplate

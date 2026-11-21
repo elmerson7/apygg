@@ -129,6 +129,7 @@ test('los controladores no dependen de servicios concretos: solo de App\Contract
 function archServiciosConInterfaz(): array
 {
     return [
+        'App\Services\MetricsService' => 'App\Contracts\MetricsServiceInterface', // module:metrics
         'App\Services\AuthService' => 'App\Contracts\AuthServiceInterface',
         'App\Services\UserService' => 'App\Contracts\UserServiceInterface',
         'App\Services\RoleService' => 'App\Contracts\RoleServiceInterface',

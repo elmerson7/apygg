@@ -24,6 +24,7 @@ return [
         'up',
         'health',
         'health/*',
+        'metrics', // module:metrics
         'webhooks/inbound/*',
         'webhooks/mail',
         'docs/api',

@@ -23,6 +23,7 @@ documentos vigentes; un test (`DocsIndiceTest`) falla si falta alguno. Además: 
 - [permissions.md](permissions.md) · [sessions-and-2fa.md](sessions-and-2fa.md) · [api-keys.md](api-keys.md) · [impersonation.md](impersonation.md) · [cors-configuration.md](cors-configuration.md)
 - [multi-tenancy.md](multi-tenancy.md) · [tenant-onboarding.md](tenant-onboarding.md) · [settings-and-flags.md](settings-and-flags.md) · [features-usage-examples.md](features-usage-examples.md)
 - [audit.md](audit.md) · [security-audit.md](security-audit.md) · [privacy.md](privacy.md) · [logging.md](logging.md)
+- [jwt-keys.md](jwt-keys.md): JWT asimétrico (RS256/ES256) con `kid` y rotación
 
 ## Funcionalidad
 - [billing.md](billing.md) · [notifications.md](notifications.md) · [mail-system.md](mail-system.md) · [files.md](files.md) · [export-import.md](export-import.md)
@@ -37,6 +38,7 @@ documentos vigentes; un test (`DocsIndiceTest`) falla si falta alguno. Además: 
 - [deploy.md](deploy.md): producción (`.env.production.example`, validación de arranque) · [docker-maintenance.md](docker-maintenance.md) · [frankenphp-configuration.md](frankenphp-configuration.md) · [kubernetes-health-checks.md](kubernetes-health-checks.md)
 - [scheduler-tasks.md](scheduler-tasks.md) · [horizon-reverb-telescope.md](horizon-reverb-telescope.md) · [local-services.md](local-services.md)
 - [logging-file-structure.md](logging-file-structure.md) · [logging-sentry-behavior.md](logging-sentry-behavior.md) · [sentry-configuration.md](sentry-configuration.md)
+- [metrics.md](metrics.md): módulo `metrics`, `GET /metrics` Prometheus protegido
 
 ## Pruebas y rendimiento
 - [testing.md](testing.md) · [testing-database.md](testing-database.md) · [seed-load.md](seed-load.md) · [load-testing.md](load-testing.md) · [performance-baseline.md](performance-baseline.md)

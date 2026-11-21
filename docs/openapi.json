@@ -11346,6 +11346,31 @@
                 ]
             }
         },
+        "/metrics": {
+            "get": {
+                "operationId": "metrics.show",
+                "summary": "Métricas en formato de texto de Prometheus. No usa el envelope JSON: Prometheus exige texto plano",
+                "tags": [
+                    "Metrics"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Correcto",
+                        "content": {
+                            "text/plain; version=0.0.4; charset=utf-8": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/RateLimited"
+                    }
+                },
+                "security": []
+            }
+        },
         "/user/notifications/preferences": {
             "get": {
                 "operationId": "user.notifications.preferences.show",

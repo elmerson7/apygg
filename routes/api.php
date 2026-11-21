@@ -64,6 +64,9 @@ Route::prefix(ApiPath::prefix())->group(function () {
 // Webhooks entrantes: fuera del prefijo (los llaman los proveedores y su URL se configura en su panel).
 require __DIR__.'/api/inbound-webhooks.php';
 
+// Métricas Prometheus: fuera del prefijo, con token o IP (docs/metrics.md).
+require __DIR__.'/api/metrics.php'; // module:metrics
+
 Route::prefix(ApiPath::prefix())->group(function () {
     require __DIR__.'/api/llm.php'; // module:llm
     require __DIR__.'/api/menu.php';

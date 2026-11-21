@@ -35,6 +35,7 @@ use App\Contracts\MailServiceInterface;
 use App\Contracts\MailSuppressionServiceInterface;
 use App\Contracts\MaintenanceServiceInterface;
 use App\Contracts\MenuServiceInterface;
+use App\Contracts\MetricsServiceInterface;
 use App\Contracts\NotificationDeliveryServiceInterface;
 use App\Contracts\NotificationPreferenceServiceInterface;
 use App\Contracts\NotificationServiceInterface;
@@ -108,6 +109,7 @@ use App\Services\Mail\SvixSignatureVerifier;
 use App\Services\MailService;
 use App\Services\MaintenanceService;
 use App\Services\Menu\MenuService;
+use App\Services\MetricsService;
 use App\Services\Notifications\DeviceService;
 use App\Services\Notifications\InboxService;
 use App\Services\Notifications\NotificationDeliveryService;
@@ -244,6 +246,7 @@ class ContractServiceProvider extends ServiceProvider
         $this->app->bind(AuditServiceInterface::class, AuditService::class);
         $this->app->bind(ImpersonationServiceInterface::class, ImpersonationService::class); // module:impersonation
         $this->app->bind(MaintenanceServiceInterface::class, MaintenanceService::class); // module:maintenance
+        $this->app->bind(MetricsServiceInterface::class, MetricsService::class); // module:metrics
 
         // Notificaciones multicanal (docs/notifications.md)
         $this->app->bind(InboxServiceInterface::class, InboxService::class);

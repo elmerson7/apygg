@@ -20,3 +20,14 @@ openapi-breaking:
 types:
 	docker run --rm -u $$(id -u):$$(id -g) -e HOME=/tmp -v "$(CURDIR)":/work -w /work node:22-alpine \
 		npx --yes openapi-typescript@$(OPENAPI_TS_VERSION) docs/openapi.json -o docs/api-types.d.ts
+
+# Cliente Dart/Flutter desde docs/openapi.json -> clients/dart (ignorado por git: se regenera, no se versiona).
+# Docker efímero con versión fija de openapi-generator-cli; súbela a propósito. Paquete: DART_PACKAGE.
+OPENAPI_GEN_VERSION ?= v7.10.0
+DART_PACKAGE ?= api_client
+client-dart:
+	@mkdir -p clients
+	docker run --rm -u $$(id -u):$$(id -g) -v "$(CURDIR)":/local openapitools/openapi-generator-cli:$(OPENAPI_GEN_VERSION) generate \
+		-i /local/docs/openapi.json -g dart-dio -o /local/clients/dart \
+		--additional-properties=pubName=$(DART_PACKAGE) --skip-validate-spec
+	@echo "-> Cliente Dart en clients/dart (docs/api-contract.md#cliente-dart-flutter)"

@@ -127,6 +127,7 @@ help:
 	@printf "  %-20s %s\n" "openapi-check" "Falla si docs/openapi.json está desactualizado"
 	@printf "  %-20s %s\n" "openapi-breaking" "Falla si el contrato rompe a las apps publicadas (oasdiff; BASE=<ref>, por defecto main)"
 	@printf "  %-20s %s\n" "types" "Tipos TypeScript para los fronts (docs/api-types.d.ts)"
+	@printf "  %-20s %s\n" "client-dart" "Cliente Dart/Flutter desde docs/openapi.json (clients/dart; DART_PACKAGE=)"
 	@printf "  %-20s %s\n" "pint" "Formatear código"
 	@printf "  %-20s %s\n" "pint-test" "Ver qué se formatearía sin aplicar"
 	@printf "  %-20s %s\n" "phpstan" "Análisis estático"

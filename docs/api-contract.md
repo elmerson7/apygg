@@ -19,6 +19,17 @@ cambias rutas / requests / resources  ->  make openapi  ->  make test-contract  
 | `make openapi-check` | Falla si el archivo versionado está desactualizado. Lo mismo lo hace un test de la suite por defecto (`OpenApiDocumentoTest`), así que **olvidar `make openapi` rompe la CI**. |
 | `make test-contract` | Valida respuestas reales (health, auth, usuarios, settings, webhooks, errores 401/403/404/422) contra el documento. |
 | `make types` | Genera `docs/api-types.d.ts` con `openapi-typescript` (versión fija en `OPENAPI_TS_VERSION`, Node efímero en Docker). |
+| `make client-dart` | Genera un cliente Dart/Flutter en `clients/dart` (ver abajo). |
+
+### Cliente Dart/Flutter
+
+`make client-dart` genera un paquete Dart (`dart-dio`, con `built_value`) desde `docs/openapi.json` usando Docker
+(`openapitools/openapi-generator-cli`, versión fija en `OPENAPI_GEN_VERSION`; súbela a propósito). La salida va a
+`clients/dart`, **ignorada por git** (se regenera, como `docs/api-types.d.ts`). `DART_PACKAGE=mi_api make client-dart`
+cambia el nombre del paquete. Para usarlo en una app Flutter, cópialo a su repo o referéncialo por ruta en `pubspec.yaml`
+(`api_client: { path: ../api/clients/dart }`) y ejecuta allí `dart run build_runner build` (los modelos son `built_value`).
+El generador corre con `--skip-validate-spec` (Scramble emite OpenAPI 3.1, que el validador del generador aún marca con
+avisos); si el spec cambia de forma importante, repasa la salida antes de publicar el paquete.
 
 Si una respuesta no cumple el contrato hay dos causas: el código se salió de lo documentado (arréglalo) o
 el contrato quedó viejo (ajusta controller/Resource y regenera). Nunca edites `openapi.json` a mano.

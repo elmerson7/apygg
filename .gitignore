@@ -40,5 +40,8 @@ frankenphp-worker.php
 # Tipos TS generados desde docs/openapi.json (make types): se generan en cada front, no se versionan aquí
 /docs/api-types.d.ts
 
+# Cliente Dart/Flutter generado desde docs/openapi.json (make client-dart): se regenera, no se versiona
+/clients/
+
 # Grafo local de graphify (se regenera)
 graphify-out/

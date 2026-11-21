@@ -23,6 +23,7 @@ class ForceJsonResponse
         '/telescope',
         '/horizon',
         '/up',
+        '/metrics', // module:metrics
     ];
 
     /**

@@ -1,6 +1,7 @@
 <?php
 
 use App\Auth\JwtBlacklistStorage;
+use App\Support\Jwt\KeyRotatingLcobucci;
 use PHPOpenSourceSaver\JWTAuth\Providers\Auth\Illuminate;
 use PHPOpenSourceSaver\JWTAuth\Providers\JWT\Lcobucci;
 
@@ -137,6 +138,19 @@ return [
     */
 
     'algo' => env('JWT_ALGO', 'HS256'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Rotación de claves asimétricas (opcional; docs/jwt-keys.md)
+    |--------------------------------------------------------------------------
+    |
+    | Solo con `JWT_ALGO=RS256|ES256...` y `JWT_KID`: los tokens llevan la cabecera `kid` y, durante la ventana
+    | `JWT_PREVIOUS_PUBLIC_KEY_UNTIL` (fecha ISO 8601), también se aceptan los firmados con la clave pública
+    | anterior (`JWT_PREVIOUS_PUBLIC_KEY`). Sin `JWT_KID` todo funciona como la librería trae de serie.
+    */
+    'kid' => env('JWT_KID'),
+    'previous_public_key' => env('JWT_PREVIOUS_PUBLIC_KEY'),
+    'previous_public_key_until' => env('JWT_PREVIOUS_PUBLIC_KEY_UNTIL'),
 
     /*
     |--------------------------------------------------------------------------
@@ -311,7 +325,7 @@ return [
         |
         */
 
-        'jwt' => Lcobucci::class,
+        'jwt' => env('JWT_KID') ? KeyRotatingLcobucci::class : Lcobucci::class,
 
         /*
         |--------------------------------------------------------------------------
