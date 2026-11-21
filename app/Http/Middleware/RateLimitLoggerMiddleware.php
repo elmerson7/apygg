@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Helpers\Actor;
 use App\Services\Logging\SecurityLogger;
 use App\Services\LogService;
+use App\Support\ApiPath;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -276,7 +277,7 @@ class RateLimitLoggerMiddleware
      */
     protected function detectDdosPattern(Request $request, int $timeWindow): void
     {
-        $path = $request->path();
+        $path = ApiPath::path($request);
         $cacheKey = "rate_limit:ddos_pattern:{$path}";
         $blocks = Cache::get($cacheKey, []);
 

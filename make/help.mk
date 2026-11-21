@@ -125,6 +125,7 @@ help:
 	@printf "  %-20s %s\n" "migrations-lint" "Linter de migraciones peligrosas (despliegue sin parada)"
 	@printf "  %-20s %s\n" "openapi" "Exportar el contrato OpenAPI a docs/openapi.json (tras cambiar rutas/respuestas)"
 	@printf "  %-20s %s\n" "openapi-check" "Falla si docs/openapi.json está desactualizado"
+	@printf "  %-20s %s\n" "openapi-breaking" "Falla si el contrato rompe a las apps publicadas (oasdiff; BASE=<ref>, por defecto main)"
 	@printf "  %-20s %s\n" "types" "Tipos TypeScript para los fronts (docs/api-types.d.ts)"
 	@printf "  %-20s %s\n" "pint" "Formatear código"
 	@printf "  %-20s %s\n" "pint-test" "Ver qué se formatearía sin aplicar"

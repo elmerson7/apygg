@@ -51,6 +51,7 @@ make load-stress | load-spike | load-soak
 make load-report                                    # tabla con p95, errores y umbrales de load/results/*.json
 ```
 
+- `LOAD_API_PREFIX` (p. ej. `v1`): si la API usa `API_PREFIX`, los escenarios llaman a `/v1/...` (y `stack.sh` levanta el stack con ese prefijo). Vacío por defecto.
 - `LOAD_BASE_URL` por defecto `http://127.0.0.1:<APP_PORT>`; k6 corre con `--network host`.
 - Cualquier variable `LOAD_*` de `load/lib/config.js` se pasa al contenedor (`LOAD_VUS`, `LOAD_ROLES`, `LOAD_THINK_TIME`, `LOAD_CREDENTIALS`...).
 - Cada ejecución deja `load/results/<escenario>.json` (resumen y métricas; no se versiona).

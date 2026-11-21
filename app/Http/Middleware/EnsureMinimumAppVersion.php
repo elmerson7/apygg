@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Enums\ErrorCode;
 use App\Helpers\ApiResponse;
+use App\Support\ApiPath;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -63,7 +64,7 @@ class EnsureMinimumAppVersion
     private function excepted(Request $request): bool
     {
         foreach ((array) config('app-versions.except', []) as $pattern) {
-            if ($request->is($pattern)) {
+            if (ApiPath::is($request, $pattern)) {
                 return true;
             }
         }

@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Contracts\SecurityServiceInterface;
 use App\Enums\ErrorCode;
 use App\Services\LogService;
+use App\Support\ApiPath;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -25,7 +26,7 @@ class IpWhitelistMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         $ip = $request->ip();
-        $path = $request->path();
+        $path = ApiPath::path($request);
 
         // Verificar si la IP está en blacklist global
         if ($this->isIpBlacklisted($ip)) {

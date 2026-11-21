@@ -20,7 +20,7 @@ esta doc). Node **nunca** corre en el host: todo va en contenedores efímeros de
 | `make frontend-dev` | servidor de desarrollo en `http://localhost:5173` (`VITE_API_URL=http://localhost:8000` por defecto) |
 | `make frontend-e2e` | Playwright (escritorio y móvil) contra un **stack temporal propio**; lo baja al terminar |
 
-`make frontend-dev VITE_API_URL=http://localhost:8010` cambia la API de destino. El navegador siempre habla con
+`make frontend-dev VITE_API_URL=http://localhost:8010` cambia la API de destino. Con `API_PREFIX=v1` en la API, `VITE_API_PREFIX=v1` hace que el proxy reenvíe `/api/x` a `/v1/x` (`API_PREFIX=v1 make frontend-e2e` lo pasa solo). El navegador siempre habla con
 `/api` (mismo origen) y el proxy de Vite (`vite.config.ts`, también en `preview`) lo reenvía a la API **quitando el
 prefijo** (la API no usa `/api`): así no hace falta CORS en desarrollo ni en las pruebas. En un despliegue real,
 define `VITE_API_BASE` con la URL absoluta de la API (y configura CORS: `docs/cors-configuration.md`).

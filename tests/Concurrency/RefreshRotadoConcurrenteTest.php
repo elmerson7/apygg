@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use App\Models\UserSession;
+use App\Support\ApiPath;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,7 +25,7 @@ test('dos refresh simultaneos con el mismo token: uno recibe 200, el otro 401 re
 
     $results = ConcurrentRunner::run(2, function (int $i) use ($refresh) {
         $response = app(Kernel::class)->handle(
-            Request::create('/auth/refresh', 'POST', [], [], [], [
+            Request::create(ApiPath::with('/auth/refresh'), 'POST', [], [], [], [
                 'CONTENT_TYPE' => 'application/json',
                 'HTTP_ACCEPT' => 'application/json',
                 'REMOTE_ADDR' => '10.0.1.'.($i + 1),

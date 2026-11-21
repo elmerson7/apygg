@@ -2,6 +2,7 @@
 
 namespace Tests\Support;
 
+use App\Support\ApiPath;
 use Illuminate\Testing\TestResponse;
 use Opis\JsonSchema\Errors\ErrorFormatter;
 use Opis\JsonSchema\Validator;
@@ -30,7 +31,7 @@ final class OpenApiValidator
     {
         $spec = self::spec();
         $method = strtolower($method ?? request()->method());
-        $route = '/'.ltrim($route ?? (string) request()->route()?->uri(), '/');
+        $route = '/'.ltrim(ApiPath::strip($route ?? (string) request()->route()?->uri()), '/');
         $route = (string) preg_replace('/\{(\w+)\?\}/', '{$1}', $route);
 
         $operation = $spec->paths->{$route}->{$method} ?? null;

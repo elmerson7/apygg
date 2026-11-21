@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\ApiPath;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -60,7 +61,7 @@ class ForceJsonResponse
      */
     private function shouldExclude(Request $request): bool
     {
-        $path = $request->path();
+        $path = ApiPath::path($request);
 
         foreach ($this->excludedPaths as $excludedPath) {
             if (str_starts_with($path, ltrim($excludedPath, '/'))) {

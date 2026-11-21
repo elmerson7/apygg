@@ -7,6 +7,7 @@ x-env: &env
   env_file: ${LOAD_ENV_FILE:-../.env}
   environment: &envvars
     APP_ENV: staging
+    API_PREFIX: ${LOAD_API_PREFIX:-}
     APP_DEBUG: "false"
     LOG_LEVEL: warning
     LOG_STACK: single

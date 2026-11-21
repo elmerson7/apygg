@@ -25,6 +25,15 @@ el contrato quedó viejo (ajusta controller/Resource y regenera). Nunca edites `
 
 > **Ojo:** Scramble infiere los tipos de los modelos leyendo la base de datos. Ejecuta `make openapi` con la BD migrada (lo normal dentro del contenedor `app`); con una BD vacía el spec pierde los tipos de los modelos y el test de frescura falla.
 
+## Prefijo de versión y cambios que rompen
+
+- `docs/openapi.json` se genera siempre SIN el prefijo `API_PREFIX` en los paths (los tipos de los fronts no cambian). Con
+  prefijo, `servers[].url` termina en `/v1`; las rutas que nunca lo llevan (salud, webhooks) declaran su `servers` raíz. La
+  suite funciona con `API_PREFIX=v1` (en CI, job `test-prefix`): `OpenApiDocumentoTest` compara todo salvo `servers`.
+- `make openapi-breaking [BASE=<ref>]` (y el job `openapi-breaking` de CI) corre `oasdiff breaking` entre el contrato de la
+  base y el actual y falla si rompe a las apps publicadas. Política, escapes y detalle: `docs/api-routes-conventions.md`
+  («Versiones y apps móviles»).
+
 ## Qué describe el documento (y cómo)
 
 - **Servidor**: `scramble.export_server_url` (`OPENAPI_SERVER_URL`, por defecto `http://localhost:8000`). Es fijo

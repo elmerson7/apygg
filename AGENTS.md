@@ -150,9 +150,12 @@ parámetro sin tipo (`store($request)`) hace que Laravel no inyecte el Request y
 la ruta dé 500. Los scopes del `Model` base están sin tipar: no estreches su
 firma en los hijos. Detalle en `docs/CODING_STANDARDS.md`.
 
-## Rutas — NO existe el prefijo /api/
+## Rutas — NO existe el prefijo /api/ (el de versión `/v1` es opcional)
 
-Las rutas cuelgan de la raíz. Cada módulo vive en `routes/api/<modulo>.php` y se
+Las rutas cuelgan de la raíz. Con `API_PREFIX=v1` (vacío por defecto; para proyectos con apps móviles) las de la app pasan
+a `/v1/...`; salud, webhooks entrantes, `/docs/api` y paneles web nunca lo llevan (`config/api.php`, `docs/api-routes-conventions.md`).
+En código, patrones de ruta con `App\Support\ApiPath` (no `$request->path()`/`is()` a pelo); `config('api.prefix')`, nunca `env()`.
+Cada módulo vive en `routes/api/<modulo>.php` y se
 incluye con `require` desde `routes/api.php`.
 
 | Ámbito | Prefijo | Ejemplo |
@@ -301,6 +304,7 @@ Una norma por documento; esos archivos son la fuente de verdad de cada tema:
 - [`docs/modules.md`](docs/modules.md) → anatomía de un módulo, checklist «añadir un módulo» y qué es núcleo u opcional.
 - [`docs/multi-tenancy.md`](docs/multi-tenancy.md) → multiempresa opt-in: `TenantContext`, `BelongsToTenant` fail-closed, middleware `tenant`, jobs y caché.
 - [`docs/tenant-onboarding.md`](docs/tenant-onboarding.md) → alta de empresa, invitaciones y miembros por tenant (roles, último dueño, tokens hasheados).
+- [`docs/api-routes-conventions.md`](docs/api-routes-conventions.md) → rutas, prefijo de versión opcional `API_PREFIX`, qué queda fuera, política de cambios para apps móviles y `make openapi-breaking` (oasdiff).
 - [`docs/octane.md`](docs/octane.md) → código seguro con Octane/FrankenPHP (estado, bindings, guards, caché de permisos).
 - [`docs/queues-and-jobs.md`](docs/queues-and-jobs.md) → colas, base `Job`, reintentos, idempotencia, `afterCommit`.
 - [`docs/integrations.md`](docs/integrations.md) → integraciones externas reales/simuladas (`<SERVICIO>_MODE`, errores tipados, `RetryPolicy`, fakes con fallos inyectables; ejemplo SMS) y webhooks entrantes genéricos (`POST /webhooks/inbound/{provider}`, recibos idempotentes, handler en cola).

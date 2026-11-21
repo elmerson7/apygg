@@ -1,6 +1,7 @@
 <?php
 
 use App\OpenApi\OpenApiDocument;
+use App\Support\ApiPath;
 
 /*
  * docs/openapi.json es el contrato que consumen los fronts y la suite Contract. Si alguien cambia
@@ -10,10 +11,35 @@ use App\OpenApi\OpenApiDocument;
 test('docs/openapi.json versionado coincide con lo que genera Scramble', function () {
     $versionado = is_file(OpenApiDocument::path()) ? (string) file_get_contents(OpenApiDocument::path()) : '';
 
-    expect($versionado)->toBe(
-        OpenApiDocument::render(),
-        'docs/openapi.json está desactualizado respecto a las rutas/requests/resources actuales. Ejecuta: make openapi'
-    );
+    $mensaje = 'docs/openapi.json está desactualizado respecto a las rutas/requests/resources actuales. Ejecuta: make openapi';
+
+    if (ApiPath::prefix() === '') {
+        expect($versionado)->toBe(OpenApiDocument::render(), $mensaje);
+
+        return;
+    }
+
+    // Con API_PREFIX el contrato (paths, esquemas) es el mismo; solo cambian los `servers`, que dependen del prefijo.
+    $versionadoSpec = json_decode($versionado, false, 512, JSON_THROW_ON_ERROR);
+    unset($versionadoSpec->servers);
+
+    foreach ($versionadoSpec->paths as $item) {
+        unset($item->servers);
+    }
+
+    expect(OpenApiDocument::encode((array) $versionadoSpec))->toBe(OpenApiDocument::encode(OpenApiDocument::withoutServers()), $mensaje);
+});
+
+test('los paths del contrato nunca llevan el prefijo de versión y los servers sí', function () {
+    config(['api.prefix' => '/v1/']);
+
+    $spec = OpenApiDocument::spec();
+
+    expect(array_keys($spec['paths']))->not->toContain('/v1/users')
+        ->and($spec['paths'])->toHaveKey('/users')
+        ->and($spec['servers'][0]['url'])->toEndWith('/v1')
+        // La salud no lleva prefijo: su path declara el servidor raíz.
+        ->and($spec['paths']['/health']['servers'][0]['url'])->not->toEndWith('/v1');
 });
 
 test('el documento OpenAPI es 3.1, tiene seguridad Bearer y API Key y no filtra rutas internas', function () {

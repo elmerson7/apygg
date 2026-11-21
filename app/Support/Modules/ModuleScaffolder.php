@@ -81,6 +81,14 @@ final class ModuleScaffolder
                     throw new RuntimeException('No encuentro la ancla «'.trim((string) strtok($anchor, "\n")).'» en '.$file.': añádelo a mano (docs/modules.md).');
                 }
 
+                // Con ancla de última aparición (routes/api.php) se respeta la sangría de su línea: el último grupo de
+                // rutas puede ir dentro de un `Route::prefix(...)->group(function () {`.
+                if ($pair[2] ?? false) {
+                    $lineStart = strrpos(substr($text, 0, $position), "\n");
+                    $indent = substr($text, $lineStart === false ? 0 : $lineStart + 1, $position - ($lineStart === false ? 0 : $lineStart + 1));
+                    $replacement = str_replace("\n", "\n".(trim($indent) === '' ? $indent : ''), $replacement);
+                }
+
                 $text = substr($text, 0, $position).$replacement.substr($text, $position + strlen($anchor));
             }
 

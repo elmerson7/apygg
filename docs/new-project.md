@@ -28,6 +28,14 @@ make init NAME=miapp [PORT_BASE=8100] [TITLE="Mi App"] [VENDOR=miorg] [README=1]
 | `README=1` | Crea `README.project.md` con un README mínimo del proyecto. | no |
 | `YES=1` | No pide confirmación si ya estaba inicializado. | pide |
 
+### Prefijo de versión (opcional)
+
+Si el proyecto alimenta **apps móviles**, decide ya si la API cuelga de `/v1`: pon `API_PREFIX=v1` en el `.env` (y en el de
+producción) antes de publicar la primera app; después cambiarlo rompe a los clientes. Por defecto va vacío y nada cambia.
+Si lo activas, repasa `GOOGLE_REDIRECT_URI` y similares (llevan el prefijo), pasa `API_PREFIX` a `make e2e`/`make frontend-e2e`
+y a `LOAD_API_PREFIX` en k6, y regenera el contrato (`make openapi`). Qué queda fuera y la política de cambios:
+`docs/api-routes-conventions.md` («Versiones y apps móviles»).
+
 ### Nomenclatura y puertos
 
 Todo sale de dos valores de `compose.env`: **`PROJECT`** (nombres) y **`PORT_BASE`/los `*_PORT`**

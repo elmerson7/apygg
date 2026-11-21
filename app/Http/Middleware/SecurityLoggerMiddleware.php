@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Helpers\Actor;
 use App\Services\Logging\SecurityLogger;
 use App\Services\LogService;
+use App\Support\ApiPath;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -142,7 +143,7 @@ class SecurityLoggerMiddleware
         }
 
         // 5. Detectar escalada de privilegios (intentos repetidos de acceso admin)
-        if ($statusCode === 403 && $this->isAdminRoute($request->path())) {
+        if ($statusCode === 403 && $this->isAdminRoute(ApiPath::path($request))) {
             $this->detectPrivilegeEscalation($ipAddress, $user, $request);
         }
     }

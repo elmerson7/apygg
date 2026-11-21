@@ -1,0 +1,6 @@
+# Excepciones documentadas a la comprobación de cambios que rompen (oasdiff; docs/api-routes-conventions.md).
+#
+# Una línea por cambio ACEPTADO a propósito, con el texto exacto que imprime `make openapi-breaking`:
+#   <MÉTODO> <ruta> <mensaje>      p. ej.:  GET /legacy api removed without deprecation
+# Antes de cada línea, un comentario con el MOTIVO, la fecha y quién lo aprobó (mínimo: la versión de app que
+# ya no usa esa ruta). Quita la línea cuando el cambio ya esté en la rama base: solo hace falta para el PR que lo introduce.

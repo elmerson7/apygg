@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Contracts\ConsentServiceInterface;
 use App\Exceptions\PrivacyException;
 use App\Models\User;
+use App\Support\ApiPath;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -21,7 +22,7 @@ class EnsureLegalConsents
 
     public function handle(Request $request, Closure $next): Response
     {
-        if (! config('privacy.consents.enforce') || $request->isMethod('OPTIONS') || $request->is(...(array) config('privacy.consents.except', []))) {
+        if (! config('privacy.consents.enforce') || $request->isMethod('OPTIONS') || ApiPath::is($request, ...(array) config('privacy.consents.except', []))) {
             return $next($request);
         }
 

@@ -257,6 +257,7 @@ recorrido los pasos van en orden y dependen unos de otros (`->depends()`): si un
 make init NAME=miapp     # una vez: crea .env y compose.env
 make e2e                 # levanta el stack efímero, corre tests/E2E y lo baja con down -v
 make e2e ARGS="--filter=Facturacion"   # argumentos de Pest
+API_PREFIX=v1 make e2e   # la misma suite con la API bajo /v1 (el stack y los helpers leen API_PREFIX)
 ```
 
 `make e2e` (`scripts/e2e-stack.sh`) usa **su propio** `docker-compose.e2e.yml` y no toca el stack de desarrollo:

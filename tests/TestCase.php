@@ -5,6 +5,7 @@ namespace Tests;
 use App\Contracts\HostResolverInterface;
 use App\Models\Permission;
 use App\Models\User;
+use App\Support\ApiPath;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Contracts\Console\Kernel;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\ParallelTesting;
 use Illuminate\Testing\TestResponse;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
+use Symfony\Component\Routing\Route;
 use Tests\Support\FakeHostResolver;
 use Tests\Support\OpenApiValidator;
 
@@ -54,6 +56,43 @@ abstract class TestCase extends BaseTestCase
         }
 
         return $app;
+    }
+
+    /**
+     * Con `API_PREFIX` (docs/api-routes-conventions.md) las peticiones de test a rutas de la API llevan el prefijo
+     * sin tocar las miles de URLs de las pruebas; las rutas que nunca lo llevan (`config('api.unprefixed')`:
+     * salud, webhooks entrantes, docs...) y las URLs absolutas (p. ej. firmadas) quedan como están.
+     *
+     * @param  string  $uri
+     * @return string
+     */
+    protected function prepareUrlForRequest($uri)
+    {
+        $prefix = ApiPath::prefix();
+
+        if ($prefix !== '' && ! str_starts_with($uri, 'http')) {
+            $path = trim((string) parse_url($uri, PHP_URL_PATH), '/');
+
+            if (! ApiPath::isUnprefixed($path) && ! $this->esRutaSinPrefijo($path) && $path !== $prefix && ! str_starts_with($path, $prefix.'/')) {
+                $uri = ApiPath::with($uri);
+            }
+        }
+
+        return parent::prepareUrlForRequest($uri);
+    }
+
+    /** Rutas registradas por el propio test sin prefijo (p. ej. `/_err/x`): se piden tal cual. */
+    private function esRutaSinPrefijo(string $path): bool
+    {
+        $prefijada = '/'.ApiPath::prefix().'/'.$path;
+        $existe = fn (string $uri): bool => collect($this->app['router']->getRoutes()->getRoutes())
+            ->contains(function ($ruta) use ($uri): bool {
+                $compilada = (new Route($ruta->uri() === '/' ? '/' : '/'.$ruta->uri(), [], $ruta->wheres))->compile();
+
+                return (bool) preg_match($compilada->getRegex(), rawurldecode($uri));
+            });
+
+        return ! $existe($prefijada) && $existe('/'.$path);
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Enums\ErrorCode;
+use App\Support\ApiPath;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -77,7 +78,7 @@ class AdaptiveRateLimitingMiddleware
      */
     protected function getEndpointType(Request $request): string
     {
-        $path = $request->path();
+        $path = ApiPath::path($request);
         $method = $request->method();
 
         // Verificar patrones específicos primero
@@ -170,7 +171,7 @@ class AdaptiveRateLimitingMiddleware
         $exceptions = config('rate-limiting.except', []);
 
         foreach ($exceptions as $exception) {
-            if ($this->matchesPattern($request->path(), $exception)) {
+            if ($this->matchesPattern(ApiPath::path($request), $exception)) {
                 return true;
             }
         }

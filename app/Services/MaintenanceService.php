@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Contracts\AuditServiceInterface;
 use App\Contracts\MaintenanceServiceInterface;
 use App\Models\User;
+use App\Support\ApiPath;
 use Carbon\CarbonInterface;
 use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Http\Request;
@@ -71,7 +72,7 @@ class MaintenanceService implements MaintenanceServiceInterface
 
     public function allows(Request $request): bool
     {
-        $path = trim($request->path(), '/');
+        $path = trim(ApiPath::path($request), '/');
 
         foreach ((array) config('maintenance.allow_paths', []) as $pattern) {
             if (is_string($pattern) && fnmatch($pattern, $path)) {

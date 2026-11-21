@@ -20,13 +20,13 @@ use Illuminate\Support\Facades\Storage;
 // ── 1. Salud y ficha ─────────────────────────────────────────────────────────
 
 test('la API responde lista y la raiz devuelve la ficha con el titulo', function () {
-    $ready = e2eApi()->get('/health/ready');
+    $ready = e2eApi(prefijada: false)->get('/health/ready');
     expect($ready->status())->toBe(200)
         ->and($ready->json('status'))->toBe('ready')
         ->and($ready->json('services.database.status'))->toBe('ok')
         ->and($ready->json('services.redis.status'))->toBe('ok');
 
-    $ficha = e2eApi()->get('/');
+    $ficha = e2eApi(prefijada: false)->get('/');
     expect($ficha->status())->toBe(200)
         ->and($ficha->json('status'))->toBe('running')
         ->and($ficha->json('name'))->toBeString()->not->toBeEmpty()

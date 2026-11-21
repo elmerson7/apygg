@@ -6,6 +6,7 @@ use App\Models\Logs\SecurityLog;
 use App\Models\Permission;
 use App\Models\User;
 use App\Services\Logging\ActivityLogger;
+use App\Support\ApiPath;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -215,7 +216,7 @@ test('el log de una petición no guarda ni devuelve la contraseña ni el token e
         'access_token' => 'TokenSecreto-654',
     ])->assertCreated();
 
-    $this->assertDatabaseHas('logs_api', ['request_path' => 'settings']);
+    $this->assertDatabaseHas('logs_api', ['request_path' => ltrim(ApiPath::with('/settings'), '/')]);
 
     $this->withHeaders(logsCabeceras(logsUsuarioCon('system.logs')))->getJson('/admin/logs/api')
         ->assertOk()

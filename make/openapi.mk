@@ -10,6 +10,12 @@ openapi:
 openapi-check:
 	$(DC) exec app php artisan openapi:export --check
 
+# Falla si docs/openapi.json introduce cambios que rompen a las apps publicadas (oasdiff en Docker, versión fija).
+# `make openapi-breaking` compara con main; `make openapi-breaking BASE=<ref>` con otra rama o commit. Escapes: docs/api-routes-conventions.md
+BASE ?= main
+openapi-breaking:
+	@bash scripts/openapi-breaking.sh $(BASE)
+
 # Tipos TypeScript para los fronts desde docs/openapi.json -> docs/api-types.d.ts (sin tocar el stack: Node efímero)
 types:
 	docker run --rm -u $$(id -u):$$(id -g) -e HOME=/tmp -v "$(CURDIR)":/work -w /work node:22-alpine \

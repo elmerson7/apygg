@@ -160,6 +160,140 @@ jobs:
           name: codecov-umbrella
           fail_ci_if_error: false
 
+  test-prefix:
+    name: Tests con API_PREFIX=v1
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: lint
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: apygg_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    env:
+      APP_ENV: testing
+      APP_KEY: base64:Y2ktcGlwZWxpbmUta2V5LTMyLWJ5dGVzLWxvbmchISE=
+      DB_CONNECTION: pgsql
+      # La BD del servicio ya es la de tests (apygg_test): sin esto TestCase usaría apygg_test_test
+      DB_TEST_ISOLATION: 'false'
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_DATABASE: apygg_test
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      CACHE_STORE: redis
+      SESSION_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      JWT_SECRET: test-jwt-secret-for-ci-pipeline-only-must-be-at-least-32-characters-long-for-256-bits-minimum-requirement
+      BROADCAST_CONNECTION: log
+      # Prefijo de versión opcional: toda la suite con la API colgando de /v1 (docs/api-routes-conventions.md)
+      API_PREFIX: v1
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: pdo_pgsql, redis, gd, intl, zip, opcache, bcmath, pcntl
+          coverage: none
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v5
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Prepare Laravel application
+        run: |
+          cp .env.example .env || true
+          php artisan key:generate --force
+          php artisan config:clear
+          php artisan cache:clear
+
+      - name: Run database migrations
+        run: php artisan migrate --force --env=testing
+
+      # Misma suite por defecto, Contract y Concurrency, con la API bajo /v1: las URLs de los tests llevan el
+      # prefijo (tests/TestCase.php) salvo las rutas de infraestructura (config/api.php `unprefixed`).
+      - name: Run Pest tests (API_PREFIX=v1)
+        run: ./vendor/bin/pest --ci
+
+      - name: Run Contract and Concurrency suites (API_PREFIX=v1)
+        run: ./vendor/bin/pest --ci --testsuite=Contract,Concurrency
+
+  # Cambios que rompen a las apps móviles ya publicadas: compara docs/openapi.json con el de la base (rama destino
+  # del PR, o el commit anterior en push) con oasdiff (imagen de versión fija). Detalle y escapes (archivo de
+  # excepciones, etiqueta `breaking-change-approved`): docs/api-routes-conventions.md "Versiones y apps móviles".
+  openapi-breaking:
+    name: Cambios que rompen (oasdiff)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Determinar la referencia base
+        id: base
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT" = "pull_request" ]; then
+            ref="origin/$BASE_REF"
+          elif [ -n "$BEFORE" ] && ! echo "$BEFORE" | grep -qE '^0+$' && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            ref="$BEFORE"
+          elif git rev-parse --verify --quiet HEAD~1 >/dev/null; then
+            ref="HEAD~1"
+          else
+            ref=""
+          fi
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+
+      - name: oasdiff breaking
+        if: steps.base.outputs.ref != ''
+        env:
+          ALLOW_BREAKING: ${{ contains(github.event.pull_request.labels.*.name, 'breaking-change-approved') && '1' || '0' }}
+        run: bash scripts/openapi-breaking.sh "${{ steps.base.outputs.ref }}"
+
   security:
     name: Security Scan (Composer Audit)
     runs-on: ubuntu-latest
@@ -474,7 +608,7 @@ jobs:
   ci-success:
     name: CI Pipeline Success
     runs-on: ubuntu-latest
-    needs: [lint, test, security, build, migrations, modules-removed]
+    needs: [lint, test, test-prefix, security, build, migrations, modules-removed, openapi-breaking]
     if: always()
 
     steps:
@@ -482,10 +616,12 @@ jobs:
         run: |
           if [ "${{ needs.lint.result }}" != "success" ] || \
              [ "${{ needs.test.result }}" != "success" ] || \
+             [ "${{ needs.test-prefix.result }}" != "success" ] || \
              [ "${{ needs.security.result }}" != "success" ] || \
              [ "${{ needs.build.result }}" != "success" ] || \
              [ "${{ needs.migrations.result }}" != "success" ] || \
-             [ "${{ needs.modules-removed.result }}" != "success" ]; then
+             [ "${{ needs.modules-removed.result }}" != "success" ] || \
+             [ "${{ needs.openapi-breaking.result }}" != "success" ]; then
             echo "❌ CI Pipeline failed"
             exit 1
           fi

@@ -6,6 +6,7 @@ use App\Helpers\Actor;
 use App\Helpers\Redactor;
 use App\Models\Logs\ApiLog;
 use App\Services\LogService;
+use App\Support\ApiPath;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
@@ -57,7 +58,7 @@ class ApiLogger
     ): ?ApiLog {
         try {
             // Verificar si la ruta debe ser excluida
-            if (self::shouldExcludePath($request->path())) {
+            if (self::shouldExcludePath(ApiPath::path($request))) {
                 return null;
             }
 

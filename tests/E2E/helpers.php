@@ -29,10 +29,17 @@ function e2e(string $recorrido = 'base'): ArrayObject
     return $estados[$recorrido] ??= new ArrayObject($comun);
 }
 
-/** Cliente HTTP contra el stack, opcionalmente con token y tenant (`X-Tenant`: slug o id). */
-function e2eApi(?string $token = null, string|int|null $tenant = null): PendingRequest
+/**
+ * Cliente HTTP contra el stack, opcionalmente con token y tenant (`X-Tenant`: slug o id).
+ *
+ * Con `API_PREFIX` (p. ej. `v1`, la misma variable con la que se levanta el stack) las rutas de la app cuelgan
+ * de `/v1`: `$prefijada = false` para las que nunca lo llevan (salud, raíz, webhooks entrantes).
+ */
+function e2eApi(?string $token = null, string|int|null $tenant = null, bool $prefijada = true): PendingRequest
 {
-    $peticion = Http::baseUrl(rtrim((string) getenv('E2E_BASE_URL'), '/'))
+    $prefijo = $prefijada ? trim((string) getenv('API_PREFIX'), '/') : '';
+
+    $peticion = Http::baseUrl(rtrim((string) getenv('E2E_BASE_URL'), '/').($prefijo !== '' ? '/'.$prefijo : ''))
         ->acceptJson()
         ->timeout(30);
 

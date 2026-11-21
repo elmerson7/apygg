@@ -3,6 +3,7 @@
 use App\Models\Tenant;
 use App\Models\TenantInvitation;
 use App\Models\User;
+use App\Support\ApiPath;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;
@@ -36,7 +37,7 @@ test('dos altas simultáneas del mismo slug crean una sola empresa y la otra rec
     $results = ConcurrentRunner::run(2, function (int $i) use ($tokens, $slug) {
         config(['multi-tenancy.enabled' => true, 'multi-tenancy.onboarding.signup.enabled' => true]);
 
-        $response = app(Kernel::class)->handle(Request::create('/tenants', 'POST', [], [], [], [
+        $response = app(Kernel::class)->handle(Request::create(ApiPath::with('/tenants'), 'POST', [], [], [], [
             'CONTENT_TYPE' => 'application/json',
             'HTTP_ACCEPT' => 'application/json',
             'HTTP_AUTHORIZATION' => 'Bearer '.$tokens[$i],
@@ -71,7 +72,7 @@ test('dos aceptaciones simultáneas de la misma invitación dejan una sola membr
     $results = ConcurrentRunner::run(2, function (int $i) use ($jwt, $token) {
         config(['multi-tenancy.enabled' => true]);
 
-        $response = app(Kernel::class)->handle(Request::create('/tenant/invitations/accept', 'POST', [], [], [], [
+        $response = app(Kernel::class)->handle(Request::create(ApiPath::with('/tenant/invitations/accept'), 'POST', [], [], [], [
             'CONTENT_TYPE' => 'application/json',
             'HTTP_ACCEPT' => 'application/json',
             'HTTP_AUTHORIZATION' => 'Bearer '.$jwt,

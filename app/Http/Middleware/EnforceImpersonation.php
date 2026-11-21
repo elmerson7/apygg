@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Exceptions\ImpersonationException;
 use App\Models\Tenant;
+use App\Support\ApiPath;
 use App\Support\Impersonation;
 use Closure;
 use Illuminate\Http\Request;
@@ -54,7 +55,7 @@ class EnforceImpersonation
 
     private function isBlocked(Request $request): bool
     {
-        $subject = $request->method().' '.trim($request->path(), '/');
+        $subject = $request->method().' '.trim(ApiPath::path($request), '/');
 
         foreach ((array) config('impersonation.blocked_routes', []) as $pattern) {
             if (is_string($pattern) && fnmatch($pattern, $subject, FNM_CASEFOLD)) {

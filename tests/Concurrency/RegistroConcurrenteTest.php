@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Support\ApiPath;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +21,7 @@ test('dos registros simultáneos con el mismo email crean un solo usuario y el o
 
     $results = ConcurrentRunner::run(2, function (int $i) use ($email) {
         $response = app(Kernel::class)->handle(
-            Request::create('/auth/register', 'POST', [], [], [], [
+            Request::create(ApiPath::with('/auth/register'), 'POST', [], [], [], [
                 'CONTENT_TYPE' => 'application/json',
                 'HTTP_ACCEPT' => 'application/json',
                 'REMOTE_ADDR' => '10.0.0.'.($i + 1),

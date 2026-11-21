@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Support\ApiPath;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -28,7 +29,7 @@ test('dos peticiones simultaneas con la misma clave ejecutan una sola vez', func
     $results = ConcurrentRunner::run(2, function (int $i) use ($token, $key, $nombre) {
         config(['idempotency.wait_ms' => 0]);
 
-        $response = app(Kernel::class)->handle(Request::create('/webhooks', 'POST', [], [], [], [
+        $response = app(Kernel::class)->handle(Request::create(ApiPath::with('/webhooks'), 'POST', [], [], [], [
             'CONTENT_TYPE' => 'application/json',
             'HTTP_ACCEPT' => 'application/json',
             'HTTP_AUTHORIZATION' => 'Bearer '.$token,
@@ -60,7 +61,7 @@ test('con espera configurada la segunda peticion devuelve la respuesta guardada 
     $results = ConcurrentRunner::run(3, function (int $i) use ($token, $key, $nombre) {
         config(['idempotency.wait_ms' => 5000]);
 
-        $response = app(Kernel::class)->handle(Request::create('/webhooks', 'POST', [], [], [], [
+        $response = app(Kernel::class)->handle(Request::create(ApiPath::with('/webhooks'), 'POST', [], [], [], [
             'CONTENT_TYPE' => 'application/json',
             'HTTP_ACCEPT' => 'application/json',
             'HTTP_AUTHORIZATION' => 'Bearer '.$token,
@@ -100,7 +101,7 @@ test('dos procesos que retoman a la vez una reserva caducada solo ejecutan uno',
     $results = ConcurrentRunner::run(3, function (int $i) use ($token, $key, $body) {
         config(['idempotency.wait_ms' => 0]);
 
-        $response = app(Kernel::class)->handle(Request::create('/webhooks', 'POST', [], [], [], [
+        $response = app(Kernel::class)->handle(Request::create(ApiPath::with('/webhooks'), 'POST', [], [], [], [
             'CONTENT_TYPE' => 'application/json',
             'HTTP_ACCEPT' => 'application/json',
             'HTTP_AUTHORIZATION' => 'Bearer '.$token,

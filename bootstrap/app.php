@@ -56,7 +56,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         // Cargar rutas web solo para Telescope y Horizon (necesitan sesiones)
         web: __DIR__.'/../routes/web.php',
-        // Cargar rutas API sin prefijo /api (directo en la raíz)
+        // Cargar rutas API sin prefijo /api (directo en la raíz). Prefijo de versión opcional (`API_PREFIX`):
+        // lo aplica routes/api.php con `config('api.prefix')`, que aquí ya está cargada (docs/api-routes-conventions.md).
         using: function () {
             Route::middleware('api')
                 ->group(base_path('routes/api.php'));

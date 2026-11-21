@@ -4,6 +4,9 @@ import { SharedArray } from 'k6/data';
 const num = (name, fallback) => (__ENV[name] !== undefined && __ENV[name] !== '' ? Number(__ENV[name]) : fallback);
 
 export const BASE_URL = (__ENV.LOAD_BASE_URL || 'http://127.0.0.1:8010').replace(/\/$/, '');
+// Prefijo de versión opcional de la API (`API_PREFIX` del stack, p. ej. v1): las rutas de la app cuelgan de él; vacío = raíz.
+const API_PREFIX = (__ENV.LOAD_API_PREFIX || '').replace(/^\/+|\/+$/g, '');
+export const API_URL = API_PREFIX ? `${BASE_URL}/${API_PREFIX}` : BASE_URL;
 // Dentro del contenedor k6 el CSV se monta en /data/credentials.csv (ver make/load.mk).
 export const CREDENTIALS_FILE = __ENV.LOAD_CREDENTIALS_FILE || '/data/credentials.csv';
 // Filas del CSV que se usan: `owner` (por defecto; pueden escribir), `member` o `all`.

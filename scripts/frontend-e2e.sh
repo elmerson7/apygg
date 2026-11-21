@@ -42,7 +42,7 @@ node_run() {
 
 pw_run() {
     docker run --rm --name "${E2E_PROJECT}-playwright" --network "${E2E_PROJECT}-network" \
-        -u "$UIDGID" -e HOME=/tmp -e CI=1 -e VITE_API_URL=http://app:8000 -e MAILPIT_URL=http://mailpit:8025 \
+        -u "$UIDGID" -e HOME=/tmp -e CI=1 -e VITE_API_URL=http://app:8000 -e VITE_API_PREFIX="${API_PREFIX:-}" -e MAILPIT_URL=http://mailpit:8025 \
         --memory 768m --memory-swap 768m --shm-size 256m \
         -v "$PWD":/work -w /work/frontend-demo "$PW_IMAGE" "$@"
 }

@@ -12,6 +12,21 @@ impacto en un proyecto existente están en `CHANGELOG.md`.
 
 ## De 1.0.0 a la versión actual (Unreleased)
 
+### Prefijo de versión opcional `API_PREFIX` (no rompe: opt-in)
+
+Con `API_PREFIX` sin definir (por defecto) todo funciona exactamente igual. Lo que aporta a un derivado:
+
+- **`config/api.php`** nuevo y `App\Support\ApiPath`. `routes/api.php` agrupa las rutas de la app bajo `Route::prefix(ApiPath::prefix())`;
+  si tu `routes/api.php` está personalizado, aplica lo mismo (las rutas de salud, `/` y `inbound-webhooks.php` quedan fuera del grupo).
+- Los middlewares y servicios que comparaban `$request->path()`/`$request->is()` con patrones de config
+  (`EnsureMinimumAppVersion`, `CheckMaintenanceMode`, rate limiting, `SubscriptionAccess`, consentimientos...) usan ahora
+  `ApiPath::path()`/`ApiPath::is()`. Si añadiste middlewares propios con patrones de ruta, haz lo mismo para que valgan con prefijo.
+- **Para activarlo** en un proyecto ya desplegado: solo si ninguna app publicada usa la API todavía. Si las hay, déjalo vacío
+  y abre `/v2` como grupo aparte cuando haga falta (`docs/api-routes-conventions.md`).
+- CI: nuevo job `test-prefix` (suite con `API_PREFIX=v1`) y `openapi-breaking` (oasdiff). Si tu CI es propio, añade
+  `scripts/openapi-breaking.sh` y las variables `API_PREFIX` (E2E, `docker-compose.e2e.yml`), `LOAD_API_PREFIX` (k6) y
+  `VITE_API_PREFIX` (frontend-demo).
+
 ### Módulos opcionales quitables (ola 8.2-A)
 
 Sin cambios de comportamiento ni de rutas. Lo nuevo que afecta a un derivado:

@@ -1,7 +1,7 @@
 // Flujos de usuario reutilizados por todos los escenarios (humo, carga, estrés, pico, resistencia).
 import http from 'k6/http';
 import { check, sleep, fail } from 'k6';
-import { BASE_URL, credentials, THINK_TIME, WRITE_RATIO, INVITE_PACING } from './config.js';
+import { API_URL, credentials, THINK_TIME, WRITE_RATIO, INVITE_PACING } from './config.js';
 
 // UUID v4 sin dependencias remotas (k6 no debe necesitar red en la prueba).
 function uuidv4() {
@@ -27,7 +27,7 @@ function user() {
 function login() {
   const u = user();
   const res = http.post(
-    `${BASE_URL}/auth/login`,
+    `${API_URL}/auth/login`,
     JSON.stringify({ login: u.email, password: u.password }),
     { headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, tags: { endpoint: 'login', kind: 'auth' } },
   );
@@ -64,7 +64,7 @@ function headers(extra = {}) {
 function call(method, path, endpoint, kind, body, extraHeaders) {
   if (!ensureSession()) return null;
   const send = () =>
-    http.request(method, `${BASE_URL}${path}`, body === undefined ? null : JSON.stringify(body), {
+    http.request(method, `${API_URL}${path}`, body === undefined ? null : JSON.stringify(body), {
       headers: headers(extraHeaders),
       tags: { endpoint, kind },
     });

@@ -9,6 +9,7 @@ use App\Exceptions\SubscriptionBlockedException;
 use App\Models\Invoice;
 use App\Models\Subscription;
 use App\Models\Tenant;
+use App\Support\ApiPath;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Http\Request;
 
@@ -79,7 +80,7 @@ class SubscriptionAccess implements SubscriptionAccessInterface
             return 'past_due; grace_ends_at='.$state['grace_ends_at'];
         }
 
-        if (in_array(strtoupper($request->method()), self::READ_METHODS, true) || $request->is(...$this->allowPaths())) {
+        if (in_array(strtoupper($request->method()), self::READ_METHODS, true) || ApiPath::is($request, ...$this->allowPaths())) {
             return null;
         }
 
