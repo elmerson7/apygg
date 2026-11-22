@@ -23,6 +23,7 @@ class ListLogsRequest extends BaseFormRequest
             'to' => ['nullable', 'date', 'after_or_equal:from'],
             'user_id' => ['nullable', 'integer'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'trace_id' => ['nullable', 'string', 'max:64'], // = request_id de la respuesta: sigue una petición por los tres logs
             // activity
             'action' => ['nullable', 'string', 'max:100'],
             'model_type' => ['nullable', 'string', 'max:255'],

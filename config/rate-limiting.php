@@ -23,6 +23,8 @@ return [
     | - read: Endpoints de lectura (GET)
     | - write: Endpoints de escritura (POST, PUT, PATCH, DELETE)
     | - admin: Endpoints administrativos
+    | - refresh: renovación del token (POST auth/refresh), por IP: sin access token válido no hay usuario
+    | - sensitive: cambio de contraseña, por usuario (frena la prueba de contraseñas actuales con un token robado)
     |
     */
 
@@ -47,6 +49,17 @@ return [
             'decay_minutes' => 1,
             'by' => 'user', // Por usuario autenticado
         ],
+        'refresh' => [
+            // Más alto que 'auth': varias apps de una misma oficina (NAT) renuevan a la vez.
+            'max_attempts' => (int) env('RATE_LIMIT_REFRESH_MAX', 20),
+            'decay_minutes' => 1,
+            'by' => 'ip',
+        ],
+        'sensitive' => [
+            'max_attempts' => (int) env('RATE_LIMIT_SENSITIVE_MAX', 5),
+            'decay_minutes' => 1,
+            'by' => 'user',
+        ],
     ],
 
     /*
@@ -67,6 +80,12 @@ return [
             'auth/reset-password',
             'auth/2fa/verify',
             'auth/email/verify',
+        ],
+        'refresh' => [
+            'auth/refresh',
+        ],
+        'sensitive' => [
+            'auth/change-password',
         ],
         'admin' => [
             'admin/*',

@@ -26,7 +26,7 @@ class LogsController extends Controller
      * Lista activity logs con filtros (`filter[...]`, `sort`; los nombres sueltos de antes siguen valiendo).
      */
     #[Listing(
-        filters: ['user_id' => 'int', 'action' => 'exact', 'model_type' => 'partial', 'from' => 'from:created_at', 'to' => 'to:created_at', 'tenant_id' => 'int'],
+        filters: ['user_id' => 'int', 'action' => 'exact', 'model_type' => 'partial', 'from' => 'from:created_at', 'to' => 'to:created_at', 'tenant_id' => 'int', 'trace_id' => 'exact'],
         sorts: ['created_at'],
         legacy: ['user_id', 'action', 'model_type', 'from', 'to', 'tenant_id'],
         defaultPerPage: 20,
@@ -42,7 +42,7 @@ class LogsController extends Controller
      * Lista api logs con filtros.
      */
     #[Listing(
-        filters: ['user_id' => 'int', 'method' => 'custom', 'status_code' => 'int:response_status', 'endpoint' => 'partial:request_path', 'from' => 'from:created_at', 'to' => 'to:created_at', 'tenant_id' => 'int'],
+        filters: ['user_id' => 'int', 'method' => 'custom', 'status_code' => 'int:response_status', 'endpoint' => 'partial:request_path', 'from' => 'from:created_at', 'to' => 'to:created_at', 'tenant_id' => 'int', 'trace_id' => 'exact'],
         sorts: ['created_at', 'status_code' => 'response_status', 'response_time_ms'],
         legacy: ['user_id', 'method', 'status_code', 'endpoint', 'from', 'to', 'tenant_id'],
         defaultPerPage: 20,
@@ -59,7 +59,7 @@ class LogsController extends Controller
      * Lista security logs con filtros.
      */
     #[Listing(
-        filters: ['event_type' => 'exact', 'user_id' => 'int', 'ip_address' => 'exact', 'from' => 'from:created_at', 'to' => 'to:created_at', 'tenant_id' => 'int'],
+        filters: ['event_type' => 'exact', 'user_id' => 'int', 'ip_address' => 'exact', 'from' => 'from:created_at', 'to' => 'to:created_at', 'tenant_id' => 'int', 'trace_id' => 'exact'],
         sorts: ['created_at'],
         legacy: ['event_type', 'user_id', 'ip_address', 'from', 'to', 'tenant_id'],
         defaultPerPage: 20,

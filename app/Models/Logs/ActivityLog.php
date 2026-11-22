@@ -61,6 +61,7 @@ class ActivityLog extends Model
         'old_values',
         'new_values',
         'ip_address',
+        'trace_id',
     ];
 
     /**

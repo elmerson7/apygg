@@ -14,6 +14,12 @@ x-app: &app
     - "host.docker.internal:host-gateway"
   networks:
     - network
+  # Los logs salen en JSON por stderr (.env.production.example): rotación para no llenar el disco
+  logging:
+    driver: json-file
+    options:
+      max-size: ${LOG_MAX_SIZE:-20m}
+      max-file: ${LOG_MAX_FILE:-5}
 
 services:
   app:

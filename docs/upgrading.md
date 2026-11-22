@@ -17,6 +17,21 @@ impacto en un proyecto existente están en `CHANGELOG.md`.
 
 ## De 1.0.0 a la versión actual (Unreleased)
 
+### `trace_id` en la auditoría de actividad y límites de `/auth/refresh` y cambio de contraseña
+
+- **Migraciones nuevas** (`make migrate`):
+  - `logs_activity.trace_id` (varchar 64, nulo, índice `CONCURRENTLY`): une cada cambio con su petición.
+  - `logs_api.trace_id` y `logs_security.trace_id` pasan de `uuid` a `varchar(64)`. Antes un `X-Request-ID` del
+    cliente que no fuera UUID (válido según el contrato) hacía fallar el insert del log. El cambio de tipo reescribe
+    la tabla: si tus logs son muy grandes, purga antes (`php artisan logs:clean --days=30`).
+- `LogService::logActivity()` ahora sí guarda `before`/`after` en `old_values`/`new_values` (antes se perdían).
+- `/admin/logs/*` acepta `filter[trace_id]`.
+- **Límites nuevos**: `RATE_LIMIT_REFRESH_MAX` (20/min por IP) para `/auth/refresh` y `RATE_LIMIT_SENSITIVE_MAX`
+  (5/min por usuario) para `/auth/change-password`. Antes contaban como escritura genérica (30/min). Si tus apps
+  renuevan el token muy a menudo desde una misma IP, sube `RATE_LIMIT_REFRESH_MAX`.
+- `config/migration-lint.php`: `large_tables` usaba nombres que no existen (`api_logs`, `activity_logs`, `llm_logs`);
+  ahora `logs_api`, `logs_activity`, `logs_security` y `logs_llm`.
+
 ### Puertos en 127.0.0.1, validación de arranque en producción y `.env.production.example`
 
 - **`docker-compose.yml`**: `app`, `reverb`, `pgbouncer` y `meilisearch` publican en `127.0.0.1` (variable `BIND_HOST`, por

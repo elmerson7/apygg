@@ -45,7 +45,9 @@ En `DEPLOY_PATH` (p. ej. `/srv/miapp`) crea **solo** el `.env` de Laravel de pro
 - El `app` publica `127.0.0.1:${APP_PORT:-8000}`: pon delante tu proxy TLS (Caddy/nginx). Reverb es opcional:
   `COMPOSE_PROFILES_EXTRA=reverb`.
 - **`.env` de producción**: parte de `.env.production.example` (`APP_DEBUG=false`, `LOG_LEVEL=warning`, Sentry a tasa baja,
-  sin claves por defecto). No dupliques variables: lo que no está ahí se toma de `.env.example`.
+  sin claves por defecto). Los logs salen en **JSON por stderr** (`LOG_STACK=stderr,sentry_logs`,
+  `LOG_STDERR_FORMATTER=Monolog\Formatter\JsonFormatter`), una línea por evento con `trace_id`: `docker compose logs app`
+  o tu agregador; el compose los rota (`LOG_MAX_SIZE`, `LOG_MAX_FILE`). No dupliques variables: lo que no está ahí se toma de `.env.example`.
 - **Validación de arranque** (`App\Support\Security\ProductionConfigGuard`, desde `AppServiceProvider::boot`): con
   `APP_ENV=production` la app **se niega a arrancar** (excepción con la lista de problemas) si hay `APP_DEBUG=true`,
   `JWT_SECRET` vacío/corto/por defecto, `DB_PASSWORD`, `REDIS_PASSWORD` o `MEILISEARCH_KEY` por defecto (`secret`,

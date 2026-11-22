@@ -80,7 +80,8 @@ class Redactor
         $hasDigits = preg_match('/\d(?:[ ().\-]*\d){6}/', $value) === 1;
         if ($hasDigits && in_array('card', $patterns, true)) {
             $value = (string) preg_replace_callback(
-                '/(?<![\d])(?:\d[ -]?){12,18}\d(?![\d])/',
+                // Sin letras, dígitos ni guion pegados: un UUID o un id hexadecimal no es una tarjeta
+                '/(?<![\w-])(?:\d[ -]?){12,18}\d(?![\w]|-\w)/',
                 function (array $m) use ($remove): string {
                     $digits = (string) preg_replace('/\D/', '', $m[0]);
                     if (strlen($digits) < 13 || strlen($digits) > 19 || ! self::luhn($digits)) {

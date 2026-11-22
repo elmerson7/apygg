@@ -276,3 +276,36 @@ test('un rango con to anterior a from responde 422', function () {
     $this->withHeaders(logsCabeceras(logsUsuarioCon('system.logs')))->getJson('/admin/logs/security?from=2026-02-01&to=2026-01-01')
         ->assertUnprocessable();
 });
+
+// ── trace_id: unir la actividad con su petición ─────────────────────────────
+
+test('el registro de actividad guarda el request_id de la petición que lo causó', function () {
+    $admin = logsUsuarioCon('users.update', 'system.logs');
+    $otro = User::factory()->create();
+
+    $this->withHeaders(logsCabeceras($admin) + ['X-Request-ID' => 'req-actividad-42'])
+        ->putJson("/users/{$otro->id}", ['name' => 'Nombre Nuevo'])
+        ->assertOk()
+        ->assertHeader('X-Request-ID', 'req-actividad-42');
+
+    $log = ActivityLog::where('model_type', User::class)->where('model_id', $otro->id)
+        ->where('action', ActivityLog::ACTION_UPDATED)->latest('id')->first();
+
+    expect($log)->not->toBeNull()->and($log->trace_id)->toBe('req-actividad-42');
+});
+
+test('los listados de logs filtran por trace_id', function (string $tipo, string $modelo) {
+    $buscado = $modelo::factory()->create(['trace_id' => 'traza-buscada']);
+    $otro = $modelo::factory()->create(['trace_id' => 'otra-traza']);
+
+    $filas = collect($this->withHeaders(logsCabeceras(logsUsuarioCon('system.logs')))
+        ->getJson("/admin/logs/{$tipo}?filter[trace_id]=traza-buscada")
+        ->assertOk()
+        ->json('data'));
+
+    expect($filas->pluck('id')->all())->toContain($buscado->id)->not->toContain($otro->id);
+})->with([
+    'activity' => ['activity', ActivityLog::class],
+    'api' => ['api', ApiLog::class],
+    'security' => ['security', SecurityLog::class],
+]);

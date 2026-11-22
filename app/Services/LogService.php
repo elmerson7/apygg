@@ -326,10 +326,10 @@ class LogService
             'model_type' => $data['model_type'],
             'model_id' => $data['model_id'],
             'action' => $data['action'],
-            'before' => $data['before'],
-            'after' => $data['after'],
+            'old_values' => $data['before'],
+            'new_values' => $data['after'],
             'ip_address' => $context['ip_address'],
-            'user_agent' => $context['user_agent'],
+            'trace_id' => $context['trace_id'],
         ]);
     }
 

@@ -64,6 +64,8 @@ class ActivityLogger
                 'old_values' => $oldValuesFiltered,
                 'new_values' => $newValuesFiltered,
                 'ip_address' => $ipAddress,
+                // Solo si la petición ya tiene uno (HTTP); en consola y colas queda nulo, sin inventarlo
+                'trace_id' => request()->attributes->get('trace_id'),
             ]);
         } catch (\Exception $e) {
             // Log del error pero no interrumpir el flujo principal

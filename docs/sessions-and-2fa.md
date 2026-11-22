@@ -76,6 +76,9 @@ un **store de caché propio** (`jwt.blacklist_store`, `App\Auth\JwtBlacklistStor
   correo lo invalida. Inválido/caducado: 422 `token_invalid`. Repetir es inofensivo.
 - Cambiar el correo de un usuario (`PUT /users/{id}` con `users.update`, `UserService::update`) anula
   `email_verified_at` y reenvía el enlace (`AUTH_EMAIL_VERIFICATION_ON_CHANGE`, por defecto sí).
+- Límites propios (`config/rate-limiting.php`, 429 `rate_limited`): `POST /auth/refresh` por IP
+  (`RATE_LIMIT_REFRESH_MAX`, 20/min: más alto que el login por las oficinas detrás de NAT) y
+  `POST /auth/change-password` por usuario (`RATE_LIMIT_SENSITIVE_MAX`, 5/min). No gastan el cupo de escritura.
 - `POST /auth/email/resend` (auth) con límite `AUTH_EMAIL_VERIFICATION_RESEND_PER_HOUR` por usuario (429 `rate_limited`).
 - Exigirlo en una ruta: `->middleware(['auth:api', 'verified'])` -> 403 `email_not_verified`.
   `AUTH_EMAIL_VERIFICATION_ENFORCE=false` lo desactiva en bloque.

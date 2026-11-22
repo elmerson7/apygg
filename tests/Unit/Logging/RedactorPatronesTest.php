@@ -28,6 +28,17 @@ test('enmascara tarjetas válidas por Luhn y deja pasar números que no lo son',
         ->and(Redactor::redactString('pedido 4111111111111112'))->toBe('pedido 4111111111111112');
 });
 
+test('no confunde un UUID ni un id hexadecimal con una tarjeta', function () {
+    // El tramo 575-7772-4917-83 de este UUID pasa Luhn: antes se enmascaraba al azar
+    $uuid = '169ec575-7772-4917-83f4-65904b2466a4';
+
+    expect(Redactor::redactString("token_id={$uuid}"))->toBe("token_id={$uuid}")
+        ->and(Redactor::redactString('12345678-1234-1234-1234-123456789012'))->toBe('12345678-1234-1234-1234-123456789012')
+        ->and(Redactor::redactString('ref a4111111111111111b'))->toBe('ref a4111111111111111b')
+        ->and(Redactor::redactString('pago con 4111-1111-1111-1111.'))->toBe('pago con ****1111.')
+        ->and(Redactor::redactString('(4111111111111111)'))->toBe('(****1111)');
+});
+
 test('enmascara teléfonos internacionales y JWT y Bearer', function () {
     $jwt = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.firmaabc123';
 

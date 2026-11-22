@@ -3,6 +3,7 @@
 use App\Models\Logs\ActivityLog;
 use App\Models\User;
 use App\Services\Logging\ActivityLogger;
+use App\Services\LogService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 
@@ -147,4 +148,30 @@ test('registra log con acción personalizada', function () {
 
     expect($log)->not->toBeNull()
         ->and($log->action)->toBe(ActivityLog::ACTION_CREATED);
+});
+
+test('guarda el trace_id de la petición y lo deja nulo si no hay ninguno', function () {
+    $user = User::factory()->create();
+
+    expect(ActivityLogger::logCreated($user)->trace_id)->toBeNull();
+
+    request()->attributes->set('trace_id', 'traza-unitaria');
+
+    expect(ActivityLogger::logCreated($user)->trace_id)->toBe('traza-unitaria');
+});
+
+test('LogService::logActivity guarda los valores de antes y después y el trace_id', function () {
+    request()->attributes->set('trace_id', 'traza-servicio');
+
+    LogService::logActivity('updated', User::class, $this->user->id, [
+        'before' => ['name' => 'Antes'],
+        'after' => ['name' => 'Después'],
+    ]);
+
+    $log = ActivityLog::where('trace_id', 'traza-servicio')->latest('id')->first();
+
+    expect($log)->not->toBeNull()
+        ->and($log->old_values)->toBe(['name' => 'Antes'])
+        ->and($log->new_values)->toBe(['name' => 'Después'])
+        ->and($log->model_id)->toBe($this->user->id);
 });

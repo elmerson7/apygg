@@ -14,6 +14,20 @@ punto de redacción, `App\Helpers\Redactor`, configurado en `config/logging.php`
 
 Un canal nuevo en `config/logging.php` debe llevar `'tap' => [RedactLogs::class]`.
 
+## Seguir una petición por los logs
+
+Las tres tablas guardan `trace_id` (texto de hasta 64): es el `request_id` de la respuesta y la cabecera
+`X-Request-ID` (el del cliente si es válido, si no un UUID; `TraceIdMiddleware`). En `logs_activity` queda nulo
+cuando el cambio viene de consola o de una cola. `GET /admin/logs/{activity|api|security}?filter[trace_id]=<id>`
+devuelve lo que dejó esa petición en cada tabla.
+
+## Producción: JSON por stderr
+
+`.env.production.example` deja `LOG_STACK=stderr,sentry_logs` y `LOG_STDERR_FORMATTER=Monolog\Formatter\JsonFormatter`:
+una línea JSON por evento (`message`, `level_name`, `context.trace_id`...), ya redactada. Los canales con fecha
+(`activity`, `security`, `auth`) siguen escribiendo en `storage/logs`, que en la imagen de producción no persiste:
+lo que importa de ellos ya está en sus tablas.
+
 ## Qué se redacta
 
 - **Por nombre de clave** (`keys` exacto, `key_fragments` contiene): `password`, `token`, `secret`,

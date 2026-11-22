@@ -8298,9 +8298,20 @@
                         }
                     },
                     {
+                        "name": "trace_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 64
+                        }
+                    },
+                    {
                         "name": "action",
                         "in": "query",
-                        "description": "activity",
+                        "description": "= request_id de la respuesta: sigue una petición por los tres logs\nactivity",
                         "schema": {
                             "type": [
                                 "string",
@@ -8441,6 +8452,14 @@
                         "description": "Igualdad; varios valores separados por comas (`a,b`) = cualquiera de ellos.",
                         "schema": {
                             "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "filter[trace_id]",
+                        "in": "query",
+                        "description": "Igualdad; varios valores separados por comas (`a,b`) = cualquiera de ellos.",
+                        "schema": {
+                            "type": "string"
                         }
                     },
                     {
@@ -8651,9 +8670,20 @@
                         }
                     },
                     {
+                        "name": "trace_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 64
+                        }
+                    },
+                    {
                         "name": "action",
                         "in": "query",
-                        "description": "activity",
+                        "description": "= request_id de la respuesta: sigue una petición por los tres logs\nactivity",
                         "schema": {
                             "type": [
                                 "string",
@@ -8802,6 +8832,14 @@
                         "description": "Igualdad; varios valores separados por comas (`a,b`) = cualquiera de ellos.",
                         "schema": {
                             "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "filter[trace_id]",
+                        "in": "query",
+                        "description": "Igualdad; varios valores separados por comas (`a,b`) = cualquiera de ellos.",
+                        "schema": {
+                            "type": "string"
                         }
                     },
                     {
@@ -9012,9 +9050,20 @@
                         }
                     },
                     {
+                        "name": "trace_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 64
+                        }
+                    },
+                    {
                         "name": "action",
                         "in": "query",
-                        "description": "activity",
+                        "description": "= request_id de la respuesta: sigue una petición por los tres logs\nactivity",
                         "schema": {
                             "type": [
                                 "string",
@@ -9155,6 +9204,14 @@
                         "description": "Igualdad; varios valores separados por comas (`a,b`) = cualquiera de ellos.",
                         "schema": {
                             "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "filter[trace_id]",
+                        "in": "query",
+                        "description": "Igualdad; varios valores separados por comas (`a,b`) = cualquiera de ellos.",
+                        "schema": {
+                            "type": "string"
                         }
                     },
                     {

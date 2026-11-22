@@ -19,7 +19,7 @@ return [
     // Tablas grandes: un índice sin CREATE INDEX CONCURRENTLY sobre ellas bloquea escrituras.
     'large_tables' => array_values(array_filter(array_map('trim', explode(',', (string) env(
         'MIGRATION_LINT_LARGE_TABLES',
-        'users,api_logs,mail_logs,mail_events,audit_logs,activity_logs,notifications,notification_deliveries,webhook_deliveries,llm_logs,files'
+        'users,logs_api,logs_activity,logs_security,logs_llm,mail_logs,mail_events,audit_logs,notifications,notification_deliveries,webhook_deliveries,files'
     ))))),
 
     // Tiempos que aplica `App\Support\Database\SafeMigration` (formato PostgreSQL: '5s', '10min', '0' = sin límite).
