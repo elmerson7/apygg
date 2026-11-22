@@ -13,7 +13,7 @@ final class ModuleRemover
     /** Carpetas y archivos raíz donde se buscan marcadores `module:<nombre>`. */
     private const SCAN_DIRS = ['app', 'bootstrap', 'config', 'database', 'routes', 'tests', 'lang', 'resources'];
 
-    private const SCAN_ROOT_FILES = ['Makefile', '.env.example', 'phpunit.xml', 'docker-compose.yml', 'phpstan.neon', 'AGENTS.md', 'README.md', 'TECH_STACK.md', 'CLAUDE.md'];
+    private const SCAN_ROOT_FILES = ['Makefile', '.env.example', 'phpunit.xml', 'docker-compose.yml', 'phpstan.neon', 'AGENTS.md', 'README.md', 'TECH_STACK.md', 'CLAUDE.md', 'docs/README.md'];
 
     private const SCAN_EXTENSIONS = ['php', 'md', 'xml', 'yml', 'yaml', 'example', 'mk'];
 

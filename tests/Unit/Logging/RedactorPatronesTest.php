@@ -7,6 +7,7 @@ use App\Logging\SentryScrubber;
 use App\Models\Logs\ActivityLog;
 use App\Models\Logs\ApiLog;
 use App\Models\Logs\SecurityLog;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
 use Monolog\Handler\StreamHandler;
 use Monolog\Level;
@@ -15,6 +16,8 @@ use Sentry\Breadcrumb;
 use Sentry\Event;
 use Sentry\ExceptionDataBag;
 use Sentry\UserDataBag;
+
+uses(RefreshDatabase::class);
 
 test('enmascara emails conservando una pista', function () {
     expect(Redactor::redactString('Hola juan@dominio.com fin'))->toBe('Hola j***@d***.com fin');

@@ -20,27 +20,42 @@ documentos vigentes; un test (`DocsIndiceTest`) falla si falta alguno. Además: 
 - [adr/](adr/): registros de decisiones (históricos).
 
 ## Seguridad, acceso y multiempresa
-- [permissions.md](permissions.md) · [sessions-and-2fa.md](sessions-and-2fa.md) · [api-keys.md](api-keys.md) · [impersonation.md](impersonation.md) · [cors-configuration.md](cors-configuration.md)
+- [permissions.md](permissions.md) · [sessions-and-2fa.md](sessions-and-2fa.md) · [api-keys.md](api-keys.md) · [cors-configuration.md](cors-configuration.md)
+- [impersonation.md](impersonation.md) <!-- module:impersonation -->
 - [multi-tenancy.md](multi-tenancy.md) · [tenant-onboarding.md](tenant-onboarding.md) · [settings-and-flags.md](settings-and-flags.md) · [features-usage-examples.md](features-usage-examples.md)
-- [audit.md](audit.md) · [security-audit.md](security-audit.md) · [privacy.md](privacy.md) · [logging.md](logging.md)
-- [social-login.md](social-login.md): login con Google/GitHub (módulo `social-login`) · [otp-login.md](otp-login.md): login con código por correo/SMS (módulo `otp-login`)
-- [offline-sync.md](offline-sync.md): sincronización offline para apps (módulo `offline-sync`: UUID del cliente, If-Match/412, `POST /sync/batch`)
+- [audit.md](audit.md) · [security-audit.md](security-audit.md) · [logging.md](logging.md)
+- [privacy.md](privacy.md) <!-- module:privacy -->
+- [social-login.md](social-login.md): login con Google/GitHub (módulo `social-login`) <!-- module:social-login -->
+- [otp-login.md](otp-login.md): login con código por correo/SMS (módulo `otp-login`) <!-- module:otp-login -->
+- [offline-sync.md](offline-sync.md): sincronización offline para apps (módulo `offline-sync`: UUID del cliente, If-Match/412, `POST /sync/batch`) <!-- module:offline-sync -->
 - [jwt-keys.md](jwt-keys.md): JWT asimétrico (RS256/ES256) con `kid` y rotación
 
 ## Funcionalidad
-- [billing.md](billing.md) · [notifications.md](notifications.md) · [mail-system.md](mail-system.md) · [files.md](files.md) · [export-import.md](export-import.md)
-- [webhooks.md](webhooks.md) · [integrations.md](integrations.md) · [idempotency.md](idempotency.md) · [llm.md](llm.md) · [docs-assistant.md](docs-assistant.md)
-- [menu-system.md](menu-system.md) · [maintenance-mode.md](maintenance-mode.md) · [backoffice.md](backoffice.md) · [websockets.md](websockets.md) · [frontend-demo.md](frontend-demo.md)
+- [notifications.md](notifications.md) · [mail-system.md](mail-system.md) · [files.md](files.md)
+- [billing.md](billing.md) <!-- module:billing -->
+- [export-import.md](export-import.md) <!-- module:export-import -->
+- [webhooks.md](webhooks.md) · [integrations.md](integrations.md) · [idempotency.md](idempotency.md)
+- [llm.md](llm.md) <!-- module:llm -->
+- [docs-assistant.md](docs-assistant.md) <!-- module:docs-assistant -->
+- [menu-system.md](menu-system.md)
+- [maintenance-mode.md](maintenance-mode.md) <!-- module:maintenance -->
+- [backoffice.md](backoffice.md) <!-- module:backoffice -->
+- [websockets.md](websockets.md) <!-- module:reverb -->
+- [frontend-demo.md](frontend-demo.md) <!-- module:frontend-demo -->
 
 ## Caché, búsqueda y datos
 - [cache-service-usage.md](cache-service-usage.md) · [cache-invalidation.md](cache-invalidation.md) · [cache-warming.md](cache-warming.md) · [cache-inspection.md](cache-inspection.md)
-- [redis-configuration.md](redis-configuration.md) · [meilisearch-configuration.md](meilisearch-configuration.md) · [backups-system.md](backups-system.md)
+- [redis-configuration.md](redis-configuration.md) · [backups-system.md](backups-system.md)
+- [meilisearch-configuration.md](meilisearch-configuration.md) <!-- module:search -->
 
 ## Operación y despliegue
 - [deploy.md](deploy.md): producción (`.env.production.example`, validación de arranque) · [docker-maintenance.md](docker-maintenance.md) · [frankenphp-configuration.md](frankenphp-configuration.md) · [kubernetes-health-checks.md](kubernetes-health-checks.md)
 - [scheduler-tasks.md](scheduler-tasks.md) · [horizon-reverb-telescope.md](horizon-reverb-telescope.md) · [local-services.md](local-services.md)
 - [logging-file-structure.md](logging-file-structure.md) · [logging-sentry-behavior.md](logging-sentry-behavior.md) · [sentry-configuration.md](sentry-configuration.md)
-- [metrics.md](metrics.md): módulo `metrics`, `GET /metrics` Prometheus protegido
+- [metrics.md](metrics.md): módulo `metrics`, `GET /metrics` Prometheus protegido <!-- module:metrics -->
 
 ## Pruebas y rendimiento
-- [testing.md](testing.md) · [testing-database.md](testing-database.md) · [seed-load.md](seed-load.md) · [load-testing.md](load-testing.md) · [performance-baseline.md](performance-baseline.md)
+- [testing.md](testing.md) · [testing-database.md](testing-database.md)
+- [seed-load.md](seed-load.md) <!-- module:seed-load -->
+- [load-testing.md](load-testing.md) <!-- module:load-testing -->
+- [performance-baseline.md](performance-baseline.md) <!-- module:load-testing -->

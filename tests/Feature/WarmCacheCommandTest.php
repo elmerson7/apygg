@@ -3,6 +3,9 @@
 use App\Enums\WebhookStatusEnum;
 use App\Models\User;
 use App\Models\Webhook;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
 
 it('precalienta la caché sin fallar cuando hay webhooks activos', function () {
     $user = User::factory()->create();

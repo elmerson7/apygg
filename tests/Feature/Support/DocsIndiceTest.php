@@ -18,3 +18,32 @@ test('los enlaces relativos de docs/README.md apuntan a archivos que existen', f
 
     expect($rotos)->toBe([]);
 });
+
+test('cada documento de un módulo opcional va en su propia línea del índice con el marcador del módulo', function () {
+    $lineas = explode("\n", file_get_contents(base_path('docs/README.md')));
+    $faltan = [];
+
+    foreach (glob(base_path('modules/*.php')) as $manifiesto) {
+        $modulo = basename($manifiesto, '.php');
+        $datos = require $manifiesto;
+        if (($datos['core'] ?? true) !== false) {
+            continue;
+        }
+
+        foreach ($datos['files'] ?? [] as $archivo) {
+            if (! preg_match('#^docs/([a-z0-9_-]+\.md)$#', $archivo, $m) || $m[1] === 'modules.md') {
+                continue;
+            }
+
+            $conMarcador = collect($lineas)->contains(
+                fn (string $l) => str_contains($l, "]({$m[1]})") && str_contains($l, "<!-- module:{$modulo} -->")
+            );
+            if (! $conMarcador) {
+                $faltan[] = "{$m[1]} ({$modulo})";
+            }
+        }
+    }
+
+    // Sin el marcador, `module:remove` borra el doc y deja el enlace roto en el índice.
+    expect($faltan)->toBe([]);
+});

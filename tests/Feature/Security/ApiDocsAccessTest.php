@@ -1,7 +1,10 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
+
+uses(RefreshDatabase::class);
 
 /**
  * El acceso abierto a la documentación debe ser una decisión explícita, no un
