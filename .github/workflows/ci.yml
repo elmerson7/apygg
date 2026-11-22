@@ -97,6 +97,8 @@ jobs:
       DB_PASSWORD: postgres
       REDIS_HOST: localhost
       REDIS_PORT: 6379
+      # El Redis del servicio no tiene contraseña: anula la de .env.example (que se copia a .env)
+      REDIS_PASSWORD: 'null'
       CACHE_STORE: redis
       SESSION_DRIVER: redis
       QUEUE_CONNECTION: redis
@@ -204,6 +206,8 @@ jobs:
       DB_PASSWORD: postgres
       REDIS_HOST: localhost
       REDIS_PORT: 6379
+      # El Redis del servicio no tiene contraseña: anula la de .env.example (que se copia a .env)
+      REDIS_PASSWORD: 'null'
       CACHE_STORE: redis
       SESSION_DRIVER: redis
       QUEUE_CONNECTION: redis
@@ -465,6 +469,8 @@ jobs:
       DB_PASSWORD: postgres
       REDIS_HOST: localhost
       REDIS_PORT: 6379
+      # El Redis del servicio no tiene contraseña: anula la de .env.example (que se copia a .env)
+      REDIS_PASSWORD: 'null'
       CACHE_STORE: redis
       SESSION_DRIVER: redis
       QUEUE_CONNECTION: redis
