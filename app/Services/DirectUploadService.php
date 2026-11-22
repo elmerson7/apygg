@@ -113,7 +113,7 @@ class DirectUploadService implements DirectUploadServiceInterface
         $category = (string) ($data['category'] ?? 'default');
         $checksum = isset($data['checksum_sha256']) ? strtolower((string) $data['checksum_sha256']) : null;
 
-        $extension = $this->validateDeclared($name, $mime, $size, max(1, (int) config('files.multipart.max_size_mb', 5120)) * self::MIB);
+        $extension = $this->validateDeclared($name, $mime, $size, $this->multipartMaxBytes($mime));
         $this->files->ensureFileSizeAllowed($size);
         $this->files->assertVisibilityAllowed($isPublic);
 
@@ -313,6 +313,18 @@ class DirectUploadService implements DirectUploadServiceInterface
      *
      * @throws BusinessLogicException
      */
+    /**
+     * Tope de la subida por partes para el tipo del archivo: `multipart.max_sizes_mb.<tipo>` si existe
+     * (las imágenes no suben de su tope normal por defecto) y, si no, `multipart.max_size_mb`.
+     */
+    private function multipartMaxBytes(string $mime): int
+    {
+        $perType = config('files.multipart.max_sizes_mb.'.$this->files->detectType($mime));
+        $mb = is_numeric($perType) ? (int) $perType : (int) config('files.multipart.max_size_mb', 5120);
+
+        return max(1, $mb) * self::MIB;
+    }
+
     private function validateDeclared(string $name, string $mime, int $size, ?int $maxBytes = null): string
     {
         $client = strtolower(pathinfo($name, PATHINFO_EXTENSION));

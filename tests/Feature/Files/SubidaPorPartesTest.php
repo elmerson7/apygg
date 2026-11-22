@@ -128,6 +128,18 @@ test('el máximo por archivo del plan se aplica a la subida por partes', functio
     mpCrear($this, $this->hA)->assertStatus(413)->assertJsonPath('code', 'file_too_large_for_plan');
 });
 
+test('una imagen por partes respeta su tope por tipo y no el general de la subida por partes', function () {
+    $imagen = ['name' => 'foto.png', 'mime_type' => 'image/png'];
+
+    $r = mpCrear($this, $this->hA, $imagen);
+    expect($r->status())->toBeGreaterThanOrEqual(400)->toBeLessThan(500)->not->toBe(413);
+    expect($r->json('detail') ?? $r->json('message'))->toContain('tamaño máximo');
+    expect(TenantQuery::withoutTenant(fn () => FileUploadIntent::count(), 'test'))->toBe(0);
+
+    config(['files.multipart.max_sizes_mb.image' => 20]);
+    mpCrear($this, $this->hA, $imagen)->assertCreated();
+});
+
 test('abortar libera la cuota, borra las partes y deja la intención cerrada', function () {
     $this->limits->setOverride($this->a->id, 'max_storage_mb', 12);
     $uuid = mpCrear($this, $this->hA)->json('data.id');
@@ -216,6 +228,7 @@ test('una parte con tamaño distinto al esperado descarta la subida', function (
 });
 
 test('un tipo mentido se detecta por el contenido real y el objeto se borra', function () {
+    config(['files.multipart.max_sizes_mb.image' => 20]);
     $uuid = mpCrear($this, $this->hA, ['name' => 'f.png', 'mime_type' => 'image/png'])->assertCreated()->json('data.id');
     $subida = mpSubir($this, $uuid, [1, 2, 3]);
 

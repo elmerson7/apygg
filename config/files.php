@@ -240,6 +240,10 @@ return [
         'part_size_mb' => (int) env('FILE_MULTIPART_PART_MB', 16),
         'max_parts' => (int) env('FILE_MULTIPART_MAX_PARTS', 10000),
         'max_size_mb' => (int) env('FILE_MULTIPART_MAX_MB', 5120),
+        // Tope por tipo (MB) que sustituye a `max_size_mb`; un tipo sin entrada usa `max_size_mb`.
+        'max_sizes_mb' => [
+            'image' => (int) env('FILE_MULTIPART_MAX_MB_IMAGE', 5),
+        ],
         'intent_minutes' => (int) env('FILE_MULTIPART_MINUTES', 1440),
         'url_minutes' => (int) env('FILE_MULTIPART_URL_MINUTES', 60),
         'max_urls_per_request' => (int) env('FILE_MULTIPART_MAX_URLS', 100),
