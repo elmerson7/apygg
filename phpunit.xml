@@ -53,6 +53,7 @@
         <env name="BACKOFFICE_ENABLED" value="true" force="true"/> <!-- module:backoffice -->
         <env name="BROADCAST_CONNECTION" value="null" force="true"/>
         <env name="TELESCOPE_ENABLED" value="false" force="true"/>
-        <ini name="memory_limit" value="1G"/>
+        <!-- Tope, no consumo: el informe de cobertura de la suite completa pasa de 1 GB al escribirse -->
+        <ini name="memory_limit" value="4G"/>
     </php>
 </phpunit>

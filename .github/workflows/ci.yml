@@ -144,8 +144,8 @@ jobs:
       # Suite por defecto (Unit + Feature + Arch) con cobertura. Mínimo = COVERAGE_MIN de
       # make/test.mk (cobertura medida redondeada a múltiplo de 5): súbelo con la cobertura.
       - name: Run Pest tests (coverage minimum)
-        # El informe de cobertura de ~2250 tests pasa de 1 GB al escribirse: sin tope de memoria en este paso
-        run: php -d memory_limit=-1 ./vendor/bin/pest --ci --coverage --coverage-clover=coverage.xml --min=55
+        # memory_limit lo fija phpunit.xml (4G): el informe de cobertura de la suite completa pasa de 1 GB
+        run: ./vendor/bin/pest --ci --coverage --coverage-clover=coverage.xml --min=55
         continue-on-error: false
 
       # Suites a propósito (no están en la por defecto). Concurrency compromete datos en la BD
