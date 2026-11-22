@@ -31,7 +31,8 @@ test('cada documento de un módulo opcional va en su propia línea del índice c
         }
 
         foreach ($datos['files'] ?? [] as $archivo) {
-            if (! preg_match('#^docs/([a-z0-9_-]+\.md)$#', $archivo, $m) || $m[1] === 'modules.md') {
+            // Un doc que ya no existe es de un módulo quitado (module:remove deja el manifiesto): nada que enlazar.
+            if (! preg_match('#^docs/([a-z0-9_-]+\.md)$#', $archivo, $m) || $m[1] === 'modules.md' || ! is_file(base_path($archivo))) {
                 continue;
             }
 

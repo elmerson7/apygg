@@ -1,6 +1,6 @@
 <?php
 
-use App\Contracts\MaintenanceServiceInterface;
+use App\Contracts\MaintenanceServiceInterface; // module:maintenance
 use App\Support\ApiPath;
 use Illuminate\Http\Request;
 use Illuminate\Routing\RouteCollection;
@@ -52,7 +52,8 @@ test('con prefijo vacío las rutas cuelgan de la raíz como siempre', function (
 test('con prefijo las rutas de la app cuelgan de /v1 y las de infraestructura siguen en la raíz', function () {
     $uris = urisConPrefijo('v1');
 
-    expect($uris)->toContain('v1/users', 'v1/auth/login', 'v1/broadcasting/auth')
+    expect($uris)->toContain('v1/broadcasting/auth'); // module:reverb
+    expect($uris)->toContain('v1/users', 'v1/auth/login')
         ->not->toContain('users')
         ->not->toContain('auth/login')
         // Fuera del prefijo: salud, raíz y webhooks entrantes (los llaman servidores y proveedores).
@@ -105,6 +106,7 @@ test('los patrones de excepción valen con y sin prefijo', function () {
         ->and(ApiPath::strip('v10/users'))->toBe('v10/users');
 });
 
+// module:maintenance:start
 test('el mantenimiento deja pasar la salud con prefijo', function () {
     config(['api.prefix' => 'v1']);
 
@@ -114,3 +116,4 @@ test('el mantenimiento deja pasar la salud con prefijo', function () {
     expect($permitida)->toBeTrue()
         ->and($prefijada)->toBeTrue();
 });
+// module:maintenance:end
