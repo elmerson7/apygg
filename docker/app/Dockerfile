@@ -80,6 +80,10 @@ COPY . .
 # Completar instalación de Composer si hay autoloader
 RUN if [ -f composer.json ]; then composer dump-autoload --no-interaction --optimize || true; fi
 
+# .dockerignore excluye storage/framework/* y logs: crearlos para que `docker run <imagen> php artisan ...` arranque
+# sin pasar por el entrypoint (en desarrollo el volumen montado ya los trae)
+RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
+
 # Ajustar permisos del código copiado
 RUN chown -R appuser:appuser /app || true
 

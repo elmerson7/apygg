@@ -1,7 +1,7 @@
 # Tests (Pest) y bases de datos de testing (targets: make/*.mk)
 # Suites (phpunit.xml): Unit, Feature, Arch (por defecto) + Contract, Concurrency, E2E, Integration (a propósito).
 # Cobertura mínima de la suite por defecto; sube junto con la cobertura real (misma cifra en .github/workflows/ci.yml).
-COVERAGE_MIN ?= 55
+COVERAGE_MIN ?= 80
 
 # Suite por defecto: Unit + Feature + Arch
 test:

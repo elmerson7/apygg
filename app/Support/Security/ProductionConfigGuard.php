@@ -20,7 +20,7 @@ final class ProductionConfigGuard
     private const BUILD_COMMANDS = [
         'package:discover', 'config:cache', 'config:clear', 'route:cache', 'route:clear', 'view:cache',
         'view:clear', 'event:cache', 'optimize', 'optimize:clear', 'key:generate', 'vendor:publish',
-        'storage:link', 'about', 'list', 'help', 'clear-compiled', 'filament:upgrade',
+        'storage:link', 'about', 'list', 'help', '--version', '-V', 'clear-compiled', 'filament:upgrade',
     ];
 
     /** Comando de consola que no es `artisan` (PHPStan, Pest...): herramienta de desarrollo o CI, no un proceso servido. */
