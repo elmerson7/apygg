@@ -20,8 +20,11 @@ final class ProductionConfigGuard
     private const BUILD_COMMANDS = [
         'package:discover', 'config:cache', 'config:clear', 'route:cache', 'route:clear', 'view:cache',
         'view:clear', 'event:cache', 'optimize', 'optimize:clear', 'key:generate', 'vendor:publish',
-        'storage:link', 'about', 'list', 'help',
+        'storage:link', 'about', 'list', 'help', 'clear-compiled', 'filament:upgrade',
     ];
+
+    /** Comando de consola que no es `artisan` (PHPStan, Pest...): herramienta de desarrollo o CI, no un proceso servido. */
+    public const EXTERNAL_TOOL = 'external-tool';
 
     /**
      * @return list<string>
@@ -77,7 +80,7 @@ final class ProductionConfigGuard
             return;
         }
 
-        if ($consoleCommand !== null && in_array($consoleCommand, self::BUILD_COMMANDS, true)) {
+        if ($consoleCommand !== null && ($consoleCommand === self::EXTERNAL_TOOL || in_array($consoleCommand, self::BUILD_COMMANDS, true))) {
             return;
         }
 

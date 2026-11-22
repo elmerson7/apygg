@@ -27,7 +27,7 @@ return [
     'auto_register' => (bool) env('SOCIAL_LOGIN_AUTO_REGISTER', false),
 
     // Exigir que la app envíe `nonce` (y que vaya dentro del id_token). Con `false` solo se compara si viene.
-    'require_nonce' => (bool) env('SOCIAL_LOGIN_REQUIRE_NONCE', false),
+    'require_nonce' => (bool) env('SOCIAL_LOGIN_REQUIRE_NONCE', true),
 
     // Fallos de canje por IP en la ventana antes de responder 429.
     'max_failures_per_ip' => (int) env('SOCIAL_LOGIN_MAX_FAILURES_PER_IP', 10),

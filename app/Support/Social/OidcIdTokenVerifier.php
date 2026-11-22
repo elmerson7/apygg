@@ -72,7 +72,7 @@ final class OidcIdTokenVerifier
         // El nonce ata el token a la petición de la app: si cualquiera de los dos lo trae, deben coincidir.
         $claimNonce = $claims['nonce'] ?? null;
 
-        if ($nonce !== null || $claimNonce !== null || config('social-login.require_nonce', false)) {
+        if ($nonce !== null || $claimNonce !== null || config('social-login.require_nonce', true)) {
             $valido = $valido && is_string($nonce) && $nonce !== '' && is_string($claimNonce) && hash_equals($claimNonce, $nonce);
         }
 

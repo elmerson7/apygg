@@ -25,7 +25,7 @@ Errores (todos con `code` estable): 401 `social_login_invalid` (genérico: no di
 | `oidc` (Google) | Firma RS256 contra el JWKS del proveedor (clave por `kid`; HS256/`none` se rechazan), `iss` en la lista, `aud` ∈ `client_ids`, `exp` (margen `SOCIAL_LOGIN_LEEWAY`), `sub` presente, `nonce` y **un solo canje por id_token** (hasta su caducidad). El JWKS va en caché (`SOCIAL_LOGIN_JWKS_CACHE_MINUTES`); un `kid` desconocido vuelve a pedirlo como mucho una vez por minuto. |
 | `socialite` (GitHub) | Antes de pedir el perfil, el proveedor confirma que el token es de **esta** aplicación (`check_token_url`): sin eso cualquier app que obtenga un token de la víctima podría entrar aquí. Perfil con `Socialite::buildProvider(...)->stateless()->userFromToken()`. |
 
-`nonce`: si la app lo envía o el token lo trae, deben coincidir; `SOCIAL_LOGIN_REQUIRE_NONCE=true` lo exige siempre.
+`nonce`: **obligatorio por defecto** (`SOCIAL_LOGIN_REQUIRE_NONCE=true`): la app genera uno aleatorio por intento, lo pasa al SDK de Google y lo envía junto al `id_token`; así un `id_token` robado o interceptado no sirve. Con `false` solo se compara si viene (para clientes que no pueden fijar nonce).
 
 ## Vincular y crear cuentas (lo delicado)
 

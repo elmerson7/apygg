@@ -122,6 +122,16 @@ test('con el nonce correcto pasa y con require_nonce se exige', function () {
     expect(fn () => verificar(firmar(['sub' => 'otro'], $k['private'], 'k1')))->toThrow(SocialLoginException::class);
 });
 
+test('por defecto el nonce es obligatorio: sin él el id_token se rechaza', function () {
+    $k = parClaves('k1');
+    conJwks($k['jwk']);
+    expect(require base_path('config/social-login.php'))->toHaveKey('require_nonce', true);
+
+    config(['social-login.require_nonce' => (require base_path('config/social-login.php'))['require_nonce']]);
+    expect(fn () => verificar(firmar([], $k['private'], 'k1')))->toThrow(SocialLoginException::class);
+    expect(verificar(firmar(['nonce' => 'n-2'], $k['private'], 'k1'), 'n-2')->providerUserId)->toBe('sub-1');
+});
+
 test('un id_token solo se canjea una vez', function () {
     $k = parClaves('k1');
     conJwks($k['jwk']);

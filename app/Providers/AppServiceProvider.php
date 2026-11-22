@@ -61,7 +61,7 @@ class AppServiceProvider extends ServiceProvider
         ProductionConfigGuard::assertSafe(
             $this->app['config'],
             (string) $this->app->environment(),
-            $this->app->runningInConsole() ? (string) ($_SERVER['argv'][1] ?? '') : null,
+            $this->app->runningInConsole() ? $this->consoleCommand() : null,
         );
 
         // Registrar Observers para invalidación automática de cache
@@ -216,5 +216,18 @@ class AppServiceProvider extends ServiceProvider
             config(['scout.driver' => 'database']);
             Log::debug('Scout driver fallback: meilisearch unavailable, using database');
         }
+    }
+
+    /**
+     * Comando de `artisan` en curso, o `EXTERNAL_TOOL` si la consola no es `artisan` (PHPStan, Pest):
+     * sin `.env` Laravel asume producción y el guard no debe tumbar el análisis estático ni la CI.
+     */
+    private function consoleCommand(): string
+    {
+        $argv = (array) ($_SERVER['argv'] ?? []);
+
+        return basename((string) ($argv[0] ?? '')) === 'artisan'
+            ? (string) ($argv[1] ?? '')
+            : ProductionConfigGuard::EXTERNAL_TOOL;
     }
 }

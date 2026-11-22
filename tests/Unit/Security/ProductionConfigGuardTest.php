@@ -51,6 +51,8 @@ test('no actúa fuera de producción, con el guard apagado ni en comandos de con
     ProductionConfigGuard::assertSafe($mala, 'local');
     ProductionConfigGuard::assertSafe(configSegura(['app' => ['debug' => true, 'production_guard' => false]]), 'production');
     ProductionConfigGuard::assertSafe($mala, 'production', 'package:discover');
+    ProductionConfigGuard::assertSafe($mala, 'production', 'clear-compiled');
+    ProductionConfigGuard::assertSafe($mala, 'production', ProductionConfigGuard::EXTERNAL_TOOL);
     expect(fn () => ProductionConfigGuard::assertSafe($mala, 'production', 'octane:start'))->toThrow(RuntimeException::class);
 });
 
