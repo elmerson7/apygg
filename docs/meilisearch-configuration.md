@@ -7,7 +7,7 @@ Meilisearch es un motor de búsqueda full-text rápido y moderno. Laravel Scout 
 ## Instalación
 
 Las dependencias ya están instaladas:
-- `laravel/scout` ^10.17
+- `laravel/scout` ^11.11
 - `meilisearch/meilisearch-php` ^1.15
 
 ## Configuración

@@ -20,12 +20,12 @@ Extensiones PHP instaladas en la imagen: `pcntl`, `intl`, `zip`, `opcache`, `gd`
 | `php-open-source-saver/jwt-auth` | 2.9.3 | JWT (`AuthService`, `TokenService`) |
 | `laravel/horizon` | 5.49.0 | Panel y gestión de colas |
 | `laravel/reverb` | 1.11.1 | WebSockets (`BroadcastAuthController`, `routes/channels.php`) |
-| `laravel/scout` | 10.25.0 | Búsqueda (driver `meilisearch` por defecto) |
+| `laravel/scout` | 11.11.0 | Búsqueda (driver `meilisearch` por defecto) |
 | `meilisearch/meilisearch-php` | 1.17.0 | Cliente de Meilisearch |
 | `league/flysystem-aws-s3-v3` | 3.35.3 | Disco `s3` de `config/filesystems.php` |
 | `resend/resend-laravel` | 1.4.0 | Proveedor de correo (`config/mail.php`) |
 | `dedoc/scramble` | 0.13.43 | Documentación OpenAPI en `/docs/api` |
-| `sentry/sentry-laravel` | 4.27.0 | Captura de excepciones (`bootstrap/app.php`) |
+| `sentry/sentry-laravel` | 4.31.0 | Captura de excepciones (`bootstrap/app.php`) |
 | `laravel/telescope` | 5.24.0 | Depuración (provider registrado en `bootstrap/providers.php`) |
 | `chillerlan/php-qrcode` | 5.0.5 | QR del MFA TOTP del back-office (Filament 5 exige `^5.0`) |
 | `spatie/laravel-permission` | 8.5.0 | RBAC (roles, permisos, middlewares `permission:`/`role:`); guard `api`, teams apagado. Ver `docs/permissions.md` |

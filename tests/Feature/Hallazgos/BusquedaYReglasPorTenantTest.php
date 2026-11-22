@@ -40,7 +40,7 @@ test('el indice de busqueda de un modelo de tenant lleva tenant_id y es filtrabl
 test('search filtra por el tenant del contexto', function () {
     $builder = $this->ctx->run($this->a, fn () => NotaBuscable::search('x'));
 
-    expect($builder->wheres)->toBe(['tenant_id' => $this->a->id]);
+    expect($builder->wheres)->toBe([['field' => 'tenant_id', 'operator' => '=', 'value' => $this->a->id]]);
 });
 
 test('search sin tenant en el contexto falla cerrado y dentro de withoutTenant no filtra', function () {
