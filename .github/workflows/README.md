@@ -1,131 +1,49 @@
-# GitHub Actions CI/CD
+# GitHub Actions
 
-Este directorio contiene los workflows de GitHub Actions para CI/CD del proyecto APYGG.
+Cuatro workflows. `main` está protegida: todo cambio entra por PR y necesita el check **CI Pipeline Success** en verde;
+no se permite push directo, force-push ni borrar la rama (también para administradores).
 
-## Workflows Disponibles
+## `ci.yml` — CI Pipeline
 
-### `ci.yml` - Pipeline de Integración Continua
+Corre en cada push y PR a `main`/`develop`, y a mano (`workflow_dispatch`).
 
-Se ejecuta automáticamente en:
-- Push a ramas `main` o `develop`
-- Pull Requests hacia `main` o `develop`
-- Manualmente (`workflow_dispatch`)
+| Job | Qué comprueba |
+|---|---|
+| Lint & Code Quality | `pint --test` y `phpstan analyse` (nivel y rutas en `phpstan.neon`) |
+| Tests & Coverage | suite Pest completa con pcov; **falla si la cobertura baja del 80 %** (`--min=80`); sube el informe a Codecov |
+| Tests con API_PREFIX=v1 | la suite con el prefijo de versión activo |
+| Cambios que rompen (oasdiff) | `docs/openapi.json` frente al de `main`; excepciones aceptadas en `docs/openapi-breaking-ignore.txt` |
+| Security Scan (Composer Audit) | `composer audit` con y sin dependencias de desarrollo |
+| Migraciones (lint, upgrade y rollback) | `migrations:lint`, migrar desde cero, subir desde la versión anterior y deshacer |
+| Sin módulos (…) | matriz: un escenario con todos los módulos opcionales quitados y uno por cada módulo (con sus dependientes); corre la suite restante. `ModulosMatrizCiTest` exige que no falte ninguno |
+| E2E (stack real) | recorridos HTTP contra el stack de `docker-compose.e2e.yml`; solo en push a `main` y a mano; no bloquea |
+| Docker Build | construye la imagen de producción |
+| CI Pipeline Success | agrega el resultado de los anteriores (salvo E2E); es el check obligatorio de la protección de `main` |
 
-#### Etapas del Pipeline:
+El número de checks que se ve en un PR es mayor que el de jobs porque la matriz de módulos genera uno por escenario.
 
-1. **Lint & Code Quality**
-   - Laravel Pint (formateo y estilo de código)
-   - PHPStan nivel 6 (análisis estático)
+## `release.yml` — imagen inmutable
 
-2. **Tests & Coverage**
-   - Tests con Pest (suite por defecto) y suites `Contract` y `Concurrency`
-   - Cobertura de código (mínimo 0% para empezar)
-   - Servicios: PostgreSQL 18 y Redis 7
+En push a `main` y en tags `v*`: construye la imagen, la escanea con Trivy y la publica en GHCR como `sha-<commit>`
+(y `vX.Y.Z` en tags). Nunca `latest`. Ver `docs/deploy.md`.
 
-3. **Security Scan**
-   - Composer audit (escaneo rápido de vulnerabilidades)
+## `cd.yml` — despliegue manual
 
-4. **E2E (stack real)** — solo en push a `main` y a mano
-   - `make init` + `make e2e` (stack efímero propio: `docker-compose.e2e.yml`, que se baja con `down -v` al terminar)
-   - Ver `docs/testing.md`, sección "Pruebas E2E"
+`workflow_dispatch`: despliega o hace rollback por SSH + Docker Compose. Ver `docs/deploy.md`.
 
-5. **Docker Build**
-   - Construcción de imagen Docker
-   - Verificación de que la imagen funciona
+## Análisis de calidad que corre de verdad
 
-## Configuración Requerida
+PHPStan, Pint, cobertura mínima del 80 %, `composer audit`, Trivy sobre la imagen, oasdiff sobre el contrato y el
+linter de migraciones. **No hay SonarCloud**: el workflow existía pero nunca tuvo token (`SONAR_TOKEN`) y salía
+cancelado en cada corrida, así que se quitó. Un proyecto derivado que lo quiera debe crear el proyecto en
+sonarcloud.io, añadir el secreto y su propio workflow.
 
-### Secrets de GitHub
+## Dependabot
 
-Configura los siguientes secrets en tu repositorio (Settings → Secrets and variables → Actions):
+`.github/dependabot.yml` abre PRs mensuales de Composer y de GitHub Actions. Pasan por la misma CI.
 
-- `SONAR_TOKEN` (opcional): Token de SonarCloud para análisis de código
-  - Obtener en: https://sonarcloud.io/account/security/
-  - Si no se configura, el workflow `sonarcloud.yml` fallará
+## Si la CI falla
 
-### Variables de Entorno
-
-El workflow usa las siguientes variables por defecto:
-- `APP_ENV=testing`
-- `DB_DATABASE=apygg_test`
-- `REDIS_HOST=localhost`
-
-## Cómo Funciona
-
-1. **En cada push/PR**: Se ejecuta el pipeline completo
-2. **Si alguna etapa falla**: El pipeline se detiene y marca el check como fallido
-3. **Si todas pasan**: El pipeline se marca como exitoso
-
-## Ver Resultados
-
-- Ve a la pestaña "Actions" en GitHub
-- Selecciona el workflow que quieres ver
-- Revisa los logs de cada etapa
-
-## Troubleshooting
-
-### Tests fallan localmente pero pasan en CI
-- Verifica que tengas las mismas versiones de PHP, PostgreSQL y Redis
-- Asegúrate de tener `.env` configurado correctamente
-
-### PHPStan falla
-- Ejecuta `./vendor/bin/phpstan analyse` localmente
-- Revisa los errores y corrígelos
-
-### Docker build falla
-- Verifica que `docker/app/Dockerfile` esté correcto
-- Prueba construir localmente: `docker build -f docker/app/Dockerfile .`
-
-### `release.yml` - Imagen inmutable de producción
-
-En cada push a `main` y en tags `v*`: construye `docker/app/Dockerfile.prod`, la escanea con Trivy y la publica en
-GHCR con etiquetas fijas `sha-<commit>` y `vX.Y.Z` (nunca `latest`), con SBOM y provenance.
-
-### `cd.yml` - Despliegue manual (SSH + Docker Compose)
-
-Solo `workflow_dispatch`: elige entorno, `image_tag` (o `rollback`) y ejecuta `scripts/deploy/deploy.sh`
-(pull, migraciones en contenedor aparte, `up --wait`, humo y rollback automático). Los mismos pasos corren en
-local con `make deploy|rollback|smoke`. Guía completa y secrets: `docs/deploy.md`.
-
-### `sonarcloud.yml` - SonarCloud Analysis
-
-Análisis de calidad de código con SonarCloud:
-- Detección de bugs y vulnerabilidades
-- Code smells y deuda técnica
-- Cobertura de código
-- Métricas de complejidad
-
-**Se ejecuta automáticamente después de que CI pasa exitosamente** (solo en main/develop, no en PRs de Dependabot).
-
-**Configuración:**
-1. Login en https://sonarcloud.io/ con tu cuenta GitHub
-2. Importa tu proyecto en SonarCloud
-3. Obtén Project Key y Organization Key
-4. Genera token en https://sonarcloud.io/account/security/
-5. Agrega `SONAR_TOKEN` a GitHub Secrets
-6. Actualiza `YOUR_PROJECT_KEY` y `YOUR_ORGANIZATION_KEY` en el workflow
-
-**Nota:** Si falta el token o las keys, el workflow fallará. Configúralo o desactívalo temporalmente.
-
-## Control de Ejecuciones
-
-### Limitar ejecuciones en PRs de Dependabot
-
-El workflow `sonarcloud.yml` está configurado para **NO ejecutarse** en PRs de Dependabot.
-
-Solo se ejecuta después de que CI pasa exitosamente en ramas `main` o `develop`, evitando ejecuciones innecesarias cuando Dependabot actualiza dependencias.
-
-### Desactivar workflows temporalmente
-
-Si quieres desactivar SonarCloud temporalmente:
-
-1. Ve al archivo `.github/workflows/sonarcloud.yml`
-2. Comenta el trigger `on:` o cambia las ramas
-3. O simplemente no configures el `SONAR_TOKEN` (el workflow fallará pero no bloqueará CI)
-
-## Próximos Pasos
-
-- [x] Imagen inmutable en GHCR y despliegue manual por SSH + Compose (`docs/deploy.md`) ✅
-- [x] Configurar SonarCloud Analysis ✅
-- [ ] Agregar más tests para aumentar cobertura
-- [ ] Configurar notificaciones (Slack, Discord, Email)
+1. Abre el job en rojo y lee el paso que falla.
+2. Reprodúcelo en local con Make (`make check`, `make test`, `make art cmd="migrations:lint"`, `make openapi-breaking`).
+3. Corrige en tu rama y vuelve a empujar: el PR no se puede unir hasta que **CI Pipeline Success** esté en verde.

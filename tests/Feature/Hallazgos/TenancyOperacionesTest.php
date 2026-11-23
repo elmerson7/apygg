@@ -133,9 +133,8 @@ test('la entrega de un webhook de un tenant pendiente se descarta sin tocar nada
     $this->ctx->clear();
 
     // Sin el descarte lanzaria RuntimeException ("Webhook o entrega no encontrada").
+    // La expectativa `shouldNotReceive` es la aserción: Mockery la verifica al cerrar el test.
     $job->process(Mockery::mock(WebhookServiceInterface::class)->shouldNotReceive('deliver')->getMock());
-
-    expect(true)->toBeTrue();
 });
 
 // ── 11. Resincronizar roles tenant-* al activar equipos ─────────────────────
