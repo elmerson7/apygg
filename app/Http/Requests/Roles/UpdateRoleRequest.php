@@ -10,7 +10,7 @@ class UpdateRoleRequest extends BaseFormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('update', Role::findOrFail($this->route('id')));
+        return (bool) $this->user()?->can('update', Role::findOrFail($this->route('id')));
     }
 
     /**

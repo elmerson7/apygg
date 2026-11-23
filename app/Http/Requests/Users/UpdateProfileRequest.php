@@ -31,7 +31,7 @@ class UpdateProfileRequest extends BaseFormRequest
             'name' => ['sometimes', 'string', 'min:2', 'max:255'],
             'first_name' => ['sometimes', 'nullable', 'string', 'max:100'],
             'last_name' => ['sometimes', 'nullable', 'string', 'max:100'],
-            'username' => ['sometimes', 'string', 'min:3', 'max:50', Rule::unique('users', 'username')->ignore($this->user()->id)],
+            'username' => ['sometimes', 'string', 'min:3', 'max:50', Rule::unique('users', 'username')->ignore($this->user()?->id)],
             'timezone' => ['sometimes', 'nullable', 'string', 'timezone:all'],
             'locale' => ['sometimes', 'nullable', 'string', Rule::in(app(LocaleResolverInterface::class)->supportedLocales())],
             'phone' => ['sometimes', 'nullable', 'string', 'max:50'],

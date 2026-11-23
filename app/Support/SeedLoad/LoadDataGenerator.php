@@ -93,7 +93,7 @@ final class LoadDataGenerator
         $asOf = ($options->asOf ?? CarbonImmutable::now())->startOfSecond();
         $first = $this->nextIndex();
         $roleIds = $this->roleIds();
-        $scenario = new BillingScenario($this->catalog(), array_map('intval', (array) config('billing.dunning.retry_days', [1, 3, 5])));
+        $scenario = new BillingScenario($this->catalog(), array_values(array_map('intval', (array) config('billing.dunning.retry_days', [1, 3, 5]))));
         $hash = (string) app('hash')->make($options->password);
 
         $totals = ['tenants' => 0, 'users' => 0, 'memberships' => 0, 'subscriptions' => 0, 'invoices' => 0, 'payments' => 0, 'files' => 0, 'notifications' => 0, 'first_index' => $first, 'last_index' => $first - 1, 'credentials' => []];
@@ -364,6 +364,7 @@ final class LoadDataGenerator
         }
 
         $invoiceIds = $this->reserveIds('invoices', count($plans));
+        /** @var numeric-string $rate */
         $rate = (string) config('billing.tax.rate', '0');
         $label = (string) config('billing.tax.label', '');
         $scope = config('billing.invoice.sequence_scope') === 'tenant' ? 'tenant' : 'global';
@@ -618,6 +619,8 @@ final class LoadDataGenerator
     private function catalog(): array
     {
         $catalog = [];
+        /** @var array<string, array<string, array<string, array{id: int, amount: int}>>> $pricesByCode */
+        $pricesByCode = [];
 
         $plans = DB::table('plans')->where('is_active', true)->whereNull('deleted_at')->orderBy('sort_order')->get();
         foreach ($plans as $plan) {
@@ -629,8 +632,12 @@ final class LoadDataGenerator
         foreach ($prices as $price) {
             $code = $codeById[$price->plan_id] ?? null;
             if ($code !== null) {
-                $catalog[(string) $code]['prices'][(string) $price->currency][(string) $price->interval] = ['id' => (int) $price->id, 'amount' => (int) $price->unit_amount_minor];
+                $pricesByCode[(string) $code][(string) $price->currency][(string) $price->interval] = ['id' => (int) $price->id, 'amount' => (int) $price->unit_amount_minor];
             }
+        }
+
+        foreach ($catalog as $code => $entry) {
+            $catalog[$code]['prices'] = $pricesByCode[$code] ?? [];
         }
 
         if ($catalog === []) {
@@ -653,7 +660,7 @@ final class LoadDataGenerator
 
         $rows = DB::select("select nextval(pg_get_serial_sequence('{$table}', 'id')) as id from generate_series(1, {$count})");
 
-        return array_map(fn (object $r): int => (int) $r->id, $rows);
+        return array_values(array_map(fn (\stdClass $r): int => (int) $r->id, $rows));
     }
 
     /**

@@ -21,7 +21,7 @@ Route::middleware(['auth:api'])->prefix('user')->group(function () {
     Route::put('notifications/preferences', [NotificationPreferenceController::class, 'update'])->name('user.notifications.preferences.update');
 
     Route::get('devices', [DeviceController::class, 'index'])->name('user.devices.index');
-    Route::post('devices', [DeviceController::class, 'store'])->name('user.devices.store');
+    Route::post('devices', [DeviceController::class, 'store'])->middleware('idempotent')->name('user.devices.store');
     Route::delete('devices/{id}', [DeviceController::class, 'destroy'])->whereNumber('id')->name('user.devices.destroy');
 });
 

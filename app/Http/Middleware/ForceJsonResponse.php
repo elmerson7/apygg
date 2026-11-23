@@ -50,7 +50,7 @@ class ForceJsonResponse
         }
 
         if (! $response->headers->has('Content-Type') ||
-            ! str_contains($response->headers->get('Content-Type'), 'application/json')) {
+            ! str_contains((string) $response->headers->get('Content-Type'), 'application/json')) {
             $response->headers->set('Content-Type', 'application/json');
         }
 

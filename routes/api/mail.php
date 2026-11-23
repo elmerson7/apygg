@@ -29,18 +29,18 @@ Route::middleware(['auth:api', 'permission:mail.manage,api'])
     ->group(function () {
         // Proveedores
         Route::get('/providers', [MailProviderController::class, 'index'])->name('mail.providers.index');
-        Route::post('/providers', [MailProviderController::class, 'store'])->name('mail.providers.store');
+        Route::post('/providers', [MailProviderController::class, 'store'])->middleware('idempotent')->name('mail.providers.store');
         Route::get('/providers/{mailProvider}', [MailProviderController::class, 'show'])->name('mail.providers.show');
         Route::put('/providers/{mailProvider}', [MailProviderController::class, 'update'])->name('mail.providers.update');
         Route::delete('/providers/{mailProvider}', [MailProviderController::class, 'destroy'])->name('mail.providers.destroy');
 
         // Cuentas de envío
         Route::get('/accounts', [MailAccountController::class, 'index'])->name('mail.accounts.index');
-        Route::post('/accounts', [MailAccountController::class, 'store'])->name('mail.accounts.store');
+        Route::post('/accounts', [MailAccountController::class, 'store'])->middleware('idempotent')->name('mail.accounts.store');
         Route::get('/accounts/{mailAccount}', [MailAccountController::class, 'show'])->name('mail.accounts.show');
         Route::put('/accounts/{mailAccount}', [MailAccountController::class, 'update'])->name('mail.accounts.update');
         Route::delete('/accounts/{mailAccount}', [MailAccountController::class, 'destroy'])->name('mail.accounts.destroy');
-        Route::post('/accounts/{mailAccount}/test', [MailAccountController::class, 'test'])->name('mail.accounts.test');
+        Route::post('/accounts/{mailAccount}/test', [MailAccountController::class, 'test'])->middleware('idempotent')->name('mail.accounts.test');
 
         // Plantillas
         Route::get('/templates', [MailTemplateController::class, 'index'])->name('mail.templates.index');
@@ -68,6 +68,6 @@ Route::middleware(['auth:api', 'permission:mail.suppressions,api'])
     ->prefix('admin/mail')
     ->group(function () {
         Route::get('/suppressions', [MailSuppressionController::class, 'index'])->name('mail.suppressions.index');
-        Route::post('/suppressions', [MailSuppressionController::class, 'store'])->name('mail.suppressions.store');
+        Route::post('/suppressions', [MailSuppressionController::class, 'store'])->middleware('idempotent')->name('mail.suppressions.store');
         Route::delete('/suppressions/{mailSuppression}', [MailSuppressionController::class, 'destroy'])->name('mail.suppressions.destroy');
     });

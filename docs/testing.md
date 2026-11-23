@@ -191,8 +191,8 @@ Cada proceso usa **su propia base** (`apygg_test_1`, `_2`…): si comparten una,
 se pisan los datos y los tests fallan de forma intermitente, que es la peor
 forma de fallar. `TestCase` resuelve el nombre con el token de proceso.
 
-Referencia en esta base de código: 250 tests en ~41 s con 4 procesos frente a
-~129 s en serie.
+Referencia (23-nov-2026): la suite tiene ~2.260 tests; con 4 procesos tarda varias veces menos que
+en serie. Mídelo en tu máquina: `make test-parallel` frente a `make test`.
 
 ---
 

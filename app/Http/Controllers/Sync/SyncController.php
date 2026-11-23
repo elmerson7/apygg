@@ -23,7 +23,7 @@ class SyncController extends Controller
     public function changes(SyncChangesRequest $request, string $resource): JsonResponse
     {
         $definition = $this->sync->definition($resource);
-        $this->sync->authorize($request->user(), 'viewAny', $definition);
+        $this->sync->authorize($this->authUser($request), 'viewAny', $definition);
 
         return $this->syncChanges(
             $request,
@@ -37,7 +37,7 @@ class SyncController extends Controller
     {
         /** @var list<array<string, mixed>> $operations */
         $operations = $request->validated('operations');
-        $results = $this->sync->batch($request->user(), $operations);
+        $results = $this->sync->batch($this->authUser($request), $operations);
 
         $failed = count(array_filter($results, fn (array $r) => ! $r['ok']));
 

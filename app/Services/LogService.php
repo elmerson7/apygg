@@ -176,7 +176,7 @@ class LogService
             'endpoint' => $endpoint,
             'status_code' => $statusCode,
             'response_time_ms' => request()->server('REQUEST_TIME_FLOAT')
-                ? round((microtime(true) - request()->server('REQUEST_TIME_FLOAT')) * 1000, 2)
+                ? round((microtime(true) - (float) request()->server('REQUEST_TIME_FLOAT')) * 1000, 2)
                 : null,
         ], $context);
 

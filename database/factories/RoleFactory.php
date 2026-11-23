@@ -36,17 +36,12 @@ class RoleFactory extends Factory
     public function withPermissions($permissions): static
     {
         return $this->afterCreating(function (Role $role) use ($permissions) {
-            $permissionIds = collect($permissions)->map(function ($permission) {
+            $permissionIds = collect(is_array($permissions) ? $permissions : [$permissions])->map(function ($permission) {
                 if ($permission instanceof Permission) {
                     return $permission->id;
                 }
-                if (is_string($permission)) {
-                    $permissionModel = Permission::where('name', $permission)->first();
 
-                    return $permissionModel ? $permissionModel->id : null;
-                }
-
-                return null;
+                return Permission::where('name', $permission)->first()?->id;
             })->filter()->toArray();
 
             if (! empty($permissionIds)) {

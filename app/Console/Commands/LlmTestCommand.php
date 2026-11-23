@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\ReadsTypedInput;
 use App\Models\Llm\LlmArea;
 use App\Services\LLM\LlmGateway;
 use Illuminate\Console\Command;
@@ -18,6 +19,8 @@ use Illuminate\Console\Command;
  */
 class LlmTestCommand extends Command
 {
+    use ReadsTypedInput;
+
     protected $signature = 'llm:test
                             {area : Clave del área a probar}
                             {--prompt= : Prompt a enviar}';
@@ -26,7 +29,7 @@ class LlmTestCommand extends Command
 
     public function handle(LlmGateway $gateway): int
     {
-        $key = (string) $this->argument('area');
+        $key = $this->stringArgument('area') ?? '';
         $area = LlmArea::query()->where('key', $key)->first();
 
         if (! $area) {
@@ -42,7 +45,7 @@ class LlmTestCommand extends Command
             return Command::FAILURE;
         }
 
-        $prompt = (string) ($this->option('prompt') ?: 'Responde únicamente con la palabra: ok');
+        $prompt = ($this->stringOption('prompt') ?: 'Responde únicamente con la palabra: ok');
 
         $this->line('Área:   '.$area->name);
         $this->line('Cadena: '.collect($area->chain())->map(fn ($e) => $e['model'])->implode(' → '));

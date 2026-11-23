@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * pasarela, con su `idempotency_key`; el reintento tras un corte reutiliza la misma fila y la misma clave.
  *
  * @property int $id
+ * @property CarbonInterface $created_at
  * @property int $tenant_id
  * @property int $invoice_id
  * @property int $attempt

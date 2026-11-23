@@ -46,9 +46,9 @@ class DocsService implements DocsServiceInterface
         // web, y —a diferencia de to_tsquery— no revienta con entrada libre.
         $results = DocChunk::query()
             ->forScope($scope)
-            ->whereRaw("search_vector @@ websearch_to_tsquery('{$config}', ?)", [$query])
+            ->whereRaw('search_vector @@ websearch_to_tsquery(?::regconfig, ?)', [$config, $query])
             ->select('*')
-            ->selectRaw("ts_rank(search_vector, websearch_to_tsquery('{$config}', ?)) AS rank", [$query])
+            ->selectRaw('ts_rank(search_vector, websearch_to_tsquery(?::regconfig, ?)) AS rank', [$config, $query])
             ->orderByDesc('rank')
             ->limit($limit)
             ->get();

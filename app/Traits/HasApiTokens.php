@@ -93,7 +93,7 @@ trait HasApiTokens
             return false;
         }
 
-        return $apiKey->delete();
+        return (bool) $apiKey->delete();
     }
 
     /**

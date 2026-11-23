@@ -14,7 +14,7 @@ class SyncRolePermissionsRequest extends BaseFormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('assignPermission', Role::findOrFail($this->route('id')));
+        return (bool) $this->user()?->can('assignPermission', Role::findOrFail($this->route('id')));
     }
 
     /**

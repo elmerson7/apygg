@@ -84,7 +84,7 @@ class Webhook extends Model
      */
     public static function getAvailableEvents(): array
     {
-        return array_keys(config('webhooks.events', []));
+        return array_map('strval', array_keys(config('webhooks.events', [])));
     }
 
     /**
@@ -102,7 +102,9 @@ class Webhook extends Model
     {
         $events = config('webhooks.events', []);
 
-        return array_search($eventClass, $events) ?: null;
+        $name = array_search($eventClass, $events);
+
+        return $name ? (string) $name : null;
     }
 
     /**
@@ -249,7 +251,7 @@ class Webhook extends Model
             $this->save();
         }
 
-        return $this->secret;
+        return (string) $this->secret;
     }
 
     /**

@@ -116,7 +116,7 @@ class FeatureFlagService implements FeatureFlagServiceInterface
 
             $view[] = [
                 'key' => $key,
-                'description' => ($rows->has($key) ? $rows->get($key)->description : null) ?? config("features.{$key}.description"),
+                'description' => ($rows->has($key) ? $rows->get($key)?->description : null) ?? config("features.{$key}.description"),
                 'enabled' => $enabled,
                 'rollout_percentage' => $percentage,
                 'rollout_by' => $by,

@@ -20,7 +20,7 @@ class UpdateFileRequest extends BaseFormRequest
         $file = File::find($this->route('id'));
 
         // Un id inexistente pasa y el controller responde 404 con findOrFail
-        return $file === null || $this->user()->can('update', $file);
+        return $file === null || (bool) $this->user()?->can('update', $file);
     }
 
     /**

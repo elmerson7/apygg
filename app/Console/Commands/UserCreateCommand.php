@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\ReadsTypedInput;
 use App\Contracts\UserServiceInterface;
 use App\Models\User;
 use Illuminate\Console\Command;
@@ -13,6 +14,8 @@ use Illuminate\Console\Command;
  */
 class UserCreateCommand extends Command
 {
+    use ReadsTypedInput;
+
     /**
      * The name and signature of the console command.
      *
@@ -37,9 +40,9 @@ class UserCreateCommand extends Command
      */
     public function handle(UserServiceInterface $userService): int
     {
-        $name = $this->argument('name');
-        $email = $this->argument('email');
-        $password = $this->argument('password');
+        $name = $this->stringArgument('name') ?? '';
+        $email = $this->stringArgument('email') ?? '';
+        $password = $this->stringArgument('password');
         $roles = $this->option('roles');
         $sendEmail = $this->option('send-email');
 

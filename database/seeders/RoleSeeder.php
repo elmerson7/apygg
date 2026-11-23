@@ -28,7 +28,8 @@ class RoleSeeder extends Seeder
         $this->call(PermissionSeeder::class);
 
         $roles = self::definitions();
-        $roles['admin']['permissions'] = Permission::query()->pluck('name')->all();
+        // `admin` recibe todos los permisos de la BD (no solo el catálogo de `definitions()`).
+        $adminPermissions = Permission::query()->pluck('name')->all();
 
         foreach ($roles as $name => $definition) {
             $role = Role::firstOrCreate(
@@ -36,14 +37,16 @@ class RoleSeeder extends Seeder
                 ['display_name' => $definition['display_name'], 'description' => $definition['description']]
             );
 
-            if ($definition['permissions'] !== []) {
-                $role->givePermissionTo($definition['permissions']);
+            $permissions = $name === 'admin' ? $adminPermissions : $definition['permissions'];
+
+            if ($permissions !== []) {
+                $role->givePermissionTo($permissions);
             }
         }
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        $this->command->info('Roles base: '.implode(', ', array_keys($roles)));
+        $this->command?->info('Roles base: '.implode(', ', array_keys($roles)));
     }
 
     /**

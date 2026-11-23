@@ -41,7 +41,7 @@ class SecurityLoggerMiddleware
         try {
             $statusCode = $response->getStatusCode();
             $user = Actor::user();
-            $ipAddress = $request->ip();
+            $ipAddress = $request->ip() ?? '';
 
             // Registrar eventos de seguridad
             $this->logSecurityEvent($request, $response, $statusCode, $user, $ipAddress);

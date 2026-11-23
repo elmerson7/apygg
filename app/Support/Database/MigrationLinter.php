@@ -170,7 +170,7 @@ final class MigrationLinter
     /** @return list<string> reglas ignoradas en todo el archivo (marca antes de `return new class`) */
     private function ignoredRules(string $source): array
     {
-        $head = preg_split('/return\s+new\s+class/', $source)[0];
+        $head = (preg_split('/return\s+new\s+class/', $source) ?: [$source])[0];
         if (! preg_match_all('/migration-lint:\s*ignore\s+([a-z*\-]+(?:\s*,\s*[a-z*\-]+)*)/', $head, $m)) {
             return [];
         }

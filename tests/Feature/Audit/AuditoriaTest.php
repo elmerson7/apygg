@@ -28,7 +28,7 @@ beforeEach(function () {
 
 function auditoriaWebhook($test, $tenant, array $extra = []): Webhook
 {
-    return $test->ctx->run($tenant, fn () => Webhook::factory()->create($extra + ['user_id' => $test->ownerA->id, 'name' => 'hook', 'status' => 'active', 'events' => null, 'url' => 'https://example.com/h', 'secret' => str_repeat('s', 40)]));
+    return $test->ctx->run($tenant, fn () => Webhook::factory()->create($extra + ['user_id' => $test->ownerA->id, 'name' => 'hook', 'timeout' => 30, 'status' => 'active', 'events' => null, 'url' => 'https://example.com/h', 'secret' => str_repeat('s', 40)]));
 }
 
 // ── Trait Auditable ────────────────────────────────────────────────────────

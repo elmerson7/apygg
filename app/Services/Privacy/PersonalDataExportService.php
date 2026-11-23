@@ -95,6 +95,9 @@ class PersonalDataExportService implements PersonalDataExportServiceInterface
             $disk = (string) config('privacy.export.disk');
             $path = trim((string) config('privacy.export.directory', 'privacy-exports'), '/').'/'.$user->getKey().'/'.Str::ulid().'.zip';
             $stream = fopen((string) $tmp, 'rb');
+            if ($stream === false) {
+                throw new \RuntimeException('No se pudo leer el archivo temporal de la exportación.');
+            }
             Storage::disk($disk)->put($path, $stream);
             if (is_resource($stream)) {
                 fclose($stream);

@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\ReadsTypedInput;
 use App\Support\Database\MigrationLinter;
 use Illuminate\Console\Command;
 
@@ -13,6 +14,8 @@ use Illuminate\Console\Command;
  */
 class MigrationsLintCommand extends Command
 {
+    use ReadsTypedInput;
+
     protected $signature = 'migrations:lint
         {--path= : Directorio de migraciones (por defecto database/migrations)}
         {--all : Revisar también las anteriores a la base permitida}';
@@ -21,7 +24,7 @@ class MigrationsLintCommand extends Command
 
     public function handle(): int
     {
-        $dir = (string) ($this->option('path') ?: database_path('migrations'));
+        $dir = ($this->stringOption('path') ?: database_path('migrations'));
         $baseline = (string) config('migration-lint.baseline', '');
         /** @var array<string, list<string>> $exceptions */
         $exceptions = (array) config('migration-lint.exceptions', []);

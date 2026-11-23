@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\ReadsTypedInput;
 use App\Contracts\BackupServiceInterface;
 use App\Services\LogService;
 use Illuminate\Console\Command;
@@ -21,6 +22,8 @@ use Illuminate\Support\Facades\Storage;
  */
 class BackupRestoreRemoteCommand extends Command
 {
+    use ReadsTypedInput;
+
     /**
      * The name and signature of the console command.
      *
@@ -53,7 +56,7 @@ class BackupRestoreRemoteCommand extends Command
         $diskName = $config['remote']['disk'];
         $remotePath = $config['remote']['path'];
         $force = (bool) $this->option('force');
-        $fileOption = $this->option('file');
+        $fileOption = $this->stringOption('file');
 
         try {
             $disk = Storage::disk($diskName);

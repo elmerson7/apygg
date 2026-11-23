@@ -17,6 +17,10 @@ trait StreamsAuditCsv
     {
         return response()->streamDownload(function () use ($rows): void {
             $out = fopen('php://output', 'w');
+            if ($out === false) {
+                return;
+            }
+
             fwrite($out, "\xEF\xBB\xBF");
 
             foreach ($rows as $row) {

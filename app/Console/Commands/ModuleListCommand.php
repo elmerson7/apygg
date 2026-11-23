@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\ReadsTypedInput;
 use App\Support\Modules\ModuleRegistry;
 use Illuminate\Console\Command;
 
@@ -10,13 +11,15 @@ use Illuminate\Console\Command;
  */
 class ModuleListCommand extends Command
 {
+    use ReadsTypedInput;
+
     protected $signature = 'module:list {--path= : Raíz del proyecto (por defecto, la actual)}';
 
     protected $description = 'Listar los módulos (núcleo y opcionales), su estado y sus dependencias';
 
     public function handle(): int
     {
-        $registry = new ModuleRegistry((string) ($this->option('path') ?: base_path()));
+        $registry = new ModuleRegistry(($this->stringOption('path') ?: base_path()));
         $rows = [];
 
         foreach ($registry->all() as $module) {

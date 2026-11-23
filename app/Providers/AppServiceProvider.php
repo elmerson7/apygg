@@ -59,7 +59,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Producción: rechaza APP_DEBUG, claves por defecto y Sentry al 100 % (docs/deploy.md)
         ProductionConfigGuard::assertSafe(
-            $this->app['config'],
+            $this->app->make('config'),
             (string) $this->app->environment(),
             $this->app->runningInConsole() ? $this->consoleCommand() : null,
         );

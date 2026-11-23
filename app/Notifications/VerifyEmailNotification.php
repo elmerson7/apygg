@@ -41,7 +41,7 @@ class VerifyEmailNotification extends Notification implements HasMailTemplate, S
     {
         return (new MailMessage)
             ->subject(__('messages.mail.email_verification.subject'))
-            ->greeting(__('messages.mail.email_verification.greeting', ['name' => $notifiable->name]))
+            ->greeting(__('messages.mail.email_verification.greeting', ['name' => $notifiable->name ?? '']))
             ->line(__('messages.mail.email_verification.intro'))
             ->action(__('messages.mail.email_verification.action'), $this->url)
             ->line(__('messages.mail.email_verification.expires', ['minutes' => $this->expireMinutes]))

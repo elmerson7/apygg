@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\ReadsTypedInput;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Http\Kernel;
@@ -34,6 +35,8 @@ use Illuminate\Support\Str;
  */
 class ScanLazyLoadingCommand extends Command
 {
+    use ReadsTypedInput;
+
     protected $signature = 'scan:lazy-loading
                             {--prefix= : Analizar solo las rutas que empiecen por este prefijo}
                             {--delay=200 : Milisegundos entre peticiones, para no chocar con el rate limiter}
@@ -70,7 +73,7 @@ class ScanLazyLoadingCommand extends Command
         $routes = collect(Route::getRoutes()->getRoutes())
             ->filter(fn (RouteInstance $route) => in_array('GET', $route->methods(), true))
             ->when($this->option('prefix'), fn ($c) => $c->filter(
-                fn (RouteInstance $route) => str_starts_with($route->uri(), (string) $this->option('prefix'))
+                fn (RouteInstance $route) => str_starts_with($route->uri(), ($this->stringOption('prefix') ?? ''))
             ));
 
         $this->info("Analizando {$routes->count()} rutas GET como '{$user->email}'...");
@@ -98,8 +101,9 @@ class ScanLazyLoadingCommand extends Command
 
     private function resolveUser(): ?User
     {
-        if ($id = $this->option('user')) {
-            return User::find($id);
+        $id = $this->stringOption('user');
+        if ($id !== null && $id !== '') {
+            return User::query()->find($id);
         }
 
         return User::whereHas('roles', fn ($q) => $q->where('name', 'admin'))->first()

@@ -61,7 +61,7 @@ class RenewalService implements RenewalServiceInterface
             ->limit($limit)
             ->get(['id', 'tenant_id']), 'barrido de renovaciones (billing:renew)');
 
-        return $rows->map(fn ($r) => ['id' => (int) $r->id, 'tenant_id' => (int) $r->tenant_id])->all();
+        return array_values($rows->map(fn ($r) => ['id' => (int) $r->id, 'tenant_id' => (int) $r->tenant_id])->all());
     }
 
     public function renew(int $subscriptionId): RenewalOutcome
@@ -97,7 +97,7 @@ class RenewalService implements RenewalServiceInterface
         $now = now();
 
         if ($subscription->status === SubscriptionStatus::Incomplete) {
-            if ($subscription->created_at->gt($now->copy()->subHours((int) config('billing.incomplete_expire_hours', 24)))) {
+            if (($subscription->created_at ?? $now)->gt($now->copy()->subHours((int) config('billing.incomplete_expire_hours', 24)))) {
                 return RenewalOutcome::NotDue;
             }
 

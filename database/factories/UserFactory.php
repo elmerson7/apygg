@@ -118,17 +118,12 @@ class UserFactory extends Factory
     public function withRoles($roles): static
     {
         return $this->afterCreating(function (User $user) use ($roles) {
-            $roleIds = collect($roles)->map(function ($role) {
+            $roleIds = collect(is_array($roles) ? $roles : [$roles])->map(function ($role) {
                 if ($role instanceof Role) {
                     return $role->id;
                 }
-                if (is_string($role)) {
-                    $roleModel = Role::where('name', $role)->first();
 
-                    return $roleModel ? $roleModel->id : null;
-                }
-
-                return null;
+                return Role::where('name', $role)->first()?->id;
             })->filter()->toArray();
 
             if (! empty($roleIds)) {
@@ -145,17 +140,12 @@ class UserFactory extends Factory
     public function withPermissions($permissions): static
     {
         return $this->afterCreating(function (User $user) use ($permissions) {
-            $permissionIds = collect($permissions)->map(function ($permission) {
+            $permissionIds = collect(is_array($permissions) ? $permissions : [$permissions])->map(function ($permission) {
                 if ($permission instanceof Permission) {
                     return $permission->id;
                 }
-                if (is_string($permission)) {
-                    $permissionModel = Permission::where('name', $permission)->first();
 
-                    return $permissionModel ? $permissionModel->id : null;
-                }
-
-                return null;
+                return Permission::where('name', $permission)->first()?->id;
             })->filter()->toArray();
 
             if (! empty($permissionIds)) {

@@ -63,6 +63,6 @@ final class Listing
     {
         [$type, $column] = array_pad(explode(':', $this->filters[$name], 2), 2, null);
 
-        return [$type, $column ?? $name];
+        return [(string) $type, $column ?? $name];
     }
 }

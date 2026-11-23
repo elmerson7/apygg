@@ -42,7 +42,7 @@ Dependencias del `composer.json` sin uso en `app/`, `config/`, `routes/` ni `boo
 |---|---|---|
 | Pest | 4.7.8 | Tests (`tests/Unit`, `tests/Feature`, arquitectura con `arch()`) |
 | Laravel Pint | 1.32.1 | Formato PSR-12 (`make pint`) |
-| PHPStan | 2.2.13 | Análisis estático, nivel 6, sin baseline ni excludePaths (`phpstan.neon`) |
+| PHPStan | 2.2.13 | Análisis estático, nivel 8, sin baseline ni excludePaths (`phpstan.neon`) |
 | Larastan | 3.12.0 | Extensión de PHPStan para Laravel |
 | Laravel Pail | 1.2.7 | Logs en vivo (script `composer dev`) |
 | Mockery | 1.6.15 | Mocks en tests |
@@ -69,9 +69,9 @@ Dependencias del `composer.json` sin uso en `app/`, `config/`, `routes/` ni `boo
 
 Workflows en `.github/workflows/`:
 
-- `ci.yml`: job `lint` (Pint en modo test y PHPStan), job `test` (migraciones y Pest con cobertura) y `composer audit`.
-- `cd.yml`: despliegue.
-- `sonarcloud.yml`: análisis de calidad.
+- `ci.yml`: lint (Pint + PHPStan), suite con cobertura mínima del 80 %, suite con `API_PREFIX=v1`, oasdiff, `composer audit`, migraciones, matriz sin módulos, E2E y build. Detalle en `.github/workflows/README.md`.
+- `release.yml`: imagen inmutable en GHCR escaneada con Trivy.
+- `cd.yml`: despliegue manual.
 - `.github/dependabot.yml`: actualización de dependencias.
 
 ## Requisitos

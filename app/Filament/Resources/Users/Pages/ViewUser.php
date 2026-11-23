@@ -50,7 +50,7 @@ class ViewUser extends ViewRecord
                 $done = Failure::guard(function () use ($data, $record): bool {
                     Gate::authorize('manageRoles', $record);
 
-                    $roleIds = array_map('intval', $data['role_ids']);
+                    $roleIds = array_values(array_map('intval', $data['role_ids']));
                     $currentIds = $record->roles->pluck('id')->map(fn ($id): int => (int) $id)->all();
                     $changed = array_merge(array_diff($roleIds, $currentIds), array_diff($currentIds, $roleIds));
 

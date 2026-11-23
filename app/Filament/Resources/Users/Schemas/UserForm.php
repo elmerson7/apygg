@@ -59,7 +59,7 @@ class UserForm
     /**
      * Roles que el usuario en sesión puede conceder (RolePolicy::assign), por id => nombre.
      *
-     * @return array<int, string>
+     * @return array<int|string, string>
      */
     public static function assignableRoles(): array
     {

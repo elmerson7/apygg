@@ -100,7 +100,7 @@ class UserController extends Controller
     public function store(StoreUserRequest $request): JsonResponse
     {
         $validated = $request->validated();
-        $roleIds = array_map('intval', $validated['role_ids'] ?? []);
+        $roleIds = array_values(array_map('intval', $validated['role_ids'] ?? []));
         unset($validated['role_ids']);
 
         // Mismo control que al asignar roles: nadie crea un usuario con un rol
@@ -164,7 +164,7 @@ class UserController extends Controller
         $user = $this->userService->find($id);
         $validated = $request->validated();
 
-        $roleIds = array_map('intval', $validated['role_ids']);
+        $roleIds = array_values(array_map('intval', $validated['role_ids']));
 
         // Cada rol que se añade o se quita debe poder ser asignado por quien actúa
         $currentIds = $user->roles->pluck('id')->map(fn ($v) => (int) $v)->all();

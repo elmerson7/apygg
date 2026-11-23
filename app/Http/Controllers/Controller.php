@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ListsResources;
 use App\Http\Controllers\Concerns\RespondsWithApi;
+use App\Models\User;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Http\Request;
 
 /**
  * Base Controller
@@ -24,4 +27,15 @@ use Illuminate\Foundation\Validation\ValidatesRequests;
 abstract class Controller
 {
     use AuthorizesRequests, ListsResources, RespondsWithApi, ValidatesRequests;
+
+    /**
+     * Usuario autenticado de la petición, tipado. Las rutas que lo usan van bajo `auth:api`, así que
+     * un `null` aquí es un fallo de configuración de la ruta: responde 401 en vez de un error de PHP.
+     */
+    protected function authUser(Request $request): User
+    {
+        $user = $request->user();
+
+        return $user instanceof User ? $user : throw new AuthenticationException;
+    }
 }

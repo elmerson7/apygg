@@ -27,19 +27,19 @@ Route::get('user/data-export/{id}/download', [PersonalDataExportController::clas
 
 Route::middleware(['auth:api'])->prefix('user')->group(function () {
     Route::get('consents', [ConsentController::class, 'index'])->name('user.consents.index');
-    Route::post('consents', [ConsentController::class, 'accept'])->name('user.consents.accept');
+    Route::post('consents', [ConsentController::class, 'accept'])->middleware('idempotent')->name('user.consents.accept');
     Route::delete('consents/{key}', [ConsentController::class, 'withdraw'])->name('user.consents.withdraw');
 
     Route::get('data-export', [PersonalDataExportController::class, 'index'])->name('user.data-export.index');
-    Route::post('data-export', [PersonalDataExportController::class, 'store'])->middleware('throttle:5,60')->name('user.data-export.store');
+    Route::post('data-export', [PersonalDataExportController::class, 'store'])->middleware('throttle:5,60')->middleware('idempotent')->name('user.data-export.store');
     Route::get('data-export/{id}/link', [PersonalDataExportController::class, 'link'])->whereNumber('id')->name('user.data-export.link');
 
     Route::get('account-deletion', [AccountDeletionController::class, 'show'])->name('user.account-deletion.show');
-    Route::post('account-deletion', [AccountDeletionController::class, 'store'])->middleware('throttle:5,60')->name('user.account-deletion.store');
+    Route::post('account-deletion', [AccountDeletionController::class, 'store'])->middleware('throttle:5,60')->middleware('idempotent')->name('user.account-deletion.store');
     Route::delete('account-deletion', [AccountDeletionController::class, 'destroy'])->name('user.account-deletion.destroy');
 });
 
 Route::middleware(['auth:api'])->prefix('admin/legal-documents')->group(function () {
     Route::get('/', [LegalDocumentController::class, 'index'])->middleware('permission:legal-documents.read,api')->name('admin.legal-documents.index');
-    Route::post('/', [LegalDocumentController::class, 'store'])->middleware('permission:legal-documents.manage,api')->name('admin.legal-documents.store');
+    Route::post('/', [LegalDocumentController::class, 'store'])->middleware('permission:legal-documents.manage,api')->middleware('idempotent')->name('admin.legal-documents.store');
 });

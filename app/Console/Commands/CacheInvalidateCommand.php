@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\ReadsTypedInput;
 use App\Services\CacheService;
 use Illuminate\Console\Command;
 
@@ -13,6 +14,8 @@ use Illuminate\Console\Command;
  */
 class CacheInvalidateCommand extends Command
 {
+    use ReadsTypedInput;
+
     /**
      * The name and signature of the console command.
      *
@@ -36,9 +39,9 @@ class CacheInvalidateCommand extends Command
      */
     public function handle(): int
     {
-        $tag = $this->option('tag');
-        $tags = $this->option('tags');
-        $pattern = $this->option('pattern');
+        $tag = $this->stringOption('tag');
+        $tags = $this->stringOption('tags');
+        $pattern = $this->stringOption('pattern');
         $all = $this->option('all');
 
         if ($all) {

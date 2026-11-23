@@ -26,7 +26,7 @@ Route::middleware(['auth:api', 'permission:menu.manage,api'])
     ->prefix('admin/menu')
     ->group(function () {
         Route::get('/items', [MenuController::class, 'catalog'])->name('menu.items.index');
-        Route::post('/items', [MenuController::class, 'store'])->name('menu.items.store');
+        Route::post('/items', [MenuController::class, 'store'])->middleware('idempotent')->name('menu.items.store');
         Route::put('/items/visibility', [MenuController::class, 'updateVisibility'])->name('menu.items.visibility');
         Route::put('/items/{menuItem}', [MenuController::class, 'update'])->name('menu.items.update');
         Route::delete('/items/{menuItem}', [MenuController::class, 'destroy'])->name('menu.items.destroy');

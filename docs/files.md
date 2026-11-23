@@ -94,6 +94,13 @@ suma el uso y solo entonces crea. Dos subidas simultáneas se serializan y no pu
 el tamaño real); la presignada solo bloquea el instante de reservar, y al completar los mismos bytes pasan de reserva a archivo sin
 cambiar el total. `GET /files/usage` devuelve `used_bytes`, `limit_bytes`, `remaining_bytes` y `max_file_bytes` del tenant.
 
+## Pendiente: sin antivirus
+
+Las subidas **no se escanean en busca de malware**. Se valida tipo MIME, extensión y tamaño, pero un archivo
+infectado con un tipo permitido se guarda tal cual. Si el proyecto acepta archivos de terceros que otros usuarios
+descargan, añade un escaneo (p. ej. ClamAV en un job en cola tras la subida, con el archivo en cuarentena hasta
+que pase). No está en el boilerplate.
+
 ## S3 / emulador local
 
 Para desarrollo, `make up-dev` levanta un S3 local con los dos buckets (ver `docs/local-services.md`).

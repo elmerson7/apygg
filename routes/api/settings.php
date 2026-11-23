@@ -29,7 +29,7 @@ Route::middleware(['auth:api', 'permission:system.settings,api'])->prefix('setti
         ->name('settings.show');
 
     Route::post('/', [SettingsController::class, 'store'])
-        ->name('settings.store');
+        ->middleware('idempotent')->name('settings.store');
 
     Route::put('/{id}', [SettingsController::class, 'update'])
         ->name('settings.update');

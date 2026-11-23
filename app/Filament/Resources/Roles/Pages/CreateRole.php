@@ -8,6 +8,7 @@ use App\Filament\Support\Failure;
 use App\Models\Role;
 use App\Models\User;
 use Filament\Resources\Pages\CreateRecord;
+use Filament\Support\Exceptions\Halt;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
 
@@ -21,7 +22,7 @@ class CreateRole extends CreateRecord
         $role = Failure::guard(function () use ($data): Role {
             Gate::authorize('create', Role::class);
 
-            $permissionIds = array_map('intval', $data['permission_ids'] ?? []);
+            $permissionIds = array_values(array_map('intval', $data['permission_ids'] ?? []));
             unset($data['permission_ids']);
 
             $service = app(RoleServiceInterface::class);
@@ -41,7 +42,7 @@ class CreateRole extends CreateRecord
         });
 
         if (! $role instanceof Role) {
-            $this->halt();
+            throw new Halt;
         }
 
         return $role;

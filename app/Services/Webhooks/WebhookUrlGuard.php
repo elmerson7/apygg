@@ -86,7 +86,9 @@ class WebhookUrlGuard
         // IPv4 embebida en IPv6 (::ffff:a.b.c.d y NAT64 64:ff9b::/96): se evalúa la IPv4 real
         if (strlen($binary) === 16
             && (str_starts_with($binary, str_repeat("\0", 10)."\xff\xff") || str_starts_with($binary, "\x00\x64\xff\x9b".str_repeat("\0", 8)))) {
-            return self::isBlockedIp(inet_ntop(substr($binary, 12)));
+            $embedded = inet_ntop(substr($binary, 12));
+
+            return $embedded === false || self::isBlockedIp($embedded);
         }
 
         foreach (self::BLOCKED_CIDRS as $cidr) {
@@ -103,7 +105,7 @@ class WebhookUrlGuard
         [$range, $bits] = explode('/', $cidr);
         $rangeBinary = inet_pton($range);
 
-        if (strlen($rangeBinary) !== strlen($binaryIp)) {
+        if ($rangeBinary === false || strlen($rangeBinary) !== strlen($binaryIp)) {
             return false;
         }
 

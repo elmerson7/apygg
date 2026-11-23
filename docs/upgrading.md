@@ -17,6 +17,36 @@ impacto en un proyecto existente están en `CHANGELOG.md`.
 
 ## De 1.0.0 a la versión actual (Unreleased)
 
+### `upsert` en modelos con tenant exige `tenant_id` en `uniqueBy`
+
+- Con multiempresa activo, `Modelo::query()->upsert($filas, $uniqueBy, ...)` sobre un modelo con `BelongsToTenant` lanza `CrossTenantViolation` si `$uniqueBy` no incluye `tenant_id`, y con `$update = null` ya no actualiza `tenant_id`. Si tenías un upsert por `id`/`uuid`, cámbialo a una clave única que empiece por `tenant_id` (crea el índice si falta).
+
+### `Idempotency-Key` obligatoria en las rutas de cobro y más POST con `idempotent` opcional
+
+- **Exigen la cabecera (400 `idempotency_key_required` sin ella)**: `POST /tenant/billing/subscription`,
+  `/tenant/billing/subscription/change`, `/tenant/billing/invoices/{id}/pay`, `/admin/billing/tenants/{tenant}/plan`,
+  `/admin/billing/invoices/{id}/mark-paid` y `/admin/billing/tenants/{tenant}/free-period`. Los clientes (apps, back-office
+  propio, scripts) deben enviar `Idempotency-Key: <uuid>`, el mismo al reintentar el mismo intento. Tus tests que
+  llamen a esas rutas necesitan la cabecera (`AssertsTenantIsolation::isoCall` ya añade una por llamada).
+- Otros ~30 `POST` de creación o efecto externo pasan a aceptar la cabecera de forma **opcional**: sin ella nada cambia.
+  Tabla completa y excepciones en `docs/idempotency.md`; `CoberturaIdempotenciaTest` obliga a clasificar cada POST nuevo.
+
+### Multiempresa: builder con escrituras masivas aisladas y coherencia de la bandera
+
+- Los modelos con `BelongsToTenant` usan ahora `TenantEloquentBuilder`: con multiempresa activo, `insert`/`upsert`/
+  `insertOrIgnore`/`insertGetId` rellenan `tenant_id` (o lanzan `CrossTenantViolation` si la fila trae otro) y
+  `update()` con `tenant_id` lanza. Si tu código insertaba filas masivas de un modelo con tenant sin contexto (comandos,
+  seeders), envuélvelo en `TenantContext::run($tenant, ...)` o pasa `tenant_id` dentro de `TenantQuery::withoutTenant()`.
+  Si un modelo tuyo ya define `newEloquentBuilder`, extiende `TenantEloquentBuilder`.
+- Nuevo `php artisan tenancy:check` y `MULTI_TENANCY_STRICT` (por defecto true solo en producción): con
+  `MULTI_TENANCY_ENABLED=false` y más de una empresa en `tenants`, el middleware `tenant` responde 500. Si tu despliegue
+  estaba en ese estado, activa la multiempresa o limpia las empresas sobrantes.
+- Nueva regla de `ArchTest`: `DB::table()` sobre tablas con `tenant_id` solo en los archivos auditados; añade los tuyos a la lista tras revisarlos.
+
+### Back-office: datos personales exportados piden `users.read`
+
+- El recurso «Datos personales exportados» (módulo privacy) pedía `users.export`, que es del módulo export-import: al quitar ese módulo el panel fallaba. Ahora pide `users.read` (núcleo). Si diste `users.export` a soporte solo para ver ese recurso, dale `users.read`.
+
 ### `trace_id` en la auditoría de actividad y límites de `/auth/refresh` y cambio de contraseña
 
 - **Migraciones nuevas** (`make migrate`):

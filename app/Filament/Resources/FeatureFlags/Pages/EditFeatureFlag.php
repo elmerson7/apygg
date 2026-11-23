@@ -39,7 +39,7 @@ class EditFeatureFlag extends EditRecord
                     Gate::authorize('delete', $this->record);
 
                     $done = Failure::guard(function (): true {
-                        app(FeatureFlagServiceInterface::class)->resetFlag((string) $this->record->getAttribute('key'));
+                        app(FeatureFlagServiceInterface::class)->resetFlag((string) $this->getRecord()->getAttribute('key'));
 
                         return true;
                     });

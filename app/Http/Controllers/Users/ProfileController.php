@@ -26,7 +26,7 @@ class ProfileController extends Controller
      */
     public function show(Request $request): JsonResponse
     {
-        $user = $request->user()->load('profile');
+        $user = $this->authUser($request)->load('profile');
 
         return $this->sendSuccess(new ProfileResource($user), 'Perfil obtenido exitosamente');
     }
@@ -36,7 +36,7 @@ class ProfileController extends Controller
      */
     public function update(UpdateProfileRequest $request): JsonResponse
     {
-        $user = $this->userService->updateProfile($request->user(), $request->validated());
+        $user = $this->userService->updateProfile($this->authUser($request), $request->validated());
 
         return $this->sendSuccess(new ProfileResource($user), 'Perfil actualizado exitosamente');
     }
@@ -54,7 +54,7 @@ class ProfileController extends Controller
      */
     public function updatePreferences(UpdatePreferencesRequest $request): JsonResponse
     {
-        $user = $this->userService->updatePreferences((string) $request->user()->id, $request->validated());
+        $user = $this->userService->updatePreferences((string) $this->authUser($request)->id, $request->validated());
 
         return $this->sendSuccess($user->preferences, 'Preferencias actualizadas exitosamente');
     }

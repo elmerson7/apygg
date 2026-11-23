@@ -25,7 +25,7 @@ class FileUploadController extends Controller
      */
     public function store(StoreFileUploadRequest $request): JsonResponse
     {
-        $result = $this->uploads->create($request->user(), $request->validated());
+        $result = $this->uploads->create($this->authUser($request), $request->validated());
         $intent = $result['intent'];
 
         return $this->sendSuccess([
@@ -67,7 +67,7 @@ class FileUploadController extends Controller
      */
     public function storeMultipart(StoreFileUploadRequest $request): JsonResponse
     {
-        $result = $this->uploads->createMultipart($request->user(), $request->validated());
+        $result = $this->uploads->createMultipart($this->authUser($request), $request->validated());
         $intent = $result['intent'];
 
         return $this->sendSuccess([
@@ -139,6 +139,6 @@ class FileUploadController extends Controller
     /** Solo quien creó la intención (o `files.manage`). */
     private function canManage(Request $request, FileUploadIntent $intent): bool
     {
-        return $intent->user_id === $request->user()->id || $request->user()->can('files.manage');
+        return $intent->user_id === $this->authUser($request)->id || $this->authUser($request)->can('files.manage');
     }
 }

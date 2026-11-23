@@ -24,7 +24,7 @@ Route::middleware(['auth:api'])->prefix('users')->group(function () {
 
     Route::post('/', [UserController::class, 'store'])
         ->middleware('permission:users.create,api')
-        ->name('users.store');
+        ->middleware('idempotent')->name('users.store');
 
     // Sin middleware de permiso: cada quien edita su perfil; administrar a otros
     // lo decide UserPolicy::update (users.update). Roles y contraseña: ver controller.

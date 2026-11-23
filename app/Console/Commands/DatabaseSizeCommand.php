@@ -2,11 +2,14 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\ReadsTypedInput;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
 class DatabaseSizeCommand extends Command
 {
+    use ReadsTypedInput;
+
     /**
      * The name and signature of the console command.
      *
@@ -28,8 +31,9 @@ class DatabaseSizeCommand extends Command
     {
         $database = config('database.connections.pgsql.database');
 
-        if ($this->option('table')) {
-            return $this->showTableSize($this->option('table'));
+        $table = $this->stringOption('table');
+        if ($table !== null && $table !== '') {
+            return $this->showTableSize($table);
         }
 
         return $this->showDatabaseSize($database);

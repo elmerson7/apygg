@@ -62,7 +62,7 @@ class RateLimitLoggerMiddleware
     protected function logRateLimitBlock(Request $request, Response $response): void
     {
         $user = Actor::model();
-        $ipAddress = $request->ip();
+        $ipAddress = $request->ip() ?? '';
         $path = $request->path();
         $method = $request->method();
 
@@ -138,7 +138,7 @@ class RateLimitLoggerMiddleware
     protected function detectAbusePatterns(Request $request, Response $response): void
     {
         $user = Actor::model();
-        $ipAddress = $request->ip();
+        $ipAddress = $request->ip() ?? '';
         $userId = $user?->id;
         $timeWindow = self::TIME_WINDOW_MINUTES * 60;
 

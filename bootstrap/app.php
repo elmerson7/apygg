@@ -2,7 +2,6 @@
 
 use App\Enums\ErrorCode;
 use App\Exceptions\ApiException;
-use App\Exceptions\BusinessLogicException;
 use App\Helpers\ApiResponse;
 use App\Http\Middleware\AdaptiveRateLimitingMiddleware;
 use App\Http\Middleware\CheckApiKeyScope;
@@ -260,20 +259,6 @@ return Application::configure(basePath: dirname(__DIR__))
                         ! empty($e->getErrors()) ? ['errors' => $e->getErrors()] : []
                     ),
                     $e->errorCode()
-                );
-            }
-
-            // BusinessLogicException
-            if ($e instanceof BusinessLogicException) {
-                $logException($e, $request, false);
-
-                return ApiResponse::rfc7807(
-                    $e->getMessage(),
-                    422,
-                    $e->getMessage(),
-                    'business_logic_error',
-                    $request->path(),
-                    $e->getExtensions()
                 );
             }
 

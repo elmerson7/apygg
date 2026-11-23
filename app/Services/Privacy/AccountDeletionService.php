@@ -90,8 +90,8 @@ class AccountDeletionService implements AccountDeletionServiceInterface
 
     public function dueIds(): array
     {
-        return AccountDeletionRequest::query()->where('status', AccountDeletionRequest::PENDING)
-            ->where('scheduled_for', '<=', now())->orderBy('id')->limit(500)->pluck('id')->map(fn ($id) => (int) $id)->all();
+        return array_values(AccountDeletionRequest::query()->where('status', AccountDeletionRequest::PENDING)
+            ->where('scheduled_for', '<=', now())->orderBy('id')->limit(500)->pluck('id')->map(fn ($id) => (int) $id)->all());
     }
 
     public function execute(int $requestId): void
@@ -192,9 +192,9 @@ class AccountDeletionService implements AccountDeletionServiceInterface
      */
     private function ownedTenantIds(User $user): array
     {
-        return DB::table('tenant_user')->where('user_id', $user->getKey())
+        return array_values(DB::table('tenant_user')->where('user_id', $user->getKey())
             ->where('role', TenantRoles::owner())->where('status', TenantMembershipStatus::Active->value)
-            ->pluck('tenant_id')->map(fn ($id) => (int) $id)->all();
+            ->pluck('tenant_id')->map(fn ($id) => (int) $id)->all());
     }
 
     /**
@@ -204,7 +204,7 @@ class AccountDeletionService implements AccountDeletionServiceInterface
      */
     private function soleOwnerTenantIds(User $user): array
     {
-        return DB::table('tenant_user as tu')
+        return array_values(DB::table('tenant_user as tu')
             ->where('tu.user_id', $user->getKey())
             ->where('tu.role', TenantRoles::owner())
             ->where('tu.status', TenantMembershipStatus::Active->value)
@@ -213,7 +213,7 @@ class AccountDeletionService implements AccountDeletionServiceInterface
                 ->where('other.user_id', '!=', $user->getKey())
                 ->where('other.role', TenantRoles::owner())
                 ->where('other.status', TenantMembershipStatus::Active->value))
-            ->orderBy('tu.tenant_id')->pluck('tu.tenant_id')->map(fn ($id) => (int) $id)->all();
+            ->orderBy('tu.tenant_id')->pluck('tu.tenant_id')->map(fn ($id) => (int) $id)->all());
     }
 
     private function afterErase(int $userId): void

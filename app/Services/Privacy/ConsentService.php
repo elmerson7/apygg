@@ -225,7 +225,7 @@ class ConsentService implements ConsentServiceInterface
     /**
      * Última acción del usuario por clave.
      *
-     * @return array<string, object>
+     * @return array<string, \stdClass>
      */
     private function latestActions(User $user): array
     {
