@@ -1,10 +1,10 @@
 <?php
 
-use App\Contracts\AccountDeletionServiceInterface;
-use App\Contracts\PersonalDataExportServiceInterface;
-use App\Models\AccountDeletionRequest;
+use App\Contracts\AccountDeletionServiceInterface; // module:privacy
+use App\Contracts\PersonalDataExportServiceInterface; // module:privacy
+use App\Models\AccountDeletionRequest; // module:privacy
 use App\Models\InboxNotification;
-use App\Models\PersonalDataExport;
+use App\Models\PersonalDataExport; // module:privacy
 use App\Support\Tenancy\Exceptions\CrossTenantViolation;
 use App\Support\Tenancy\Exceptions\MissingTenantContext;
 use App\Support\Tenancy\Exceptions\TenancyMisconfigured;
@@ -138,6 +138,7 @@ test('con multiempresa apagado los insert masivos no se tocan', function () {
     expect(DB::table('tenant_notes')->where('title', 'libre')->value('tenant_id'))->toBe($this->b->id);
 });
 
+// module:privacy:start
 test('la exportación de datos de un usuario no devuelve filas de otras personas del mismo ni de otro tenant', function () {
     Storage::fake('local');
     Mail::fake();
@@ -179,6 +180,7 @@ test('el borrado de cuenta de un usuario del tenant A no borra datos del usuario
     $this->ctx->run($this->b, fn () => expect(InboxNotification::query()->pluck('title')->all())->toBe(['ajena']));
     expect(DB::table('api_keys')->pluck('name')->all())->toBe(['ajena']);
 });
+// module:privacy:end
 
 test('con multiempresa apagado y varias empresas la comprobación de coherencia falla en voz alta', function () {
     config(['multi-tenancy.enabled' => false, 'multi-tenancy.strict' => true]);
