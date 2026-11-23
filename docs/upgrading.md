@@ -17,6 +17,10 @@ impacto en un proyecto existente están en `CHANGELOG.md`.
 
 ## De 1.0.0 a la versión actual (Unreleased)
 
+### Back-office: datos personales exportados piden `users.read`
+
+- El recurso «Datos personales exportados» (módulo privacy) pedía `users.export`, que es del módulo export-import: al quitar ese módulo el panel fallaba. Ahora pide `users.read` (núcleo). Si diste `users.export` a soporte solo para ver ese recurso, dale `users.read`.
+
 ### `trace_id` en la auditoría de actividad y límites de `/auth/refresh` y cambio de contraseña
 
 - **Migraciones nuevas** (`make migrate`):

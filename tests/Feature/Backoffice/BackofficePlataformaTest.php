@@ -435,7 +435,7 @@ test('los datos personales exportados son de solo lectura y piden su permiso', f
     $this->actingAs(conPermisosBo());
     Livewire::test(ListPersonalDataExports::class)->assertForbidden();
 
-    $this->actingAs(conPermisosBo('users.export', 'users.import'));
+    $this->actingAs(conPermisosBo('users.read'));
     Livewire::test(ListPersonalDataExports::class)->assertCanSeeTableRecords([$personal]);
 });
 // module:privacy:end
