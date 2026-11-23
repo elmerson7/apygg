@@ -15,6 +15,7 @@ function tokenServiceQueLanza(Throwable $excepcion): TokenService
     $jwt = Mockery::mock(JWTAuth::class);
     $jwt->shouldReceive('setToken')->andReturnSelf();
     $jwt->shouldReceive('parseToken')->andThrow($excepcion);
+    $jwt->shouldReceive('authenticate')->andThrow($excepcion);
 
     return new TokenService($jwt);
 }
