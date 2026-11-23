@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\ReadsTypedInput;
 use App\Support\Modules\ModuleRegistry;
 use App\Support\Modules\ModuleRemover;
 use Illuminate\Console\Command;
@@ -16,6 +17,8 @@ use RuntimeException;
  */
 class ModuleRemoveCommand extends Command
 {
+    use ReadsTypedInput;
+
     protected $signature = 'module:remove {name : Nombre del módulo (ver module:list)}
         {--dry-run : Mostrar lo que haría sin tocar nada}
         {--purge-migrations : Borra también las migraciones que crearon sus tablas y no crea la de baja (solo antes del primer despliegue)}
@@ -26,11 +29,11 @@ class ModuleRemoveCommand extends Command
 
     public function handle(): int
     {
-        $root = rtrim((string) ($this->option('path') ?: base_path()), '/');
+        $root = rtrim(($this->stringOption('path') ?: base_path()), '/');
         $remover = new ModuleRemover(new ModuleRegistry($root));
 
         try {
-            $plan = $remover->plan((string) $this->argument('name'), (bool) $this->option('purge-migrations'));
+            $plan = $remover->plan(($this->stringArgument('name') ?? ''), (bool) $this->option('purge-migrations'));
         } catch (RuntimeException $e) {
             $this->error($e->getMessage());
 

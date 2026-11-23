@@ -25,7 +25,7 @@ class CreateUser extends CreateRecord
         $user = Failure::guard(function () use ($data): User {
             Gate::authorize('create', User::class);
 
-            $roleIds = array_map('intval', $data['role_ids'] ?? []);
+            $roleIds = array_values(array_map('intval', $data['role_ids'] ?? []));
             unset($data['role_ids']);
 
             foreach (Role::whereIn('id', $roleIds)->get() as $role) {

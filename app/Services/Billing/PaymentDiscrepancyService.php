@@ -67,7 +67,7 @@ class PaymentDiscrepancyService implements PaymentDiscrepancyServiceInterface
             throw BillingException::discrepancyNotFound();
         }
 
-        return $this->tenants->run(Tenant::query()->findOrFail($tenantId), fn () => DB::transaction(function () use ($id, $actor, $note): PaymentDiscrepancy {
+        return $this->tenants->run(Tenant::query()->findOrFail((int) $tenantId), fn () => DB::transaction(function () use ($id, $actor, $note): PaymentDiscrepancy {
             $d = PaymentDiscrepancy::query()->whereKey($id)->lockForUpdate()->firstOrFail();
 
             if ($d->status === PaymentDiscrepancy::STATUS_OPEN) {

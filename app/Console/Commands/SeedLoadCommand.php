@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\ReadsTypedInput;
 use App\Support\SeedLoad\LoadDataGenerator;
 use App\Support\SeedLoad\LoadOptions;
 use Carbon\CarbonImmutable;
@@ -16,6 +17,8 @@ use Illuminate\Support\Facades\File;
  */
 class SeedLoadCommand extends Command
 {
+    use ReadsTypedInput;
+
     protected $signature = 'seed:load
         {--tenants=500 : Empresas a crear}
         {--users-per-tenant=20 : Usuarios (miembros) por empresa}
@@ -45,8 +48,8 @@ class SeedLoadCommand extends Command
             notificationsPerUser: max(0, (int) $this->option('notifications-per-user')),
             seed: (int) $this->option('seed'),
             batchSize: max(1, (int) $this->option('batch')),
-            asOf: $this->option('as-of') ? CarbonImmutable::parse((string) $this->option('as-of')) : null,
-            password: (string) $this->option('password'),
+            asOf: $this->option('as-of') ? CarbonImmutable::parse(($this->stringOption('as-of') ?? '')) : null,
+            password: ($this->stringOption('password') ?? ''),
             credentialsLimit: max(0, (int) $this->option('credentials-limit')),
         );
 
@@ -85,7 +88,7 @@ class SeedLoadCommand extends Command
         $this->info(sprintf('Índices %d-%d, %.1f s (%.0f empresas/s), memoria pico PHP %.0f MB.', $totals['first_index'], $totals['last_index'], $seconds, $totals['tenants'] / $seconds, memory_get_peak_usage(true) / 1048576));
 
         if ($options->credentialsLimit > 0) {
-            $path = $this->writeCredentials((string) ($this->option('credentials') ?: storage_path('app/seed-load/credentials.csv')), $totals['credentials'], $options->password, $options->credentialsLimit);
+            $path = $this->writeCredentials(($this->stringOption('credentials') ?: storage_path('app/seed-load/credentials.csv')), $totals['credentials'], $options->password, $options->credentialsLimit);
             $this->line("Credenciales de ejemplo: {$path} (contraseña común: \"{$options->password}\").");
         }
 

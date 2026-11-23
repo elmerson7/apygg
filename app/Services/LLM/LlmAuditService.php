@@ -41,7 +41,7 @@ class LlmAuditService
         ?string $error = null,
     ): void {
         $promptText = implode("\n", array_map(
-            fn (array $m): string => is_string($m['content'] ?? null) ? $m['content'] : json_encode($m['content'] ?? ''),
+            fn (array $m): string => is_string($m['content'] ?? null) ? $m['content'] : (string) json_encode($m['content'] ?? ''),
             $messages
         ));
 

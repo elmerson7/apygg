@@ -10,7 +10,7 @@ parameters:
         - database/seeders
 
     # Rule level (0 es el más laxo, 9 el más estricto). Ver docs/CODING_STANDARDS.md.
-    level: 6
+    level: 7
 
     # Política: sin excludePaths, sin baseline y sin ignores genéricos. Un ignore solo
     # se admite si es un falso positivo demostrable, con ruta y mensaje exactos.

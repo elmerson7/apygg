@@ -51,7 +51,7 @@ modelo de Claude**, solo lo consulta.
 - ✅ `make check` → `pint` (formato PSR-12) + `phpstan` (análisis estático)
 - Equivale a `make pint` + `make phpstan` por separado.
 - Si phpstan devuelve errores, corrígelos antes de dar el trabajo por terminado.
-- PHPStan corre a **nivel 6** (`phpstan.neon`), con `reportUnmatchedIgnoredErrors: true`,
+- PHPStan corre a **nivel 7** (`phpstan.neon`), con `reportUnmatchedIgnoredErrors: true`,
   **sin `excludePaths` ni baseline** y con un único `ignoreErrors` justificado.
   Un error nuevo se **arregla** (tipo, `@property`, genérico), no se ignora: ver
   "Análisis estático" en `docs/CODING_STANDARDS.md`.

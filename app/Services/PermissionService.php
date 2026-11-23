@@ -358,9 +358,9 @@ class PermissionService implements PermissionServiceInterface
     /**
      * Limpiar cache de permisos
      *
-     * @param  string|null  $permissionId  ID específico del permiso o null para limpiar todo
+     * @param  int|string|null  $permissionId  ID específico del permiso o null para limpiar todo
      */
-    protected function clearCache(?string $permissionId = null): void
+    protected function clearCache(int|string|null $permissionId = null): void
     {
         if ($permissionId) {
             CacheService::forget(self::CACHE_PREFIX.$permissionId);

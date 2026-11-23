@@ -42,7 +42,7 @@ Dependencias del `composer.json` sin uso en `app/`, `config/`, `routes/` ni `boo
 |---|---|---|
 | Pest | 4.7.8 | Tests (`tests/Unit`, `tests/Feature`, arquitectura con `arch()`) |
 | Laravel Pint | 1.32.1 | Formato PSR-12 (`make pint`) |
-| PHPStan | 2.2.13 | Análisis estático, nivel 6, sin baseline ni excludePaths (`phpstan.neon`) |
+| PHPStan | 2.2.13 | Análisis estático, nivel 7, sin baseline ni excludePaths (`phpstan.neon`) |
 | Larastan | 3.12.0 | Extensión de PHPStan para Laravel |
 | Laravel Pail | 1.2.7 | Logs en vivo (script `composer dev`) |
 | Mockery | 1.6.15 | Mocks en tests |

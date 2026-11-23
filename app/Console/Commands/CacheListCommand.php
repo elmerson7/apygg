@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\ReadsTypedInput;
 use App\Services\CacheService;
 use Illuminate\Console\Command;
 use Illuminate\Redis\Connections\Connection;
@@ -15,6 +16,8 @@ use Illuminate\Support\Facades\Redis;
  */
 class CacheListCommand extends Command
 {
+    use ReadsTypedInput;
+
     /**
      * The name and signature of the console command.
      *
@@ -47,12 +50,12 @@ class CacheListCommand extends Command
             return Command::FAILURE;
         }
 
-        $pattern = $this->option('pattern');
-        $tag = $this->option('tag');
+        $pattern = $this->listOption('pattern');
+        $tag = $this->stringOption('tag');
         $limit = (int) $this->option('limit');
-        $showTtl = $this->option('ttl');
-        $showSize = $this->option('size');
-        $showValue = $this->option('value');
+        $showTtl = (bool) $this->option('ttl');
+        $showSize = (bool) $this->option('size');
+        $showValue = (bool) $this->option('value');
         $showStats = $this->option('stats');
 
         try {
@@ -88,7 +91,7 @@ class CacheListCommand extends Command
     /**
      * Construir patrón de búsqueda
      *
-     * @param  array<string, mixed>  $pattern
+     * @param  list<string>|null  $pattern
      */
     protected function buildSearchPattern(?array $pattern, ?string $tag): string
     {
@@ -309,7 +312,7 @@ class CacheListCommand extends Command
             return '<null>';
         }
 
-        $json = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $json = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '<no serializable>';
 
         if (strlen($json) > 100) {
             return substr($json, 0, 97).'...';
@@ -325,7 +328,7 @@ class CacheListCommand extends Command
     {
         $units = ['B', 'KB', 'MB', 'GB'];
         $bytes = max($bytes, 0);
-        $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+        $pow = (int) floor(($bytes ? log($bytes) : 0) / log(1024));
         $pow = min($pow, count($units) - 1);
         $bytes /= pow(1024, $pow);
 

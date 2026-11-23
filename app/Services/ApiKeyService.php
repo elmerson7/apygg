@@ -225,6 +225,7 @@ class ApiKeyService implements ApiKeyServiceInterface
 
         // Usar valores de la key antigua si no se proporcionan nuevos
         $name = $newName ?? $oldApiKey->name.' (rotated)';
+        /** @var list<string> $scopes */
         $scopes = $newScopes ?? ($oldApiKey->scopes ?? []);
         $expiresAt = $oldApiKey->expires_at;
 
@@ -378,7 +379,7 @@ class ApiKeyService implements ApiKeyServiceInterface
             }
 
             // Si está en cache como válida, buscar el modelo
-            $apiKey = ApiKey::find($cached);
+            $apiKey = is_int($cached) || is_string($cached) ? ApiKey::query()->find($cached) : null;
             if ($apiKey && $apiKey->isActive()) {
                 return $apiKey;
             }

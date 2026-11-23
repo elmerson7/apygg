@@ -55,8 +55,11 @@ class SimpleMail extends Mailable implements ShouldQueue
 
     public function content(): Content
     {
+        /** @var view-string $view */
+        $view = $this->emailView;
+
         return new Content(
-            view: $this->emailView,
+            view: $view,
             with: $this->emailData,
         );
     }

@@ -58,7 +58,9 @@ class AuthController extends Controller
      */
     public function register(RegisterRequest $request): JsonResponse
     {
-        $result = $this->authService->register($request->validated());
+        /** @var array{name: string, email: string, password: string} $data */
+        $data = $request->validated();
+        $result = $this->authService->register($data);
         $user = $result['user'];
 
         LogService::info('Usuario registrado', [
@@ -107,9 +109,11 @@ class AuthController extends Controller
         // Renovar tokens (con rotación). Un token inválido o expirado lanza
         // JWTException y el handler responde 401.
         $result = $this->authService->refreshToken($refreshToken);
+        /** @var array{access_token: string, refresh_token: string} $tokens */
+        $tokens = $result;
 
         return $this->sendSuccess(
-            $this->authPayload($result['user'], $result),
+            $this->authPayload($result['user'], $tokens),
             'Token renovado exitosamente'
         );
     }

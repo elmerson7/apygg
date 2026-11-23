@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\ReadsTypedInput;
 use App\Enums\TenantStatus;
 use App\Models\Tenant;
 use Illuminate\Console\Command;
@@ -12,13 +13,15 @@ use Illuminate\Console\Command;
  */
 class TenancyApproveCommand extends Command
 {
+    use ReadsTypedInput;
+
     protected $signature = 'tenancy:approve {tenant : Tenant (id o slug)}';
 
     protected $description = 'Aprueba un tenant pendiente de revisión (pending -> active)';
 
     public function handle(): int
     {
-        $identifier = (string) $this->argument('tenant');
+        $identifier = $this->stringArgument('tenant') ?? '';
         $tenant = ctype_digit($identifier) ? Tenant::query()->find((int) $identifier) : Tenant::query()->bySlug($identifier)->first();
 
         if (! $tenant instanceof Tenant) {

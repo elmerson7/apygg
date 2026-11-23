@@ -83,7 +83,7 @@ class TokenService implements TokenServiceInterface
             $originalTtl = config('jwt.ttl');
 
             // Calcular expiración explícitamente (en segundos desde ahora)
-            $expirationTime = now()->addMinutes($refreshTtl)->timestamp;
+            $expirationTime = now()->addMinutes($refreshTtl)->getTimestamp();
 
             // Configurar TTL temporalmente para el refresh token
             config(['jwt.ttl' => $refreshTtl]);

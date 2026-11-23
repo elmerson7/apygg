@@ -261,12 +261,12 @@ class UserService implements UserServiceInterface
         $user->syncRoles(array_map('intval', $roleIds));
 
         foreach (array_diff($roleIds, $previousRoleIds) as $roleId) {
-            if ($role = Role::find($roleId)) {
+            if ($role = Role::query()->find((int) $roleId)) {
                 event(new RoleAssigned($user, $role));
             }
         }
         foreach (array_diff($previousRoleIds, $roleIds) as $roleId) {
-            if ($role = Role::find($roleId)) {
+            if ($role = Role::query()->find((int) $roleId)) {
                 event(new RoleRemoved($user, $role));
             }
         }
@@ -488,12 +488,12 @@ class UserService implements UserServiceInterface
         $this->clearCache($userId);
 
         foreach (array_diff($roleIds, $previousRoleIds) as $roleId) {
-            if ($role = Role::find($roleId)) {
+            if ($role = Role::query()->find((int) $roleId)) {
                 event(new RoleAssigned($user, $role));
             }
         }
         foreach (array_diff($previousRoleIds, $roleIds) as $roleId) {
-            if ($role = Role::find($roleId)) {
+            if ($role = Role::query()->find((int) $roleId)) {
                 event(new RoleRemoved($user, $role));
             }
         }
@@ -565,12 +565,12 @@ class UserService implements UserServiceInterface
         $this->clearCache($userId);
 
         foreach (array_diff($permissionIds, $previousPermissionIds) as $permissionId) {
-            if ($permission = Permission::find($permissionId)) {
+            if ($permission = Permission::query()->find((int) $permissionId)) {
                 event(new PermissionGranted($user, $permission));
             }
         }
         foreach (array_diff($previousPermissionIds, $permissionIds) as $permissionId) {
-            if ($permission = Permission::find($permissionId)) {
+            if ($permission = Permission::query()->find((int) $permissionId)) {
                 event(new PermissionRevoked($user, $permission));
             }
         }

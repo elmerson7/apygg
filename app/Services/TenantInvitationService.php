@@ -180,7 +180,7 @@ class TenantInvitationService implements TenantInvitationServiceInterface
             try {
                 return DB::transaction(function () use ($user, $tenant, $found): string {
                     // Bloquea la invitación: dos aceptaciones a la vez se ordenan y la segunda ve `accepted_at`.
-                    $invitation = TenantInvitation::query()->lockForUpdate()->findOrFail($found->getKey());
+                    $invitation = TenantInvitation::query()->lockForUpdate()->findOrFail((int) $found->getKey());
 
                     $this->assertOpen($invitation);
 

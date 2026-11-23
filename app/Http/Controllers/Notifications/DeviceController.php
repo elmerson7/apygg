@@ -25,7 +25,10 @@ class DeviceController extends Controller
 
     public function store(RegisterDeviceRequest $request): JsonResponse
     {
-        return $this->sendSuccess($this->devices->register($request->user(), $request->validated()), 'Dispositivo registrado', 201);
+        /** @var array{token: string, platform: string, device_id?: string|null, name?: string|null} $data */
+        $data = $request->validated();
+
+        return $this->sendSuccess($this->devices->register($request->user(), $data), 'Dispositivo registrado', 201);
     }
 
     public function destroy(Request $request, int $id): JsonResponse

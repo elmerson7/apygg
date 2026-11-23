@@ -61,7 +61,7 @@ class RenewalService implements RenewalServiceInterface
             ->limit($limit)
             ->get(['id', 'tenant_id']), 'barrido de renovaciones (billing:renew)');
 
-        return $rows->map(fn ($r) => ['id' => (int) $r->id, 'tenant_id' => (int) $r->tenant_id])->all();
+        return array_values($rows->map(fn ($r) => ['id' => (int) $r->id, 'tenant_id' => (int) $r->tenant_id])->all());
     }
 
     public function renew(int $subscriptionId): RenewalOutcome

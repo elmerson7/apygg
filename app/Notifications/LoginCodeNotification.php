@@ -41,7 +41,7 @@ class LoginCodeNotification extends Notification implements HasMailTemplate, Sho
     {
         return (new MailMessage)
             ->subject(__('otp-login.mail.subject'))
-            ->greeting(__('otp-login.mail.greeting', ['name' => $notifiable->name]))
+            ->greeting(__('otp-login.mail.greeting', ['name' => $notifiable->name ?? '']))
             ->line(__('otp-login.mail.intro'))
             ->line('**'.$this->code.'**')
             ->line(__('otp-login.mail.expires', ['minutes' => $this->expireMinutes]))

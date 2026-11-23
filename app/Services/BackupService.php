@@ -237,7 +237,7 @@ class BackupService implements BackupServiceInterface
         // Backups locales
         $localPath = $config['local_path'];
         if (is_dir($localPath)) {
-            $files = glob("{$localPath}/backup_*.{sql,sql.gz}", GLOB_BRACE);
+            $files = glob("{$localPath}/backup_*.{sql,sql.gz}", GLOB_BRACE) ?: [];
 
             foreach ($files as $file) {
                 $filename = basename($file);
@@ -290,7 +290,7 @@ class BackupService implements BackupServiceInterface
     {
         $fileSize = filesize($filePath);
         $fileSizeMB = round($fileSize / 1024 / 1024, 2);
-        $createdAt = Carbon::createFromTimestamp(filemtime($filePath));
+        $createdAt = Carbon::createFromTimestamp((int) filemtime($filePath));
 
         // Extraer tipo y fecha del nombre del archivo
         $type = 'database'; // Por ahora solo database
@@ -407,8 +407,10 @@ class BackupService implements BackupServiceInterface
                         $isCustomFormat = true;
                     } else {
                         $handle = fopen($finalPath, 'rb');
-                        $firstLine = fgets($handle, 100);
-                        fclose($handle);
+                        $firstLine = $handle ? (string) fgets($handle, 100) : '';
+                        if ($handle) {
+                            fclose($handle);
+                        }
 
                         $isCustomFormat = ! (
                             str_starts_with(trim($firstLine), '--') ||

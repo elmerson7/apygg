@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Concerns;
 
 use App\Enums\ErrorCode;
 use Illuminate\Contracts\Pagination\CursorPaginator;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
  * RespondsWithApi
@@ -61,9 +61,20 @@ trait RespondsWithApi
      */
     private function wrapData(mixed $data): mixed
     {
-        return $this->resource && ! is_array($data) && ! $data instanceof JsonResource && class_exists($this->resource)
-            ? new $this->resource($data)
-            : $data;
+        if ($this->resource && ! is_array($data) && ! $data instanceof JsonResource && class_exists($this->resource)) {
+            // Para el análisis (y para Scramble) el tipo de salida es el de entrada: ver arriba.
+            /** @var TData $wrapped */
+            $wrapped = $this->makeResource($data);
+
+            return $wrapped;
+        }
+
+        return $data;
+    }
+
+    private function makeResource(mixed $data): mixed
+    {
+        return new $this->resource($data);
     }
 
     /**

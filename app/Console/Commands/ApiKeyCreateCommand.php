@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\ReadsTypedInput;
 use App\Contracts\ApiKeyServiceInterface;
 use App\Models\Tenant;
 use App\Models\User;
@@ -15,6 +16,8 @@ use Illuminate\Console\Command;
  */
 class ApiKeyCreateCommand extends Command
 {
+    use ReadsTypedInput;
+
     /**
      * The name and signature of the console command.
      *
@@ -40,14 +43,14 @@ class ApiKeyCreateCommand extends Command
      */
     public function handle(ApiKeyServiceInterface $apiKeyService): int
     {
-        $userId = $this->argument('userId');
-        $name = $this->argument('name');
-        $scopes = $this->option('scopes');
-        $expiresDays = $this->option('expires-days');
-        $environment = $this->option('environment') ?: 'live';
+        $userId = $this->stringArgument('userId') ?? '';
+        $name = $this->stringArgument('name') ?? '';
+        $scopes = $this->stringOption('scopes');
+        $expiresDays = $this->stringOption('expires-days');
+        $environment = $this->stringOption('environment') ?: 'live';
 
         // Validate user exists
-        $user = User::find($userId);
+        $user = User::query()->find($userId);
         if (! $user) {
             $this->error("User with ID '{$userId}' not found.");
 
@@ -57,9 +60,8 @@ class ApiKeyCreateCommand extends Command
         // Parse scopes
         $scopeArray = [];
         if ($scopes) {
-            $scopeArray = explode(',', $scopes);
-            $scopeArray = array_map('trim', $scopeArray);
-            $scopeArray = array_filter($scopeArray); // Remove empty values
+            $scopeArray = array_map('trim', explode(',', $scopes));
+            $scopeArray = array_values(array_filter($scopeArray)); // Remove empty values
         }
 
         // Validate environment
@@ -82,7 +84,7 @@ class ApiKeyCreateCommand extends Command
             $context = app(TenantContext::class);
 
             if ($context->enabled()) {
-                $identifier = (string) $this->option('tenant');
+                $identifier = $this->stringOption('tenant') ?? '';
                 $tenant = $identifier === '' ? null : (ctype_digit($identifier)
                     ? Tenant::query()->find((int) $identifier)
                     : Tenant::query()->bySlug($identifier)->first());

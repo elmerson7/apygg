@@ -103,7 +103,7 @@ class WarmCacheCommand extends Command
             // Pre-cargar todos los roles usando el servicio (respeta su lógica de cache)
             $roles = Role::all();
             foreach ($roles as $role) {
-                $roleService->find($role->id);
+                $roleService->find((string) $role->getKey());
                 $count++;
             }
 
@@ -121,7 +121,7 @@ class WarmCacheCommand extends Command
             // Pre-cargar todos los permisos usando el servicio
             $permissions = Permission::all();
             foreach ($permissions as $permission) {
-                $permissionService->find($permission->id);
+                $permissionService->find((string) $permission->getKey());
                 $count++;
             }
 

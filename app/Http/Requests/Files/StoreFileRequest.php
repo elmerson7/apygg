@@ -86,14 +86,14 @@ class StoreFileRequest extends BaseFormRequest
     {
         // Si la categoría tiene tipos específicos, usarlos
         if ($category !== 'default' && isset(config('files.allowed_mimes')[$category])) {
-            return config("files.allowed_mimes.{$category}");
+            return array_values(array_filter((array) config("files.allowed_mimes.{$category}"), is_string(...)));
         }
 
         // Si no, determinar por tipo de archivo común
         // Por defecto, permitir imágenes y documentos comunes
-        return array_merge(
-            config('files.allowed_mimes.image', []),
-            config('files.allowed_mimes.document', [])
-        );
+        return array_values(array_filter(array_merge(
+            (array) config('files.allowed_mimes.image', []),
+            (array) config('files.allowed_mimes.document', [])
+        ), is_string(...)));
     }
 }

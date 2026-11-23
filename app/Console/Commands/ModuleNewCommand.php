@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\ReadsTypedInput;
 use App\Support\Modules\ModuleScaffolder;
 use Illuminate\Console\Command;
 use RuntimeException;
@@ -11,6 +12,8 @@ use RuntimeException;
  */
 class ModuleNewCommand extends Command
 {
+    use ReadsTypedInput;
+
     protected $signature = 'module:new {name : Nombre en kebab-case (p. ej. mi-modulo)}
         {--dry-run : Mostrar los archivos que crearía/editaría}
         {--path= : Raíz del proyecto (por defecto, la actual)}';
@@ -19,10 +22,10 @@ class ModuleNewCommand extends Command
 
     public function handle(): int
     {
-        $scaffolder = new ModuleScaffolder(rtrim((string) ($this->option('path') ?: base_path()), '/'));
+        $scaffolder = new ModuleScaffolder(rtrim(($this->stringOption('path') ?: base_path()), '/'));
 
         try {
-            $files = $scaffolder->create((string) $this->argument('name'), (bool) $this->option('dry-run'));
+            $files = $scaffolder->create(($this->stringArgument('name') ?? ''), (bool) $this->option('dry-run'));
         } catch (RuntimeException $e) {
             $this->error($e->getMessage());
 

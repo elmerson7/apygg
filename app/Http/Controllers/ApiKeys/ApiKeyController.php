@@ -107,7 +107,7 @@ class ApiKeyController extends Controller
      */
     public function whoami(Request $request): JsonResponse
     {
-        $apiKey = ApiKey::findOrFail($request->attributes->get('api_key_id'));
+        $apiKey = ApiKey::query()->findOrFail((int) $request->attributes->get('api_key_id'));
 
         return $this->sendSuccess([
             'api_key' => ['id' => $apiKey->id, 'name' => $apiKey->name, 'scopes' => $apiKey->scopes ?? []],

@@ -70,7 +70,7 @@ class DocsController extends Controller
 
         $conversation = $request->filled('conversation_id')
             ? DocConversation::where('user_id', $request->user()->id)
-                ->findOrFail($request->validated('conversation_id'))
+                ->findOrFail((int) $request->validated('conversation_id'))
             : DocConversation::create([
                 'user_id' => $request->user()->id,
                 'scope' => $scope,

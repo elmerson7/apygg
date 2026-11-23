@@ -214,7 +214,7 @@ class SecurityService implements SecurityServiceInterface
             '/on\w+\s*=/i',
         ];
 
-        $dataToCheck = json_encode($context);
+        $dataToCheck = (string) json_encode($context);
 
         foreach ($suspiciousPatterns as $pattern) {
             if (preg_match($pattern, $dataToCheck)) {
@@ -238,7 +238,7 @@ class SecurityService implements SecurityServiceInterface
     /**
      * Calcular score de riesgo
      *
-     * @param  array<string, mixed>  $reasons
+     * @param  list<string>  $reasons
      */
     protected function calculateRiskScore(array $reasons): int
     {

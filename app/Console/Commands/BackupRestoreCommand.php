@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\ReadsTypedInput;
 use App\Contracts\BackupServiceInterface;
 use App\Services\LogService;
 use Carbon\Carbon;
@@ -15,6 +16,8 @@ use Illuminate\Support\Facades\Storage;
  */
 class BackupRestoreCommand extends Command
 {
+    use ReadsTypedInput;
+
     /**
      * The name and signature of the console command.
      *
@@ -36,7 +39,7 @@ class BackupRestoreCommand extends Command
      */
     public function handle(BackupServiceInterface $backups): int
     {
-        $backupInput = $this->argument('backup');
+        $backupInput = $this->stringArgument('backup') ?? '';
         $force = $this->option('force');
 
         // Buscar el backup
@@ -162,7 +165,7 @@ class BackupRestoreCommand extends Command
             $createdAt = Carbon::createFromTimestamp($lastModified);
         } else {
             $size = filesize($backupPath);
-            $createdAt = Carbon::createFromTimestamp(filemtime($backupPath));
+            $createdAt = Carbon::createFromTimestamp((int) filemtime($backupPath));
         }
 
         return [

@@ -91,6 +91,8 @@ trait SoftDeletesWithUser
      */
     public function wasDeletedByCurrentUser(): bool
     {
-        return Actor::id() !== null && $this->wasDeletedBy(Actor::id());
+        $actorId = Actor::id();
+
+        return $actorId !== null && $this->wasDeletedBy((string) $actorId);
     }
 }

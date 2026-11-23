@@ -111,7 +111,7 @@ class LlmGateway
         }
 
         return str_contains($this->useCase, '.')
-            ? strstr($this->useCase, '.', true)
+            ? explode('.', $this->useCase, 2)[0]
             : $this->useCase;
     }
 

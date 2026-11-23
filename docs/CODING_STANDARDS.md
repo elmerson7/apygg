@@ -377,9 +377,9 @@ Model::preventLazyLoading(app()->isLocal());
 Así una relación no cargada falla de forma visible en desarrollo en lugar de
 degradar el rendimiento en producción de forma silenciosa.
 
-## Análisis estático (PHPStan nivel 6)
+## Análisis estático (PHPStan nivel 7)
 
-`make check` ejecuta Pint y PHPStan (Larastan) a **nivel 6** sobre `app/`,
+`make check` ejecuta Pint y PHPStan (Larastan) a **nivel 7** sobre `app/`,
 `database/factories` y `database/seeders`. Larastan deduce las columnas de los
 modelos leyendo las migraciones (no necesita BD), así que `$user->email` ya está
 tipado sin `@property`. Para el resto:
@@ -404,6 +404,17 @@ tipado sin `@property`. Para el resto:
   `/** @use HasFactory<XFactory> */` (en modelos sin factory, `Factory<static>`).
 - **Resources**: `@mixin \App\Models\X` en la clase para tipar `$this->columna`.
   `BaseResource` ya declara `id`, `created_at`, `updated_at`, `deleted_at`.
+- **Comandos de consola**: `option()`/`argument()` devuelven `array|string|bool|null`;
+  no castees a ciegas `(string) $this->option('x')`. Usa el trait
+  `App\Console\Concerns\ReadsTypedInput` (`stringOption`, `stringArgument`,
+  `listOption`) o comprueba el tipo.
+- **Filas de `DB::table()`**: son `\stdClass`, no `object` (`@param \stdClass $row`).
+- **Resultados que pueden ser `false`** (`json_encode`, `fopen`, `glob`, `strstr`,
+  `preg_split`…): comprueba y actúa, no los pases a ciegas a otra función.
+- **bcmath**: los argumentos son `numeric-string`; tras validar la cadena,
+  `assert(is_numeric($x))` informa al análisis (ver `Money`).
+- **`list<>`**: `Collection::all()`/`array_map` dan `array<int, T>`; envuélvelo en
+  `array_values()` si la firma promete `list<T>`.
 - **Callbacks de cache/transacción**: `Closure(): mixed`, no `callable` (Laravel
   los pasa a firmas con `Closure`).
 - **`@throws`**: importa la excepción (`use Illuminate\Database\Eloquent\ModelNotFoundException;`);
@@ -420,7 +431,7 @@ tipado sin `@property`. Para el resto:
   `make check`, así que no se acumulan ignores muertos.
 - Hoy solo hay uno: los traits `HasUuid` y `BelongsToTenant` (infraestructura
   opcional que ningún módulo propio usa todavía; PHPStan los marca como "usados cero veces").
-- Subir de nivel: `vendor/bin/phpstan analyse --level=7` mide cuántos errores
+- Subir de nivel: `vendor/bin/phpstan analyse --level=8` mide cuántos errores
   habría antes de cambiar `phpstan.neon`.
 
 ## Errores comunes a evitar

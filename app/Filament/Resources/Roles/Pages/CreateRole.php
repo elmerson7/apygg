@@ -21,7 +21,7 @@ class CreateRole extends CreateRecord
         $role = Failure::guard(function () use ($data): Role {
             Gate::authorize('create', Role::class);
 
-            $permissionIds = array_map('intval', $data['permission_ids'] ?? []);
+            $permissionIds = array_values(array_map('intval', $data['permission_ids'] ?? []));
             unset($data['permission_ids']);
 
             $service = app(RoleServiceInterface::class);

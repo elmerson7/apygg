@@ -48,7 +48,7 @@ class WelcomeNotification extends Notification implements HasMailTemplate, Shoul
 
         return (new MailMessage)
             ->subject(__('messages.mail.welcome.subject', ['app' => $app]))
-            ->greeting(__('messages.mail.welcome.greeting', ['name' => $notifiable->name]))
+            ->greeting(__('messages.mail.welcome.greeting', ['name' => $notifiable->name ?? '']))
             ->line(__('messages.mail.welcome.intro', ['app' => $app]))
             ->line(__('messages.mail.welcome.body'))
             ->line(__('messages.mail.welcome.help'))
@@ -64,7 +64,7 @@ class WelcomeNotification extends Notification implements HasMailTemplate, Shoul
     {
         return [
             'type' => 'welcome',
-            'user_id' => $notifiable->id,
+            'user_id' => $notifiable->id ?? null,
         ];
     }
 }

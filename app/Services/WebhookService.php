@@ -80,7 +80,7 @@ class WebhookService implements WebhookServiceInterface
                 $this->preparePayload($delivery->payload, $webhook, $delivery),
                 JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR
             );
-            $timestamp = now()->timestamp;
+            $timestamp = now()->getTimestamp();
 
             $request = Http::timeout(min(
                 (int) ($webhook->timeout ?? config('webhooks.defaults.timeout', 30)),
@@ -197,7 +197,7 @@ class WebhookService implements WebhookServiceInterface
     {
         $tolerance = $tolerance ?? (int) config('webhooks.security.timestamp_tolerance', 300);
 
-        if ($secret === '' || $signatureHeader === '' || abs(now()->timestamp - $timestamp) > $tolerance) {
+        if ($secret === '' || $signatureHeader === '' || abs(now()->getTimestamp() - $timestamp) > $tolerance) {
             return false;
         }
 

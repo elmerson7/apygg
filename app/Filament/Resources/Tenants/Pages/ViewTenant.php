@@ -28,6 +28,14 @@ class ViewTenant extends ViewRecord
 {
     protected static string $resource = TenantResource::class;
 
+    /** El registro de la ficha, ya tipado como empresa (Filament lo declara `Model|int|string`). */
+    private function tenant(): Tenant
+    {
+        $record = $this->record;
+
+        return $record instanceof Tenant ? $record : throw new \LogicException('La ficha no tiene una empresa cargada.');
+    }
+
     /** @var Tenant */
     public Model|int|string|null $record;
 
@@ -60,19 +68,19 @@ class ViewTenant extends ViewRecord
             ->label($label)->color($color)
             ->modalDescription($description)
             ->schema([Textarea::make('reason')->label('Motivo')->required()->maxLength((int) config('audit.reason_max_length', 500))])
-            ->visible(fn (): bool => $this->record->status === $visibleWhen && Gate::allows('update', $this->record))
+            ->visible(fn (): bool => $this->tenant()->status === $visibleWhen && Gate::allows('update', $this->tenant()))
             ->action(function (array $data) use ($name): void {
-                Gate::authorize('update', $this->record);
+                Gate::authorize('update', $this->tenant());
 
                 $service = app(TenantAdminServiceInterface::class);
                 $actor = Auth::guard('web')->user();
 
                 $tenant = Failure::guard(fn (): Tenant => $name === 'suspend'
-                    ? $service->suspend($this->record, $data['reason'], $actor)
-                    : $service->reactivate($this->record, $data['reason'], $actor));
+                    ? $service->suspend($this->tenant(), $data['reason'], $actor)
+                    : $service->reactivate($this->tenant(), $data['reason'], $actor));
 
                 if ($tenant instanceof Tenant) {
-                    $this->record->refresh();
+                    $this->tenant()->refresh();
                     Notification::make()->success()->title($name === 'suspend' ? 'Empresa suspendida' : 'Empresa reactivada')->send();
                 }
             });
@@ -91,7 +99,7 @@ class ViewTenant extends ViewRecord
                     ->hidden(fn ($get): bool => (bool) $get('unlimited')),
                 Textarea::make('reason')->label('Motivo')->required()->maxLength((int) config('audit.reason_max_length', 500)),
             ])
-            ->visible(fn (): bool => Gate::forUser(Auth::guard('web')->user())->allows('update', $this->record) && (bool) Auth::guard('web')->user()?->can('plan-limits.manage'))
+            ->visible(fn (): bool => Gate::forUser(Auth::guard('web')->user())->allows('update', $this->tenant()) && (bool) Auth::guard('web')->user()?->can('plan-limits.manage'))
             ->action(function (array $data): void {
                 abort_unless(Auth::guard('web')->user()?->can('plan-limits.manage'), 403);
 
@@ -100,8 +108,8 @@ class ViewTenant extends ViewRecord
                     $reason = $audit->requireReason('tenant.limit-override', $data['reason']);
                     $value = ! empty($data['unlimited']) ? null : (int) $data['value'];
 
-                    app(PlanLimitsInterface::class)->setOverride((int) $this->record->getKey(), $data['key'], $value);
-                    $audit->recordAction('tenant.limit-override', $this->record, $reason, ['key' => $data['key'], 'value' => $value], (int) $this->record->getKey());
+                    app(PlanLimitsInterface::class)->setOverride((int) $this->tenant()->getKey(), $data['key'], $value);
+                    $audit->recordAction('tenant.limit-override', $this->tenant(), $reason, ['key' => $data['key'], 'value' => $value], (int) $this->tenant()->getKey());
 
                     return true;
                 });
@@ -120,13 +128,13 @@ class ViewTenant extends ViewRecord
                 Select::make('plan')->label('Plan')->placeholder('Por defecto')
                     ->options(collect(array_keys((array) config('plans.plans', [])))->mapWithKeys(fn (string $k): array => [$k => $k])->all()),
             ])
-            ->fillForm(fn (): array => ['plan' => $this->record->plan])
-            ->visible(fn (): bool => Gate::forUser(Auth::guard('web')->user())->allows('update', $this->record) && (bool) Auth::guard('web')->user()?->can('plan-limits.manage'))
+            ->fillForm(fn (): array => ['plan' => $this->tenant()->plan])
+            ->visible(fn (): bool => Gate::forUser(Auth::guard('web')->user())->allows('update', $this->tenant()) && (bool) Auth::guard('web')->user()?->can('plan-limits.manage'))
             ->action(function (array $data): void {
                 abort_unless(Auth::guard('web')->user()?->can('plan-limits.manage'), 403);
 
-                app(PlanLimitsInterface::class)->setPlan((int) $this->record->getKey(), $data['plan'] ?: null);
-                $this->record->refresh();
+                app(PlanLimitsInterface::class)->setPlan((int) $this->tenant()->getKey(), $data['plan'] ?: null);
+                $this->tenant()->refresh();
                 Notification::make()->success()->title('Plan actualizado')->send();
             });
     }

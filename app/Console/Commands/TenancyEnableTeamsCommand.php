@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\ReadsTypedInput;
 use App\Models\Tenant;
 use App\Support\Tenancy\PermissionTeams;
 use App\Support\Tenancy\PermissionTeamsSchema;
@@ -14,6 +15,8 @@ use Illuminate\Console\Command;
  */
 class TenancyEnableTeamsCommand extends Command
 {
+    use ReadsTypedInput;
+
     protected $signature = 'tenancy:enable-teams
                             {--assign-to= : Tenant (id o slug) al que atribuir las asignaciones de roles existentes; los admin además siguen siendo admin de la plataforma. Sin él, quedan en la plataforma}
                             {--resync-roles : Con PERMISSION_TEAMS=true ya puesto: rehace los roles `tenant-*` por tenant desde tenant_user.role}
@@ -55,7 +58,7 @@ class TenancyEnableTeamsCommand extends Command
         $assignTo = null;
 
         if ($this->option('assign-to') !== null) {
-            $identifier = (string) $this->option('assign-to');
+            $identifier = $this->stringOption('assign-to') ?? '';
             $tenant = ctype_digit($identifier) ? Tenant::query()->find((int) $identifier) : Tenant::query()->bySlug($identifier)->first();
 
             if (! $tenant instanceof Tenant) {

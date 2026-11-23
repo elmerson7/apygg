@@ -366,9 +366,9 @@ class RoleService implements RoleServiceInterface
     /**
      * Limpiar cache de roles
      *
-     * @param  string|null  $roleId  ID específico del rol o null para limpiar todo
+     * @param  int|string|null  $roleId  ID específico del rol o null para limpiar todo
      */
-    protected function clearCache(?string $roleId = null): void
+    protected function clearCache(int|string|null $roleId = null): void
     {
         if ($roleId) {
             CacheService::forget(self::CACHE_PREFIX.$roleId);

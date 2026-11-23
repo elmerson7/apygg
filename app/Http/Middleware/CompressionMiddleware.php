@@ -80,7 +80,7 @@ class CompressionMiddleware
 
         // Verificar tamaño mínimo
         $content = $response->getContent();
-        if (strlen($content) < $this->minSize) {
+        if ($content === false || strlen($content) < $this->minSize) {
             return $response;
         }
 

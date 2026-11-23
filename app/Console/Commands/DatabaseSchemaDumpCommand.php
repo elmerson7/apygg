@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\ReadsTypedInput;
 use Illuminate\Console\Command;
 
 /**
@@ -20,6 +21,8 @@ use Illuminate\Console\Command;
  */
 class DatabaseSchemaDumpCommand extends Command
 {
+    use ReadsTypedInput;
+
     /**
      * The name and signature of the console command.
      *
@@ -55,7 +58,7 @@ class DatabaseSchemaDumpCommand extends Command
         $host = $connection['host'] ?? '127.0.0.1';
         $port = $connection['port'] ?? '5432';
 
-        $outputPath = $this->option('output') ?: database_path('schema.sql');
+        $outputPath = $this->stringOption('output') ?: database_path('schema.sql');
         $outputDir = dirname($outputPath);
 
         if (! is_dir($outputDir) && ! mkdir($outputDir, 0755, true) && ! is_dir($outputDir)) {

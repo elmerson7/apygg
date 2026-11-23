@@ -154,7 +154,7 @@ tablas. Por eso:
 make composer cmd=install      # vendor/ según composer.lock
 make build                     # solo si cambiaron docker/ o docker-compose.yml; luego make up
 make migrate                   # migraciones nuevas
-make check                     # pint + phpstan (nivel 6)
+make check                     # pint + phpstan (nivel 7)
 make test                      # suite por defecto (Unit, Feature, Arch)
 make test-contract             # contrato público de la API (usa docs/openapi.json)
 make test-concurrency          # carreras reales (si usas billing, secuencias, cuotas...)

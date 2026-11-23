@@ -363,7 +363,7 @@ class ImportService implements ImportServiceInterface
     }
 
     /**
-     * @param  array<string, list<string>>  $messages
+     * @param  array<string, array<string>>  $messages
      */
     private function flatten(array $messages): string
     {
@@ -385,6 +385,9 @@ class ImportService implements ImportServiceInterface
 
         $tmp = tempnam(sys_get_temp_dir(), 'imp_');
         $out = fopen($tmp, 'wb');
+        if ($out === false) {
+            throw ExportImportException::fileMissing();
+        }
         stream_copy_to_stream($stream, $out);
         fclose($out);
         fclose($stream);

@@ -52,7 +52,7 @@ class CacheMetricsCommand extends Command
                 'metrics' => $metrics,
                 'recommendations' => $recommendations,
                 'alert' => $hitRate < $threshold,
-            ], JSON_PRETTY_PRINT));
+            ], JSON_PRETTY_PRINT) ?: '{}');
 
             return Command::SUCCESS;
         }
