@@ -17,6 +17,10 @@ impacto en un proyecto existente están en `CHANGELOG.md`.
 
 ## De 1.0.0 a la versión actual (Unreleased)
 
+### `upsert` en modelos con tenant exige `tenant_id` en `uniqueBy`
+
+- Con multiempresa activo, `Modelo::query()->upsert($filas, $uniqueBy, ...)` sobre un modelo con `BelongsToTenant` lanza `CrossTenantViolation` si `$uniqueBy` no incluye `tenant_id`, y con `$update = null` ya no actualiza `tenant_id`. Si tenías un upsert por `id`/`uuid`, cámbialo a una clave única que empiece por `tenant_id` (crea el índice si falta).
+
 ### `Idempotency-Key` obligatoria en las rutas de cobro y más POST con `idempotent` opcional
 
 - **Exigen la cabecera (400 `idempotency_key_required` sin ella)**: `POST /tenant/billing/subscription`,

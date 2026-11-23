@@ -109,6 +109,37 @@ test('un upsert no puede escribir en otro tenant ni reasignar tenant_id', functi
     expect(DB::table('tenant_notes')->whereIn('id', [998, 999])->count())->toBe(0);
 });
 
+test('un upsert sin tenant_id en uniqueBy se rechaza aunque no traiga columnas de tenant', function () {
+    $now = now();
+    $ajena = $this->ctx->run($this->b, fn () => TenantNote::query()->create(['title' => 'de B']));
+
+    expect(fn () => $this->ctx->run($this->a, fn () => TenantNote::query()->upsert(
+        [['id' => $ajena->id, 'title' => 'pisada', 'created_at' => $now, 'updated_at' => $now]],
+        ['id'],
+    )))->toThrow(CrossTenantViolation::class);
+
+    expect(DB::table('tenant_notes')->where('id', $ajena->id)->value('title'))->toBe('de B');
+});
+
+test('un upsert con tenant_id en uniqueBy y sin columnas a actualizar no toca tenant_id ni filas de otro tenant', function () {
+    DB::statement('create unique index tenant_notes_tenant_title on tenant_notes (tenant_id, title)');
+    $now = now();
+    $this->ctx->run($this->b, fn () => TenantNote::query()->create(['title' => 'compartido']));
+
+    $this->ctx->run($this->a, fn () => TenantNote::query()->upsert(
+        [['title' => 'compartido', 'created_at' => $now, 'updated_at' => $now]],
+        ['tenant_id', 'title'],
+    ));
+    $this->ctx->run($this->a, fn () => TenantNote::query()->upsert(
+        [['title' => 'compartido', 'created_at' => $now, 'updated_at' => $now->copy()->addMinute()]],
+        ['tenant_id', 'title'],
+    ));
+
+    $filas = DB::table('tenant_notes')->where('title', 'compartido')->pluck('tenant_id')->sort()->values()->all();
+
+    expect($filas)->toBe(collect([$this->a->id, $this->b->id])->sort()->values()->all());
+});
+
 test('un insert masivo sin tenant en el contexto falla cerrado', function () {
     $now = now();
 

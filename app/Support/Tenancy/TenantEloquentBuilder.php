@@ -51,17 +51,39 @@ class TenantEloquentBuilder extends Builder
     }
 
     /**
+     * Con multiempresa activo, `uniqueBy` debe incluir `tenant_id`: si no, el `ON CONFLICT` de una columna única
+     * global (id, uuid) podría caer sobre la fila de otro tenant y sobrescribirla. `tenant_id` nunca se actualiza:
+     * si `$update` es null se usan las columnas de la primera fila sin las de `uniqueBy`.
+     *
      * @param  array<array-key, mixed>  $values
      * @param  non-empty-array<int, non-empty-string>|non-empty-string  $uniqueBy
      * @param  array<array-key, mixed>|null  $update
      */
     public function upsert(array $values, $uniqueBy, $update = null): int
     {
-        if (app(TenantContext::class)->enabled() && is_array($update) && in_array('tenant_id', $update, true)) {
-            throw CrossTenantViolation::tenantChanged($this->getModel()::class);
+        if (! app(TenantContext::class)->enabled() || $values === []) {
+            return (int) $this->toBase()->upsert($values, $uniqueBy, $update);
         }
 
-        return (int) $this->toBase()->upsert($this->stampRows($values, 'upsert'), $uniqueBy, $update);
+        $model = $this->getModel()::class;
+        $unique = (array) $uniqueBy;
+
+        if (! in_array('tenant_id', $unique, true)) {
+            throw CrossTenantViolation::upsertWithoutTenantKey($model);
+        }
+
+        if (is_array($update) && (in_array('tenant_id', $update, true) || array_key_exists('tenant_id', $update))) {
+            throw CrossTenantViolation::tenantChanged($model);
+        }
+
+        $rows = $this->stampRows($values, 'upsert');
+
+        if ($update === null) {
+            $first = array_is_list($rows) && is_array($rows[0] ?? null) ? $rows[0] : $rows;
+            $update = array_values(array_diff(array_keys($first), $unique));
+        }
+
+        return (int) $this->toBase()->upsert($rows, $uniqueBy, $update);
     }
 
     /**

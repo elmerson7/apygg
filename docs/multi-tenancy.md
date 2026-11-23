@@ -98,7 +98,7 @@ Con multi-tenancy activo:
 | Operación | Comportamiento con multiempresa activo |
 |---|---|
 | `Model::query()->update()/delete()` | Filtrado por el scope global; `update()` con `tenant_id` en los valores lanza `CrossTenantViolation` |
-| `insert`, `insertOrIgnore`, `insertGetId`, `upsert` | Rellenan `tenant_id` con el del contexto; una fila con otro tenant lanza `CrossTenantViolation`; sin tenant, `MissingTenantContext`; `upsert` no puede actualizar `tenant_id` |
+| `insert`, `insertOrIgnore`, `insertGetId`, `upsert` | Rellenan `tenant_id` con el del contexto; una fila con otro tenant lanza `CrossTenantViolation`; sin tenant, `MissingTenantContext`; `upsert` exige `tenant_id` en `uniqueBy` (si no, el conflicto por una columna única global podría pisar la fila de otro tenant) y nunca actualiza `tenant_id`, tampoco con `$update` nulo |
 | Dentro de `TenantQuery::withoutTenant()` | Cada fila debe traer su `tenant_id` (o hay un tenant en el contexto); si no, `MissingTenantContext` |
 
 `DB::table()` y `toBase()` NO pasan por el builder ni por el scope. Regla de `ArchTest`: `DB::table('<tabla con tenant_id>')`
