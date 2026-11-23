@@ -77,6 +77,7 @@ return [
         'app/Http/Middleware/MarkDeprecated.php',
         'tests/Feature/Hallazgos/SinLiteralDelBoilerplateTest.php',
         'tests/Feature/Console/BackupCreateFilesTest.php',
+        'tests/Feature/Console/BackupRestoreLocalTest.php',
         'app/Http/Requests/BaseFormRequest.php',
         'app/Http/Resources/BaseResource.php',
         'app/Integrations/Concerns',
