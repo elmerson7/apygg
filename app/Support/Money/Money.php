@@ -60,7 +60,9 @@ final readonly class Money implements JsonSerializable
 
         $digits = $m[2].str_pad($fraction, $exponent, '0');
 
-        $minor = ($negative ? '-' : '').ltrim($digits, '0') ?: '0';
+        $abs = ltrim($digits, '0') ?: '0';
+        // "-0.00" es cero, sin signo ("-" solo no es numérico).
+        $minor = ($negative && $abs !== '0' ? '-' : '').$abs;
         assert(is_numeric($minor));
 
         return new self(self::toInt($minor), $currency);

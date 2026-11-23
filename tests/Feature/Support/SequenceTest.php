@@ -135,3 +135,81 @@ test('la restricción única impide dos filas globales con el mismo nombre', fun
         'tenant_id' => null, 'name' => 'glob', 'period' => '', 'next_value' => 1, 'created_at' => now(), 'updated_at' => now(),
     ]))->toThrow(UniqueConstraintViolationException::class);
 });
+
+test('al crear la secuencia guarda definición, fechas y avanza updated_at en cada reserva', function () {
+    $this->travelTo(now()->setDate(2026, 3, 1)->setTime(10, 0));
+    seq()->next('fechas', null, ['prefix' => 'P-', 'padding' => 4, 'start' => 5, 'max' => 9]);
+
+    $fila = DB::table('sequences')->where('name', 'fechas')->first();
+    expect($fila->prefix)->toBe('P-')
+        ->and($fila->padding)->toBe(4)
+        ->and($fila->max_value)->toBe(9)
+        ->and($fila->next_value)->toBe(6)
+        ->and($fila->tenant_id)->toBeNull()
+        ->and($fila->period)->toBe('')
+        ->and($fila->created_at)->not->toBeNull()
+        ->and($fila->updated_at)->not->toBeNull();
+
+    $creada = $fila->created_at;
+    $this->travel(5)->minutes();
+    seq()->next('fechas');
+
+    $despues = DB::table('sequences')->where('name', 'fechas')->first();
+    expect($despues->created_at)->toBe($creada)
+        ->and($despues->updated_at)->not->toBe($fila->updated_at);
+});
+
+test('normaliza la definición: relleno entre 0 y 20, inicio mínimo 1 y prefijo vacío como nulo', function () {
+    config(['sequences.defaults' => []]);
+
+    seq()->next('d-vacia');
+    seq()->next('d-alto', null, ['padding' => 25, 'start' => 0]);
+    seq()->next('d-bajo', null, ['padding' => -4, 'start' => -7, 'prefix' => '']);
+    seq()->next('d-20', null, ['padding' => 20]);
+    seq()->next('d-1', null, ['padding' => 1, 'start' => 1]);
+
+    $f = fn (string $n) => DB::table('sequences')->where('name', $n)->first();
+
+    expect($f('d-vacia')->padding)->toBe(0)
+        ->and($f('d-vacia')->next_value)->toBe(2)
+        ->and($f('d-vacia')->prefix)->toBeNull()
+        ->and($f('d-vacia')->max_value)->toBeNull()
+        ->and($f('d-alto')->padding)->toBe(20)
+        ->and($f('d-alto')->next_value)->toBe(2)
+        ->and($f('d-bajo')->padding)->toBe(0)
+        ->and($f('d-bajo')->next_value)->toBe(2)
+        ->and($f('d-bajo')->prefix)->toBeNull()
+        ->and($f('d-20')->padding)->toBe(20)
+        ->and($f('d-1')->padding)->toBe(1);
+});
+
+test('el relleno máximo es de 20 dígitos y el devuelto respeta la fila', function () {
+    config(['sequences.defaults' => []]);
+
+    expect(seq()->next('r20', null, ['padding' => 25, 'prefix' => 'N']))->toBe('N'.str_repeat('0', 19).'1')
+        ->and(seq()->next('r1', null, ['padding' => 1]))->toBe('1')
+        ->and(seq()->next('r0'))->toBe(1);
+});
+
+test('un prefijo vacío en la definición devuelve solo el número rellenado', function () {
+    expect(seq()->next('pv', null, ['prefix' => '', 'padding' => 3]))->toBe('001');
+});
+
+test('un tenant explícito con multiempresa apagado numera aparte de la secuencia global', function () {
+    $t = $this->makeTenant('seq-off');
+
+    expect(seq()->next('glob2'))->toBe(1)
+        ->and(seq()->next('glob2', $t->id))->toBe(1)
+        ->and(seq()->next('glob2', $t->id))->toBe(2)
+        ->and(seq()->next('glob2'))->toBe(2);
+    expect(DB::table('sequences')->where('name', 'glob2')->where('tenant_id', $t->id)->value('next_value'))->toBe(3)
+        ->and(DB::table('sequences')->where('name', 'glob2')->whereNull('tenant_id')->value('next_value'))->toBe(3);
+});
+
+test('peek con un tenant explícito lee la secuencia de ese tenant y usa el prefijo de la fila', function () {
+    $t = $this->makeTenant('seq-peek');
+    seq()->next('pk', $t->id, ['prefix' => 'A', 'padding' => 2]);
+
+    expect(seq()->peek('pk', $t->id))->toBe('A02')
+        ->and(seq()->peek('pk'))->toBe(1);
+});

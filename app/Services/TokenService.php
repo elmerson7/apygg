@@ -158,11 +158,7 @@ class TokenService implements TokenServiceInterface
     public function validateToken(?string $token = null): bool
     {
         try {
-            if ($token) {
-                $this->jwtAuth->setToken($token);
-            }
-
-            $this->jwtAuth->parseToken()->authenticate();
+            $this->tokenFor($token)->authenticate();
 
             return true;
         } catch (TokenExpiredException $e) {
@@ -201,11 +197,7 @@ class TokenService implements TokenServiceInterface
     public function getUserFromToken(?string $token = null): ?User
     {
         try {
-            if ($token) {
-                $this->jwtAuth->setToken($token);
-            }
-
-            $user = $this->jwtAuth->parseToken()->authenticate();
+            $user = $this->tokenFor($token)->authenticate();
 
             return $user instanceof User ? $user : null;
         } catch (JWTException $e) {
@@ -224,11 +216,7 @@ class TokenService implements TokenServiceInterface
     public function getTokenClaims(?string $token = null): array
     {
         try {
-            if ($token) {
-                $this->jwtAuth->setToken($token);
-            }
-
-            return $this->jwtAuth->parseToken()->getPayload()->toArray();
+            return $this->tokenFor($token)->getPayload()->toArray();
         } catch (JWTException $e) {
             LogService::error('Error al obtener claims del token', [
                 'error' => $e->getMessage(),
@@ -264,7 +252,8 @@ class TokenService implements TokenServiceInterface
             $userId = null;
 
             try {
-                $claims = $this->jwtAuth->parseToken()->getPayload()->toArray();
+                // El token ya está fijado arriba (argumento o cabecera): no volver a leer el request.
+                $claims = $this->jwtAuth->getPayload()->toArray();
                 $userId = $claims['sub'] ?? null;
             } catch (TokenBlacklistedException $e) {
                 // Si el token ya está blacklisted, consideramos el logout exitoso
@@ -506,5 +495,14 @@ class TokenService implements TokenServiceInterface
     public function getRefreshTokenExpiration(): int
     {
         return config('jwt.refresh_ttl', 20160) * 60; // Convertir minutos a segundos
+    }
+
+    /**
+     * El token explícito manda; sin él se lee del request. `parseToken()` siempre relee la cabecera
+     * `Authorization` y pisaría el token pasado como argumento.
+     */
+    private function tokenFor(?string $token): JWTAuthService
+    {
+        return $token ? $this->jwtAuth->setToken($token) : $this->jwtAuth->parseToken();
     }
 }
