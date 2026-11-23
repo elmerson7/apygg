@@ -6,9 +6,34 @@ use App\Models\UserSession;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
+
+/**
+ * Captura lo que se registra por canal: lista de [canal, nivel, mensaje, contexto].
+ *
+ * @return ArrayObject<int, array{0: string, 1: string, 2: string, 3: array<string, mixed>}>
+ */
+function capturarLogs(): ArrayObject
+{
+    $registro = new ArrayObject;
+    Log::shouldReceive('channel')->andReturnUsing(function (string $canal) use ($registro) {
+        return new class($canal, $registro)
+        {
+            public function __construct(private string $canal, private ArrayObject $registro) {}
+
+            /** @param array{0: string, 1?: array<string, mixed>} $args */
+            public function __call(string $nivel, array $args): void
+            {
+                $this->registro[] = [$this->canal, $nivel, (string) $args[0], (array) ($args[1] ?? [])];
+            }
+        };
+    });
+
+    return $registro;
+}
 
 function sesiones(): SessionServiceInterface
 {
@@ -318,4 +343,108 @@ test('rotate rechaza sesión inexistente, de otro usuario o ya revocada sin toca
     expect(sesiones()->rotate($s->public_id, $user->id, $j0, 'x'))->toBe(SessionServiceInterface::REJECTED);
     $s->refresh();
     expect($s->revoked_reason)->toBe('logout')->and($s->refresh_jti)->toBe($j0);
+});
+
+test('start guarda los primeros 255 caracteres exactos del user agent', function () {
+    $ua = 'Z'.str_repeat('b', 298).'FIN';
+
+    $s = sesiones()->start(User::factory()->create(), null, $ua);
+
+    expect($s->user_agent)->toBe(substr($ua, 0, 255))->and($s->user_agent)->toStartWith('Zb');
+});
+
+test('listFor devuelve last_used_at nulo si la sesión nunca se usó', function () {
+    $user = User::factory()->create();
+    $s = sesiones()->start($user, null, null);
+    UserSession::query()->where('id', $s->id)->update(['last_used_at' => null]);
+
+    $fila = sesiones()->listFor($user, null)[0];
+
+    expect($fila['last_used_at'])->toBeNull()->and($fila['created_at'])->toBeString();
+});
+
+test('revoke registra en el canal security quién, qué sesión y por qué', function () {
+    $user = User::factory()->create();
+    $s = sesiones()->start($user, null, null);
+    $logs = capturarLogs();
+
+    sesiones()->revoke($user, $s->public_id, 'soporte');
+
+    expect($logs)->toHaveCount(1)
+        ->and($logs[0][0])->toBe('security')
+        ->and($logs[0][1])->toBe('info')
+        ->and($logs[0][2])->toBe('Sesión revocada')
+        ->and($logs[0][3])->toMatchArray(['user_id' => $user->id, 'session' => $s->public_id, 'reason' => 'soporte']);
+});
+
+test('revokeOthers registra cuántas revocó y no registra nada si no había ninguna', function () {
+    $user = User::factory()->create();
+    $actual = sesiones()->start($user, null, null);
+    sesiones()->start($user, null, null);
+    $logs = capturarLogs();
+
+    sesiones()->revokeOthers($user, $actual->public_id, 'cambio');
+
+    expect($logs)->toHaveCount(1)
+        ->and($logs[0][0])->toBe('security')
+        ->and($logs[0][2])->toBe('Sesiones revocadas')
+        ->and($logs[0][3])->toMatchArray(['user_id' => $user->id, 'count' => 1, 'reason' => 'cambio']);
+
+    sesiones()->revokeOthers($user, $actual->public_id);
+    expect($logs)->toHaveCount(1);
+});
+
+test('touch deja la marca de intervalo en caché con la clave de la sesión', function () {
+    config(['auth.sessions.touch_interval' => 60]);
+    $s = sesiones()->start(User::factory()->create(), null, null);
+
+    expect(Cache::has('user_session:touch:'.$s->public_id))->toBeFalse();
+    sesiones()->touch($s->public_id);
+    expect(Cache::has('user_session:touch:'.$s->public_id))->toBeTrue();
+});
+
+test('rotate actualiza last_used_at y updated_at de la sesión', function () {
+    $user = User::factory()->create();
+    $s = sesiones()->start($user, null, null);
+    $j0 = $s->refresh()->refresh_jti;
+    UserSession::query()->where('id', $s->id)->update(['last_used_at' => now()->subDay(), 'updated_at' => now()->subDay()]);
+
+    sesiones()->rotate($s->public_id, $user->id, $j0, 'j1');
+
+    $s->refresh();
+    expect($s->last_used_at->isToday())->toBeTrue()->and($s->updated_at->isToday())->toBeTrue();
+});
+
+test('rotate con gracia de 1 segundo ya tolera la carrera del refresh anterior', function () {
+    config(['auth.sessions.refresh_reuse_grace_seconds' => 1]);
+    $user = User::factory()->create();
+    $s = sesiones()->start($user, null, null);
+    $j0 = $s->refresh()->refresh_jti;
+    sesiones()->rotate($s->public_id, $user->id, $j0, 'j1');
+
+    expect(sesiones()->rotate($s->public_id, $user->id, $j0, 'j2'))->toBe(SessionServiceInterface::SUPERSEDED);
+});
+
+test('rotate registra la carrera tolerada en auth y la reutilización en security', function () {
+    $user = User::factory()->create();
+    $s = sesiones()->start($user, null, null);
+    $j0 = $s->refresh()->refresh_jti;
+    sesiones()->rotate($s->public_id, $user->id, $j0, 'j1');
+    $logs = capturarLogs();
+
+    sesiones()->rotate($s->public_id, $user->id, $j0, 'j2');
+
+    expect($logs)->toHaveCount(1)
+        ->and($logs[0][0])->toBe('auth')
+        ->and($logs[0][1])->toBe('info')
+        ->and($logs[0][3])->toMatchArray(['user_id' => $user->id, 'session' => $s->public_id]);
+
+    config(['auth.sessions.refresh_reuse_grace_seconds' => 0]);
+    $logs->exchangeArray([]);
+    sesiones()->rotate($s->public_id, $user->id, $j0, 'j3');
+
+    expect($logs)->toHaveCount(1)
+        ->and($logs[0][0])->toBe('security')
+        ->and($logs[0][1])->toBe('warning')
+        ->and($logs[0][3])->toMatchArray(['user_id' => $user->id, 'session' => $s->public_id]);
 });
