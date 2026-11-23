@@ -25,6 +25,11 @@ class CrossTenantViolation extends ApiException
         return new self("El tenant de un {$model} existente no se puede cambiar.");
     }
 
+    public static function upsertWithoutTenantKey(string $model): self
+    {
+        return new self("Un upsert de {$model} con multiempresa activo debe incluir tenant_id en uniqueBy.");
+    }
+
     public function errorCode(): ErrorCode
     {
         return ErrorCode::CrossTenant;
