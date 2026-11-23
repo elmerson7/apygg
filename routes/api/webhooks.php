@@ -22,11 +22,11 @@ Route::middleware(['auth:api', 'tenant'])->group(function () {
     Route::delete('/webhooks/{id}', [WebhookController::class, 'destroy'])->name('webhooks.destroy');
 
     // Rotación de secret
-    Route::post('/webhooks/{id}/rotate-secret', [WebhookController::class, 'rotateSecret'])->name('webhooks.rotate-secret');
+    Route::post('/webhooks/{id}/rotate-secret', [WebhookController::class, 'rotateSecret'])->middleware('idempotent')->name('webhooks.rotate-secret');
 
     // Historial de entregas
     Route::get('/webhooks/{id}/deliveries', [WebhookController::class, 'deliveries'])->name('webhooks.deliveries');
 
     // Reenvío manual de entregas fallidas
-    Route::post('/webhooks/{id}/deliveries/{deliveryId}/retry', [WebhookController::class, 'retryDelivery'])->name('webhooks.deliveries.retry');
+    Route::post('/webhooks/{id}/deliveries/{deliveryId}/retry', [WebhookController::class, 'retryDelivery'])->middleware('idempotent')->name('webhooks.deliveries.retry');
 });

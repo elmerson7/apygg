@@ -26,7 +26,7 @@ Route::middleware(['auth:api', 'tenant'])->prefix('files')->group(function () {
 
     // Subir archivo
     Route::post('/', [FileController::class, 'store'])
-        ->name('files.store');
+        ->middleware('idempotent')->name('files.store');
 
     // Uso y límites de almacenamiento del tenant (antes de /{id})
     Route::get('/usage', [FileController::class, 'usage'])

@@ -52,7 +52,7 @@ Route::middleware(['auth:api'])->prefix('auth')->group(function () {
 
 // Reenvío del correo de verificación (límite por usuario y hora en el servicio)
 Route::middleware(['auth:api'])->post('/auth/email/resend', [EmailVerificationController::class, 'resend'])
-    ->name('auth.email.resend');
+    ->middleware('idempotent')->name('auth.email.resend');
 
 // Sesiones (dispositivos con login abierto) y 2FA del usuario en sesión
 Route::middleware(['auth:api'])->prefix('user')->group(function () {

@@ -17,6 +17,16 @@ impacto en un proyecto existente están en `CHANGELOG.md`.
 
 ## De 1.0.0 a la versión actual (Unreleased)
 
+### `Idempotency-Key` obligatoria en las rutas de cobro y más POST con `idempotent` opcional
+
+- **Exigen la cabecera (400 `idempotency_key_required` sin ella)**: `POST /tenant/billing/subscription`,
+  `/tenant/billing/subscription/change`, `/tenant/billing/invoices/{id}/pay`, `/admin/billing/tenants/{tenant}/plan`,
+  `/admin/billing/invoices/{id}/mark-paid` y `/admin/billing/tenants/{tenant}/free-period`. Los clientes (apps, back-office
+  propio, scripts) deben enviar `Idempotency-Key: <uuid>`, el mismo al reintentar el mismo intento. Tus tests que
+  llamen a esas rutas necesitan la cabecera (`AssertsTenantIsolation::isoCall` ya añade una por llamada).
+- Otros ~30 `POST` de creación o efecto externo pasan a aceptar la cabecera de forma **opcional**: sin ella nada cambia.
+  Tabla completa y excepciones en `docs/idempotency.md`; `CoberturaIdempotenciaTest` obliga a clasificar cada POST nuevo.
+
 ### `trace_id` en la auditoría de actividad y límites de `/auth/refresh` y cambio de contraseña
 
 - **Migraciones nuevas** (`make migrate`):

@@ -11,6 +11,7 @@ use App\Support\Tenancy\TenantRoles;
 use Closure;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
@@ -84,6 +85,12 @@ trait AssertsTenantIsolation
      */
     public function isoCall(array $headers, string $method, string $uri, array $body = []): TestResponse
     {
+        // Las rutas de dinero exigen `Idempotency-Key` (docs/idempotency.md): cada llamada lleva una clave
+        // nueva salvo que el test fije la suya, así un POST no se repite por accidente.
+        if (in_array(strtoupper($method), ['POST', 'PATCH'], true) && ! array_key_exists('Idempotency-Key', $headers)) {
+            $headers['Idempotency-Key'] = (string) Str::uuid();
+        }
+
         return $this->asHeaders($headers)->json($method, $uri, $body);
     }
 

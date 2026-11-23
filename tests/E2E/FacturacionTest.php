@@ -65,8 +65,9 @@ test('contratar el plan pro empieza una prueba sin cobrar y el reintento con la 
     expect($repetida->header('Idempotent-Replayed'))->toBe('true')
         ->and($repetida->json('data.id'))->toBe($alta->json('data.id'));
 
-    // Sin clave y con otra petición: ya hay una suscripción viva (una sola por empresa).
-    $otra = e2eApi($s['a']['access'], $slug)->post('/tenant/billing/subscription', $cuerpo);
+    // Sin clave la ruta de cobro se rechaza (idempotent:required); con otra clave, ya hay una suscripción viva (una sola por empresa).
+    expect(e2eApi($s['a']['access'], $slug)->post('/tenant/billing/subscription', $cuerpo)->json('code'))->toBe('idempotency_key_required');
+    $otra = e2eApi($s['a']['access'], $slug)->withHeaders(['Idempotency-Key' => 'otra-'.$s['run']])->post('/tenant/billing/subscription', $cuerpo);
     expect($otra->status())->toBe(409)->and($otra->json('code'))->toBe('subscription_exists');
 
     // Pagar o contratar es cosa de dueños/admins: un tercero con otra empresa ni siquiera entra.
@@ -234,7 +235,7 @@ test('aislamiento A/B: la factura de una empresa no se lee desde la otra', funct
     // Con su propio tenant, el id de otra empresa no existe.
     expect(e2eApi($s['b']['access'], $s['b']['empresa']['slug'])->get("/tenant/billing/invoices/{$factura}")->status())->toBe(404);
     expect(e2eApi($s['b']['access'], $s['b']['empresa']['slug'])->get("/tenant/billing/invoices/{$factura}/pdf")->status())->toBe(404);
-    expect(e2eApi($s['b']['access'], $s['b']['empresa']['slug'])->post("/tenant/billing/invoices/{$factura}/pay")->status())->toBeIn([404, 409]);
+    expect(e2eApi($s['b']['access'], $s['b']['empresa']['slug'])->withHeaders(['Idempotency-Key' => 'ajena-'.$s['run']])->post("/tenant/billing/invoices/{$factura}/pay")->status())->toBeIn([404, 409]);
     // Declarando la empresa de A, ni entra.
     expect(e2eApi($s['b']['access'], $s['a']['empresa']['slug'])->get("/tenant/billing/invoices/{$factura}")->status())->toBe(403);
     // Y B no hereda nada de la suscripción de A.
