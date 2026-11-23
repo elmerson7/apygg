@@ -101,7 +101,7 @@ class ViewTenant extends ViewRecord
             ])
             ->visible(fn (): bool => Gate::forUser(Auth::guard('web')->user())->allows('update', $this->tenant()) && (bool) Auth::guard('web')->user()?->can('plan-limits.manage'))
             ->action(function (array $data): void {
-                abort_unless(Auth::guard('web')->user()?->can('plan-limits.manage'), 403);
+                abort_unless((bool) Auth::guard('web')->user()?->can('plan-limits.manage'), 403);
 
                 $saved = Failure::guard(function () use ($data): true {
                     $audit = app(AuditServiceInterface::class);
@@ -131,7 +131,7 @@ class ViewTenant extends ViewRecord
             ->fillForm(fn (): array => ['plan' => $this->tenant()->plan])
             ->visible(fn (): bool => Gate::forUser(Auth::guard('web')->user())->allows('update', $this->tenant()) && (bool) Auth::guard('web')->user()?->can('plan-limits.manage'))
             ->action(function (array $data): void {
-                abort_unless(Auth::guard('web')->user()?->can('plan-limits.manage'), 403);
+                abort_unless((bool) Auth::guard('web')->user()?->can('plan-limits.manage'), 403);
 
                 app(PlanLimitsInterface::class)->setPlan((int) $this->tenant()->getKey(), $data['plan'] ?: null);
                 $this->tenant()->refresh();

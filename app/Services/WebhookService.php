@@ -235,7 +235,7 @@ class WebhookService implements WebhookServiceInterface
             $signatures = [$this->sign($timestamp, $body, $webhook->secret)];
 
             if ($webhook->isOldSecretValid((int) config('webhooks.security.rotation_grace_days', 7))) {
-                $signatures[] = $this->sign($timestamp, $body, $webhook->old_secret);
+                $signatures[] = $this->sign($timestamp, $body, (string) $webhook->old_secret);
             }
 
             $headers[config('webhooks.security.signature_header', 'X-Webhook-Signature')] = implode(' ', $signatures);

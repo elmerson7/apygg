@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * contratar; el estado solo cambia por `SubscriptionLifecycle::transition()` (máquina de `SubscriptionStatus`).
  *
  * @property int $id
+ * @property CarbonInterface $created_at
  * @property int $tenant_id
  * @property int $plan_id
  * @property int $plan_price_id

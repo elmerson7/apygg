@@ -6,15 +6,26 @@ parameters:
     reportUnmatchedIgnoredErrors: true
     paths:
         - app
+        - bootstrap
+        - config
         - database/factories
         - database/seeders
+        - modules
+        - routes
 
     # Rule level (0 es el más laxo, 9 el más estricto). Ver docs/CODING_STANDARDS.md.
-    level: 7
+    level: 8
 
     # Política: sin excludePaths, sin baseline y sin ignores genéricos. Un ignore solo
     # se admite si es un falso positivo demostrable, con ruta y mensaje exactos.
     ignoreErrors:
+        # `bootstrap/app.php` corre ANTES de cargar la configuración (los callbacks de
+        # `withMiddleware` se ejecutan al resolver el kernel): `config()` aún no existe y
+        # `env()` lee las variables reales del contenedor, también con `config:cache`.
+        -
+            message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+            paths:
+                - bootstrap/app.php
         # Traits de infraestructura que el boilerplate ofrece y ningún módulo propio usa
         # todavía; se activan en el modelo que los necesite (ver docs/id-strategy.md).
         -

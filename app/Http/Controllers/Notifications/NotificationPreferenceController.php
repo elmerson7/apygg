@@ -17,17 +17,17 @@ class NotificationPreferenceController extends Controller
 
     public function show(Request $request): JsonResponse
     {
-        return $this->sendSuccess($this->preferences->forUser($request->user()), 'Preferencias de notificación');
+        return $this->sendSuccess($this->preferences->forUser($this->authUser($request)), 'Preferencias de notificación');
     }
 
     public function update(UpdateNotificationPreferencesRequest $request): JsonResponse
     {
         $this->preferences->update(
-            $request->user(),
+            $this->authUser($request),
             $request->validated('preferences', []),
             $request->validated('quiet_hours'),
         );
 
-        return $this->sendSuccess($this->preferences->forUser($request->user()), 'Preferencias actualizadas');
+        return $this->sendSuccess($this->preferences->forUser($this->authUser($request)), 'Preferencias actualizadas');
     }
 }

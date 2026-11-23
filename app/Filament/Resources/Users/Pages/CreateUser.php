@@ -8,6 +8,7 @@ use App\Filament\Support\Failure;
 use App\Models\Role;
 use App\Models\User;
 use Filament\Resources\Pages\CreateRecord;
+use Filament\Support\Exceptions\Halt;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
 
@@ -36,7 +37,7 @@ class CreateUser extends CreateRecord
         });
 
         if (! $user instanceof User) {
-            $this->halt();
+            throw new Halt;
         }
 
         return $user;

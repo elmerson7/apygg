@@ -23885,10 +23885,7 @@
                         ]
                     },
                     "created_at": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
+                        "type": "string"
                     }
                 },
                 "required": [

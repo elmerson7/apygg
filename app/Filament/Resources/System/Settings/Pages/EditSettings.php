@@ -7,6 +7,7 @@ use App\Filament\Resources\System\Settings\SettingsResource;
 use App\Filament\Support\Failure;
 use App\Models\Settings;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Support\Exceptions\Halt;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
 
@@ -36,7 +37,7 @@ class EditSettings extends EditRecord
         });
 
         if (! $setting instanceof Settings) {
-            $this->halt();
+            throw new Halt;
         }
 
         return $setting;

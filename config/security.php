@@ -24,7 +24,7 @@ return [
     */
 
     'ip_whitelist' => env('SECURITY_IP_WHITELIST', '')
-        ? explode(',', env('SECURITY_IP_WHITELIST'))
+        ? explode(',', (string) env('SECURITY_IP_WHITELIST'))
         : [],
 
     /*
@@ -38,7 +38,7 @@ return [
     */
 
     'ip_blacklist' => env('SECURITY_IP_BLACKLIST', '')
-        ? explode(',', env('SECURITY_IP_BLACKLIST'))
+        ? explode(',', (string) env('SECURITY_IP_BLACKLIST'))
         : [],
 
     /*

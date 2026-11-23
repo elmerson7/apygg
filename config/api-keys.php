@@ -3,7 +3,7 @@
 use Illuminate\Support\Str;
 
 // Prefijo identificable de la instalación (APP_SLUG, o APP_NAME en slug), con `_` en lugar de `-`.
-$slug = str_replace('-', '_', env('APP_SLUG', Str::slug((string) env('APP_NAME', 'app'))) ?: 'app');
+$slug = str_replace('-', '_', (string) env('APP_SLUG', Str::slug((string) env('APP_NAME', 'app'))) ?: 'app');
 
 return [
 

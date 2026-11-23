@@ -102,7 +102,7 @@ class RoleService implements RoleServiceInterface
             'changes' => $data,
         ], 'activity');
 
-        return $role->fresh();
+        return $role->fresh() ?? $role;
     }
 
     /**
@@ -138,7 +138,7 @@ class RoleService implements RoleServiceInterface
             'role_name' => $roleName,
         ], 'activity');
 
-        return $deleted;
+        return (bool) $deleted;
     }
 
     /**
@@ -237,7 +237,7 @@ class RoleService implements RoleServiceInterface
             ], 'activity');
         }
 
-        return $role->fresh(['permissions']);
+        return $role->fresh(['permissions']) ?? $role;
     }
 
     /**
@@ -271,7 +271,7 @@ class RoleService implements RoleServiceInterface
             'permission_name' => $permission->name,
         ], 'activity');
 
-        return $role->fresh(['permissions']);
+        return $role->fresh(['permissions']) ?? $role;
     }
 
     /**
@@ -308,7 +308,7 @@ class RoleService implements RoleServiceInterface
             'permission_count' => $permissions->count(),
         ], 'activity');
 
-        return $role->fresh(['permissions']);
+        return $role->fresh(['permissions']) ?? $role;
     }
 
     /**

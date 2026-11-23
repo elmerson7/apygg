@@ -184,7 +184,7 @@ return [
     */
 
     'allowed_origins' => array_filter(
-        array_map('trim', explode(',', env('ALLOWED_ORIGINS', '')))
+        array_map('trim', explode(',', (string) env('ALLOWED_ORIGINS', '')))
     ),
 
     /*

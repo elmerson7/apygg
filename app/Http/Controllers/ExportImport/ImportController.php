@@ -21,28 +21,28 @@ class ImportController extends Controller
 
     public function store(StoreImportRequest $request): JsonResponse
     {
-        $import = $this->imports->upload($request->user(), (string) $request->route('importer'), $request->file('file'));
+        $import = $this->imports->upload($this->authUser($request), (string) $request->route('importer'), $request->file('file'));
 
         return $this->sendSuccess(new DataImportResource($import), 'Archivo recibido; validando', 202);
     }
 
     public function index(Request $request): JsonResponse
     {
-        return $this->sendPaginated($this->imports->paginateFor($request->user(), $this->perPage($request)));
+        return $this->sendPaginated($this->imports->paginateFor($this->authUser($request), $this->perPage($request)));
     }
 
     public function show(Request $request, int $id): JsonResponse
     {
-        return $this->sendSuccess(new DataImportResource($this->imports->findFor($request->user(), $id)));
+        return $this->sendSuccess(new DataImportResource($this->imports->findFor($this->authUser($request), $id)));
     }
 
     public function confirm(Request $request, int $id): JsonResponse
     {
-        return $this->sendSuccess(new DataImportResource($this->imports->confirm($request->user(), $id)), 'Importación confirmada', 202);
+        return $this->sendSuccess(new DataImportResource($this->imports->confirm($this->authUser($request), $id)), 'Importación confirmada', 202);
     }
 
     public function errors(Request $request, int $id): StreamedResponse
     {
-        return $this->imports->errorsReport($this->imports->findFor($request->user(), $id));
+        return $this->imports->errorsReport($this->imports->findFor($this->authUser($request), $id));
     }
 }

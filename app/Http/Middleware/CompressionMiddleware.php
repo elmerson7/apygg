@@ -73,7 +73,7 @@ class CompressionMiddleware
         }
 
         // Verificar tipo de contenido
-        $contentType = $response->headers->get('Content-Type', '');
+        $contentType = (string) $response->headers->get('Content-Type', '');
         if (! $this->isCompressible($contentType)) {
             return $response;
         }

@@ -46,7 +46,7 @@ class RoleSeeder extends Seeder
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        $this->command->info('Roles base: '.implode(', ', array_keys($roles)));
+        $this->command?->info('Roles base: '.implode(', ', array_keys($roles)));
     }
 
     /**

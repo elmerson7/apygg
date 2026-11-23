@@ -20,7 +20,7 @@ class AssignRoleRequest extends BaseFormRequest
     {
         $user = User::findOrFail($this->route('id'));
 
-        return $this->user()->can('manageRoles', $user);
+        return (bool) $this->user()?->can('manageRoles', $user);
     }
 
     /**

@@ -44,10 +44,10 @@ class LlmAreaSeeder extends Seeder
             );
         }
 
-        $this->command->info('Áreas de IA registradas: '.LlmArea::count());
+        $this->command?->info('Áreas de IA registradas: '.LlmArea::count());
 
         if (! $defaultModel) {
-            $this->command->warn('Sin LLM_DEFAULT_MODEL: configura el modelo de cada área desde /admin/llm/areas.');
+            $this->command?->warn('Sin LLM_DEFAULT_MODEL: configura el modelo de cada área desde /admin/llm/areas.');
         }
     }
 }

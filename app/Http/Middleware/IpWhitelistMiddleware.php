@@ -25,7 +25,7 @@ class IpWhitelistMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $ip = $request->ip();
+        $ip = $request->ip() ?? '';
         $path = ApiPath::path($request);
 
         // Verificar si la IP está en blacklist global

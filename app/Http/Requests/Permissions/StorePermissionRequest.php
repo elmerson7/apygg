@@ -9,7 +9,7 @@ class StorePermissionRequest extends BaseFormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('create', Permission::class);
+        return (bool) $this->user()?->can('create', Permission::class);
     }
 
     /**

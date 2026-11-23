@@ -304,8 +304,8 @@ class SecurityService implements SecurityServiceInterface
         $sanitized = strip_tags($input, $allowedTags);
 
         // Escapar atributos peligrosos
-        $sanitized = preg_replace('/on\w+\s*=\s*["\'][^"\']*["\']/i', '', $sanitized);
-        $sanitized = preg_replace('/javascript:/i', '', $sanitized);
+        $sanitized = (string) preg_replace('/on\w+\s*=\s*["\'][^"\']*["\']/i', '', $sanitized);
+        $sanitized = (string) preg_replace('/javascript:/i', '', $sanitized);
 
         return $sanitized;
     }

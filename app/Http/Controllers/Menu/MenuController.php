@@ -30,8 +30,8 @@ class MenuController extends Controller
     public function mine(Request $request): JsonResponse
     {
         return $this->sendSuccess([
-            'items' => $this->menu->getUserMenuTree($request->user()),
-            'keys' => $this->menu->getUserMenuKeys($request->user()),
+            'items' => $this->menu->getUserMenuTree($this->authUser($request)),
+            'keys' => $this->menu->getUserMenuKeys($this->authUser($request)),
         ], 'Menú obtenido exitosamente');
     }
 

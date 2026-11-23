@@ -114,7 +114,7 @@ class PermissionService implements PermissionServiceInterface
             'changes' => $data,
         ], 'activity');
 
-        return $permission->fresh();
+        return $permission->fresh() ?? $permission;
     }
 
     /**
@@ -148,7 +148,7 @@ class PermissionService implements PermissionServiceInterface
             'permission_name' => $permissionName,
         ], 'activity');
 
-        return $deleted;
+        return (bool) $deleted;
     }
 
     /**

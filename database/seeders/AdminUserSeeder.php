@@ -27,7 +27,7 @@ class AdminUserSeeder extends Seeder
         $email = config('auth.initial_admin.email');
 
         if (! $email) {
-            $this->command->warn('ADMIN_EMAIL no definido: no se crea el administrador inicial.');
+            $this->command?->warn('ADMIN_EMAIL no definido: no se crea el administrador inicial.');
 
             return;
         }
@@ -40,7 +40,7 @@ class AdminUserSeeder extends Seeder
 
             if (! $password) {
                 if (app()->environment('production')) {
-                    $this->command->error('ADMIN_PASSWORD no definida en producción: el administrador inicial NO se crea.');
+                    $this->command?->error('ADMIN_PASSWORD no definida en producción: el administrador inicial NO se crea.');
 
                     return;
                 }
@@ -57,20 +57,20 @@ class AdminUserSeeder extends Seeder
             $user->forceFill(['email_verified_at' => now()])->save();
 
             if ($generated) {
-                $this->command->warn("Contraseña generada para {$email} (se muestra solo ahora): {$password}");
+                $this->command?->warn("Contraseña generada para {$email} (se muestra solo ahora): {$password}");
             }
         }
 
         $adminRole = Role::where('name', 'admin')->first();
 
         if (! $adminRole) {
-            $this->command->warn('Rol admin inexistente: ejecuta RoleSeeder antes.');
+            $this->command?->warn('Rol admin inexistente: ejecuta RoleSeeder antes.');
 
             return;
         }
 
         $user->assignRole($adminRole);
 
-        $this->command->info("Administrador inicial: {$email}");
+        $this->command?->info("Administrador inicial: {$email}");
     }
 }

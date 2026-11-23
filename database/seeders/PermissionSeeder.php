@@ -130,6 +130,6 @@ class PermissionSeeder extends Seeder
         // Los seeders corren sin eventos de modelo: hay que vaciar la caché de Spatie a mano.
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        $this->command->info('Permisos base: '.count(self::catalog()));
+        $this->command?->info('Permisos base: '.count(self::catalog()));
     }
 }

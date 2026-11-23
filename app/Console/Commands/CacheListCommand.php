@@ -343,6 +343,6 @@ class CacheListCommand extends Command
         // Remover prefijos de Redis y Laravel
         $key = preg_replace('/^.*'.preg_quote(CacheService::prefix(), '/').':/', '', $fullKey);
 
-        return $key;
+        return $key ?? $fullKey;
     }
 }

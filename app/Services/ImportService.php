@@ -299,7 +299,7 @@ class ImportService implements ImportServiceInterface
                 throw ExportImportException::invalidFile('El archivo está vacío.');
             }
 
-            if ($batch !== []) {
+            if ($onBatch !== null && $batch !== []) {
                 $onBatch($batch);
             }
 

@@ -9,6 +9,7 @@ use App\Filament\Support\Failure;
 use App\Models\User;
 use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Support\Exceptions\Halt;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
 
@@ -51,7 +52,7 @@ class EditUser extends EditRecord
         });
 
         if (! $updated instanceof User) {
-            $this->halt();
+            throw new Halt;
         }
 
         return $updated;

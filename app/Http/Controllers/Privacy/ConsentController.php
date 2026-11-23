@@ -18,8 +18,8 @@ class ConsentController extends Controller
     public function index(Request $request): JsonResponse
     {
         return $this->sendSuccess([
-            'consents' => $this->consents->stateFor($request->user()),
-            'pending' => $this->consents->pendingFor($request->user()),
+            'consents' => $this->consents->stateFor($this->authUser($request)),
+            'pending' => $this->consents->pendingFor($this->authUser($request)),
         ], 'Consentimientos');
     }
 
@@ -27,18 +27,18 @@ class ConsentController extends Controller
     {
         /** @var list<array{key: string, version: string}> $documents */
         $documents = $request->validated('documents');
-        $this->consents->accept($request->user(), $documents, $request->ip(), $request->userAgent());
+        $this->consents->accept($this->authUser($request), $documents, $request->ip(), $request->userAgent());
 
         return $this->sendSuccess([
-            'consents' => $this->consents->stateFor($request->user()),
-            'pending' => $this->consents->pendingFor($request->user()),
+            'consents' => $this->consents->stateFor($this->authUser($request)),
+            'pending' => $this->consents->pendingFor($this->authUser($request)),
         ], 'Consentimientos registrados');
     }
 
     public function withdraw(Request $request, string $key): JsonResponse
     {
-        $this->consents->withdraw($request->user(), $key, $request->ip(), $request->userAgent());
+        $this->consents->withdraw($this->authUser($request), $key, $request->ip(), $request->userAgent());
 
-        return $this->sendSuccess(['consents' => $this->consents->stateFor($request->user())], 'Consentimiento retirado');
+        return $this->sendSuccess(['consents' => $this->consents->stateFor($this->authUser($request))], 'Consentimiento retirado');
     }
 }

@@ -124,7 +124,7 @@ class SettingsService implements SettingsServiceInterface
                 $data['value'] = $this->encryptValue($setting->getDecryptedValue());
             } else {
                 // Cambia de encriptado a no encriptado: desencriptar el valor actual
-                $data['value'] = $this->decryptValue($setting->value);
+                $data['value'] = $this->decryptValue((string) $setting->value);
             }
         }
 
@@ -140,7 +140,7 @@ class SettingsService implements SettingsServiceInterface
             'after' => $setting->only(['key', 'value', 'type', 'group', 'is_public', 'is_encrypted']),
         ]);
 
-        return $setting->fresh();
+        return $setting->fresh() ?? $setting;
     }
 
     /**
@@ -169,7 +169,7 @@ class SettingsService implements SettingsServiceInterface
             'group' => $setting->group,
         ]);
 
-        return $deleted;
+        return (bool) $deleted;
     }
 
     /**

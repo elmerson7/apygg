@@ -18,21 +18,21 @@ class AccountDeletionController extends Controller
 
     public function show(Request $request): JsonResponse
     {
-        $pending = $this->deletions->pending($request->user());
+        $pending = $this->deletions->pending($this->authUser($request));
 
         return $this->sendSuccess($pending ? $this->present($pending) : null, 'Solicitud de borrado');
     }
 
     public function store(RequestAccountDeletionRequest $request): JsonResponse
     {
-        $row = $this->deletions->request($request->user(), (string) $request->validated('password'), $request->validated('second_factor'), $request->ip());
+        $row = $this->deletions->request($this->authUser($request), (string) $request->validated('password'), $request->validated('second_factor'), $request->ip());
 
         return $this->sendSuccess($this->present($row), 'Borrado de cuenta programado', 202);
     }
 
     public function destroy(Request $request): JsonResponse
     {
-        return $this->sendSuccess($this->present($this->deletions->cancel($request->user())), 'Borrado de cuenta cancelado');
+        return $this->sendSuccess($this->present($this->deletions->cancel($this->authUser($request))), 'Borrado de cuenta cancelado');
     }
 
     /**

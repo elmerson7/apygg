@@ -69,10 +69,10 @@ class DocsController extends Controller
         $scope = $request->validated('scope') ?? 'general';
 
         $conversation = $request->filled('conversation_id')
-            ? DocConversation::where('user_id', $request->user()->id)
+            ? DocConversation::where('user_id', $this->authUser($request)->id)
                 ->findOrFail((int) $request->validated('conversation_id'))
             : DocConversation::create([
-                'user_id' => $request->user()->id,
+                'user_id' => $this->authUser($request)->id,
                 'scope' => $scope,
                 'messages' => [],
             ]);
@@ -89,7 +89,7 @@ class DocsController extends Controller
     public function conversations(Request $request): JsonResponse
     {
         $conversations = DocConversation::query()
-            ->where('user_id', $request->user()->id)
+            ->where('user_id', $this->authUser($request)->id)
             ->orderByDesc('updated_at')
             ->paginate($this->perPage($request, 15));
 
@@ -98,7 +98,7 @@ class DocsController extends Controller
 
     public function conversation(Request $request, DocConversation $docConversation): JsonResponse
     {
-        abort_unless($docConversation->user_id === $request->user()->id, 403);
+        abort_unless($docConversation->user_id === $this->authUser($request)->id, 403);
 
         return $this->sendSuccess($docConversation, 'Conversación obtenida exitosamente');
     }

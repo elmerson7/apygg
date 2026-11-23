@@ -135,7 +135,7 @@ git checkout -b refactor/tu-refactor
 ### 3. Antes de crear PR
 
 ```bash
-# Formatear y analizar (Pint + PHPStan, nivel 7)
+# Formatear y analizar (Pint + PHPStan, nivel 8)
 make check
 
 # Ejecutar tests

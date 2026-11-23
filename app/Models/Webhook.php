@@ -251,7 +251,7 @@ class Webhook extends Model
             $this->save();
         }
 
-        return $this->secret;
+        return (string) $this->secret;
     }
 
     /**

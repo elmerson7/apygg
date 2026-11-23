@@ -98,7 +98,7 @@ class UserService implements UserServiceInterface
         $this->clearCache();
         event(new UserCreated($user));
 
-        return $user->fresh(['roles', 'permissions', 'profile']);
+        return $user->fresh(['roles', 'permissions', 'profile']) ?? $user;
     }
 
     /**
@@ -196,7 +196,7 @@ class UserService implements UserServiceInterface
         $this->clearCache($userId);
         event(new UserUpdated($user, $oldAttributes));
 
-        return $user->fresh(['roles', 'permissions', 'profile']);
+        return $user->fresh(['roles', 'permissions', 'profile']) ?? $user;
     }
 
     /**
@@ -241,7 +241,7 @@ class UserService implements UserServiceInterface
         $this->clearCache((string) $user->id);
         event(new UserUpdated($user, $oldAttributes));
 
-        return $user->fresh(['profile']);
+        return $user->fresh(['profile']) ?? $user;
     }
 
     /**
@@ -287,7 +287,7 @@ class UserService implements UserServiceInterface
         $user->update(['preferences' => $merged]);
         $this->clearCache($userId);
 
-        return $user->fresh(['roles', 'permissions']);
+        return $user->fresh(['roles', 'permissions']) ?? $user;
     }
 
     /**
@@ -342,7 +342,7 @@ class UserService implements UserServiceInterface
         $this->clearCache($userId);
         event(new UserRestored($user));
 
-        return $user->fresh(['roles', 'permissions']);
+        return $user->fresh(['roles', 'permissions']) ?? $user;
     }
 
     /**
@@ -498,7 +498,7 @@ class UserService implements UserServiceInterface
             }
         }
 
-        return $user->fresh(['roles', 'permissions']);
+        return $user->fresh(['roles', 'permissions']) ?? $user;
     }
 
     /**
@@ -524,7 +524,7 @@ class UserService implements UserServiceInterface
             $this->clearCache($userId);
             event(new RoleRemoved($user, $role));
 
-            return $user->fresh(['roles', 'permissions']);
+            return $user->fresh(['roles', 'permissions']) ?? $user;
         });
     }
 
@@ -575,7 +575,7 @@ class UserService implements UserServiceInterface
             }
         }
 
-        return $user->fresh(['roles', 'permissions']);
+        return $user->fresh(['roles', 'permissions']) ?? $user;
     }
 
     /**
@@ -597,7 +597,7 @@ class UserService implements UserServiceInterface
             'permission_id' => $permissionId,
         ], 'activity');
 
-        return $user->fresh(['roles', 'permissions']);
+        return $user->fresh(['roles', 'permissions']) ?? $user;
     }
 
     /**

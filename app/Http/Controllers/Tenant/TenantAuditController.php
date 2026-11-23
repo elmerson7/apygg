@@ -26,7 +26,7 @@ class TenantAuditController extends Controller
     {
         return $this->sendPaginated($this->audit->paginateForTenant(
             $this->activeTenant($request),
-            $request->user(),
+            $this->authUser($request),
             $request->safe()->only(self::FILTERS),
             $this->perPage($request, 25),
         ));
@@ -35,7 +35,7 @@ class TenantAuditController extends Controller
     public function export(ListAuditRequest $request): StreamedResponse
     {
         $tenant = $this->activeTenant($request);
-        $rows = $this->audit->exportForTenant($tenant, $request->user(), $request->safe()->only(self::FILTERS));
+        $rows = $this->audit->exportForTenant($tenant, $this->authUser($request), $request->safe()->only(self::FILTERS));
 
         return $this->csvResponse($rows, 'auditoria-'.$tenant->slug.'-'.now()->format('Ymd-His').'.csv');
     }

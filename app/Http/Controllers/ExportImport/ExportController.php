@@ -22,7 +22,7 @@ class ExportController extends Controller
     public function store(StoreExportRequest $request): JsonResponse
     {
         $export = $this->exports->request(
-            $request->user(),
+            $this->authUser($request),
             (string) $request->route('exporter'),
             (string) $request->validated('format'),
             (array) $request->validated('filters', []),
@@ -33,16 +33,16 @@ class ExportController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        return $this->sendPaginated($this->exports->paginateFor($request->user(), $this->perPage($request)));
+        return $this->sendPaginated($this->exports->paginateFor($this->authUser($request), $this->perPage($request)));
     }
 
     public function show(Request $request, int $id): JsonResponse
     {
-        return $this->sendSuccess(new DataExportResource($this->exports->findFor($request->user(), $id)));
+        return $this->sendSuccess(new DataExportResource($this->exports->findFor($this->authUser($request), $id)));
     }
 
     public function download(Request $request, int $id): StreamedResponse
     {
-        return $this->exports->download($this->exports->findFor($request->user(), $id));
+        return $this->exports->download($this->exports->findFor($this->authUser($request), $id));
     }
 }

@@ -22,7 +22,7 @@ class WebhookController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Webhook::query()
-            ->where('user_id', $request->user()->id)
+            ->where('user_id', $this->authUser($request)->id)
             ->withCount('deliveries')
             ->orderBy('created_at', 'desc');
 
@@ -44,7 +44,7 @@ class WebhookController extends Controller
             $validated['secret'] = bin2hex(random_bytes(32));
         }
 
-        $webhook = Webhook::create(array_merge($validated, ['user_id' => $request->user()->id]));
+        $webhook = Webhook::create(array_merge($validated, ['user_id' => $this->authUser($request)->id]));
 
         // El secreto se muestra SOLO ahora (y al rotarlo): después no se puede volver a consultar
         return $this->sendSuccess([
@@ -58,7 +58,7 @@ class WebhookController extends Controller
     {
         $webhook = Webhook::with('user')
             ->withCount('deliveries')
-            ->where('user_id', $request->user()->id)
+            ->where('user_id', $this->authUser($request)->id)
             ->findOrFail($id);
 
         return $this->sendSuccess($webhook, 'Webhook obtenido exitosamente');
@@ -66,7 +66,7 @@ class WebhookController extends Controller
 
     public function update(UpdateWebhookRequest $request, string $id): JsonResponse
     {
-        $webhook = Webhook::where('user_id', $request->user()->id)->findOrFail($id);
+        $webhook = Webhook::where('user_id', $this->authUser($request)->id)->findOrFail($id);
         $webhook->update($request->validated());
 
         return $this->sendSuccess($webhook->fresh(), 'Webhook actualizado exitosamente');
@@ -74,7 +74,7 @@ class WebhookController extends Controller
 
     public function destroy(Request $request, string $id): JsonResponse
     {
-        $webhook = Webhook::where('user_id', $request->user()->id)->findOrFail($id);
+        $webhook = Webhook::where('user_id', $this->authUser($request)->id)->findOrFail($id);
         $webhook->delete();
 
         return $this->sendSuccess(null, 'Webhook eliminado exitosamente');
@@ -82,7 +82,7 @@ class WebhookController extends Controller
 
     public function rotateSecret(Request $request, string $id): JsonResponse
     {
-        $webhook = Webhook::where('user_id', $request->user()->id)->findOrFail($id);
+        $webhook = Webhook::where('user_id', $this->authUser($request)->id)->findOrFail($id);
         $gracePeriodDays = (int) $request->input('grace_period_days', 7);
         $result = $webhook->rotateSecret($gracePeriodDays);
 
@@ -97,7 +97,7 @@ class WebhookController extends Controller
 
     public function deliveries(Request $request, string $id): JsonResponse
     {
-        $webhook = Webhook::where('user_id', $request->user()->id)->findOrFail($id);
+        $webhook = Webhook::where('user_id', $this->authUser($request)->id)->findOrFail($id);
 
         $query = WebhookDelivery::where('webhook_id', $webhook->id)->orderBy('created_at', 'desc');
 
@@ -117,7 +117,7 @@ class WebhookController extends Controller
 
     public function retryDelivery(Request $request, string $id, string $deliveryId): JsonResponse
     {
-        $webhook = Webhook::where('user_id', $request->user()->id)->findOrFail($id);
+        $webhook = Webhook::where('user_id', $this->authUser($request)->id)->findOrFail($id);
         $delivery = WebhookDelivery::where('webhook_id', $webhook->id)->findOrFail($deliveryId);
 
         if ($delivery->status !== WebhookDelivery::STATUS_FAILED) {

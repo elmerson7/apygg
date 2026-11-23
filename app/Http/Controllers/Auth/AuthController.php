@@ -132,6 +132,10 @@ class AuthController extends Controller
         // Recargar con relaciones
         $user = User::with(['roles', 'profile'])->find($user->id);
 
+        if (! $user instanceof User) {
+            return $this->sendError('Usuario no autenticado', 401);
+        }
+
         // Permisos efectivos: directos + los de sus roles (API de Spatie)
         $allPermissions = $user->getAllPermissions()->pluck('name')->unique()->values();
 

@@ -152,7 +152,7 @@ class ApiKeyService implements ApiKeyServiceInterface
             'after' => $apiKey->only(['name', 'scopes', 'expires_at']),
         ]);
 
-        return $apiKey->fresh();
+        return $apiKey->fresh() ?? $apiKey;
     }
 
     /**
@@ -178,7 +178,7 @@ class ApiKeyService implements ApiKeyServiceInterface
             'name' => $apiKey->name,
         ]);
 
-        return $deleted;
+        return (bool) $deleted;
     }
 
     public function revokeAllForUser(int $userId): int

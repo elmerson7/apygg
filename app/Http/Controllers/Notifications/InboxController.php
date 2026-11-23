@@ -24,7 +24,7 @@ class InboxController extends Controller
         $perPage = $request->integer('per_page') ?: null;
 
         return $this->sendPaginated($this->inbox->paginate(
-            $request->user(),
+            $this->authUser($request),
             ['unread' => $request->boolean('unread'), 'type' => $request->validated('type')],
             $perPage,
         ));
@@ -32,22 +32,22 @@ class InboxController extends Controller
 
     public function unreadCount(Request $request): JsonResponse
     {
-        return $this->sendSuccess(['unread' => $this->inbox->unreadCount($request->user())], 'Notificaciones sin leer');
+        return $this->sendSuccess(['unread' => $this->inbox->unreadCount($this->authUser($request))], 'Notificaciones sin leer');
     }
 
     public function read(Request $request, int $id): JsonResponse
     {
-        return $this->sendSuccess($this->inbox->markRead($request->user(), $id), 'Notificación marcada como leída');
+        return $this->sendSuccess($this->inbox->markRead($this->authUser($request), $id), 'Notificación marcada como leída');
     }
 
     public function readAll(Request $request): JsonResponse
     {
-        return $this->sendSuccess(['marked' => $this->inbox->markAllRead($request->user())], 'Notificaciones marcadas como leídas');
+        return $this->sendSuccess(['marked' => $this->inbox->markAllRead($this->authUser($request))], 'Notificaciones marcadas como leídas');
     }
 
     public function destroy(Request $request, int $id): JsonResponse
     {
-        $this->inbox->delete($request->user(), $id);
+        $this->inbox->delete($this->authUser($request), $id);
 
         return $this->sendSuccess(null, 'Notificación eliminada');
     }

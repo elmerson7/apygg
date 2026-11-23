@@ -49,14 +49,14 @@ class SecurityScanController extends Controller
             );
         }
 
-        $scan = $this->audit->start($request->user());
+        $scan = $this->audit->start($this->authUser($request));
 
         return $this->sendSuccess($scan, 'Escaneo iniciado exitosamente', 201);
     }
 
     public function stop(Request $request, SecurityScan $securityScan): JsonResponse
     {
-        $this->audit->stop($securityScan, $request->user());
+        $this->audit->stop($securityScan, $this->authUser($request));
 
         return $this->sendSuccess($securityScan->fresh(), 'Escaneo detenido exitosamente');
     }
