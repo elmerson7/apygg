@@ -9,7 +9,7 @@ use Illuminate\Console\Command;
 /**
  * BackupCreateCommand
  *
- * Comando para crear backups de base de datos y archivos.
+ * Comando para crear backups de base de datos. El de archivos no existe: `--files` falla con error.
  */
 class BackupCreateCommand extends Command
 {
@@ -20,7 +20,7 @@ class BackupCreateCommand extends Command
      */
     protected $signature = 'backup:create 
                             {--database : Crear backup de base de datos (por defecto)}
-                            {--files : Crear backup de archivos}
+                            {--files : NO soportado: falla con error (los archivos no se respaldan con este comando)}
                             {--no-compress : No comprimir el backup}
                             {--no-upload : No subir a almacenamiento remoto}';
 
@@ -36,12 +36,18 @@ class BackupCreateCommand extends Command
      */
     public function handle(BackupServiceInterface $backups): int
     {
+        if ($this->option('files')) {
+            // No se acepta en silencio: el respaldo de archivos no lo hace este comando (ver docs/backups-system.md).
+            $this->error('--files no está soportado: este comando solo respalda la base de datos. Los archivos viven en el disco configurado (FILE_DISK_*): respáldalos con el versionado/replicación del bucket S3 o con un snapshot del volumen.');
+
+            return Command::FAILURE;
+        }
+
         $this->info('Iniciando creación de backups...');
 
         $compress = ! $this->option('no-compress');
         $uploadToRemote = ! $this->option('no-upload');
         $backupDatabase = $this->option('database') || (! $this->option('files'));
-        $backupFiles = $this->option('files');
 
         $createdBackups = [];
 
@@ -66,12 +72,6 @@ class BackupCreateCommand extends Command
                 }
 
                 $createdBackups[] = $backupInfo;
-            }
-
-            // Backup de archivos (si está habilitado)
-            if ($backupFiles) {
-                $this->warn('Backup de archivos aún no implementado');
-                // TODO: Implementar backup de archivos
             }
 
             $this->info('✓ Backups creados exitosamente');
