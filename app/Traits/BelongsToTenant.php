@@ -82,7 +82,10 @@ trait BelongsToTenant
      */
     public function newEloquentBuilder($query): TenantEloquentBuilder
     {
-        return new TenantEloquentBuilder($query);
+        /** @var TenantEloquentBuilder<static> $builder */
+        $builder = new TenantEloquentBuilder($query);
+
+        return $builder;
     }
 
     /**
