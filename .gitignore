@@ -45,3 +45,6 @@ frankenphp-worker.php
 
 # Grafo local de graphify (se regenera)
 graphify-out/
+
+# Estado local de herramientas de IA (no se versiona)
+/.bob/

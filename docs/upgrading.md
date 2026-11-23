@@ -29,6 +29,10 @@ impacto en un proyecto existente están en `CHANGELOG.md`.
   estaba en ese estado, activa la multiempresa o limpia las empresas sobrantes.
 - Nueva regla de `ArchTest`: `DB::table()` sobre tablas con `tenant_id` solo en los archivos auditados; añade los tuyos a la lista tras revisarlos.
 
+### Back-office: datos personales exportados piden `users.read`
+
+- El recurso «Datos personales exportados» (módulo privacy) pedía `users.export`, que es del módulo export-import: al quitar ese módulo el panel fallaba. Ahora pide `users.read` (núcleo). Si diste `users.export` a soporte solo para ver ese recurso, dale `users.read`.
+
 ### `trace_id` en la auditoría de actividad y límites de `/auth/refresh` y cambio de contraseña
 
 - **Migraciones nuevas** (`make migrate`):

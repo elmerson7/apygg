@@ -67,7 +67,7 @@ make art cmd="db:seed --class=RoleSeeder"          # lo da al rol admin
 | Plataforma | Feature flags | `feature-flags.read` / `.manage` | crear/editar/restablecer (`FeatureFlagServiceInterface`; solo claves de `config/features.php`) y overrides por empresa |
 | Correo | Supresión | `mail.suppressions` | alta manual y quitar (`MailSuppressionServiceInterface`; quitar exige motivo auditado) |
 | Privacidad | Documentos legales | `legal-documents.read` / `.manage` | publicar versión nueva (`ConsentServiceInterface::publish`, inmutable); la ficha agrega aceptaciones sin datos personales |
-| Privacidad | Datos personales exportados | `users.export` | solo lectura (nunca disco ni ruta) |
+| Privacidad | Datos personales exportados | `users.read` | solo lectura (nunca disco ni ruta) |
 | Datos | Exportaciones, Importaciones | `users.export`, `users.import` | solo lectura (nunca disco ni ruta) |
 | Sistema | Mantenimiento | `maintenance.manage` | página: activar con mensaje y fin / desactivar (`MaintenanceServiceInterface`) |
 
