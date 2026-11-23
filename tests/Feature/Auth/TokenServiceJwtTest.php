@@ -23,7 +23,7 @@ function tokens(): TokenServiceInterface
     return app(TokenServiceInterface::class);
 }
 
-/** parseToken() lee el token del request: el argumento explícito solo vale si la petición lo trae. */
+/** Pone el token en la cabecera Authorization (para los métodos que, sin argumento, lo leen del request). */
 function enCabecera(string $jwt): void
 {
     request()->headers->set('Authorization', 'Bearer '.$jwt);
@@ -405,7 +405,7 @@ test('getTokenClaims registra el error con su mensaje antes de relanzar', functi
 test('revokeToken con un token ya en lista negra al leer sus claims devuelve true y lo registra', function () {
     $jwt = Mockery::mock(JWTAuth::class);
     $jwt->shouldReceive('getToken')->andReturn('tok');
-    $jwt->shouldReceive('parseToken')->andThrow(new TokenBlacklistedException('ya'));
+    $jwt->shouldReceive('getPayload')->andThrow(new TokenBlacklistedException('ya'));
     $jwt->shouldNotReceive('invalidate');
     $logs = logsDeTokens();
 
@@ -419,7 +419,7 @@ test('revokeToken con un token ya en lista negra al leer sus claims devuelve tru
 test('revokeToken sigue invalidando aunque no pueda leer los claims y registra el aviso', function () {
     $jwt = Mockery::mock(JWTAuth::class);
     $jwt->shouldReceive('getToken')->andReturn('tok');
-    $jwt->shouldReceive('parseToken')->andThrow(new JWTException('ilegible'));
+    $jwt->shouldReceive('getPayload')->andThrow(new JWTException('ilegible'));
     $jwt->shouldReceive('invalidate')->once()->with(true);
     $logs = logsDeTokens();
 
@@ -597,4 +597,22 @@ test('sin jwt.ttl ni jwt.refresh_ttl configurados se usan 60 y 20160 minutos', f
     expect(tokens()->getTokenExpiration())->toBe(3600)
         ->and(tokens()->getRefreshTokenExpiration())->toBe(1209600)
         ->and(claimsDe(tokens()->generateRefreshToken($user))['exp'])->toBe(now()->addMinutes(20160)->timestamp);
+});
+
+test('un token explícito se valida aunque la petición no traiga cabecera Authorization', function () {
+    $user = User::factory()->create();
+    $jwt = tokens()->generateAccessToken($user);
+    request()->headers->remove('Authorization');
+
+    expect(tokens()->validateToken($jwt))->toBeTrue()
+        ->and(tokens()->getUserFromToken($jwt)?->id)->toBe($user->id)
+        ->and(tokens()->getTokenClaims($jwt)['sub'])->toBe((string) $user->id);
+});
+
+test('el token explícito manda sobre el de la cabecera: no se usa el de otro usuario', function () {
+    $yo = User::factory()->create();
+    $otro = User::factory()->create();
+    enCabecera(tokens()->generateAccessToken($otro));
+
+    expect(tokens()->getUserFromToken(tokens()->generateAccessToken($yo))?->id)->toBe($yo->id);
 });
