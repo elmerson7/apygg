@@ -15,7 +15,7 @@ Corre en cada push y PR a `main`/`develop`, y a mano (`workflow_dispatch`).
 | Cambios que rompen (oasdiff) | `docs/openapi.json` frente al de `main`; excepciones aceptadas en `docs/openapi-breaking-ignore.txt` |
 | Security Scan (Composer Audit) | `composer audit` con y sin dependencias de desarrollo |
 | Migraciones (lint, upgrade y rollback) | `migrations:lint`, migrar desde cero, subir desde la versión anterior y deshacer |
-| Sin módulos (…) | matriz: quita módulos opcionales con `module:remove` y corre la suite restante |
+| Sin módulos (…) | matriz: un escenario con todos los módulos opcionales quitados y uno por cada módulo (con sus dependientes); corre la suite restante. `ModulosMatrizCiTest` exige que no falte ninguno |
 | E2E (stack real) | recorridos HTTP contra el stack de `docker-compose.e2e.yml`; solo en push a `main` y a mano; no bloquea |
 | Docker Build | construye la imagen de producción |
 | CI Pipeline Success | agrega el resultado de los anteriores (salvo E2E); es el check obligatorio de la protección de `main` |
