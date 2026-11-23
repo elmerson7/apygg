@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:api')->prefix('docs')->group(function () {
     Route::get('/', [DocsController::class, 'index'])->name('docs.index');
     Route::get('/search', [DocsController::class, 'search'])->name('docs.search');
-    Route::post('/ask', [DocsController::class, 'ask'])->name('docs.ask');
+    Route::post('/ask', [DocsController::class, 'ask'])->middleware('idempotent')->name('docs.ask');
     Route::get('/conversations', [DocsController::class, 'conversations'])->name('docs.conversations');
     Route::get('/conversations/{docConversation}', [DocsController::class, 'conversation'])->name('docs.conversation');
 });

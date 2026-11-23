@@ -16,9 +16,55 @@ Route::middleware(['auth:api', 'tenant'])->group(function () {
 });
 ```
 
-Va **después** de `auth:api` y `tenant` (necesita saber quién actúa y en qué tenant). Solo vigila los
-métodos de `idempotency.methods` (`POST` y `PATCH`); el resto pasa de largo. Aplicado hoy a
-`POST /webhooks`, `POST /tenant/invitations` y `POST /files/uploads` (opcional: los clientes actuales no cambian).
+Va **después** de `auth:api` y `tenant` (y de `permission:`, para no guardar denegaciones): necesita saber quién
+actúa y en qué tenant. Solo vigila los métodos de `idempotency.methods` (`POST` y `PATCH`); el resto pasa de
+largo (los `PUT` y `DELETE` son idempotentes por definición).
+
+## Qué rutas la llevan
+
+Regla: toda ruta `POST`/`PATCH` que **crea un recurso**, **mueve dinero** o **dispara un efecto externo no
+repetible** (correo, SMS, coste de LLM, rotación de secretos, exportaciones) lleva `idempotent`. Las que
+**cobran o conceden dinero/tiempo de pago** llevan `idempotent:required`: sin cabecera, 400
+`idempotency_key_required` (un reintento sin clave podría cobrar dos veces). Lo vigila
+`tests/Feature/Idempotency/CoberturaIdempotenciaTest.php`: recorre `Route::getRoutes()` y falla si un
+`POST`/`PATCH` nuevo no lleva el middleware ni está en su lista de excepciones con motivo.
+
+**`idempotent:required` (obligatoria)**
+
+| Ruta | Por qué |
+|---|---|
+| `POST /tenant/billing/subscription` | Alta: cobra la primera factura |
+| `POST /tenant/billing/subscription/change` | Cambio de plan: prorratea y cobra |
+| `POST /tenant/billing/invoices/{id}/pay` | Reintenta el cobro de una factura |
+| `POST /admin/billing/tenants/{tenant}/plan` | La plataforma asigna plan y cobra |
+| `POST /admin/billing/invoices/{id}/mark-paid` | Registra un pago manual |
+| `POST /admin/billing/tenants/{tenant}/free-period` | Cada repetición alargaría el periodo otra vez |
+
+**`idempotent` (opcional: sin cabecera funciona como siempre)**
+
+| Familia | Rutas |
+|---|---|
+| Crean recursos | `POST /users`, `/roles`, `/permissions`, `/settings`, `/tenants`, `/api-keys`, `/webhooks`, `/files`, `/files/uploads`, `/files/uploads/multipart`, `/user/devices`, `/user/consents`, `/admin/blacklist`, `/admin/legal-documents`, `/admin/llm/areas`, `/admin/mail/accounts`, `/admin/mail/providers`, `/admin/mail/suppressions`, `/admin/menu/items`, `/admin/security/scans`, `/admin/imports/users`, `/admin/imports/{id}/confirm`, `/tenant/invitations` |
+| Efecto externo | `POST /tenant/invitations/{id}/resend`, `/auth/email/resend`, `/admin/mail/accounts/{id}/test`, `/admin/llm/areas/{id}/test`, `/docs/ask` (coste de LLM), `/user/data-export`, `/user/account-deletion`, `/admin/exports/users`, `/tenant/exports/members`, `/webhooks/{id}/rotate-secret`, `/webhooks/{id}/deliveries/{id}/retry`, `/api-keys/{id}/rotate` |
+| Billing (estado) | `POST /admin/billing/discrepancies/{id}/resolve` |
+
+**Sin `idempotent` (y por qué)**
+
+| Grupo | Rutas | Motivo |
+|---|---|---|
+| Autenticación | `auth/login`, `register`, `refresh`, `logout`, `forgot-password`, `reset-password`, `change-password`, `2fa/verify`, `email/verify`, `otp/request`, `otp/verify`, `social/{provider}`, `user/2fa/*` | Sin sesión no hay actor estable (la clave se ataría a la IP); los códigos y tokens son de un solo uso; el refresh rota el token y su reutilización se detecta aparte; repetir una respuesta guardada con tokens o códigos sería un riesgo, no una ayuda. Las protegen `throttle` y la lógica propia |
+| Webhooks entrantes | `webhooks/inbound/{provider}`, `webhooks/mail`, `resend/webhook` | Los proveedores reintentan por su cuenta: deduplican por id de evento en recibos propios (`docs/integrations.md`) |
+| Sync offline | `sync/batch` | Idempotencia propia por operación del lote (`docs/offline-sync.md`) |
+| Suplantación | `admin/impersonate/{id}` y `/stop` | Cada llamada debe ser una sesión nueva y auditada |
+| Naturalmente idempotentes | `users/{id}/restore`, `users/{id}/roles`, `tenant/members/*` (cambio, suspender, reactivar), `tenant/billing/subscription/cancel`, `resume`, `preview-change`, `user/notifications/*/read`, `files/uploads/{uuid}/complete` y `/parts`, `admin/maintenance`, interruptores de plantillas, `security/scans/{id}/stop` | Repetir deja el mismo estado final y no cobra ni envía nada; `invitations/accept` canjea un token de un solo uso |
+
+La lista exacta de excepciones, con su motivo, está en el test; un `POST` nuevo se clasifica allí o lleva el
+middleware.
+
+## Clientes: la cabecera pasa a ser obligatoria en dinero
+
+Los clientes que llaman a las seis rutas `required` deben enviar `Idempotency-Key` (un UUID por intento
+lógico, el **mismo** al reintentar). Ver `docs/upgrading.md`.
 
 ## Semántica
 

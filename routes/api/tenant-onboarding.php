@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['auth:api', 'tenancy.enabled'])->group(function () {
     Route::post('/tenants', [TenantController::class, 'store'])
         ->middleware('throttle:5,1')
-        ->name('tenants.store');
+        ->middleware('idempotent')->name('tenants.store');
 
     Route::get('/tenants/mine', [TenantController::class, 'mine'])
         ->name('tenants.mine');
@@ -65,7 +65,7 @@ Route::middleware(['auth:api', 'tenancy.enabled', 'tenant'])->prefix('tenant')->
         Route::post('/invitations/{id}/resend', [TenantInvitationController::class, 'resend'])
             ->whereNumber('id')
             ->middleware('throttle:30,1')
-            ->name('tenant.invitations.resend');
+            ->middleware('idempotent')->name('tenant.invitations.resend');
 
         Route::delete('/invitations/{id}', [TenantInvitationController::class, 'destroy'])
             ->whereNumber('id')

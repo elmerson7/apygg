@@ -27,7 +27,7 @@ Route::middleware(['auth:api'])->group(function () {
 
         Route::post('/', [RoleController::class, 'store'])
             ->middleware('permission:roles.create,api')
-            ->name('roles.store');
+            ->middleware('idempotent')->name('roles.store');
 
         Route::put('/{id}', [RoleController::class, 'update'])
             ->middleware('permission:roles.update,api')
@@ -62,7 +62,7 @@ Route::middleware(['auth:api'])->group(function () {
 
         Route::post('/', [PermissionController::class, 'store'])
             ->middleware('permission:permissions.create,api')
-            ->name('permissions.store');
+            ->middleware('idempotent')->name('permissions.store');
 
         Route::put('/{id}', [PermissionController::class, 'update'])
             ->middleware('permission:permissions.update,api')
