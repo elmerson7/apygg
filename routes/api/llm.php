@@ -22,11 +22,11 @@ Route::middleware(['auth:api', 'permission:llm.manage,api'])
         Route::get('/status', [LlmAreaController::class, 'status'])->name('llm.status');
 
         Route::get('/areas', [LlmAreaController::class, 'index'])->name('llm.areas.index');
-        Route::post('/areas', [LlmAreaController::class, 'store'])->name('llm.areas.store');
+        Route::post('/areas', [LlmAreaController::class, 'store'])->middleware('idempotent')->name('llm.areas.store');
         Route::get('/areas/{llmArea}', [LlmAreaController::class, 'show'])->name('llm.areas.show');
         Route::put('/areas/{llmArea}', [LlmAreaController::class, 'update'])->name('llm.areas.update');
         Route::delete('/areas/{llmArea}', [LlmAreaController::class, 'destroy'])->name('llm.areas.destroy');
-        Route::post('/areas/{llmArea}/test', [LlmAreaController::class, 'test'])->name('llm.areas.test');
+        Route::post('/areas/{llmArea}/test', [LlmAreaController::class, 'test'])->middleware('idempotent')->name('llm.areas.test');
     });
 
 Route::middleware(['auth:api', 'permission:llm.logs,api'])

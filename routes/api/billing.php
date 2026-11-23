@@ -28,7 +28,7 @@ Route::middleware(['auth:api', 'tenancy.enabled', 'tenant'])->prefix('tenant/bil
         ->name('tenant.billing.subscription.show');
 
     Route::post('/subscription', [TenantSubscriptionController::class, 'store'])
-        ->middleware(['permission:tenant-billing.manage,api', 'throttle:10,1', 'idempotent'])
+        ->middleware(['permission:tenant-billing.manage,api', 'throttle:10,1', 'idempotent:required'])
         ->name('tenant.billing.subscription.store');
 
     Route::post('/subscription/preview-change', [TenantSubscriptionController::class, 'preview'])
@@ -36,7 +36,7 @@ Route::middleware(['auth:api', 'tenancy.enabled', 'tenant'])->prefix('tenant/bil
         ->name('tenant.billing.subscription.preview');
 
     Route::post('/subscription/change', [TenantSubscriptionController::class, 'change'])
-        ->middleware(['permission:tenant-billing.manage,api', 'throttle:10,1', 'idempotent'])
+        ->middleware(['permission:tenant-billing.manage,api', 'throttle:10,1', 'idempotent:required'])
         ->name('tenant.billing.subscription.change');
 
     Route::post('/subscription/cancel', [TenantSubscriptionController::class, 'cancel'])
@@ -71,28 +71,27 @@ Route::middleware(['auth:api', 'tenancy.enabled', 'tenant'])->prefix('tenant/bil
 
     Route::post('/invoices/{id}/pay', [TenantInvoiceController::class, 'pay'])
         ->whereNumber('id')
-        ->middleware(['permission:tenant-billing.manage,api', 'throttle:10,1', 'idempotent'])
+        ->middleware(['permission:tenant-billing.manage,api', 'throttle:10,1', 'idempotent:required'])
         ->name('tenant.billing.invoices.pay');
 });
 
 Route::middleware(['auth:api', 'permission:billing.manage,api'])->prefix('admin/billing')->group(function () {
     Route::post('/invoices/{id}/mark-paid', [AdminBillingController::class, 'markPaid'])
         ->whereNumber('id')
-        ->name('admin.billing.invoices.mark-paid');
+        ->middleware('idempotent:required')->name('admin.billing.invoices.mark-paid');
 
     Route::post('/tenants/{tenant}/plan', [AdminBillingController::class, 'assignPlan'])
         ->whereNumber('tenant')
-        ->middleware('idempotent')
-        ->name('admin.billing.plan.assign');
+        ->middleware('idempotent:required')->name('admin.billing.plan.assign');
 
     Route::get('/discrepancies', [AdminBillingController::class, 'discrepancies'])
         ->name('admin.billing.discrepancies.index');
 
     Route::post('/discrepancies/{id}/resolve', [AdminBillingController::class, 'resolveDiscrepancy'])
         ->whereNumber('id')
-        ->name('admin.billing.discrepancies.resolve');
+        ->middleware('idempotent')->name('admin.billing.discrepancies.resolve');
 
     Route::post('/tenants/{tenant}/free-period', [AdminBillingController::class, 'grantFreePeriod'])
         ->whereNumber('tenant')
-        ->name('admin.billing.free-period');
+        ->middleware('idempotent:required')->name('admin.billing.free-period');
 });

@@ -22,14 +22,14 @@ Route::middleware(['auth:api', 'tenant'])->prefix('api-keys')->group(function ()
         ->name('api-keys.show');
 
     Route::post('/', [ApiKeyController::class, 'store'])
-        ->name('api-keys.store');
+        ->middleware('idempotent')->name('api-keys.store');
 
     Route::delete('/{id}', [ApiKeyController::class, 'destroy'])
         ->name('api-keys.destroy');
 
     // Rotación de keys
     Route::post('/{id}/rotate', [ApiKeyController::class, 'rotate'])
-        ->name('api-keys.rotate');
+        ->middleware('idempotent')->name('api-keys.rotate');
 });
 
 /*

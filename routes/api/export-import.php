@@ -26,7 +26,7 @@ Route::middleware(['auth:api'])->prefix('admin')->group(function () {
 
     Route::middleware('permission:users.import,api')->prefix('imports')->group(function () {
         Route::post('/users', [ImportController::class, 'store'])
-            ->defaults('importer', 'users')->name('admin.imports.users');
+            ->defaults('importer', 'users')->middleware('idempotent')->name('admin.imports.users');
         Route::get('/', [ImportController::class, 'index'])->name('admin.imports.index');
         Route::get('/{id}', [ImportController::class, 'show'])->whereNumber('id')->name('admin.imports.show');
         Route::post('/{id}/confirm', [ImportController::class, 'confirm'])->whereNumber('id')->middleware('idempotent')->name('admin.imports.confirm');
