@@ -21,8 +21,8 @@ use App\Contracts\FeatureFlagServiceInterface;
 use App\Contracts\FileServiceInterface;
 use App\Contracts\HostResolverInterface;
 use App\Contracts\IdempotencyInterface;
-use App\Contracts\ImpersonationServiceInterface; // module:offline-sync
-use App\Contracts\ImportServiceInterface; // module:offline-sync
+use App\Contracts\ImpersonationServiceInterface;
+use App\Contracts\ImportServiceInterface;
 use App\Contracts\InboundWebhookServiceInterface;
 use App\Contracts\InboxServiceInterface;
 use App\Contracts\InvoiceServiceInterface;
@@ -104,8 +104,8 @@ use App\Services\FileService;
 use App\Services\I18n\LocaleResolver;
 use App\Services\I18n\LocaleSettingsService;
 use App\Services\IdempotencyService;
-use App\Services\ImpersonationService; // module:offline-sync
-use App\Services\ImportService; // module:offline-sync
+use App\Services\ImpersonationService;
+use App\Services\ImportService;
 use App\Services\LLM\LlmSecurityAnalysisProvider;
 use App\Services\Mail\BrandResolver;
 use App\Services\Mail\MailAccountService;

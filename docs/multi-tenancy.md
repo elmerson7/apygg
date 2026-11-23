@@ -91,6 +91,31 @@ Con multi-tenancy activo:
 - **Cambiar `tenant_id`** de un registro existente: siempre `CrossTenantViolation`, también en plataforma.
 - Las claves únicas deben incluir `tenant_id` (`unique(tenant_id, slug)`), no ser globales.
 
+## Escrituras masivas y consultas directas
+
+`BelongsToTenant` instala `App\Support\Tenancy\TenantEloquentBuilder` (vía `newEloquentBuilder`):
+
+| Operación | Comportamiento con multiempresa activo |
+|---|---|
+| `Model::query()->update()/delete()` | Filtrado por el scope global; `update()` con `tenant_id` en los valores lanza `CrossTenantViolation` |
+| `insert`, `insertOrIgnore`, `insertGetId`, `upsert` | Rellenan `tenant_id` con el del contexto; una fila con otro tenant lanza `CrossTenantViolation`; sin tenant, `MissingTenantContext`; `upsert` no puede actualizar `tenant_id` |
+| Dentro de `TenantQuery::withoutTenant()` | Cada fila debe traer su `tenant_id` (o hay un tenant en el contexto); si no, `MissingTenantContext` |
+
+`DB::table()` y `toBase()` NO pasan por el builder ni por el scope. Regla de `ArchTest`: `DB::table('<tabla con tenant_id>')`
+solo en los archivos auditados de la lista de ese test (cada uno filtra por `tenant_id`/`user_id` explícito o es una
+consulta de plataforma dentro de `withoutTenant`). Un archivo nuevo en esa lista exige la misma revisión. Los contribuyentes
+de privacidad filtran por `user_id` (los datos de UNA persona en todas sus empresas) y nunca por otras personas.
+
+## Bandera apagada con varias empresas (fallo en voz alta)
+
+La multiempresa es opt-in y `MULTI_TENANCY_ENABLED=false` sigue siendo el defecto (un proyecto de una sola empresa no paga
+nada). Pero apagarla con varias empresas en la BD deja los scopes inactivos y mezclaría sus datos, así que:
+
+- `php artisan tenancy:check` sale con error si la bandera está apagada y hay más de una empresa en `tenants` (úsalo en el despliegue/CI).
+- Con `MULTI_TENANCY_STRICT=true` (por defecto solo en `APP_ENV=production`) el middleware `tenant` lanza
+  `TenancyMisconfigured` (500) en ese estado en vez de servir datos sin aislar (resultado cacheado 60 s).
+- Con la bandera encendida el aislamiento ya es fail-closed (sin tenant, `MissingTenantContext`).
+
 ## Resolver el tenant en una ruta
 
 ```php

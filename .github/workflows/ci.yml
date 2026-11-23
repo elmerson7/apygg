@@ -423,14 +423,46 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Un escenario con todos los módulos opcionales quitados y uno por módulo. Los dependientes se quitan
+        # antes que su dependencia (docs-assistant → llm, load-testing → seed-load → billing).
+        # ModulosMatrizCiTest comprueba que cada módulo con 'core' => false tiene su escenario.
         include:
           - escenario: todos
-            modulos: docs-assistant llm backoffice load-testing seed-load billing export-import maintenance privacy search reverb impersonation metrics offline-sync otp-login social-login
-          - escenario: billing
-            # seed-load depende de billing y load-testing de seed-load: se quitan antes
-            modulos: load-testing seed-load billing
+            modulos: docs-assistant llm backoffice load-testing seed-load billing export-import maintenance privacy search reverb impersonation metrics offline-sync otp-login social-login frontend-demo
           - escenario: backoffice
             modulos: backoffice
+          - escenario: billing
+            modulos: load-testing seed-load billing
+          - escenario: docs-assistant
+            modulos: docs-assistant
+          - escenario: export-import
+            modulos: export-import
+          - escenario: frontend-demo
+            modulos: frontend-demo
+          - escenario: impersonation
+            modulos: impersonation
+          - escenario: llm
+            modulos: docs-assistant llm
+          - escenario: load-testing
+            modulos: load-testing
+          - escenario: maintenance
+            modulos: maintenance
+          - escenario: metrics
+            modulos: metrics
+          - escenario: offline-sync
+            modulos: offline-sync
+          - escenario: otp-login
+            modulos: otp-login
+          - escenario: privacy
+            modulos: privacy
+          - escenario: reverb
+            modulos: reverb
+          - escenario: search
+            modulos: search
+          - escenario: seed-load
+            modulos: load-testing seed-load
+          - escenario: social-login
+            modulos: social-login
 
     services:
       postgres:
@@ -512,6 +544,8 @@ jobs:
       - name: Quitar módulos (${{ matrix.modulos }})
         run: |
           for m in ${{ matrix.modulos }}; do
+            # En un derivado que ya quitó el módulo, su escenario no tiene nada que quitar.
+            if [ ! -f "modules/$m.php" ]; then echo "módulo $m ya no existe: se omite"; continue; fi
             php artisan module:remove "$m" --no-verify
           done
           composer dump-autoload --optimize

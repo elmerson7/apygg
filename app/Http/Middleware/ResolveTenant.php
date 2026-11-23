@@ -10,6 +10,7 @@ use App\Support\Tenancy\Exceptions\MissingTenantContext;
 use App\Support\Tenancy\Exceptions\TenantAccessDenied;
 use App\Support\Tenancy\Exceptions\TenantSuspended;
 use App\Support\Tenancy\PermissionTeams;
+use App\Support\Tenancy\TenancyCoherence;
 use App\Support\Tenancy\TenantContext;
 use Closure;
 use Illuminate\Http\Request;
@@ -42,6 +43,9 @@ class ResolveTenant
     public function handle(Request $request, Closure $next, string $mode = 'required'): Response
     {
         if (! $this->context->enabled()) {
+            // Apagado con varias empresas en la BD = despliegue incoherente: falla en voz alta (docs/multi-tenancy.md).
+            TenancyCoherence::assertCoherent();
+
             return $next($request);
         }
 

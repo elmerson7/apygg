@@ -161,3 +161,12 @@ test('formatea por locale con los decimales de la moneda', function () {
 test('se serializa a JSON como entero + moneda', function () {
     expect(json_encode(Money::of(1999, 'EUR')))->toBe('{"amount_minor":1999,"currency":"EUR"}');
 });
+
+test('formatear solo presenta: no altera el entero en unidad menor ni el resultado de los cálculos', function () {
+    $m = Money::of(123456789, 'USD');
+    $m->format('en_US');
+
+    expect($m->amountMinor)->toBe(123456789)
+        ->and($m->add(Money::of(1, 'USD'))->amountMinor)->toBe(123456790)
+        ->and($m->format('en_US'))->toBe('$1,234,567.89');
+});
