@@ -170,3 +170,162 @@ test('formatear solo presenta: no altera el entero en unidad menor ni el resulta
         ->and($m->add(Money::of(1, 'USD'))->amountMinor)->toBe(123456790)
         ->and($m->format('en_US'))->toBe('$1,234,567.89');
 });
+
+test('toDecimalString conserva el signo con el menor importe negativo y con monedas sin decimales', function () {
+    expect(Money::of(-1, 'PEN')->toDecimalString())->toBe('-0.01')
+        ->and(Money::of(1, 'PEN')->toDecimalString())->toBe('0.01')
+        ->and(Money::of(0, 'PEN')->toDecimalString())->toBe('0.00')
+        ->and(Money::of(-1500, 'JPY')->toDecimalString())->toBe('-1500')
+        ->and(Money::of(-1, 'KWD')->toDecimalString())->toBe('-0.001');
+});
+
+test('abs devuelve el valor absoluto incluso del menor importe negativo', function () {
+    expect(Money::of(-1, 'PEN')->abs()->amountMinor)->toBe(1)
+        ->and(Money::of(-250, 'PEN')->abs()->amountMinor)->toBe(250)
+        ->and(Money::of(250, 'PEN')->abs()->amountMinor)->toBe(250)
+        ->and(Money::of(0, 'PEN')->abs()->amountMinor)->toBe(0);
+});
+
+test('los signos y comparaciones distinguen el cero y el menor importe', function () {
+    $zero = Money::of(0, 'PEN');
+    $one = Money::of(1, 'PEN');
+    $minusOne = Money::of(-1, 'PEN');
+
+    expect($zero->isPositive())->toBeFalse()
+        ->and($zero->isNegative())->toBeFalse()
+        ->and($one->isPositive())->toBeTrue()
+        ->and($one->isNegative())->toBeFalse()
+        ->and($minusOne->isNegative())->toBeTrue()
+        ->and($minusOne->isPositive())->toBeFalse()
+        ->and($one->greaterThan($one))->toBeFalse()
+        ->and($one->lessThan($one))->toBeFalse()
+        ->and($one->greaterThan($zero))->toBeTrue()
+        ->and($zero->greaterThan($one))->toBeFalse()
+        ->and($zero->lessThan($one))->toBeTrue()
+        ->and($one->lessThan($zero))->toBeFalse()
+        ->and($zero->greaterThan($minusOne))->toBeTrue()
+        ->and($minusOne->lessThan($zero))->toBeTrue();
+});
+
+test('acepta exactamente los límites de 64 bits y rechaza uno más', function () {
+    expect(Money::fromDecimalString('92233720368547758.07', 'PEN')->amountMinor)->toBe(PHP_INT_MAX)
+        ->and(Money::fromDecimalString('-92233720368547758.08', 'PEN')->amountMinor)->toBe(PHP_INT_MIN);
+
+    expect(fn () => Money::fromDecimalString('92233720368547758.08', 'PEN'))->toThrow(InvalidMoney::class);
+    expect(fn () => Money::fromDecimalString('-92233720368547758.09', 'PEN'))->toThrow(InvalidMoney::class);
+    expect(fn () => Money::of(PHP_INT_MIN, 'PEN')->subtract(Money::of(1, 'PEN')))->toThrow(InvalidMoney::class);
+    expect(fn () => Money::of(PHP_INT_MIN, 'PEN')->negate())->toThrow(InvalidMoney::class);
+});
+
+test('multiplicar por un entero exacto no redondea con ninguna regla, también en negativo', function (Rounding $rounding) {
+    expect(Money::of(5, 'EUR')->multiply(2, $rounding)->amountMinor)->toBe(10)
+        ->and(Money::of(5, 'EUR')->multiply(-2, $rounding)->amountMinor)->toBe(-10)
+        ->and(Money::of(5, 'EUR')->multiply('2.50', $rounding)->amountMinor)->toBe(in_array($rounding, [Rounding::Up, Rounding::HalfUp], true) ? 13 : 12)
+        ->and(Money::of(0, 'EUR')->multiply(-3, $rounding)->amountMinor)->toBe(0);
+})->with([Rounding::Down, Rounding::Up, Rounding::HalfUp, Rounding::HalfEven]);
+
+test('HalfUp redondea hacia arriba desde 0,5 y hacia abajo por debajo', function () {
+    expect(Money::fromDecimalString('0.4', 'JPY', Rounding::HalfUp)->amountMinor)->toBe(0)
+        ->and(Money::fromDecimalString('0.49', 'JPY', Rounding::HalfUp)->amountMinor)->toBe(0)
+        ->and(Money::fromDecimalString('0.5', 'JPY', Rounding::HalfUp)->amountMinor)->toBe(1)
+        ->and(Money::fromDecimalString('-0.4', 'JPY', Rounding::HalfUp)->amountMinor)->toBe(0)
+        ->and(Money::fromDecimalString('-0.5', 'JPY', Rounding::HalfUp)->amountMinor)->toBe(-1);
+});
+
+test('HalfEven redondea al par en el empate y se fija en los decimales siguientes', function () {
+    expect(Money::fromDecimalString('0.5', 'JPY', Rounding::HalfEven)->amountMinor)->toBe(0)
+        ->and(Money::fromDecimalString('1.5', 'JPY', Rounding::HalfEven)->amountMinor)->toBe(2)
+        ->and(Money::fromDecimalString('2.5', 'JPY', Rounding::HalfEven)->amountMinor)->toBe(2)
+        ->and(Money::fromDecimalString('3.5', 'JPY', Rounding::HalfEven)->amountMinor)->toBe(4)
+        ->and(Money::fromDecimalString('12.5', 'JPY', Rounding::HalfEven)->amountMinor)->toBe(12)
+        ->and(Money::fromDecimalString('13.5', 'JPY', Rounding::HalfEven)->amountMinor)->toBe(14)
+        ->and(Money::fromDecimalString('2.51', 'JPY', Rounding::HalfEven)->amountMinor)->toBe(3)
+        ->and(Money::fromDecimalString('2.501', 'JPY', Rounding::HalfEven)->amountMinor)->toBe(3)
+        ->and(Money::fromDecimalString('2.49', 'JPY', Rounding::HalfEven)->amountMinor)->toBe(2)
+        ->and(Money::fromDecimalString('2.6', 'JPY', Rounding::HalfEven)->amountMinor)->toBe(3)
+        ->and(Money::fromDecimalString('2.4', 'JPY', Rounding::HalfEven)->amountMinor)->toBe(2)
+        ->and(Money::fromDecimalString('-2.5', 'JPY', Rounding::HalfEven)->amountMinor)->toBe(-2)
+        ->and(Money::fromDecimalString('-3.5', 'JPY', Rounding::HalfEven)->amountMinor)->toBe(-4);
+});
+
+test('Down trunca hacia cero y Up redondea alejándose de cero', function () {
+    expect(Money::fromDecimalString('2.9', 'JPY', Rounding::Down)->amountMinor)->toBe(2)
+        ->and(Money::fromDecimalString('-2.9', 'JPY', Rounding::Down)->amountMinor)->toBe(-2)
+        ->and(Money::fromDecimalString('2.1', 'JPY', Rounding::Up)->amountMinor)->toBe(3)
+        ->and(Money::fromDecimalString('-2.1', 'JPY', Rounding::Up)->amountMinor)->toBe(-3)
+        ->and(Money::fromDecimalString('2.0', 'JPY', Rounding::Up)->amountMinor)->toBe(2);
+});
+
+test('multiplicar y porcentaje conservan 12 decimales de precisión antes de redondear', function () {
+    // 12 decimales exactos en el factor: el empate 0,5 + 1e-12 sube con HalfEven.
+    expect(Money::of(1, 'EUR')->multiply('0.500000000001', Rounding::HalfEven)->amountMinor)->toBe(1)
+        // 13 decimales: el último se descarta a escala 12 y queda empate exacto -> par (0).
+        ->and(Money::of(1, 'EUR')->multiply('0.5000000000001', Rounding::HalfEven)->amountMinor)->toBe(0);
+
+    // percentage divide por 100 con escala 12.
+    expect(Money::of(1, 'EUR')->percentage('50.0000000001', Rounding::HalfEven)->amountMinor)->toBe(1)
+        ->and(Money::of(1, 'EUR')->percentage('50.00000000001', Rounding::HalfEven)->amountMinor)->toBe(0)
+        ->and(Money::of(1000, 'EUR')->percentage('18', Rounding::HalfUp)->amountMinor)->toBe(180)
+        ->and(Money::of(5, 'EUR')->percentage('10', Rounding::HalfUp)->amountMinor)->toBe(1)
+        ->and(Money::of(-5, 'EUR')->percentage(10, Rounding::HalfUp)->amountMinor)->toBe(-1);
+});
+
+test('multiplicar y porcentaje rechazan factores no decimales', function () {
+    foreach (['1e3', '', 'abc', '1,5', '.5', '1.'] as $bad) {
+        expect(fn () => Money::of(1, 'EUR')->multiply($bad, Rounding::Down))->toThrow(InvalidMoney::class);
+        expect(fn () => Money::of(1, 'EUR')->percentage($bad, Rounding::Down))->toThrow(InvalidMoney::class);
+    }
+});
+
+test('allocate rechaza proporciones negativas (también -1) y totales nulos, y acepta un único 1', function () {
+    expect(fn () => Money::of(10, 'PEN')->allocate([-1, 5]))->toThrow(InvalidMoney::class);
+    expect(fn () => Money::of(10, 'PEN')->allocate([]))->toThrow(InvalidMoney::class);
+    expect(fn () => Money::of(10, 'PEN')->allocate([0, 0]))->toThrow(InvalidMoney::class);
+
+    expect(array_map(fn (Money $p) => $p->amountMinor, Money::of(10, 'PEN')->allocate([1])))->toBe([10])
+        ->and(array_map(fn (Money $p) => $p->amountMinor, Money::of(10, 'PEN')->allocate([0, 1])))->toBe([0, 10]);
+});
+
+test('allocate con importe negativo reparte el valor absoluto y niega las partes, incluido -1', function () {
+    expect(array_map(fn (Money $p) => $p->amountMinor, Money::of(-1, 'PEN')->allocate([1, 1])))->toBe([-1, 0])
+        ->and(array_map(fn (Money $p) => $p->amountMinor, Money::of(-10, 'PEN')->allocate([1, 1, 1])))->toBe([-4, -3, -3])
+        ->and(array_map(fn (Money $p) => $p->amountMinor, Money::of(0, 'PEN')->allocate([1, 2])))->toBe([0, 0]);
+});
+
+test('allocate no da resto a las partes con proporción cero y la suma siempre cuadra', function () {
+    $parts = Money::of(101, 'PEN')->allocate([0, 1, 1, 0, 1]);
+
+    expect(array_map(fn (Money $p) => $p->amountMinor, $parts))->toBe([0, 34, 34, 0, 33])
+        ->and(array_sum(array_map(fn (Money $p) => $p->amountMinor, $parts)))->toBe(101);
+});
+
+test('split acepta una sola parte y rechaza cero o negativas', function () {
+    expect(array_map(fn (Money $p) => $p->amountMinor, Money::of(7, 'PEN')->split(1)))->toBe([7]);
+    expect(array_map(fn (Money $p) => $p->amountMinor, Money::of(10, 'PEN')->split(3)))->toBe([4, 3, 3]);
+    expect(fn () => Money::of(7, 'PEN')->split(0))->toThrow(InvalidMoney::class);
+    expect(fn () => Money::of(7, 'PEN')->split(-1))->toThrow(InvalidMoney::class);
+});
+
+test('exponent no distingue mayúsculas y rechaza monedas fuera de la configuración', function () {
+    expect(Money::exponent('jpy'))->toBe(0)
+        ->and(Money::exponent('kwd'))->toBe(3);
+    expect(fn () => Money::exponent('xxx'))->toThrow(UnsupportedCurrency::class);
+
+    config(['currencies.exponents' => null]);
+    expect(fn () => Money::exponent('PEN'))->toThrow(UnsupportedCurrency::class);
+});
+
+test('format usa siempre los decimales de la moneda configurada como mínimo y máximo', function () {
+    config(['currencies.exponents.USD' => 3]);
+
+    expect(Money::of(1230, 'USD')->format('en_US'))->toBe('$1.230')
+        ->and(Money::of(1, 'USD')->format('en_US'))->toBe('$0.001')
+        ->and(Money::of(1235, 'USD')->format('en_US'))->toBe('$1.235');
+});
+
+test('fromDecimalString trata cero con signo y ceros a la izquierda', function () {
+    expect(Money::fromDecimalString('0', 'PEN')->amountMinor)->toBe(0)
+        ->and(Money::fromDecimalString('007.05', 'PEN')->amountMinor)->toBe(705)
+        ->and(Money::fromDecimalString('-0.00', 'PEN')->amountMinor)->toBe(0)
+        ->and(Money::fromDecimalString('-0.001', 'PEN', Rounding::Down)->amountMinor)->toBe(0);
+});
