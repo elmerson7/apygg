@@ -97,7 +97,7 @@ class RenewalService implements RenewalServiceInterface
         $now = now();
 
         if ($subscription->status === SubscriptionStatus::Incomplete) {
-            if ($subscription->created_at->gt($now->copy()->subHours((int) config('billing.incomplete_expire_hours', 24)))) {
+            if (($subscription->created_at ?? $now)->gt($now->copy()->subHours((int) config('billing.incomplete_expire_hours', 24)))) {
                 return RenewalOutcome::NotDue;
             }
 
