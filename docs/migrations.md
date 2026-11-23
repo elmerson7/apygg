@@ -3,7 +3,7 @@
 PostgreSQL 18 exclusivamente. Plantilla y reglas básicas: `docs/CODING_STANDARDS.md` →
 «Migración». Aquí, las normas de fondo.
 
-> **Consolidación previa a v1.0.0.** Mientras ningún proyecto derivado existía, las 73 migraciones
+> **Consolidación previa a v1.0.0 (histórico).** Mientras ningún proyecto derivado existía, las 73 migraciones
 > históricas del boilerplate se reescribieron en 54 migraciones de creación (`create_<tabla>_table`,
 > prefijo `2026_01_01_*`, más `0001_01_01_*` de Laravel): cada una crea su tabla completa y en su forma
 > final, sin `add_*`/`alter`/`drop_*` ni tablas creadas para borrarse (el esquema resultante es idéntico).
@@ -100,7 +100,7 @@ entero «mágico» ni como booleanos múltiples (`is_paid`, `is_sent`…).
 
 ## 6. Reversibles: `down()` siempre
 
-Las 35 migraciones del repo tienen `down()`. Debe deshacer exactamente lo que hizo `up()`
+Todas las migraciones del repo tienen `down()` (58 a 23-nov-2026: `ls database/migrations | wc -l`). Debe deshacer exactamente lo que hizo `up()`
 (`dropColumn`, `dropIfExists`, o la conversión inversa, como hacía la antigua `convert_json_columns_to_jsonb`).
 Si una migración **no se puede** revertir sin perder datos (borrado de columna), dilo en el
 docblock y haz que `down()` recree la estructura aunque no pueda recuperar los datos. Hazla

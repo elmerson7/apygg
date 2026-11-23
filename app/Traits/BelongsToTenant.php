@@ -7,8 +7,10 @@ use App\Scopes\TenantScope;
 use App\Support\Tenancy\Exceptions\CrossTenantViolation;
 use App\Support\Tenancy\Exceptions\MissingTenantContext;
 use App\Support\Tenancy\TenantContext;
+use App\Support\Tenancy\TenantEloquentBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Query\Builder;
 
 /**
  * BelongsToTenant
@@ -23,8 +25,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *   del tenant activo (cubre `withoutGlobalScopes()` y la restauración de modelos en jobs, que
  *   Laravel hace sin scopes).
  *
- * No cubre las operaciones masivas de query (`insert`, `upsert`, `Model::query()->update()`):
- * ahí el `tenant_id` lo respeta el scope de lectura, pero NO se debe escribir `tenant_id`.
+ * Escrituras masivas: `TenantEloquentBuilder` filtra `update()`/`delete()` por el scope, prohíbe cambiar
+ * `tenant_id` y rellena (o valida) `tenant_id` en `insert`/`insertOrIgnore`/`insertGetId`/`upsert`.
+ * `DB::table()` y `toBase()` quedan fuera: los vigila `ArchTest`.
  *
  * @mixin Model
  */
@@ -71,6 +74,18 @@ trait BelongsToTenant
         static::restoring(fn (Model $model) => self::assertBelongsToActiveTenant($model));
 
         static::retrieved(fn (Model $model) => self::assertBelongsToActiveTenant($model));
+    }
+
+    /**
+     * @param  Builder  $query
+     * @return TenantEloquentBuilder<static>
+     */
+    public function newEloquentBuilder($query): TenantEloquentBuilder
+    {
+        /** @var TenantEloquentBuilder<static> $builder */
+        $builder = new TenantEloquentBuilder($query);
+
+        return $builder;
     }
 
     /**

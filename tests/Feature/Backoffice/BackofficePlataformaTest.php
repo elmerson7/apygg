@@ -1,43 +1,43 @@
 <?php
 
-use App\Contracts\MaintenanceServiceInterface;
+use App\Contracts\MaintenanceServiceInterface; // module:maintenance
 use App\Enums\TenantStatus;
-use App\Filament\Pages\Maintenance;
+use App\Filament\Pages\Maintenance; // module:maintenance
 use App\Filament\Resources\Audit\AuditLogResource;
 use App\Filament\Resources\Audit\Pages\ListAuditLogs;
-use App\Filament\Resources\Data\DataExportResource;
-use App\Filament\Resources\Data\DataImportResource;
-use App\Filament\Resources\Data\Pages\ListDataExports;
-use App\Filament\Resources\Data\Pages\ListDataImports;
-use App\Filament\Resources\Data\Pages\ListPersonalDataExports;
+use App\Filament\Resources\Data\DataExportResource; // module:export-import
+use App\Filament\Resources\Data\DataImportResource; // module:export-import
+use App\Filament\Resources\Data\Pages\ListDataExports; // module:export-import
+use App\Filament\Resources\Data\Pages\ListDataImports; // module:export-import
+use App\Filament\Resources\Data\Pages\ListPersonalDataExports; // module:privacy
 use App\Filament\Resources\FeatureFlags\Pages\CreateFeatureFlag;
 use App\Filament\Resources\FeatureFlags\Pages\EditFeatureFlag;
 use App\Filament\Resources\FeatureFlags\Pages\ListFeatureFlags;
 use App\Filament\Resources\FeatureFlags\RelationManagers\TenantOverridesRelationManager;
 use App\Filament\Resources\Mail\MailSuppressions\Pages\CreateMailSuppression;
 use App\Filament\Resources\Mail\MailSuppressions\Pages\ListMailSuppressions;
-use App\Filament\Resources\Privacy\LegalDocuments\LegalDocumentResource;
-use App\Filament\Resources\Privacy\LegalDocuments\Pages\CreateLegalDocument;
-use App\Filament\Resources\Privacy\LegalDocuments\Pages\ListLegalDocuments;
-use App\Filament\Resources\Privacy\LegalDocuments\Pages\ViewLegalDocument;
+use App\Filament\Resources\Privacy\LegalDocuments\LegalDocumentResource; // module:privacy
+use App\Filament\Resources\Privacy\LegalDocuments\Pages\CreateLegalDocument; // module:privacy
+use App\Filament\Resources\Privacy\LegalDocuments\Pages\ListLegalDocuments; // module:privacy
+use App\Filament\Resources\Privacy\LegalDocuments\Pages\ViewLegalDocument; // module:privacy
 use App\Filament\Resources\Tenants\Pages\ListTenants;
 use App\Filament\Resources\Tenants\Pages\ViewTenant;
 use App\Filament\Resources\Tenants\RelationManagers\InvitationsRelationManager;
 use App\Filament\Resources\Tenants\RelationManagers\MembersRelationManager;
 use App\Filament\Support\Pretty;
 use App\Models\AuditLog;
-use App\Models\DataExport;
-use App\Models\DataImport;
+use App\Models\DataExport; // module:export-import
+use App\Models\DataImport; // module:export-import
 use App\Models\FeatureFlag;
 use App\Models\FeatureFlagOverride;
-use App\Models\LegalDocument;
+use App\Models\LegalDocument; // module:privacy
 use App\Models\Mail\MailSuppression;
-use App\Models\PersonalDataExport;
+use App\Models\PersonalDataExport; // module:privacy
 use App\Models\Tenant;
 use App\Models\TenantInvitation;
 use App\Models\TenantLimitOverride;
 use App\Models\User;
-use App\Models\UserConsent;
+use App\Models\UserConsent; // module:privacy
 use App\Support\Tenancy\TenantContext;
 use Filament\Actions\Testing\TestAction;
 use Filament\Schemas\Schema;
@@ -83,11 +83,11 @@ test('cada recurso nuevo niega el acceso a quien solo tiene backoffice.access', 
     'auditoría' => ListAuditLogs::class,
     'feature flags' => ListFeatureFlags::class,
     'supresión de correo' => ListMailSuppressions::class,
-    'documentos legales' => ListLegalDocuments::class,
-    'exportaciones' => ListDataExports::class,
-    'importaciones' => ListDataImports::class,
-    'datos personales' => ListPersonalDataExports::class,
-    'mantenimiento' => Maintenance::class,
+    'documentos legales' => ListLegalDocuments::class, // module:privacy
+    'exportaciones' => ListDataExports::class, // module:export-import
+    'importaciones' => ListDataImports::class, // module:export-import
+    'datos personales' => ListPersonalDataExports::class, // module:privacy
+    'mantenimiento' => Maintenance::class, // module:maintenance
 ]);
 
 test('sin MFA configurado el panel redirige antes de mostrar los recursos nuevos', function () {
@@ -337,6 +337,7 @@ test('sin mail.suppressions no se ve ni se gestiona la lista de supresión', fun
     Livewire::test(CreateMailSuppression::class)->assertForbidden();
 });
 
+// module:privacy:start
 // ---------- Documentos legales ----------
 
 test('publicar un documento legal crea una versión inmutable y la ficha agrega las aceptaciones', function () {
@@ -378,7 +379,9 @@ test('sin legal-documents.manage no se publica; con read solo se consulta', func
     Livewire::test(ListLegalDocuments::class)->assertCanSeeTableRecords([$doc]);
     Livewire::test(CreateLegalDocument::class)->assertForbidden();
 });
+// module:privacy:end
 
+// module:maintenance:start
 // ---------- Mantenimiento ----------
 
 test('el mantenimiento se activa y se desactiva por el servicio con rastro de auditoría', function () {
@@ -400,26 +403,39 @@ test('el mantenimiento se activa y se desactiva por el servicio con rastro de au
     expect(app(MaintenanceServiceInterface::class)->state())->toBeNull()
         ->and(AuditLog::where('event', 'maintenance.disable')->exists())->toBeTrue();
 });
+// module:maintenance:end
 
+// module:export-import:start
 // ---------- Exportaciones e importaciones ----------
 
-test('exportaciones, importaciones y datos personales son de solo lectura y piden su permiso', function () {
+test('exportaciones e importaciones son de solo lectura y piden su permiso', function () {
     $user = User::factory()->create();
     $export = DataExport::create(['user_id' => $user->id, 'exporter' => 'users', 'format' => 'csv', 'status' => 'completed', 'disk' => 'local', 'path' => 'secreto/ruta.csv']);
     $import = DataImport::create(['user_id' => $user->id, 'importer' => 'users', 'status' => 'completed', 'original_name' => 'u.csv', 'disk' => 'local', 'path' => 'x/y.csv', 'file_hash' => str_repeat('a', 64)]);
-    $personal = PersonalDataExport::create(['user_id' => $user->id, 'status' => 'ready', 'disk' => 'local', 'path' => 'privado/zip']);
 
     $this->actingAs(conPermisosBo());
     Livewire::test(ListDataExports::class)->assertForbidden();
     Livewire::test(ListDataImports::class)->assertForbidden();
-    Livewire::test(ListPersonalDataExports::class)->assertForbidden();
 
     $this->actingAs(conPermisosBo('users.export', 'users.import'));
     Livewire::test(ListDataExports::class)->assertCanSeeTableRecords([$export]);
     Livewire::test(ListDataImports::class)->assertCanSeeTableRecords([$import]);
-    Livewire::test(ListPersonalDataExports::class)->assertCanSeeTableRecords([$personal]);
 
     expect(DataExportResource::canCreate())->toBeFalse()
         ->and(DataExportResource::canDelete($export))->toBeFalse()
         ->and(DataImportResource::canEdit($import))->toBeFalse();
 });
+// module:export-import:end
+
+// module:privacy:start
+test('los datos personales exportados son de solo lectura y piden su permiso', function () {
+    $user = User::factory()->create();
+    $personal = PersonalDataExport::create(['user_id' => $user->id, 'status' => 'ready', 'disk' => 'local', 'path' => 'privado/zip']);
+
+    $this->actingAs(conPermisosBo());
+    Livewire::test(ListPersonalDataExports::class)->assertForbidden();
+
+    $this->actingAs(conPermisosBo('users.read'));
+    Livewire::test(ListPersonalDataExports::class)->assertCanSeeTableRecords([$personal]);
+});
+// module:privacy:end

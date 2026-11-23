@@ -69,9 +69,9 @@ Dependencias del `composer.json` sin uso en `app/`, `config/`, `routes/` ni `boo
 
 Workflows en `.github/workflows/`:
 
-- `ci.yml`: job `lint` (Pint en modo test y PHPStan), job `test` (migraciones y Pest con cobertura) y `composer audit`.
-- `cd.yml`: despliegue.
-- `sonarcloud.yml`: análisis de calidad.
+- `ci.yml`: lint (Pint + PHPStan), suite con cobertura mínima del 80 %, suite con `API_PREFIX=v1`, oasdiff, `composer audit`, migraciones, matriz sin módulos, E2E y build. Detalle en `.github/workflows/README.md`.
+- `release.yml`: imagen inmutable en GHCR escaneada con Trivy.
+- `cd.yml`: despliegue manual.
 - `.github/dependabot.yml`: actualización de dependencias.
 
 ## Requisitos

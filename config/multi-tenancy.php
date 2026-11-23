@@ -14,6 +14,12 @@ return [
     'enabled' => (bool) env('MULTI_TENANCY_ENABLED', false),
 
     /*
+    | Modo estricto con multiempresa APAGADO: si la BD tiene más de una empresa, el middleware `tenant` falla
+    | (500 TenancyMisconfigured) en vez de servir datos sin aislar. Por defecto solo en producción.
+    */
+    'strict' => (bool) env('MULTI_TENANCY_STRICT', env('APP_ENV') === 'production'),
+
+    /*
     |--------------------------------------------------------------------------
     | Tenant por defecto
     |--------------------------------------------------------------------------

@@ -6,7 +6,6 @@ return [
     'core' => true,
     'depends' => [],
     'files' => [
-        '.bob/project_settings.json',
         'app/Casts',
         'app/Contracts/FeatureFlagServiceInterface.php',
         'app/Contracts/LocaleResolverInterface.php',

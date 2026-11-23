@@ -316,6 +316,52 @@ test('el aislamiento por tenant solo se salta con TenantQuery::withoutTenant (ni
     expect($violaciones)->toBe([]);
 });
 
+test('DB::table sobre tablas con tenant_id solo se usa en los archivos auditados (el scope no cubre consultas directas)', function () {
+    // Cada archivo de la lista se revisó: filtra por tenant_id/user_id explícito o es una consulta de plataforma
+    // dentro de TenantQuery::withoutTenant(). Un archivo nuevo aquí exige la misma revisión (docs/multi-tenancy.md).
+    $auditados = [
+        'app/Console/Commands/BillingRenewCommand.php',
+        'app/Integrations/Webhooks/StripeEventTenantResolver.php',
+        'app/Services/Billing/BillingAccountService.php',
+        'app/Services/Billing/BillingNoticeService.php',
+        'app/Services/Billing/InvoiceService.php',
+        'app/Services/Billing/PaymentDiscrepancyService.php',
+        'app/Services/Billing/PaymentProcessor.php',
+        'app/Services/Billing/PaymentReconciler.php',
+        'app/Services/Billing/RenewalService.php',
+        'app/Services/Billing/SubscriptionPlanSource.php',
+        'app/Support/SeedLoad/LoadDataPurger.php',
+        'app/Support/Privacy/Contributors/ApiKeysContributor.php',
+        'app/Support/Privacy/Contributors/FilesContributor.php',
+        'app/Support/Privacy/Contributors/NotificationsContributor.php',
+    ];
+
+    $tablas = [];
+    foreach (glob(base_path('app/Models/*.php')) ?: [] as $file) {
+        if (! str_contains((string) file_get_contents($file), 'BelongsToTenant;')) {
+            continue;
+        }
+        $class = 'App\\Models\\'.basename($file, '.php');
+        $tablas[] = (new $class)->getTable();
+    }
+
+    expect($tablas)->not->toBe([]);
+
+    $violaciones = [];
+    foreach (archPhpFiles('app') as $file) {
+        if (in_array($file, $auditados, true) || str_starts_with($file, 'app/Support/Tenancy/')) {
+            continue;
+        }
+        foreach ($tablas as $tabla) {
+            if (preg_match('/DB::table\(\s*[\'"]'.preg_quote($tabla, '/').'[\'"]/', file_get_contents(base_path($file)))) {
+                $violaciones[] = "$file ($tabla)";
+            }
+        }
+    }
+
+    expect($violaciones)->toBe([]);
+});
+
 arch('Money y las secuencias no usan float ni dependen de la capa HTTP')
     ->expect(['App\Support\Money', 'App\Support\Sequences'])
     ->not->toUse(['App\Http\Controllers', 'App\Http\Requests', 'App\Http\Resources']);

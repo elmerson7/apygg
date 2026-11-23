@@ -17,6 +17,22 @@ impacto en un proyecto existente están en `CHANGELOG.md`.
 
 ## De 1.0.0 a la versión actual (Unreleased)
 
+### Multiempresa: builder con escrituras masivas aisladas y coherencia de la bandera
+
+- Los modelos con `BelongsToTenant` usan ahora `TenantEloquentBuilder`: con multiempresa activo, `insert`/`upsert`/
+  `insertOrIgnore`/`insertGetId` rellenan `tenant_id` (o lanzan `CrossTenantViolation` si la fila trae otro) y
+  `update()` con `tenant_id` lanza. Si tu código insertaba filas masivas de un modelo con tenant sin contexto (comandos,
+  seeders), envuélvelo en `TenantContext::run($tenant, ...)` o pasa `tenant_id` dentro de `TenantQuery::withoutTenant()`.
+  Si un modelo tuyo ya define `newEloquentBuilder`, extiende `TenantEloquentBuilder`.
+- Nuevo `php artisan tenancy:check` y `MULTI_TENANCY_STRICT` (por defecto true solo en producción): con
+  `MULTI_TENANCY_ENABLED=false` y más de una empresa en `tenants`, el middleware `tenant` responde 500. Si tu despliegue
+  estaba en ese estado, activa la multiempresa o limpia las empresas sobrantes.
+- Nueva regla de `ArchTest`: `DB::table()` sobre tablas con `tenant_id` solo en los archivos auditados; añade los tuyos a la lista tras revisarlos.
+
+### Back-office: datos personales exportados piden `users.read`
+
+- El recurso «Datos personales exportados» (módulo privacy) pedía `users.export`, que es del módulo export-import: al quitar ese módulo el panel fallaba. Ahora pide `users.read` (núcleo). Si diste `users.export` a soporte solo para ver ese recurso, dale `users.read`.
+
 ### `trace_id` en la auditoría de actividad y límites de `/auth/refresh` y cambio de contraseña
 
 - **Migraciones nuevas** (`make migrate`):

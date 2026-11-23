@@ -40,6 +40,7 @@ use Tests\Support\ConcurrentRunner;
  *  7. Cancelación al fin del periodo vs renovación en 2 empresas (4): o se cobra y sigue, o se cancela sin cobro.
  *  8. Numeración por empresa (alcance `tenant`) con 3 empresas x 2 emisiones simultáneas (6): 1..3 por empresa, sin huecos.
  *  9. Límite de plan (API keys) con 6 altas simultáneas y tope 2 (6): exactamente 2 caben.
+ * 10. Números de intento de cobro (`payments.attempt`) con 4 cobros rechazados + 2 pagos manuales a la vez (6): sin repetidos ni huecos, un solo saldo.
  *
  * Los datos quedan comprometidos: se limpian a mano. La pasarela falsa vive en la memoria de CADA proceso (sus llamadas se suman).
  */
@@ -432,4 +433,42 @@ test('seis altas simultáneas con un tope de plan de 2 API keys: exactamente dos
     expect($res['ok'] ?? 0)->toBe(2, json_encode($results))
         ->and($res['tope'] ?? 0)->toBe(4, json_encode($results))
         ->and(DB::table('api_keys')->where('tenant_id', $tid)->count())->toBe(2);
+});
+
+test('seis procesos a la vez abriendo intentos de cobro (4 de pasarela rechazados y 2 pagos manuales) nunca repiten el número de intento ni saldan dos veces la factura (6 procesos)', function () {
+    $e = ccxEmpresa($this->sufijo, 'n');
+    $factura = ccxFacturaAbierta($e);
+    [$tid, $uid] = [$e['tenant']->id, $e['owner']->id];
+    $previos = (int) DB::table('payments')->where('invoice_id', $factura)->count();
+
+    $results = ConcurrentRunner::run(6, function (int $i) use ($tid, $uid, $factura) {
+        config(['multi-tenancy.enabled' => true]);
+        $tenant = Tenant::query()->findOrFail($tid);
+
+        try {
+            if ($i < 4) {
+                app(PaymentGatewayInterface::class)->declineNext();
+                app(TenantContext::class)->run($tenant, fn () => app(PaymentProcessorInterface::class)->pay($tenant, User::query()->findOrFail($uid), $factura));
+                $res = 'ok';
+            } else {
+                app(InvoiceServiceInterface::class)->markPaidManually($factura, User::query()->findOrFail($uid), 'transferencia-'.$i, 'Pago recibido por transferencia');
+                $res = 'manual';
+            }
+        } catch (BillingException $ex) {
+            $res = $ex->errorCode();
+        }
+
+        return ['res' => $res];
+    }, 90);
+
+    foreach ($results as $r) {
+        expect($r['ok'])->toBeTrue($r['error'] ?? '');
+    }
+
+    $intentos = DB::table('payments')->where('invoice_id', $factura)->orderBy('attempt')->pluck('attempt')->map(fn ($a) => (int) $a)->all();
+
+    // Sin repetidos (lo garantiza el unique (invoice_id, attempt)) y sin huecos: 1..N.
+    expect($intentos)->toBe(range(1, count($intentos)), json_encode($results))
+        ->and(count($intentos))->toBeGreaterThan($previos)
+        ->and(DB::table('payments')->where('invoice_id', $factura)->where('status', 'succeeded')->count())->toBeLessThanOrEqual(1);
 });
