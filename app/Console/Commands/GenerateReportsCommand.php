@@ -53,7 +53,7 @@ class GenerateReportsCommand extends Command
             ];
 
             $this->info('Reporte semanal generado:');
-            $this->line(json_encode($report, JSON_PRETTY_PRINT));
+            $this->line(json_encode($report, JSON_PRETTY_PRINT) ?: '{}');
 
             Log::info('Reporte semanal generado', $report);
 

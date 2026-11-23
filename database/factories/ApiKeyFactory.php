@@ -45,7 +45,7 @@ class ApiKeyFactory extends Factory
 
         return [
             'user_id' => User::factory(),
-            'name' => $this->faker->words(3, true).' Key',
+            'name' => implode(' ', (array) $this->faker->words(3)).' Key',
             'key' => $hashedKey,
             'scopes' => $this->faker->randomElements($availableScopes, $this->faker->numberBetween(1, 3)),
             'expires_at' => $this->faker->optional(0.3)->dateTimeBetween('now', '+1 year'),

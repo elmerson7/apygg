@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\ReadsTypedInput;
 use App\Contracts\FileServiceInterface;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Filesystem\Filesystem;
@@ -16,6 +17,8 @@ use Illuminate\Support\Str;
  */
 class StorageCheckCommand extends Command
 {
+    use ReadsTypedInput;
+
     protected $signature = 'storage:check
         {--disk=* : Discos a comprobar (por defecto, los de config/files.php: público y privado)}';
 
@@ -23,7 +26,7 @@ class StorageCheckCommand extends Command
 
     public function handle(): int
     {
-        $disks = $this->option('disk') ?: array_values(array_unique([
+        $disks = $this->listOption('disk') ?: array_values(array_unique([
             (string) config('files.disks.public'),
             (string) config('files.disks.private'),
         ]));

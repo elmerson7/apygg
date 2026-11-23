@@ -98,7 +98,7 @@ class UserService implements UserServiceInterface
         $this->clearCache();
         event(new UserCreated($user));
 
-        return $user->fresh(['roles', 'permissions', 'profile']);
+        return $user->fresh(['roles', 'permissions', 'profile']) ?? $user;
     }
 
     /**
@@ -196,7 +196,7 @@ class UserService implements UserServiceInterface
         $this->clearCache($userId);
         event(new UserUpdated($user, $oldAttributes));
 
-        return $user->fresh(['roles', 'permissions', 'profile']);
+        return $user->fresh(['roles', 'permissions', 'profile']) ?? $user;
     }
 
     /**
@@ -241,7 +241,7 @@ class UserService implements UserServiceInterface
         $this->clearCache((string) $user->id);
         event(new UserUpdated($user, $oldAttributes));
 
-        return $user->fresh(['profile']);
+        return $user->fresh(['profile']) ?? $user;
     }
 
     /**
@@ -261,12 +261,12 @@ class UserService implements UserServiceInterface
         $user->syncRoles(array_map('intval', $roleIds));
 
         foreach (array_diff($roleIds, $previousRoleIds) as $roleId) {
-            if ($role = Role::find($roleId)) {
+            if ($role = Role::query()->find((int) $roleId)) {
                 event(new RoleAssigned($user, $role));
             }
         }
         foreach (array_diff($previousRoleIds, $roleIds) as $roleId) {
-            if ($role = Role::find($roleId)) {
+            if ($role = Role::query()->find((int) $roleId)) {
                 event(new RoleRemoved($user, $role));
             }
         }
@@ -287,7 +287,7 @@ class UserService implements UserServiceInterface
         $user->update(['preferences' => $merged]);
         $this->clearCache($userId);
 
-        return $user->fresh(['roles', 'permissions']);
+        return $user->fresh(['roles', 'permissions']) ?? $user;
     }
 
     /**
@@ -342,7 +342,7 @@ class UserService implements UserServiceInterface
         $this->clearCache($userId);
         event(new UserRestored($user));
 
-        return $user->fresh(['roles', 'permissions']);
+        return $user->fresh(['roles', 'permissions']) ?? $user;
     }
 
     /**
@@ -488,17 +488,17 @@ class UserService implements UserServiceInterface
         $this->clearCache($userId);
 
         foreach (array_diff($roleIds, $previousRoleIds) as $roleId) {
-            if ($role = Role::find($roleId)) {
+            if ($role = Role::query()->find((int) $roleId)) {
                 event(new RoleAssigned($user, $role));
             }
         }
         foreach (array_diff($previousRoleIds, $roleIds) as $roleId) {
-            if ($role = Role::find($roleId)) {
+            if ($role = Role::query()->find((int) $roleId)) {
                 event(new RoleRemoved($user, $role));
             }
         }
 
-        return $user->fresh(['roles', 'permissions']);
+        return $user->fresh(['roles', 'permissions']) ?? $user;
     }
 
     /**
@@ -524,7 +524,7 @@ class UserService implements UserServiceInterface
             $this->clearCache($userId);
             event(new RoleRemoved($user, $role));
 
-            return $user->fresh(['roles', 'permissions']);
+            return $user->fresh(['roles', 'permissions']) ?? $user;
         });
     }
 
@@ -565,17 +565,17 @@ class UserService implements UserServiceInterface
         $this->clearCache($userId);
 
         foreach (array_diff($permissionIds, $previousPermissionIds) as $permissionId) {
-            if ($permission = Permission::find($permissionId)) {
+            if ($permission = Permission::query()->find((int) $permissionId)) {
                 event(new PermissionGranted($user, $permission));
             }
         }
         foreach (array_diff($previousPermissionIds, $permissionIds) as $permissionId) {
-            if ($permission = Permission::find($permissionId)) {
+            if ($permission = Permission::query()->find((int) $permissionId)) {
                 event(new PermissionRevoked($user, $permission));
             }
         }
 
-        return $user->fresh(['roles', 'permissions']);
+        return $user->fresh(['roles', 'permissions']) ?? $user;
     }
 
     /**
@@ -597,7 +597,7 @@ class UserService implements UserServiceInterface
             'permission_id' => $permissionId,
         ], 'activity');
 
-        return $user->fresh(['roles', 'permissions']);
+        return $user->fresh(['roles', 'permissions']) ?? $user;
     }
 
     /**

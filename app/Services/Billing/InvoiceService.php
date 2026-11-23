@@ -55,6 +55,7 @@ class InvoiceService implements InvoiceServiceInterface
             $subtotal = $subtotal->add($line->amount());
         }
 
+        /** @var numeric-string $rate */
         $rate = (string) config('billing.tax.rate', '0');
         $tax = $subtotal->isPositive() && bccomp($rate, '0', 6) > 0 ? $subtotal->percentage($rate, Rounding::HalfUp) : Money::zero($currency);
 
@@ -152,7 +153,7 @@ class InvoiceService implements InvoiceServiceInterface
             throw BillingException::invoiceNotFound();
         }
 
-        $tenant = Tenant::query()->findOrFail($row->tenant_id);
+        $tenant = Tenant::query()->findOrFail((int) $row->tenant_id);
 
         return $this->tenants->run($tenant, fn () => DB::transaction(function () use ($row, $actor, $reference, $reason): Invoice {
             $subscription = Subscription::query()->whereKey($row->subscription_id)->lockForUpdate()->firstOrFail();

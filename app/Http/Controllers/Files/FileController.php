@@ -51,9 +51,9 @@ class FileController extends Controller
         $query = File::query();
 
         // Filtrar por usuario autenticado (solo sus archivos); quien gestiona puede filtrar por usuario.
-        $canManage = $request->user()->can('files.manage');
+        $canManage = $this->authUser($request)->can('files.manage');
         if (! $canManage) {
-            $query->where('user_id', $request->user()->id);
+            $query->where('user_id', $this->authUser($request)->id);
         }
 
         return $this->listing($request, $query, [
@@ -81,7 +81,7 @@ class FileController extends Controller
         $file = File::findOrFail($id);
 
         // Un archivo privado solo lo ve su dueño o quien tenga files.manage
-        if (! $request->user()->can('view', $file)) {
+        if (! $this->authUser($request)->can('view', $file)) {
             return $this->sendError('No tienes permiso para ver este archivo', 403);
         }
 
@@ -123,7 +123,7 @@ class FileController extends Controller
                 $expiresAt = $retentionDays ? now()->addDays($retentionDays) : null;
 
                 return File::create([
-                    'user_id' => $request->user()->id,
+                    'user_id' => $this->authUser($request)->id,
                     'name' => $this->cleanOriginalName($uploadedFile->getClientOriginalName()),
                     'filename' => $uploadResult['filename'],
                     'path' => $uploadResult['path'],
@@ -185,7 +185,7 @@ class FileController extends Controller
     {
         $file = File::findOrFail($id);
 
-        if (! $request->user()->can('update', $file)) {
+        if (! $this->authUser($request)->can('update', $file)) {
             return $this->sendError('No tienes permiso para actualizar este archivo', 403);
         }
 
@@ -225,7 +225,7 @@ class FileController extends Controller
     {
         $file = File::findOrFail($id);
 
-        if (! $request->user()->can('delete', $file)) {
+        if (! $this->authUser($request)->can('delete', $file)) {
             return $this->sendError('No tienes permiso para eliminar este archivo', 403);
         }
 
@@ -259,7 +259,7 @@ class FileController extends Controller
     {
         $file = File::findOrFail($id);
 
-        if (! $request->user()->can('download', $file)) {
+        if (! $this->authUser($request)->can('download', $file)) {
             return $this->sendError('No tienes permiso para descargar este archivo', 403);
         }
 
@@ -276,7 +276,7 @@ class FileController extends Controller
     {
         $file = File::findOrFail($id);
 
-        if (! $request->user()->can('download', $file)) {
+        if (! $this->authUser($request)->can('download', $file)) {
             return $this->sendError('No tienes permiso para descargar este archivo', 403);
         }
 

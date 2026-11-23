@@ -3,6 +3,7 @@
 namespace App\Support\Jwt;
 
 use DateTimeImmutable;
+use Lcobucci\JWT\Signer\Key;
 use Lcobucci\JWT\Signer\Key\InMemory;
 use Lcobucci\JWT\Validation\Constraint\SignedWithOneInSet;
 use Lcobucci\JWT\Validation\Constraint\SignedWithUntilDate;
@@ -21,7 +22,11 @@ class KeyRotatingLcobucci extends Lcobucci
     {
         parent::__construct(config('jwt.secret'), config('jwt.algo'), (array) config('jwt.keys'));
 
-        $current = new SignedWithUntilDate($this->signer, $this->getVerificationKey(), new DateTimeImmutable('9999-12-31'));
+        // El proveedor del paquete documenta `Key|string` pero siempre devuelve un `Key` (InMemory).
+        $verificationKey = $this->getVerificationKey();
+        assert($verificationKey instanceof Key);
+
+        $current = new SignedWithUntilDate($this->signer, $verificationKey, new DateTimeImmutable('9999-12-31'));
         $constraints = [$current];
 
         $previous = config('jwt.previous_public_key');

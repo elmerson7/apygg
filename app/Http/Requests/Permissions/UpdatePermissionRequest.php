@@ -10,7 +10,7 @@ class UpdatePermissionRequest extends BaseFormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('update', Permission::findOrFail($this->route('id')));
+        return (bool) $this->user()?->can('update', Permission::findOrFail($this->route('id')));
     }
 
     /**

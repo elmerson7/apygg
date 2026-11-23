@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\ReadsTypedInput;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Console\Command;
@@ -13,6 +14,8 @@ use Illuminate\Console\Command;
  */
 class UserRoleAssignCommand extends Command
 {
+    use ReadsTypedInput;
+
     /**
      * The name and signature of the console command.
      *
@@ -34,11 +37,11 @@ class UserRoleAssignCommand extends Command
      */
     public function handle(): int
     {
-        $userId = $this->argument('userId');
-        $roleName = $this->argument('role');
+        $userId = $this->stringArgument('userId') ?? '';
+        $roleName = $this->stringArgument('role') ?? '';
 
         // Find user
-        $user = User::find($userId);
+        $user = User::query()->find($userId);
         if (! $user) {
             $this->error("User with ID '{$userId}' not found.");
 

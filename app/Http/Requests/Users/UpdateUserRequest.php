@@ -26,7 +26,7 @@ class UpdateUserRequest extends BaseFormRequest
     {
         $user = User::findOrFail($this->route('id'));
 
-        return $this->user()->can('update', $user);
+        return (bool) $this->user()?->can('update', $user);
     }
 
     /**
@@ -42,8 +42,10 @@ class UpdateUserRequest extends BaseFormRequest
     public function rules(): array
     {
         $userId = $this->route('id');
-        $isSelf = (int) $this->user()->id === (int) $userId;
-        $canManageUsers = $this->user()->can('users.update');
+        $actor = $this->user();
+        assert($actor instanceof User); // `authorize()` ya exigió un usuario autenticado
+        $isSelf = (int) $actor->id === (int) $userId;
+        $canManageUsers = $actor->can('users.update');
 
         return [
             'first_name' => ['sometimes', 'string', 'max:100'],

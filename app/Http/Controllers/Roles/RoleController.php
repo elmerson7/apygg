@@ -44,7 +44,7 @@ class RoleController extends Controller
         $permissionIds = $validated['permission_ids'] ?? null;
         if ($permissionIds !== null) {
             $this->authorize('assignPermission', new Role);
-            $this->roleService->assertCanGrantPermissions(auth('api')->user(), $permissionIds);
+            $this->roleService->assertCanGrantPermissions($this->authUser($request), $permissionIds);
         }
 
         $role = $this->roleService->create($validated);
@@ -65,7 +65,7 @@ class RoleController extends Controller
         $permissionIds = $validated['permission_ids'] ?? null;
         if ($permissionIds !== null) {
             $this->authorize('assignPermission', $role);
-            $this->roleService->assertCanGrantPermissions(auth('api')->user(), $permissionIds);
+            $this->roleService->assertCanGrantPermissions($this->authUser($request), $permissionIds);
         }
 
         $this->roleService->update($id, Arr::except($validated, ['permission_ids']));
@@ -103,7 +103,7 @@ class RoleController extends Controller
 
         $validated = $request->validated();
 
-        $this->roleService->assertCanGrantPermissions(auth('api')->user(), $validated['permissions']);
+        $this->roleService->assertCanGrantPermissions($this->authUser($request), $validated['permissions']);
 
         $this->roleService->syncPermissions($id, $validated['permissions']);
 

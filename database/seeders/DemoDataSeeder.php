@@ -22,7 +22,7 @@ class DemoDataSeeder extends Seeder
     public function run(): void
     {
         if (app()->environment('production')) {
-            $this->command->error('DemoDataSeeder no se ejecuta en producción.');
+            $this->command?->error('DemoDataSeeder no se ejecuta en producción.');
 
             return;
         }
@@ -47,6 +47,6 @@ class DemoDataSeeder extends Seeder
             $user->assignRole($roles);
         }
 
-        $this->command->info('Usuarios demo creados ('.count($users).'). Contraseña: "'.self::PASSWORD.'"');
+        $this->command?->info('Usuarios demo creados ('.count($users).'). Contraseña: "'.self::PASSWORD.'"');
     }
 }

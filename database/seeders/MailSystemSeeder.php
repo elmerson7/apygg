@@ -61,7 +61,7 @@ class MailSystemSeeder extends Seeder
         MailSetting::setValue(MailSetting::KEY_DAILY_LIMIT, 0);
         MailSetting::setValue(MailSetting::KEY_RATE_LIMIT, 0);
 
-        $this->command->info("Sistema de correo configurado: proveedor '{$provider->name}', cuenta '{$account->from_email}'");
-        $this->command->info('Plantillas registradas: '.MailTemplateConfig::count());
+        $this->command?->info("Sistema de correo configurado: proveedor '{$provider->name}', cuenta '{$account->from_email}'");
+        $this->command?->info('Plantillas registradas: '.MailTemplateConfig::count());
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Logging;
 
 use Monolog\Handler\StreamHandler;
+use Monolog\Level;
 use Monolog\Logger;
 
 /**
@@ -26,7 +27,7 @@ class DateOrganizedStreamHandler extends StreamHandler
 
         // Convertir nivel de string a constante de Monolog si es necesario
         if (is_string($level)) {
-            $level = Logger::toMonologLevel($level);
+            $level = self::resolveLevel($level);
         }
 
         // Crear path organizado por fecha: año/mes/día
@@ -65,5 +66,21 @@ class DateOrganizedStreamHandler extends StreamHandler
         }
 
         return new self($logPath, $level);
+    }
+
+    /** Nivel de Monolog desde su nombre (sin distinguir mayúsculas) o su valor numérico. */
+    private static function resolveLevel(string $level): Level
+    {
+        if (ctype_digit($level)) {
+            return Level::from((int) $level);
+        }
+
+        foreach (Level::cases() as $case) {
+            if (strcasecmp($case->getName(), $level) === 0) {
+                return $case;
+            }
+        }
+
+        throw new \InvalidArgumentException("Nivel de log desconocido: {$level}");
     }
 }

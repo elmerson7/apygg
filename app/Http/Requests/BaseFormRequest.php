@@ -135,7 +135,7 @@ abstract class BaseFormRequest extends FormRequest
         $rules = ['email'];
 
         if ($unique && $table) {
-            $rule = Rule::unique($table, $column);
+            $rule = Rule::unique($table, $column ?? 'NULL');
             if ($ignore) {
                 $rule->ignore($ignore);
             }

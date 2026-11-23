@@ -19,17 +19,17 @@ class PersonalDataExportController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        return $this->sendSuccess($this->exports->list($request->user())->map(fn ($e) => $this->present($e))->all(), 'Exportaciones');
+        return $this->sendSuccess($this->exports->list($this->authUser($request))->map(fn ($e) => $this->present($e))->all(), 'Exportaciones');
     }
 
     public function store(Request $request): JsonResponse
     {
-        return $this->sendSuccess($this->present($this->exports->request($request->user())), 'Exportación solicitada', 202);
+        return $this->sendSuccess($this->present($this->exports->request($this->authUser($request))), 'Exportación solicitada', 202);
     }
 
     public function link(Request $request, int $id): JsonResponse
     {
-        return $this->sendSuccess(['url' => $this->exports->downloadUrl($request->user(), $id)], 'Enlace de descarga');
+        return $this->sendSuccess(['url' => $this->exports->downloadUrl($this->authUser($request), $id)], 'Enlace de descarga');
     }
 
     public function download(Request $request, int $id): StreamedResponse

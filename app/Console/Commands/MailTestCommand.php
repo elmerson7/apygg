@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\ReadsTypedInput;
 use App\Contracts\MailServiceInterface;
 use App\Models\Mail\MailAccount;
 use Illuminate\Console\Command;
@@ -19,6 +20,8 @@ use Illuminate\Console\Command;
  */
 class MailTestCommand extends Command
 {
+    use ReadsTypedInput;
+
     protected $signature = 'mail:test
                             {email : Dirección de destino}
                             {--account= : ID de la cuenta de envío (por defecto, la predeterminada)}
@@ -28,7 +31,7 @@ class MailTestCommand extends Command
 
     public function handle(MailServiceInterface $mail): int
     {
-        $email = (string) $this->argument('email');
+        $email = $this->stringArgument('email') ?? '';
 
         if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $this->error("Dirección inválida: {$email}");
@@ -36,8 +39,9 @@ class MailTestCommand extends Command
             return Command::FAILURE;
         }
 
-        $account = $this->option('account')
-            ? MailAccount::find($this->option('account'))
+        $accountId = $this->stringOption('account');
+        $account = $accountId !== null && $accountId !== ''
+            ? MailAccount::query()->find($accountId)
             : MailAccount::getActiveForSending();
 
         if (! $account) {

@@ -119,7 +119,7 @@ class Settings extends Model
 
         try {
             // Un modelo no admite inyección: se resuelve por interfaz.
-            return app(SecurityServiceInterface::class)->decrypt($this->value);
+            return app(SecurityServiceInterface::class)->decrypt((string) $this->value);
         } catch (\Exception $e) {
             Log::warning('Failed to decrypt setting value', [
                 'setting_id' => $this->id,

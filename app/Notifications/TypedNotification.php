@@ -86,7 +86,9 @@ class TypedNotification extends Notification implements HasMailTemplate, ShouldQ
             ->line($this->body());
 
         if (! empty($this->params['action_url'])) {
-            $mail->action((string) ($this->params['action_text'] ?? __('notifications.action')), (string) $this->params['action_url']);
+            $defaultText = __('notifications.action');
+            $text = $this->params['action_text'] ?? (is_string($defaultText) ? $defaultText : '');
+            $mail->action((string) $text, (string) $this->params['action_url']);
         }
 
         return $mail;

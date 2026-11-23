@@ -52,7 +52,7 @@ class TenantEloquentBuilder extends Builder
 
     /**
      * @param  array<array-key, mixed>  $values
-     * @param  array<array-key, string>|string  $uniqueBy
+     * @param  non-empty-array<int, non-empty-string>|non-empty-string  $uniqueBy
      * @param  array<array-key, mixed>|null  $update
      */
     public function upsert(array $values, $uniqueBy, $update = null): int

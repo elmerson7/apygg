@@ -20,17 +20,20 @@ class DeviceController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        return $this->sendSuccess(UserDeviceResource::collection($this->devices->list($request->user())), 'Dispositivos');
+        return $this->sendSuccess(UserDeviceResource::collection($this->devices->list($this->authUser($request))), 'Dispositivos');
     }
 
     public function store(RegisterDeviceRequest $request): JsonResponse
     {
-        return $this->sendSuccess($this->devices->register($request->user(), $request->validated()), 'Dispositivo registrado', 201);
+        /** @var array{token: string, platform: string, device_id?: string|null, name?: string|null} $data */
+        $data = $request->validated();
+
+        return $this->sendSuccess($this->devices->register($this->authUser($request), $data), 'Dispositivo registrado', 201);
     }
 
     public function destroy(Request $request, int $id): JsonResponse
     {
-        $this->devices->remove($request->user(), $id);
+        $this->devices->remove($this->authUser($request), $id);
 
         return $this->sendSuccess(null, 'Dispositivo eliminado');
     }

@@ -580,9 +580,9 @@ class AuthService implements AuthServiceInterface
      */
     public function getRemainingAttempts(string $identifier, ?string $ipAddress = null): int
     {
-        $byIdentity = $this->maxAttemptsPerIdentity - RateLimiter::attempts($this->getAttemptsKey($identifier));
+        $byIdentity = $this->maxAttemptsPerIdentity - (int) RateLimiter::attempts($this->getAttemptsKey($identifier));
         $byIp = $ipAddress !== null
-            ? $this->maxAttempts - RateLimiter::attempts($this->getAttemptsKey($identifier, $ipAddress))
+            ? $this->maxAttempts - (int) RateLimiter::attempts($this->getAttemptsKey($identifier, $ipAddress))
             : $byIdentity;
 
         return max(0, min($byIdentity, $byIp));

@@ -60,7 +60,7 @@ class CheckApiKeyScope
         }
 
         // Obtener API Key (una revocada entre medias ya no existe)
-        $apiKey = ApiKey::find($apiKeyId);
+        $apiKey = is_int($apiKeyId) || is_string($apiKeyId) ? ApiKey::query()->find($apiKeyId) : null;
 
         if (! $apiKey) {
             return response()->json([

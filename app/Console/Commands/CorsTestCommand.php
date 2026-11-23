@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\ReadsTypedInput;
 use Illuminate\Console\Command;
 
 /**
@@ -9,6 +10,8 @@ use Illuminate\Console\Command;
  */
 class CorsTestCommand extends Command
 {
+    use ReadsTypedInput;
+
     /**
      * The name and signature of the console command.
      *
@@ -62,7 +65,7 @@ class CorsTestCommand extends Command
         }
 
         // Probar origen específico si se proporciona
-        $testOrigin = $this->argument('origin');
+        $testOrigin = $this->stringArgument('origin');
         if ($testOrigin) {
             $this->newLine();
             $this->info("🧪 Probando origen: {$testOrigin}");

@@ -36,7 +36,7 @@ class SessionService implements SessionServiceInterface
 
     public function listFor(User $user, ?string $currentSid): array
     {
-        return UserSession::query()
+        return array_values(UserSession::query()
             ->where('user_id', $user->id)
             ->whereNull('revoked_at')
             ->orderByDesc('last_used_at')
@@ -51,8 +51,7 @@ class SessionService implements SessionServiceInterface
                 'last_used_at' => $s->last_used_at?->toIso8601String(),
                 'current' => $currentSid !== null && hash_equals($s->public_id, $currentSid),
             ])
-            ->values()
-            ->all();
+            ->all());
     }
 
     public function revoke(User $user, string $publicId, string $reason = 'user'): void

@@ -73,7 +73,11 @@ abstract class Job implements ShouldQueue
 
             // Ejecutar la lógica del job (implementada por clases hijas)
             // Con inyección de método: cada job pide por interfaz lo que necesita en process().
-            app()->call([$this, 'process']);
+            $process = [$this, 'process'];
+            if (! is_callable($process)) {
+                throw new \LogicException(static::class.' debe definir process().');
+            }
+            app()->call($process);
 
             $executionTime = round((microtime(true) - $startTime) * 1000, 2);
             $this->log('info', "Job completado exitosamente: {$jobName}", [

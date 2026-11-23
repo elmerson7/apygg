@@ -56,9 +56,12 @@ class OfflineSyncService implements OfflineSyncInterface
         $create = (array) ($cfg['create_rules'] ?? []);
         $update = isset($cfg['update_rules']) ? (array) $cfg['update_rules'] : $this->withSometimes($create);
 
+        /** @var class-string<Model> $model */
+        $model = $cfg['model'];
+
         return new SyncResource(
             $resource,
-            (string) $cfg['model'],
+            $model,
             $cfg['resource'] ?? null,
             (array) ($cfg['permissions'] ?? []),
             $create,

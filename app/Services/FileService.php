@@ -337,7 +337,7 @@ class FileService implements FileServiceInterface
         string $path = 'images',
         array $options = []
     ): array {
-        if (! str_starts_with($file->getMimeType(), 'image/')) {
+        if (! str_starts_with((string) $file->getMimeType(), 'image/')) {
             throw BusinessLogicException::ruleViolation('El archivo debe ser una imagen.');
         }
 

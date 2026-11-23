@@ -99,7 +99,7 @@ class EnsureIdempotency
         $response = new Response((string) $reservation->body, (int) $reservation->status);
 
         foreach ($reservation->headers as $name => $values) {
-            $response->headers->set($name, $values);
+            $response->headers->set($name, array_map(fn (?string $value): string => (string) $value, $values));
         }
 
         $response->headers->set('Idempotent-Replayed', 'true');

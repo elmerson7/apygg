@@ -22,14 +22,14 @@ class TenantSettingsController extends Controller
 
     public function update(SetSettingValueRequest $request, string $key): JsonResponse
     {
-        $value = $this->registry->setTenant($request->user(), $key, $request->input('value'));
+        $value = $this->registry->setTenant($this->authUser($request), $key, $request->input('value'));
 
         return $this->sendSuccess(['key' => $key, 'value' => $value], 'Ajuste actualizado');
     }
 
     public function destroy(Request $request, string $key): JsonResponse
     {
-        $this->registry->resetTenant($request->user(), $key);
+        $this->registry->resetTenant($this->authUser($request), $key);
 
         return $this->sendSuccess(null, 'Ajuste restablecido');
     }

@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\ReadsTypedInput;
 use App\Enums\TenantMembershipStatus;
 use App\Models\Tenant;
 use Illuminate\Console\Command;
@@ -19,6 +20,8 @@ use Illuminate\Support\Facades\DB;
  */
 class TenancyAssignOrphansCommand extends Command
 {
+    use ReadsTypedInput;
+
     /** @var list<string> */
     private const TABLES = ['files', 'webhooks', 'webhook_deliveries', 'api_keys'];
 
@@ -31,7 +34,7 @@ class TenancyAssignOrphansCommand extends Command
 
     public function handle(): int
     {
-        $identifier = (string) $this->argument('tenant');
+        $identifier = $this->stringArgument('tenant') ?? '';
         $tenant = ctype_digit($identifier) ? Tenant::query()->find((int) $identifier) : Tenant::query()->bySlug($identifier)->first();
 
         if (! $tenant instanceof Tenant) {

@@ -95,6 +95,7 @@ final class ListingQuery
         $tiebreak = true;
 
         foreach ($this->sorts as [$field, $direction]) {
+            $direction = $direction === 'desc' ? 'desc' : 'asc';
             $query->orderBy($columns[$field], $direction);
             $tiebreak = $tiebreak && $columns[$field] !== $key;
         }

@@ -85,7 +85,9 @@ class AuthLogger
             ]);
 
             // Verificar si hay actividad sospechosa
-            self::checkSuspiciousActivity($ipAddress, $email);
+            if ($ipAddress !== null) {
+                self::checkSuspiciousActivity($ipAddress, $email);
+            }
 
             return $log;
         } catch (\Exception $e) {

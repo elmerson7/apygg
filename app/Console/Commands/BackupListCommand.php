@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\ReadsTypedInput;
 use App\Contracts\BackupServiceInterface;
 use Illuminate\Console\Command;
 
@@ -12,6 +13,8 @@ use Illuminate\Console\Command;
  */
 class BackupListCommand extends Command
 {
+    use ReadsTypedInput;
+
     /**
      * The name and signature of the console command.
      *
@@ -34,9 +37,9 @@ class BackupListCommand extends Command
      */
     public function handle(BackupServiceInterface $backupService): int
     {
-        $type = $this->option('type');
-        $includeRemote = $this->option('remote');
-        $format = $this->option('format');
+        $type = $this->stringOption('type');
+        $includeRemote = (bool) $this->option('remote');
+        $format = $this->stringOption('format');
 
         try {
             $backups = $backupService->listBackups($type, $includeRemote);
@@ -50,7 +53,7 @@ class BackupListCommand extends Command
             }
 
             if ($format === 'json') {
-                $this->line(json_encode($backups, JSON_PRETTY_PRINT));
+                $this->line(json_encode($backups, JSON_PRETTY_PRINT) ?: '[]');
 
                 return Command::SUCCESS;
             }

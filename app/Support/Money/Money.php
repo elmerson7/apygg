@@ -51,14 +51,19 @@ final readonly class Money implements JsonSerializable
                 throw new InvalidMoney("[{$amount}] tiene más decimales de los que admite {$currency} ({$exponent}).");
             }
 
-            $scaled = self::bcRoundToInt(bcmul(($negative ? '-' : '').$m[2].'.'.$fraction, bcpow('10', (string) $exponent), strlen($fraction)), $rounding);
+            $decimal = ($negative ? '-' : '').$m[2].'.'.$fraction;
+            assert(is_numeric($decimal));
+            $scaled = self::bcRoundToInt(bcmul($decimal, bcpow('10', (string) $exponent), strlen($fraction)), $rounding);
 
             return new self(self::toInt($scaled), $currency);
         }
 
         $digits = $m[2].str_pad($fraction, $exponent, '0');
 
-        return new self(self::toInt(($negative ? '-' : '').ltrim($digits, '0') ?: '0'), $currency);
+        $minor = ($negative ? '-' : '').ltrim($digits, '0') ?: '0';
+        assert(is_numeric($minor));
+
+        return new self(self::toInt($minor), $currency);
     }
 
     /** "12.34"; "-0.05"; "1500" (sin decimales para JPY). */
@@ -280,6 +285,7 @@ final readonly class Money implements JsonSerializable
         }
     }
 
+    /** @return numeric-string */
     private static function checkDecimal(int|string $value): string
     {
         $value = (string) $value;
@@ -288,19 +294,30 @@ final readonly class Money implements JsonSerializable
             throw new InvalidMoney("Factor decimal no válido: [{$value}].");
         }
 
+        assert(is_numeric($value));
+
         return $value;
     }
 
-    /** Redondea una cadena decimal (bcmath) a entero según la regla. */
+    /**
+     * Redondea una cadena decimal (bcmath) a entero según la regla.
+     *
+     * @param  numeric-string  $value
+     * @return numeric-string
+     */
     private static function bcRoundToInt(string $value, Rounding $rounding): string
     {
         $negative = str_starts_with($value, '-');
         $abs = ltrim($value, '-');
         [$int, $frac] = array_pad(explode('.', $abs, 2), 2, '');
+        assert(is_numeric($int));
         $frac = rtrim($frac, '0');
 
         if ($frac === '') {
-            return ($negative && $int !== '0' ? '-' : '').$int;
+            $whole = ($negative && $int !== '0' ? '-' : '').$int;
+            assert(is_numeric($whole));
+
+            return $whole;
         }
 
         $first = (int) $frac[0];
@@ -315,9 +332,13 @@ final readonly class Money implements JsonSerializable
 
         $result = $up ? bcadd($int, '1') : $int;
 
-        return ($negative && $result !== '0' ? '-' : '').$result;
+        $rounded = ($negative && $result !== '0' ? '-' : '').$result;
+        assert(is_numeric($rounded));
+
+        return $rounded;
     }
 
+    /** @param  numeric-string  $value */
     private static function toInt(string $value): int
     {
         if (bccomp($value, (string) PHP_INT_MAX) > 0 || bccomp($value, (string) PHP_INT_MIN) < 0) {

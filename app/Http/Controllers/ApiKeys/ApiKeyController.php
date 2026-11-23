@@ -8,6 +8,7 @@ use App\Http\Requests\ApiKeys\RotateApiKeyRequest;
 use App\Http\Requests\ApiKeys\StoreApiKeyRequest;
 use App\Http\Resources\ApiKeys\ApiKeyResource;
 use App\Models\ApiKey;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
@@ -30,7 +31,7 @@ class ApiKeyController extends Controller
     public function index(Request $request): JsonResponse
     {
         return $this->sendPaginated(
-            $this->apiKeyService->list($request->user(), $this->perPage($request, 20))
+            $this->apiKeyService->list($this->authUser($request), $this->perPage($request, 20))
         );
     }
 
@@ -42,7 +43,7 @@ class ApiKeyController extends Controller
         $validated = $request->validated();
 
         $result = $this->apiKeyService->create(
-            $request->user(),
+            $this->authUser($request),
             $validated['name'],
             $validated['scopes'] ?? [],
             isset($validated['expires_at']) ? Carbon::parse($validated['expires_at']) : null,
@@ -107,11 +108,14 @@ class ApiKeyController extends Controller
      */
     public function whoami(Request $request): JsonResponse
     {
-        $apiKey = ApiKey::findOrFail($request->attributes->get('api_key_id'));
+        $apiKey = ApiKey::findOrFail((int) $request->attributes->get('api_key_id'));
+
+        $keyUser = $request->user('api-key');
+        abort_unless($keyUser instanceof User, 401);
 
         return $this->sendSuccess([
             'api_key' => ['id' => $apiKey->id, 'name' => $apiKey->name, 'scopes' => $apiKey->scopes ?? []],
-            'user' => ['id' => $request->user('api-key')->id, 'name' => $request->user('api-key')->name],
+            'user' => ['id' => $keyUser->id, 'name' => $keyUser->name],
         ], 'API Key autenticada');
     }
 
@@ -124,7 +128,7 @@ class ApiKeyController extends Controller
     {
         $apiKey = $this->apiKeyService->find($id);
 
-        if ($apiKey->user_id !== $request->user()->id) {
+        if ($apiKey->user_id !== $this->authUser($request)->id) {
             throw new AuthorizationException('No autorizado');
         }
 

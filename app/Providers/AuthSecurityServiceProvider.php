@@ -17,7 +17,7 @@ class AuthSecurityServiceProvider extends ServiceProvider
         // Sustituye el driver 'jwt' del paquete (que se registra antes que los
         // providers de la app) por uno que rechaza refresh tokens y sesiones
         // revocadas.
-        $this->app['auth']->extend('jwt', function ($app, $name, array $config) {
+        $this->app->make('auth')->extend('jwt', function ($app, $name, array $config) {
             $guard = new ApiJwtGuard(
                 $app['tymon.jwt'],
                 $app['auth']->createUserProvider($config['provider']),

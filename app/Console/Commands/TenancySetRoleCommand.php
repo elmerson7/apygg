@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\ReadsTypedInput;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\Tenancy\TenantRoles;
@@ -14,15 +15,17 @@ use Illuminate\Support\Facades\DB;
  */
 class TenancySetRoleCommand extends Command
 {
+    use ReadsTypedInput;
+
     protected $signature = 'tenancy:set-role {tenant : Tenant (id o slug)} {email : Email del miembro} {role : owner|admin|member...}';
 
     protected $description = 'Fija el rol de tenant de un miembro (útil para nombrar al primer dueño)';
 
     public function handle(): int
     {
-        $identifier = (string) $this->argument('tenant');
+        $identifier = $this->stringArgument('tenant') ?? '';
         $tenant = ctype_digit($identifier) ? Tenant::query()->find((int) $identifier) : Tenant::query()->bySlug($identifier)->first();
-        $role = (string) $this->argument('role');
+        $role = $this->stringArgument('role') ?? '';
 
         if (! $tenant instanceof Tenant) {
             $this->error("Tenant '{$identifier}' no encontrado.");
@@ -36,7 +39,7 @@ class TenancySetRoleCommand extends Command
             return self::FAILURE;
         }
 
-        $user = User::query()->whereRaw('lower(email) = ?', [mb_strtolower((string) $this->argument('email'))])->first();
+        $user = User::query()->whereRaw('lower(email) = ?', [mb_strtolower(($this->stringArgument('email') ?? ''))])->first();
         $updated = $user instanceof User
             ? DB::table('tenant_user')->where('tenant_id', $tenant->getKey())->where('user_id', $user->getKey())->update(['role' => $role, 'updated_at' => now()])
             : 0;

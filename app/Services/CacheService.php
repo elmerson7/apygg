@@ -37,7 +37,7 @@ class CacheService
     public static function tag(string ...$tags): self
     {
         $instance = new self;
-        $instance->tags = $tags;
+        $instance->tags = array_values($tags);
 
         return $instance;
     }
@@ -530,7 +530,7 @@ class CacheService
     {
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
         $bytes = max($bytes, 0);
-        $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+        $pow = (int) floor(($bytes ? log($bytes) : 0) / log(1024));
         $pow = min($pow, count($units) - 1);
         $bytes /= pow(1024, $pow);
 

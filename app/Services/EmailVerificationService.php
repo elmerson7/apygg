@@ -49,7 +49,7 @@ class EmailVerificationService implements EmailVerificationServiceInterface
 
         [, $id, $expira, $firma] = $m;
 
-        if ((int) $expira < now()->timestamp) {
+        if ((int) $expira < now()->getTimestamp()) {
             throw $invalido;
         }
 
@@ -70,7 +70,7 @@ class EmailVerificationService implements EmailVerificationServiceInterface
 
     public function makeToken(User $user): string
     {
-        $expira = now()->addMinutes($this->expireMinutes())->timestamp;
+        $expira = now()->addMinutes($this->expireMinutes())->getTimestamp();
 
         return $user->id.'.'.$expira.'.'.$this->sign($user, $expira);
     }

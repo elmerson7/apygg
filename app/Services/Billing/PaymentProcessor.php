@@ -147,7 +147,7 @@ class PaymentProcessor implements PaymentProcessorInterface
             ->limit($limit)
             ->get(['payments.id', 'payments.tenant_id']), 'barrido de reembolsos pendientes (billing:renew)');
 
-        return $rows->map(fn ($r) => ['id' => (int) $r->id, 'tenant_id' => (int) $r->tenant_id])->all();
+        return array_values($rows->map(fn ($r) => ['id' => (int) $r->id, 'tenant_id' => (int) $r->tenant_id])->all());
     }
 
     public function refund(int $paymentId): bool

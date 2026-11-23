@@ -48,7 +48,7 @@ class TenantMemberService implements TenantMemberServiceInterface
 
     public function changeRole(Tenant $tenant, User $actor, int $userId, string $role): User
     {
-        $this->mutate($tenant, $actor, $userId, function (object $target, int $actorRank) use ($tenant, $role): void {
+        $this->mutate($tenant, $actor, $userId, function (\stdClass $target, int $actorRank) use ($tenant, $role): void {
             if (TenantRoles::rank($role) > $actorRank) {
                 throw TenantOnboardingException::roleInsufficient();
             }
@@ -63,7 +63,7 @@ class TenantMemberService implements TenantMemberServiceInterface
 
             // Dentro de la transacción y con el tenant bloqueado: dos cambios simultáneos se serializan y
             // el rol de Spatie siempre refleja el último `tenant_user.role` confirmado.
-            TenantRoles::sync(User::query()->findOrFail($target->user_id), $tenant, $role);
+            TenantRoles::sync(User::query()->findOrFail((int) $target->user_id), $tenant, $role);
         });
 
         return $this->find($tenant, $userId);
@@ -75,7 +75,7 @@ class TenantMemberService implements TenantMemberServiceInterface
             throw TenantOnboardingException::cannotSuspendSelf();
         }
 
-        $this->mutate($tenant, $actor, $userId, function (object $target) use ($tenant): void {
+        $this->mutate($tenant, $actor, $userId, function (\stdClass $target) use ($tenant): void {
             $this->guardLastOwner($tenant, $target);
 
             DB::table('tenant_user')->where('id', $target->id)->update([
@@ -91,7 +91,7 @@ class TenantMemberService implements TenantMemberServiceInterface
 
     public function reactivate(Tenant $tenant, User $actor, int $userId): User
     {
-        $this->mutate($tenant, $actor, $userId, function (object $target) use ($tenant): void {
+        $this->mutate($tenant, $actor, $userId, function (\stdClass $target) use ($tenant): void {
             DB::table('tenant_user')->where('id', $target->id)->update([
                 'status' => TenantMembershipStatus::Active->value,
                 'updated_at' => now(),
@@ -105,7 +105,7 @@ class TenantMemberService implements TenantMemberServiceInterface
 
     public function remove(Tenant $tenant, User $actor, int $userId): void
     {
-        $this->mutate($tenant, $actor, $userId, function (object $target) use ($tenant): void {
+        $this->mutate($tenant, $actor, $userId, function (\stdClass $target) use ($tenant): void {
             $this->guardLastOwner($tenant, $target);
 
             DB::table('tenant_user')->where('id', $target->id)->delete();
@@ -120,7 +120,7 @@ class TenantMemberService implements TenantMemberServiceInterface
     }
 
     /**
-     * @param  \Closure(object, int): void  $change  recibe la fila de `tenant_user` del objetivo y el rango del actor
+     * @param  \Closure(\stdClass, int): void  $change  recibe la fila de `tenant_user` del objetivo y el rango del actor
      */
     private function mutate(Tenant $tenant, User $actor, int $userId, \Closure $change): void
     {
@@ -148,7 +148,7 @@ class TenantMemberService implements TenantMemberServiceInterface
         });
     }
 
-    private function guardLastOwner(Tenant $tenant, object $target): void
+    private function guardLastOwner(Tenant $tenant, \stdClass $target): void
     {
         if ($target->role !== TenantRoles::owner() || $target->status !== TenantMembershipStatus::Active->value) {
             return;

@@ -57,11 +57,11 @@ class ResetPasswordNotification extends Notification implements HasMailTemplate,
     public function toMail(object $notifiable): MailMessage
     {
         // Construir URL de reset
-        $resetUrl = $this->buildResetUrl($notifiable->email);
+        $resetUrl = $this->buildResetUrl((string) ($notifiable->email ?? ''));
 
         return (new MailMessage)
             ->subject(__('messages.mail.password_reset.subject'))
-            ->greeting(__('messages.mail.password_reset.greeting', ['name' => $notifiable->name]))
+            ->greeting(__('messages.mail.password_reset.greeting', ['name' => $notifiable->name ?? '']))
             ->line(__('messages.mail.password_reset.intro'))
             ->action(__('messages.mail.password_reset.action'), $resetUrl)
             ->line(__('messages.mail.password_reset.expires'))

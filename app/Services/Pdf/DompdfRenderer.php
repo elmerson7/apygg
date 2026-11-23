@@ -48,6 +48,9 @@ class DompdfRenderer implements PdfRendererInterface
 
     public function renderView(string $view, array $data = [], array $options = []): string
     {
-        return $this->render(view($view, $data)->render(), $options);
+        /** @var view-string $viewName */
+        $viewName = $view;
+
+        return $this->render(view($viewName, $data)->render(), $options);
     }
 }

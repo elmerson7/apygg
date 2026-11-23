@@ -10,6 +10,7 @@ use App\Models\Role;
 use App\Models\User;
 use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Support\Exceptions\Halt;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
 
@@ -67,7 +68,7 @@ class EditRole extends EditRecord
         });
 
         if (! $role instanceof Role) {
-            $this->halt();
+            throw new Halt;
         }
 
         return $role;

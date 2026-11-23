@@ -209,7 +209,7 @@ class ApiLogger
         $startTime = $request->server('REQUEST_TIME_FLOAT');
 
         if ($startTime) {
-            return (microtime(true) - $startTime) * 1000;
+            return (microtime(true) - (float) $startTime) * 1000;
         }
 
         return 0;

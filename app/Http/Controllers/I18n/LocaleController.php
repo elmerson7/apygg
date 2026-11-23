@@ -27,12 +27,12 @@ class LocaleController extends Controller
 
     public function showUser(Request $request): JsonResponse
     {
-        return $this->sendSuccess($this->userPayload($request->user()), __('messages.locale.show'));
+        return $this->sendSuccess($this->userPayload($this->authUser($request)), __('messages.locale.show'));
     }
 
     public function updateUser(UpdateUserLocaleRequest $request): JsonResponse
     {
-        $user = $this->settings->updateUser($request->user(), $request->validated());
+        $user = $this->settings->updateUser($this->authUser($request), $request->validated());
 
         return $this->sendSuccess($this->userPayload($user), __('messages.locale.updated'));
     }
@@ -44,7 +44,7 @@ class LocaleController extends Controller
 
     public function updateTenant(UpdateTenantLocaleRequest $request): JsonResponse
     {
-        $tenant = $this->settings->updateTenant($this->tenants->require(), $request->user(), $request->validated());
+        $tenant = $this->settings->updateTenant($this->tenants->require(), $this->authUser($request), $request->validated());
 
         return $this->sendSuccess($this->tenantPayload($tenant), __('messages.locale.tenant_updated'));
     }

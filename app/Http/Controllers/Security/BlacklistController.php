@@ -42,7 +42,7 @@ class BlacklistController extends Controller
     {
         $reason = $this->audit->requireReason('user.block', (string) $request->validated('reason'));
 
-        $entry = $this->security->blockIdentity($request->validated(), $request->user()->id);
+        $entry = $this->security->blockIdentity($request->validated(), $this->authUser($request)->id);
 
         $this->audit->recordAction('user.block', $entry, $reason, ['user_id' => $entry->user_id, 'blocked_email' => $entry->email]);
 

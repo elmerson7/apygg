@@ -21,7 +21,7 @@ class DevToolsAccess
             return false;
         }
 
-        if (method_exists($user, 'isAdmin') && $user->isAdmin()) {
+        if (is_object($user) && method_exists($user, 'isAdmin') && $user->isAdmin()) {
             return true;
         }
 
