@@ -347,7 +347,9 @@ class BackupService implements BackupServiceInterface
      */
     public function restoreDatabaseBackup(string $backupPath, bool $confirm = true): bool
     {
-        if (! file_exists($backupPath) && ! Storage::disk('s3')->exists($backupPath)) {
+        // Un archivo local se restaura sin tocar el disco remoto: si S3 no responde, no debe impedir una restauración local.
+        $isRemote = ! file_exists($backupPath);
+        if ($isRemote && ! Storage::disk(config('backups.remote.disk'))->exists($backupPath)) {
             throw new \RuntimeException("Backup no encontrado: {$backupPath}");
         }
 
@@ -361,7 +363,6 @@ class BackupService implements BackupServiceInterface
         $port = $connection['port'] ?? 5432;
 
         // Si es remoto, descargarlo temporalmente
-        $isRemote = Storage::disk('s3')->exists($backupPath);
         $tempPath = null;
 
         if ($isRemote) {

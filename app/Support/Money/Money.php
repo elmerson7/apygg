@@ -226,7 +226,9 @@ final readonly class Money implements JsonSerializable
     /**
      * Texto para mostrar según el locale ("es_PE" -> "S/ 12,34"). SOLO presentación: para mostrar se
      * convierte a número de coma flotante (NumberFormatter no admite cadenas), así que no uses esta
-     * cadena para calcular. La API intercambia `amount_minor` + `currency`.
+     * cadena para calcular. El `(float)` de abajo solo alimenta a `NumberFormatter`: su único uso es
+     * `InvoiceService` al pintar el documento; ningún cálculo, comparación ni persistencia lo toca (todo es
+     * `amountMinor` entero). La API intercambia `amount_minor` + `currency`.
      */
     public function format(string $locale = 'en_US'): string
     {

@@ -16,11 +16,13 @@ php artisan backup:create
 php artisan backup:create --no-compress
 
 # Backup sin subir a remoto
-php artisan backup:create --no-upload
 
-# Backup de archivos (cuando esté implementado)
-php artisan backup:create --files
 ```
+
+> **Archivos:** `backup:create --files` **no está soportado** y termina con error (código 1), para que
+> nadie crea que sus archivos están respaldados. Los archivos subidos viven en el disco configurado
+> (`FILE_DISK_*`): con S3 se respaldan con el versionado y la replicación del bucket (responsabilidad del
+> proveedor); con disco local, con un snapshot del volumen o `rsync` del directorio.
 
 **Ubicación local:** `storage/app/backups/backup_db_{database}_{timestamp}.sql.gz`
 
