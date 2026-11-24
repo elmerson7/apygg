@@ -337,8 +337,9 @@ Notas:
   de la ventana ante un 429; el stack de `make e2e` sube el tope, así que no se espera.
 - Cada ejecución crea usuarios y empresas nuevos que quedan en la BD del stack; en `make e2e` desaparecen con el
   `down -v`. En un stack permanente, `make mail-clear` vacía Mailpit.
-- En CI hay un job `e2e` opcional (manual con `workflow_dispatch` y en push a `main`) que ejecuta `make e2e`:
-  ver `.github/workflows/ci.yml`.
+- En CI el job `e2e` ejecuta `make e2e` en cada PR, en push a `main`/`develop` y a mano (`workflow_dispatch`), y
+  **bloquea** `ci-success` (el check obligatorio de `main`): un recorrido roto impide unir el PR. No hay
+  reintentos automáticos: un E2E intermitente se arregla. Ver `.github/workflows/ci.yml`.
 
 ## La base de datos de tests
 
@@ -419,7 +420,7 @@ añades una factory con una columna única, haz lo mismo.
 | `lint` | `pint --test` + `phpstan` (= `make check`) | siempre |
 | `test` | con Postgres 18 y Redis 7 como servicios: suite por defecto (Unit + Feature + Arch) con cobertura mínima (`--min`, igual a `COVERAGE_MIN` de `make/test.mk`) y después `Contract` + `Concurrency` (esta última compromete datos en la BD de tests, por eso va al final) | siempre |
 | `security` | `composer audit` | siempre |
-| `e2e` | `make init` + `make setup` (stack con Docker Compose, perfil dev) y `make test-e2e` | `workflow_dispatch` y push a `main`; no bloquea `ci-success` |
+| `e2e` | `make e2e`: stack efímero de `docker-compose.e2e.yml` (app con Octane, Horizon, Postgres, Redis, Mailpit, S3), `tests/E2E` y `down -v` | siempre; bloquea `ci-success` |
 
 Equivalente local: `make ci` (check + cobertura mínima) y `make test-all` (todas las suites sin servicios extra).
 
