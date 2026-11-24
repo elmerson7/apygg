@@ -567,13 +567,13 @@ jobs:
 
   # Recorridos E2E por HTTP real (tests/E2E): levantan su propio stack con Docker Compose (docker-compose.e2e.yml:
   # app con Octane, Horizon, Postgres 18, Redis, Mailpit, S3/RustFS) y cubren alta de empresa, invitaciones,
-  # facturación, bloqueo, archivos, sesiones y 2FA. Es lento y necesita Docker,
-  # por eso solo corre en push a main y a mano (workflow_dispatch). No bloquea `ci-success`.
+  # facturación, bloqueo, archivos, sesiones y 2FA. Corre en cada PR, en push a main/develop y a mano
+  # (workflow_dispatch), y BLOQUEA `ci-success`: un recorrido roto no se une. Sin reintentos automáticos: un
+  # E2E intermitente se arregla, no se repite hasta que pase.
   e2e:
     name: E2E (stack real)
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
 
     steps:
       - name: Checkout code
@@ -648,7 +648,7 @@ jobs:
   ci-success:
     name: CI Pipeline Success
     runs-on: ubuntu-latest
-    needs: [lint, test, test-prefix, security, build, migrations, modules-removed, openapi-breaking]
+    needs: [lint, test, test-prefix, security, build, migrations, modules-removed, openapi-breaking, e2e]
     if: always()
 
     steps:
@@ -661,7 +661,8 @@ jobs:
              [ "${{ needs.build.result }}" != "success" ] || \
              [ "${{ needs.migrations.result }}" != "success" ] || \
              [ "${{ needs.modules-removed.result }}" != "success" ] || \
-             [ "${{ needs.openapi-breaking.result }}" != "success" ]; then
+             [ "${{ needs.openapi-breaking.result }}" != "success" ] || \
+             [ "${{ needs.e2e.result }}" != "success" ]; then
             echo "❌ CI Pipeline failed"
             exit 1
           fi
