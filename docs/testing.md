@@ -178,7 +178,24 @@ llamadas) y ejecuta los tests. Si siguen pasando, la mutación queda **UNTESTED*
 esa línea está cubierta pero no comprobada.
 
 Es lento —minutos por clase—, así que úsalo dirigido a la lógica crítica, no
-sobre toda la aplicación.
+sobre toda la aplicación. Pásale solo los archivos de test de esa clase: con la suite
+entera tarda mucho más y gasta más memoria. No combines `--class` con `--everything`:
+`--everything` anula el filtro y muta toda `app/`.
+
+Trampas medidas (25-nov-2026):
+
+- **Middlewares y comandos salen siempre "UNCOVERED"**: `phpunit.xml` excluye
+  `app/Http/Middleware`, `app/Console` y `app/Exceptions` de la cobertura, y Pest decide qué
+  test mata cada mutación con esa cobertura. Para medir un middleware, usa una copia
+  temporal sin la exclusión (no la commitees):
+  `sed '/app\/Http\/Middleware/d' phpunit.xml > phpunit.mutacion.xml` y añade
+  `-c phpunit.mutacion.xml` al comando.
+- **Las constantes y los valores iniciales de propiedades** salen como UNCOVERED aunque un
+  test los compruebe: la cobertura no registra esas líneas.
+- **La suite `Concurrency`** corre en procesos hijos: sus comprobaciones no cuentan para la
+  mutación. Las ramas que solo se dan en una carrera (reintentos, pausas) quedan UNTESTED.
+- Una mutación que quita un `(int)`/`(bool)` que PHP ya aplica por el tipo de retorno o del
+  parámetro es **equivalente**: no hay test que la mate. Anótala, no la persigas.
 
 ## 6. Paralelo
 
