@@ -79,7 +79,8 @@ class TenantEloquentBuilder extends Builder
         $rows = $this->stampRows($values, 'upsert');
 
         if ($update === null) {
-            $first = array_is_list($rows) && is_array($rows[0] ?? null) ? $rows[0] : $rows;
+            // Una fila sola o una lista de filas (también con claves de texto): las columnas son las de la primera fila.
+            $first = is_array(reset($rows)) ? reset($rows) : $rows;
             $update = array_values(array_diff(array_keys($first), $unique));
         }
 
