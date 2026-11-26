@@ -417,6 +417,9 @@ test('rotate actualiza last_used_at y updated_at de la sesión', function () {
 
 test('rotate con gracia de 1 segundo ya tolera la carrera del refresh anterior', function () {
     config(['auth.sessions.refresh_reuse_grace_seconds' => 1]);
+    // Reloj congelado: `refresh_rotated_at` se guarda en segundos enteros y, si las dos rotaciones caen a ambos
+    // lados de un cambio de segundo, el margen de 1 s ya habría pasado (fallo intermitente en CI).
+    $this->freezeTime();
     $user = User::factory()->create();
     $s = sesiones()->start($user, null, null);
     $j0 = $s->refresh()->refresh_jti;
