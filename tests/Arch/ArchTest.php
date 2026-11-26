@@ -143,6 +143,7 @@ function archServiciosConInterfaz(): array
         'App\Services\FileService' => 'App\Contracts\FileServiceInterface',
         'App\Services\DirectUploadService' => 'App\Contracts\DirectUploadServiceInterface',
         'App\Services\Files\S3MultipartStorage' => 'App\Contracts\MultipartStorageInterface',
+        'App\Services\Files\FileScanService' => 'App\Contracts\FileScanServiceInterface',
         'App\Services\SettingsService' => 'App\Contracts\SettingsServiceInterface',
         'App\Services\SettingsRegistry' => 'App\Contracts\SettingsRegistryInterface',
         'App\Services\FeatureFlagService' => 'App\Contracts\FeatureFlagServiceInterface',

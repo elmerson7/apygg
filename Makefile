@@ -21,9 +21,11 @@ DEV ?= $(shell [ -f compose.env ] && grep -m1 '^DEV=' compose.env | cut -d= -f2)
 # - prod: activa pgbouncer (connection pooling para alta carga)
 # - search: activa meilisearch (motor de búsqueda full-text)
 # - dev: activa mailpit + emulador S3 (make up-dev; ver docs/local-services.md)
+# - clamav: antivirus ClamAV para FILE_SCAN_ENABLED (make up CLAMAV=true; ~1,5 GB de RAM; ver docs/files.md)
 PROFILES  = $(if $(filter prod,$(ENV)),--profile prod)
 PROFILES += $(if $(SEARCH),--profile search)
 PROFILES += $(if $(filter true 1 yes,$(DEV)),--profile dev)
+PROFILES += $(if $(filter true 1 yes,$(CLAMAV)),--profile clamav)
 
 # Docker Compose usa:
 # --project-name → nombre del proyecto para imágenes y volúmenes

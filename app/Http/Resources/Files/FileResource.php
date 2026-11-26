@@ -28,7 +28,8 @@ class FileResource extends BaseResource
             'name' => $file->name,
             'filename' => $file->filename,
             // Los archivos privados no exponen ruta ni URL: se bajan por download_url
-            'path' => $this->when($file->is_public, $file->path),
+            // Ni ruta ni URL mientras el antivirus no lo dé por bueno (cuarentena)
+            'path' => $this->when($file->is_public && $file->isAvailable(), $file->path),
             'url' => $file->getUrl(),
             'download_url' => route('files.download', ['id' => $file->id]),
             'mime_type' => $file->mime_type,
@@ -42,6 +43,9 @@ class FileResource extends BaseResource
             'is_public' => $file->is_public,
             'expires_at' => $this->formatDate($file->expires_at),
             'is_expired' => $file->isExpired(),
+            // Escaneo antivirus: skipped (sin escaneo), pending, clean, infected o failed. Solo skipped/clean se descargan.
+            'scan_status' => $file->scan_status->value,
+            'scanned_at' => $this->formatDate($file->scanned_at),
 
             // Relación con usuario (solo si se carga)
             'user' => $this->whenLoaded('user', function () use ($file) {

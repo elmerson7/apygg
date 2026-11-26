@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Contracts\FileServiceInterface;
 use App\Contracts\PlanLimitsInterface;
 use App\Contracts\SettingsRegistryInterface;
+use App\Enums\FileScanStatus;
 use App\Exceptions\BusinessLogicException;
 use App\Exceptions\FileTooLargeForPlanException;
 use App\Exceptions\PlanLimitReachedException;
@@ -60,7 +61,9 @@ class FileService implements FileServiceInterface
         $extension = $this->resolveExtension($file);
         $filename = $filename !== null ? basename($filename) : $this->generateFilename($file, $extension);
         $mimeType = $file->getMimeType();
-        $size = $file->getSize();
+        $this->reencodeImage($file, (string) $mimeType);
+        clearstatcache(true, $file->getRealPath());
+        $size = (int) filesize($file->getRealPath());
 
         $storedPath = Storage::disk($disk)->putFileAs(
             $this->tenantStoragePath($path),
@@ -132,12 +135,14 @@ class FileService implements FileServiceInterface
     }
 
     /**
-     * Bytes que el tenant en contexto ya usa: archivos vivos + reservas de subidas directas vigentes.
+     * Bytes que el tenant en contexto ya usa: archivos vivos (sin los infectados) + reservas de subidas directas vigentes.
      * Solo es fiable dentro de `withStorageQuota` (bajo el bloqueo del tenant).
      */
     public function usedStorageBytes(): int
     {
-        return (int) File::query()->sum('size') + (int) FileUploadIntent::query()->reserving()->sum('size');
+        // Un archivo infectado ya no ocupa almacenamiento (el antivirus borró su contenido).
+        return (int) File::query()->where('scan_status', '!=', FileScanStatus::Infected->value)->sum('size')
+            + (int) FileUploadIntent::query()->reserving()->sum('size');
     }
 
     /**
@@ -630,6 +635,56 @@ class FileService implements FileServiceInterface
         $allAllowedExtensions = array_unique(array_merge(...array_values(config('files.allowed_extensions', []))));
         if (! in_array($clientExtension, $allAllowedExtensions, true)) {
             throw BusinessLogicException::ruleViolation('Extensión de archivo no permitida.');
+        }
+    }
+
+    /**
+     * Reprocesa la imagen (JPEG, PNG, WebP) con GD si `files.image_reencode.enabled`: se decodifica y se vuelve a
+     * codificar, así se pierde cualquier carga escondida en la imagen (archivo políglota) y sus metadatos EXIF
+     * (ubicación GPS, cámara). Solo la subida normal: la directa a S3 no pasa los bytes por la API. Los GIF no se
+     * tocan (se perdería la animación).
+     *
+     * @throws BusinessLogicException si la imagen no se puede decodificar o tiene demasiados píxeles
+     */
+    protected function reencodeImage(UploadedFile $file, string $mime): void
+    {
+        if (! (bool) config('files.image_reencode.enabled', false)
+            || ! in_array($mime, ['image/jpeg', 'image/png', 'image/webp'], true)
+            || ! function_exists('imagecreatefromstring')) {
+            return;
+        }
+
+        $path = (string) $file->getRealPath();
+        $info = @getimagesize($path);
+        $maxPixels = (int) config('files.image_reencode.max_megapixels', 40) * 1000000;
+
+        // Se mira antes de decodificar: GD reserva ~4 bytes por píxel y una imagen gigante agotaría la memoria.
+        if ($info === false || $maxPixels < $info[0] * $info[1]) {
+            throw BusinessLogicException::ruleViolation('La imagen está dañada o es demasiado grande para procesarla.');
+        }
+
+        $image = @imagecreatefromstring((string) file_get_contents($path));
+
+        if ($image === false) {
+            throw BusinessLogicException::ruleViolation('La imagen está dañada o es demasiado grande para procesarla.');
+        }
+
+        $quality = (int) config('files.image_reencode.quality', 90);
+
+        imagesavealpha($image, true); // conserva la transparencia de PNG/WebP
+
+        try {
+            $ok = match ($mime) {
+                'image/jpeg' => imagejpeg($image, $path, $quality),
+                'image/png' => imagepng($image, $path),
+                'image/webp' => imagewebp($image, $path, $quality),
+            };
+        } finally {
+            imagedestroy($image);
+        }
+
+        if (! $ok) {
+            throw new \RuntimeException('No se pudo reprocesar la imagen.');
         }
     }
 

@@ -20602,7 +20602,7 @@
                     },
                     "path": {
                         "type": "string",
-                        "description": "Los archivos privados no exponen ruta ni URL: se bajan por download_url"
+                        "description": "Los archivos privados no exponen ruta ni URL: se bajan por download_url\nNi ruta ni URL mientras el antivirus no lo dé por bueno (cuarentena)"
                     },
                     "url": {
                         "type": [
@@ -20659,6 +20659,16 @@
                     "is_expired": {
                         "type": "boolean"
                     },
+                    "scan_status": {
+                        "type": "string",
+                        "description": "Escaneo antivirus: skipped (sin escaneo), pending, clean, infected o failed. Solo skipped/clean se descargan."
+                    },
+                    "scanned_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
                     "user": {
                         "type": "object",
                         "description": "Relación con usuario (solo si se carga)",
@@ -20698,7 +20708,9 @@
                     "metadata",
                     "is_public",
                     "expires_at",
-                    "is_expired"
+                    "is_expired",
+                    "scan_status",
+                    "scanned_at"
                 ],
                 "title": "FileResource"
             },

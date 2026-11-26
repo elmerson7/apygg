@@ -1,5 +1,8 @@
 <?php
 
+use App\Integrations\Antivirus\ClamAvScanner;
+use App\Integrations\Antivirus\VirusTotalHashScanner;
+
 return [
 
     /*
@@ -174,6 +177,17 @@ return [
     ],
 
     /*
+    | Reprocesar imágenes en la subida normal (POST /files): JPEG, PNG y WebP se decodifican y se vuelven a codificar con
+    | GD. Quita cargas escondidas (archivos políglotas) y los metadatos EXIF (GPS). Apagado por defecto: cambia los bytes
+    | (y el tamaño) del archivo y gasta CPU. Las imágenes de más de `max_megapixels` se rechazan (422) con esto encendido.
+    */
+    'image_reencode' => [
+        'enabled' => (bool) env('FILE_IMAGE_REENCODE', false),
+        'quality' => (int) env('FILE_IMAGE_REENCODE_QUALITY', 90),
+        'max_megapixels' => (int) env('FILE_IMAGE_REENCODE_MAX_MP', 40),
+    ],
+
+    /*
     |--------------------------------------------------------------------------
     | Discos de Almacenamiento (público / privado)
     |--------------------------------------------------------------------------
@@ -256,16 +270,49 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Validación de Virus
+    | Escaneo antivirus de las subidas (docs/files.md, "Escaneo antivirus")
     |--------------------------------------------------------------------------
     |
-    | Configuración para escaneo de virus (requiere servicio externo).
+    | APAGADO por defecto: los archivos nacen `skipped` y se sirven como siempre. Encendido, cada archivo nuevo nace
+    | `pending` (cuarentena: sin URL ni descarga), `ScanFileJob` lo pasa por los motores de `drivers` en orden y queda
+    | `clean`, `infected` (se borra su contenido) o `failed` (sigue en cuarentena; `files:scan` lo reintenta).
+    |
+    | Motores incluidos (`engines`; un proyecto puede añadir el suyo implementando MalwareScannerInterface):
+    |  - `clamav`: el demonio clamd del contenedor opcional `clamav` (perfil de Compose `clamav`; nunca arranca si no lo
+    |    pides). Necesita ~1,5 GB de RAM fijos.
+    |  - `virustotal`: consulta solo el SHA-256 (no sube el archivo). Solo detecta malware conocido: complemento, no
+    |    sustituto. La clave gratuita es para uso NO comercial.
+    |
+    | `max_size_mb`: lo que pase de aquí no se escanea; `oversize` decide: `block` (queda `failed`, en cuarentena) o
+    | `allow` (queda `clean` con la nota "sin escanear"). Debe ser <= StreamMaxLength de clamd (CLAMAV_MAX_MB).
     |
     */
+    'scanning' => [
+        'enabled' => (bool) env('FILE_SCAN_ENABLED', false),
+        'drivers' => array_values(array_filter(array_map('trim', explode(',', (string) env('FILE_SCAN_DRIVERS', 'clamav'))))),
+        'engines' => [
+            'clamav' => ClamAvScanner::class,
+            'virustotal' => VirusTotalHashScanner::class,
+        ],
+        'max_size_mb' => (int) env('FILE_SCAN_MAX_MB', 100),
+        'oversize' => env('FILE_SCAN_OVERSIZE', 'block'),
+        'queue' => env('FILE_SCAN_QUEUE', 'default'),
+        'tries' => (int) env('FILE_SCAN_TRIES', 5),
+        'job_timeout' => (int) env('FILE_SCAN_JOB_TIMEOUT', 300),
 
-    'virus_scanning' => [
-        'enabled' => env('FILE_VIRUS_SCAN_ENABLED', false),
-        'service' => env('FILE_VIRUS_SCAN_SERVICE', 'clamav'), // clamav, cloudmersive, etc.
+        'clamav' => [
+            'host' => env('CLAMAV_HOST', 'clamav'),
+            'port' => (int) env('CLAMAV_PORT', 3310),
+            'connect_timeout' => (float) env('CLAMAV_CONNECT_TIMEOUT', 5),
+            'timeout' => (int) env('CLAMAV_TIMEOUT', 120),
+        ],
+
+        'virustotal' => [
+            'key' => env('VIRUSTOTAL_API_KEY'),
+            'url' => env('VIRUSTOTAL_URL', 'https://www.virustotal.com/api/v3'),
+            'min_detections' => (int) env('VIRUSTOTAL_MIN_DETECTIONS', 2),
+            'timeout' => (int) env('VIRUSTOTAL_TIMEOUT', 10),
+        ],
     ],
 
 ];

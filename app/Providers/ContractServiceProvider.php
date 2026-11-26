@@ -18,6 +18,7 @@ use App\Contracts\DocsServiceInterface;
 use App\Contracts\EmailVerificationServiceInterface;
 use App\Contracts\ExportServiceInterface;
 use App\Contracts\FeatureFlagServiceInterface;
+use App\Contracts\FileScanServiceInterface;
 use App\Contracts\FileServiceInterface;
 use App\Contracts\HostResolverInterface;
 use App\Contracts\IdempotencyInterface;
@@ -34,6 +35,7 @@ use App\Contracts\MailSendPolicyInterface;
 use App\Contracts\MailServiceInterface;
 use App\Contracts\MailSuppressionServiceInterface;
 use App\Contracts\MaintenanceServiceInterface;
+use App\Contracts\MalwareScannerInterface;
 use App\Contracts\MenuServiceInterface;
 use App\Contracts\MetricsServiceInterface;
 use App\Contracts\MultipartStorageInterface;
@@ -99,6 +101,7 @@ use App\Services\Docs\DocsService;
 use App\Services\EmailVerificationService;
 use App\Services\ExportService;
 use App\Services\FeatureFlagService;
+use App\Services\Files\FileScanService;
 use App\Services\Files\S3MultipartStorage;
 use App\Services\FileService;
 use App\Services\I18n\LocaleResolver;
@@ -203,6 +206,20 @@ class ContractServiceProvider extends ServiceProvider
         $this->app->bind(FileServiceInterface::class, FileService::class);
         $this->app->bind(DirectUploadServiceInterface::class, DirectUploadService::class);
         $this->app->bind(MultipartStorageInterface::class, S3MultipartStorage::class);
+        // Antivirus: los motores salen de files.scanning.drivers en cada resolución (bind, sin estado entre peticiones).
+        $this->app->bind(FileScanServiceInterface::class, fn ($app) => new FileScanService(
+            array_map(function (string $driver) use ($app): MalwareScannerInterface {
+                $class = config("files.scanning.engines.{$driver}");
+                $scanner = is_string($class) ? $app->make($class) : null;
+
+                if (! $scanner instanceof MalwareScannerInterface) {
+                    throw new \InvalidArgumentException("Motor antivirus desconocido en FILE_SCAN_DRIVERS: '{$driver}'.");
+                }
+
+                return $scanner;
+            }, (bool) config('files.scanning.enabled') ? array_values((array) config('files.scanning.drivers', [])) : []),
+            $app->make(TenantContext::class),
+        ));
         $this->app->bind(NotificationServiceInterface::class, NotificationService::class);
         $this->app->bind(SecurityServiceInterface::class, SecurityService::class);
         $this->app->bind(PermissionServiceInterface::class, PermissionService::class);
