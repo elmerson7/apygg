@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Files;
 
+use App\Contracts\FileScanServiceInterface;
 use App\Contracts\FileServiceInterface;
 use App\Exceptions\ApiException;
 use App\Exceptions\BusinessLogicException;
@@ -33,7 +34,10 @@ class FileController extends Controller
      */
     protected ?string $resource = FileResource::class;
 
-    public function __construct(private readonly FileServiceInterface $files) {}
+    public function __construct(
+        private readonly FileServiceInterface $files,
+        private readonly FileScanServiceInterface $scans,
+    ) {}
 
     /**
      * Listar archivos con paginación y filtros
@@ -280,6 +284,9 @@ class FileController extends Controller
             return $this->sendError('No tienes permiso para descargar este archivo', 403);
         }
 
+        // En cuarentena (antivirus pendiente, fallido o infectado) no se reparte ningún enlace.
+        $this->scans->assertAvailable($file);
+
         $minutes = (int) config('files.temporary_url_minutes', 15);
         $url = $file->is_public ? $file->getUrl() : $this->files->temporaryDownloadUrl($file, $minutes);
 
@@ -326,6 +333,9 @@ class FileController extends Controller
 
     protected function streamDownload(File $file): JsonResponse|StreamedResponse
     {
+        // Antivirus: un archivo en cuarentena o infectado no se sirve (409/410). También cubre la URL firmada.
+        $this->scans->assertAvailable($file);
+
         // Defensa en profundidad (multiempresa): la clave de almacenamiento lleva el tenant del
         // registro. Si no coincide, algo está mal en los datos y no se sirve el contenido.
         if (app(TenantContext::class)->enabled()

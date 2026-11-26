@@ -82,7 +82,30 @@ services:
     healthcheck:
       disable: true
 
+  # ── Antivirus ClamAV (perfil "clamav"): NUNCA arranca si no lo pides ─────
+  # Se activa con COMPOSE_PROFILES_EXTRA="clamav" en make deploy · Lo usa FILE_SCAN_ENABLED=true con FILE_SCAN_DRIVERS=clamav (docs/files.md).
+  # Ocupa ~1 GB de RAM fijos (medido: 960 MB) (las firmas viven en memoria). ConcurrentDatabaseReload=no evita que se duplique al
+  # actualizar las firmas (durante la recarga, unos segundos, no escanea: el job reintenta).
+  clamav:
+    profiles: ["clamav"]
+    image: clamav/clamav:1.5.5
+    container_name: ${PROJECT:-apygg}-clamav
+    environment:
+      CLAMD_CONF_StreamMaxLength: ${CLAMAV_MAX_MB:-100}M
+      CLAMD_CONF_ConcurrentDatabaseReload: "no"
+      FRESHCLAM_CHECKS: ${CLAMAV_FRESHCLAM_CHECKS:-4}
+    volumes:
+      - clamavdb:/var/lib/clamav
+    mem_limit: ${CLAMAV_MEMORY_LIMIT:-2g}
+    networks:
+      - network
+    restart: unless-stopped
+
 networks:
   network:
     name: ${PROJECT:-apygg}-network
     driver: bridge
+
+volumes:
+  clamavdb:
+    name: ${PROJECT:-apygg}-clamavdb

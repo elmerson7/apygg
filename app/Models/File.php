@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Contracts\FileScanServiceInterface;
+use App\Enums\FileScanStatus;
+use App\Jobs\ScanFileJob;
 use App\Traits\BelongsToTenant;
 use App\Traits\LogsActivity;
 use App\Traits\SoftDeletesWithUser;
@@ -11,6 +14,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -18,6 +22,13 @@ use Illuminate\Support\Facades\Storage;
  *
  * Modelo para gestión de archivos subidos al sistema.
  * Almacena metadatos de archivos y permite políticas de retención.
+ *
+ * Escaneo antivirus (docs/files.md): `scan_status` nace `pending` con el escaneo encendido (se encola `ScanFileJob`)
+ * o `skipped` si está apagado. Solo `skipped` y `clean` tienen URL y se pueden descargar.
+ *
+ * @property FileScanStatus $scan_status
+ * @property Carbon|null $scanned_at
+ * @property string|null $scan_result
  */
 class File extends Model
 {
@@ -62,7 +73,35 @@ class File extends Model
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
         'deleted_by' => 'string',
+        'scan_status' => FileScanStatus::class,
+        'scanned_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        // Todo archivo nuevo, venga de donde venga (subida normal, directa, por partes), pasa por aquí.
+        static::creating(function (File $file): void {
+            if ($file->getAttribute('scan_status') === null) {
+                $file->scan_status = app(FileScanServiceInterface::class)->initialStatus();
+            }
+        });
+
+        static::created(function (File $file): void {
+            if ($file->scan_status === FileScanStatus::Pending) {
+                ScanFileJob::dispatch((int) $file->getKey());
+            }
+        });
+    }
+
+    /**
+     * Se puede descargar o enlazar: subido sin escaneo o escaneado y limpio. El resto está en cuarentena.
+     */
+    public function isAvailable(): bool
+    {
+        $status = $this->getAttribute('scan_status');
+
+        return ! $status instanceof FileScanStatus || $status->isAvailable();
+    }
 
     /**
      * Relación con User
@@ -192,7 +231,7 @@ class File extends Model
      */
     public function getUrl(): ?string
     {
-        if (! $this->is_public) {
+        if (! $this->is_public || ! $this->isAvailable()) {
             return null;
         }
 

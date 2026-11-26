@@ -94,12 +94,68 @@ suma el uso y solo entonces crea. Dos subidas simultáneas se serializan y no pu
 el tamaño real); la presignada solo bloquea el instante de reservar, y al completar los mismos bytes pasan de reserva a archivo sin
 cambiar el total. `GET /files/usage` devuelve `used_bytes`, `limit_bytes`, `remaining_bytes` y `max_file_bytes` del tenant.
 
-## Pendiente: sin antivirus
+## Protección sin antivirus (siempre activa)
 
-Las subidas **no se escanean en busca de malware**. Se valida tipo MIME, extensión y tamaño, pero un archivo
-infectado con un tipo permitido se guarda tal cual. Si el proyecto acepta archivos de terceros que otros usuarios
-descargan, añade un escaneo (p. ej. ClamAV en un job en cola tras la subida, con el archivo en cuarentena hasta
-que pase). No está en el boilerplate.
+Lo que cubre la mayor parte del riesgo sin gastar memoria:
+
+- Tipo por **contenido** (finfo), lista blanca (`allowed_mimes`/`allowed_extensions`) y lista negra de lo ejecutable (SVG, HTML, JS, PHP...).
+- Nombre en disco **generado**; el original nunca se usa como ruta.
+- Descarga por la API siempre como **adjunto** con `X-Content-Type-Options: nosniff` y `Content-Security-Policy: default-src 'none'; sandbox`.
+  Las URL temporales de S3 fuerzan `Content-Disposition: attachment`.
+- Recomendado en producción: servir los archivos públicos desde **otro dominio** (bucket/CDN), no desde el de la API.
+- Opcional, **reprocesar imágenes** (`FILE_IMAGE_REENCODE=true`, `config/files.php` -> `image_reencode`): en `POST /files`, JPEG, PNG y
+  WebP se decodifican y se vuelven a codificar con GD. Se pierde lo escondido tras la imagen (archivo políglota) y los metadatos EXIF
+  (ubicación GPS, cámara). Cambia los bytes y el tamaño; gasta CPU; las de más de `FILE_IMAGE_REENCODE_MAX_MP` (40) megapíxeles se
+  rechazan (422) para no agotar la memoria. Los GIF no se tocan (perderían la animación) y la subida directa a S3 no pasa por aquí.
+
+## Escaneo antivirus (opcional, apagado por defecto)
+
+`FILE_SCAN_ENABLED=false` por defecto: todo funciona como antes y ningún contenedor de antivirus arranca. Encendido:
+
+1. Todo archivo nuevo (subida normal, directa o por partes) nace con `scan_status = pending`: **cuarentena**. No tiene `url` ni `path` en
+   la respuesta y `GET /files/{id}/download`, `/temporary-url` y la URL firmada responden **409 `file_scan_pending`** (la autorización va
+   antes: quien no puede verlo recibe 403).
+2. `ScanFileJob` (en cola, tras el commit, en el tenant del archivo) pasa el contenido por los motores de `FILE_SCAN_DRIVERS`, en orden:
+   - limpio en todos -> `clean`: se sirve normal (el público recupera su URL);
+   - uno detecta malware -> `infected`: **se borra el contenido** del almacenamiento, la fila queda como registro (`scan_result` = motor y
+     firma), deja de contar en la cuota, se registra en el canal `security` y se lanza el evento `App\Events\FileInfected` (escúchalo
+     para avisar). Descarga: **410 `file_infected`**;
+   - fallo pasajero (clamd caído, 429 de VirusTotal) -> el job reintenta (`FILE_SCAN_TRIES`, 5, con espera creciente). Agotados ->
+     `failed`, sigue en cuarentena (**409 `file_scan_failed`**). Un fallo que no se arregla reintentando (clave inválida) va directo a `failed`.
+3. Lo que pase de `FILE_SCAN_MAX_MB` (100) no se escanea: `FILE_SCAN_OVERSIZE=block` (por defecto) lo deja `failed`; `allow` lo deja
+   `clean` con la nota "sin escanear". Debe ser <= `CLAMAV_MAX_MB` (StreamMaxLength de clamd).
+4. `php artisan files:scan [--status=pending,failed] [--limit=1000]` vuelve a encolar (tras una caída de clamd). Con `--status=skipped`
+   revisa lo subido **antes** de encender el escaneo (esos archivos pasan a `pending` y quedan en cuarentena hasta escanearse).
+
+Estados (`App\Enums\FileScanStatus`, campo `scan_status` de la respuesta): `skipped` (sin escaneo; los archivos anteriores a esta
+función), `pending`, `clean`, `infected`, `failed`. Solo `skipped` y `clean` se sirven.
+
+**Limitación:** en un disco público (bucket público o `/storage`) el objeto existe desde la subida. Mientras está en cuarentena la API no
+da su ruta ni su URL (la clave lleva un ULID: no se adivina), pero no está físicamente aislado. Si necesitas aislamiento estricto, deja
+`security.allow_public_sharing` apagado (los archivos van al disco privado) o usa un bucket privado.
+
+### Motores
+
+| `FILE_SCAN_DRIVERS` | Qué hace | Coste |
+|---|---|---|
+| `clamav` | Envía el contenido a clamd (`CLAMAV_HOST`:`CLAMAV_PORT`) con INSTREAM por TCP; no comparte disco. Detecta malware conocido y patrones. | **~1 GB de RAM fijos** (medido: 960 MB con las firmas cargadas). Gratis. |
+| `virustotal` | Consulta solo el **SHA-256** en VirusTotal (`VIRUSTOTAL_API_KEY`); el archivo **no sale** del servidor. Infectado si `VIRUSTOTAL_MIN_DETECTIONS` (2) motores lo marcan. Un hash desconocido cuenta como limpio: solo detecta malware ya conocido. | Sin RAM. La clave gratuita es **solo para uso no comercial** (4 peticiones/min, 500/día); para un producto comercial hace falta la de pago. |
+| `clamav,virustotal` | Los dos en orden; el primero que detecta decide. | |
+
+Un proyecto puede añadir su motor (p. ej. un servicio de pago): una clase que implemente `App\Contracts\MalwareScannerInterface` y su
+nombre en `config/files.php` -> `scanning.engines`.
+
+### Contenedor ClamAV (perfil `clamav`)
+
+Nunca arranca si no se pide: está en el perfil de Compose `clamav` (`clamav/clamav:1.5.5`, versión fija).
+
+- Local: `make up CLAMAV=true` (con `FILE_SCAN_ENABLED=true` y `FILE_SCAN_DRIVERS=clamav` en `.env`).
+- Producción (`deploy/compose.prod.yml`): `COMPOSE_PROFILES_EXTRA="clamav" make deploy`.
+- La primera vez descarga las firmas (~1 min); se guardan en el volumen `<PROJECT>-clamavdb`. `freshclam` las actualiza
+  `CLAMAV_FRESHCLAM_CHECKS` (4) veces al día.
+- `ConcurrentDatabaseReload no`: al recargar firmas no se duplica la memoria (si no, el pico llega a ~2 GB); a cambio clamd no
+  escanea unos segundos y el job reintenta. Límite de memoria del contenedor: `CLAMAV_MEMORY_LIMIT` (2g).
+- Probar contra clamd real: `INTEGRATION_CLAMAV_HOST=clamav make test-integration` (`tests/Integration/ClamAvIntegracionTest.php`, con EICAR).
 
 ## S3 / emulador local
 
