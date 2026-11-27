@@ -24,7 +24,7 @@
         "openspout/openspout": "^4.23",
         "php-open-source-saver/jwt-auth": "^2.8",
         "pragmarx/google2fa": "^9.0",
-        "resend/resend-laravel": "^1.3",
+        "resend/resend-laravel": "^1.4",
         "sentry/sentry-laravel": "^4.15",
         "spatie/laravel-permission": "^8.5"
     },
@@ -76,13 +76,16 @@
             "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,queue,logs,vite"
         ],
         "test": [
+            "Composer\\Config::disableProcessTimeout",
             "@php artisan config:clear --ansi",
             "pest"
         ],
         "test:watch": [
+            "Composer\\Config::disableProcessTimeout",
             "pest --watch"
         ],
         "test:parallel": [
+            "Composer\\Config::disableProcessTimeout",
             "pest --parallel"
         ]
     },

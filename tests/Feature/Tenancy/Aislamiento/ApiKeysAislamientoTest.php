@@ -15,7 +15,9 @@ beforeEach(function () {
     $this->bootIsolation();
     $this->userA = $this->isoUser($this->a);
     $this->userB = $this->isoUser($this->b);
-    $crear = fn ($tenant, $user, string $name) => $this->ctx->run($tenant, fn () => app(ApiKeyService::class)->create($user, $name, ['*'])['api_key']);
+    $this->userA->givePermissionTo('api-keys.manage');
+    $this->userB->givePermissionTo('api-keys.manage');
+    $crear = fn ($tenant, $user, string $name) => $this->ctx->run($tenant, fn () => app(ApiKeyService::class)->create($user, $name, ['profile.read'])['api_key']);
     $this->keyA = $crear($this->a, $this->userA, 'de-a');
     $this->keyB = $crear($this->b, $this->userB, 'de-b');
 });

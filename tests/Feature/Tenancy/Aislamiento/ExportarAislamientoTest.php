@@ -111,3 +111,14 @@ test('el job de exportación corre en el tenant de la exportación aunque el wor
         ->and($csv)->toContain($this->ownerB->email)->and($csv)->not->toContain($this->ownerA->email)
         ->and($this->ctx->id())->toBeNull();
 });
+
+test('ser dueño en A no permite exportar los miembros de B siendo solo miembro de B', function () {
+    // Con equipos de Spatie apagados el rol tenant-owner es global: pasa el permission: de la ruta en B.
+    $doble = $this->isoUser($this->a, 'owner');
+    $this->b->users()->attach($doble->getKey(), ['status' => 'active', 'role' => 'member', 'joined_at' => now()]);
+
+    $this->isoCall($this->isoHeaders($doble, $this->b), 'POST', '/tenant/exports/members', ['format' => 'csv'])
+        ->assertForbidden();
+
+    expect(DataExport::query()->withoutGlobalScopes()->where('user_id', $doble->id)->count())->toBe(0);
+});

@@ -35,3 +35,16 @@ test('una respuesta normal a un origen permitido lleva la cabecera CORS', functi
     $this->getJson('/health', ['Origin' => 'https://app.example.test'])
         ->assertHeader('Access-Control-Allow-Origin', 'https://app.example.test');
 });
+
+test('un comodín de subdominio acepta subdominios pero no un dominio que solo termina igual', function (string $origen, bool $permitido) {
+    config(['cors.allowed_origins' => ['*.example.test']]);
+
+    $cabecera = $this->getJson('/health', ['Origin' => $origen])->headers->get('Access-Control-Allow-Origin');
+
+    expect($cabecera === $origen)->toBe($permitido);
+})->with([
+    ['https://app.example.test', true],
+    ['https://a.b.example.test', true],
+    ['https://evilexample.test', false],
+    ['https://example.test.evil.org', false],
+]);

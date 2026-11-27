@@ -19,7 +19,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
-use Intervention\Image\Facades\Image;
 use Symfony\Component\Mime\MimeTypes;
 
 /**
@@ -330,76 +329,6 @@ class FileService implements FileServiceInterface
             str_starts_with($mimeType, 'application/'), str_starts_with($mimeType, 'text/') => 'document',
             default => 'other',
         };
-    }
-
-    /**
-     * Subir imagen con procesamiento opcional (resize/formato)
-     *
-     * @param  array<string, mixed>  $options  width, height, quality, format
-     */
-    public function uploadImage(
-        UploadedFile $file,
-        string $path = 'images',
-        array $options = []
-    ): array {
-        if (! str_starts_with((string) $file->getMimeType(), 'image/')) {
-            throw BusinessLogicException::ruleViolation('El archivo debe ser una imagen.');
-        }
-
-        $width = $options['width'] ?? null;
-        $height = $options['height'] ?? null;
-        $quality = $options['quality'] ?? 90;
-        $format = $options['format'] ?? null;
-
-        if ($width || $height) {
-            if (! class_exists(Image::class)) {
-                throw new \RuntimeException('Intervention Image package is required for image processing.');
-            }
-
-            $image = Image::make($file);
-
-            if ($width && $height) {
-                $image->fit($width, $height);
-            } elseif ($width) {
-                $image->resize($width, null, fn ($c) => $c->aspectRatio());
-            } elseif ($height) {
-                $image->resize(null, $height, fn ($c) => $c->aspectRatio());
-            }
-
-            if ($format) {
-                $image->encode($format, $quality);
-            }
-
-            $extension = $format ?? $file->getClientOriginalExtension();
-            $filename = $this->generateFilename($file, $extension);
-            $fullPath = rtrim($this->tenantStoragePath($path), '/').'/'.$filename;
-            $disk = self::DEFAULT_DISK;
-
-            Storage::disk($disk)->put($fullPath, $image->stream());
-
-            $result = [
-                'path' => $fullPath,
-                'url' => Storage::disk($disk)->url($fullPath),
-                'filename' => $filename,
-                'size' => strlen($image->stream()->getContents()),
-                'mime_type' => $image->mime(),
-                'width' => $image->width(),
-                'height' => $image->height(),
-                'disk' => $disk,
-            ];
-
-            LogService::info('Imagen subida con procesamiento', [
-                'path' => $fullPath,
-                'disk' => $disk,
-                'width' => $image->width(),
-                'height' => $image->height(),
-                'mime_type' => $image->mime(),
-            ], 'files');
-
-            return $result;
-        }
-
-        return $this->upload($file, $path);
     }
 
     /**

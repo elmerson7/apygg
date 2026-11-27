@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- Usuarios: `PUT /users/{id}` de otro usuario exige tener todos sus permisos y no tocar a miembros de otra empresa; cambiar el email o la contraseña de alguien cierra sus sesiones y anula sus enlaces de restablecimiento (toma de cuentas con `users.update`).
+- API Keys: crear y rotar piden `api-keys.manage`; cada scope debe ser un permiso del dueño (o de `api-keys.self_scopes`) y `*` solo lo concede un admin.
+- Impersonación: se bloquean escribir roles y permisos, crear empresas, invitar o cambiar miembros, webhooks y la suscripción.
+- Exportación de miembros: se recheca el rango del actor en la empresa (`actorRankFor`); prueba de arquitectura para toda ruta `tenant-*`.
+- Logs: el `code` de OTP, TOTP y códigos de recuperación se oculta (los códigos de error se conservan).
+- CORS: `*.example.com` ya no acepta `evilexample.com`.
+- `UserService::find` deja de cachear el usuario (con su hash) en Redis.
+- Eliminado `FileService::uploadImage` (sin uso, se saltaba la validación).
+- Arranque en producción: rechaza el `REVERB_APP_SECRET` de ejemplo; `.env.production.example` exige sesiones (`AUTH_REQUIRE_SESSION=true`).
+
+### Fixed
+- `make test` ya no se corta a los 300 s de Composer.
+
 ### Changed
 - CI: el job `e2e` (stack real, `make e2e`) corre en cada PR y bloquea `ci-success`, el check obligatorio de `main`; antes solo corría tras unir a `main`. Ver `docs/testing.md`
 

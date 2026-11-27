@@ -36,8 +36,7 @@ class UserService implements UserServiceInterface
 {
     public function __construct(private readonly EmailVerificationServiceInterface $emailVerification) {}
 
-    protected const CACHE_TTL = 3600;
-
+    // Solo para borrar entradas antiguas: find() ya no cachea el usuario.
     protected const CACHE_PREFIX = 'user:';
 
     /**
@@ -143,6 +142,8 @@ class UserService implements UserServiceInterface
         }
 
         $emailCambiado = isset($data['email']) && $data['email'] !== $user->email;
+        $passwordCambiada = isset($data['password']);
+        $emailAnterior = $user->email;
 
         $oldAttributes = $user->getAttributes();
 
@@ -170,6 +171,17 @@ class UserService implements UserServiceInterface
         }
 
         $user->update($data);
+
+        // Cambiar credenciales (email o contraseña) cierra todas las sesiones: quien las tenía abiertas
+        // (p. ej. alguien que tomó la cuenta) no sigue dentro. Los enlaces de restablecimiento pedidos con
+        // el email anterior dejan de valer.
+        if ($emailCambiado || $passwordCambiada) {
+            $user->revokeAllTokens();
+        }
+
+        if ($emailCambiado) {
+            DB::table('password_reset_tokens')->where('email', $emailAnterior)->delete();
+        }
 
         // Un correo nuevo no está verificado: se anula y se vuelve a pedir la verificación.
         if ($emailCambiado) {
@@ -352,12 +364,9 @@ class UserService implements UserServiceInterface
      */
     public function find(string $userId): User
     {
-        return CacheService::remember(self::CACHE_PREFIX.$userId, self::CACHE_TTL, function () use ($userId) {
-            $user = User::findOrFail($userId);
-            $user->load(['roles', 'permissions']);
-
-            return $user;
-        });
+        // Sin caché: guardaba el modelo entero (con el hash de la contraseña) en Redis una hora y las policies
+        // decidían con roles que podían estar desactualizados (p. ej. un admin recién degradado). Por id es barato.
+        return User::with(['roles', 'permissions'])->findOrFail($userId);
     }
 
     /**

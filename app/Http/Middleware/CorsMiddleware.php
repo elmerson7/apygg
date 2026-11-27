@@ -147,9 +147,14 @@ class CorsMiddleware
             }
 
             // Soporte para wildcard en subdominios (ej: *.example.com)
+            // Se compara el host (con su puerto) contra '.'.$domain: evilexample.com no pasa por *.example.com.
             if (str_starts_with($allowedOrigin, '*.')) {
-                $domain = substr($allowedOrigin, 2);
-                if (str_ends_with($origin, $domain)) {
+                $domain = strtolower(substr($allowedOrigin, 2));
+                $host = strtolower((string) parse_url($origin, PHP_URL_HOST));
+                $port = parse_url($origin, PHP_URL_PORT);
+                $hostWithPort = $port !== null && $port !== false ? $host.':'.$port : $host;
+
+                if ($host !== '' && str_ends_with(str_contains($domain, ':') ? $hostWithPort : $host, '.'.$domain)) {
                     return true;
                 }
             }

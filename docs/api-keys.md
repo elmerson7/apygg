@@ -9,6 +9,11 @@ Route::middleware(['auth:api-key', 'api-key-scope:profile.read'])->get('/api-key
 - `auth:api-key` es el middleware estándar `auth` con el guard `api-key` (`config/auth.php`, `Auth::viaRequest` en `AuthServiceProvider`). La key va en `X-API-Key` o `Authorization: Bearer`.
 - `api-key-scope:` **falla en cerrado**: sin API Key da 401; una key **sin scopes no accede a nada**; el acceso total es el scope explícito `*`.
 - Las API Keys autorizan solo por scopes, no por permisos RBAC.
+- **Crear y rotar** pide el permiso `api-keys.manage` (lo traen `manager`, `tenant-owner` y `tenant-admin`; el admin pasa siempre).
+- **Una key nunca da más que su dueño**: cada scope debe ser un permiso que el dueño tiene (`checkPermissionTo`) o uno de
+  `api-keys.self_scopes` (datos propios, por defecto `profile.read`). El comodín `*` solo lo concede un admin. Si no,
+  422 con `business_code: API_KEY_SCOPE_NOT_ALLOWED`. Rotar vuelve a comprobarlo: si el dueño perdió un permiso, la
+  rotación con esos scopes se rechaza.
 - Se guardan con SHA-256; la key completa solo se muestra al crearla o rotarla.
 - Una key revocada o caducada deja de valer en el acto. Rotar una caducada se rechaza (422); la antigua sigue 7 días como máximo y nunca más allá de su propia caducidad.
 - Las keys `test` no se crean ni se aceptan en producción (`API_KEYS_ALLOW_TEST_IN_PRODUCTION`).

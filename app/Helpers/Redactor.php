@@ -157,6 +157,25 @@ class Redactor
         return false;
     }
 
+    /**
+     * `code` es ambiguo: en un login por OTP o 2FA es el secreto, pero en un error es el código estable
+     * (`validation_error`). Solo se oculta si su valor parece un código de un solo uso: 6-12 dígitos (OTP,
+     * TOTP) o el formato de los códigos de recuperación (`xxxxxxxxxx-xxxxxxxxxx`).
+     */
+    public static function isOneTimeCode(string $key, mixed $value): bool
+    {
+        if (! in_array(strtolower($key), array_map('strtolower', (array) self::setting('code_keys', [])), true)) {
+            return false;
+        }
+
+        if (is_int($value)) {
+            $value = (string) $value;
+        }
+
+        return is_string($value)
+            && preg_match('/^\s*(?:\d{6,12}|[A-Za-z0-9]{10}-[A-Za-z0-9]{10})\s*$/', $value) === 1;
+    }
+
     public static function mode(): string
     {
         return self::setting('mode', self::MODE_MASK) === self::MODE_REMOVE ? self::MODE_REMOVE : self::MODE_MASK;
@@ -184,7 +203,7 @@ class Redactor
         $remove = self::mode() === self::MODE_REMOVE;
         $result = [];
         foreach ($data as $key => $value) {
-            if (is_string($key) && self::isSensitiveKey($key)) {
+            if (is_string($key) && (self::isSensitiveKey($key) || self::isOneTimeCode($key, $value))) {
                 if (! $remove) {
                     $result[$key] = self::MASK;
                 }

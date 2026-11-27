@@ -75,6 +75,7 @@ return [
         'tests/Feature/Authorization/LogsAccessTest.php',
         'tests/Feature/Authorization/PermissionCatalogTest.php',
         'tests/Feature/Authorization/UserRolesEscalationTest.php',
+        'tests/Feature/Authorization/UserAccountTakeoverTest.php',
         'tests/Feature/Controllers/RegistroTest.php',
         'tests/Feature/Hallazgos/ListaNegraSesionesTest.php',
         'tests/Feature/Tenancy/Aislamiento/ApiKeysAislamientoTest.php',

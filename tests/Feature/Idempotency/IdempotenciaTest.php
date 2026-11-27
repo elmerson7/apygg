@@ -289,7 +289,7 @@ test('POST /webhooks con la misma clave crea un solo webhook y repite el secreto
 
 test('una API key tiene su propio espacio de claves, distinto del de su usuario', function () {
     $user = idemUsuario();
-    $creada = app(ApiKeyService::class)->create($user, 'k', ['*']);
+    $creada = app(ApiKeyService::class)->create($user, 'k', ['profile.read']);
     $clave = $creada['key'];
 
     Route::middleware(['api', 'auth:api-key', 'idempotent'])->post('/_idem/apikey2', fn () => response()->json(['ok' => true], 201));

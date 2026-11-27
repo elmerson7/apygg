@@ -83,6 +83,7 @@ test('un usuario no puede actualizar el webhook de otro', function () {
 
 test('un usuario autenticado crea una api key y recibe la clave una sola vez', function () {
     $user = usuarioNormal();
+    $user->givePermissionTo(['api-keys.manage', 'users.read']);
 
     $this->withHeaders(cabecerasDe($user))->postJson('/api-keys', [
         'name' => 'Integracion',
@@ -96,7 +97,10 @@ test('un usuario autenticado crea una api key y recibe la clave una sola vez', f
 });
 
 test('crear una api key con datos invalidos responde 422', function () {
-    $this->withHeaders(cabecerasDe(usuarioNormal()))
+    $user = usuarioNormal();
+    $user->givePermissionTo('api-keys.manage');
+
+    $this->withHeaders(cabecerasDe($user))
         ->postJson('/api-keys', ['name' => 'x', 'scopes' => ['formato malo']])
         ->assertUnprocessable();
 });

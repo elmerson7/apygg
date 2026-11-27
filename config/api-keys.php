@@ -114,6 +114,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Scopes sobre datos propios
+    |--------------------------------------------------------------------------
+    |
+    | Cualquier usuario con `api-keys.manage` puede darlos a sus keys aunque no sean un permiso de
+    | Spatie: solo dan acceso a los datos del dueño de la key. El resto de scopes debe ser un permiso
+    | que el dueño tiene (una key nunca da más que su dueño) y `*` solo lo concede un admin.
+    |
+    */
+
+    'self_scopes' => ['profile.read'],
+
+    /*
+    |--------------------------------------------------------------------------
     | Período de Gracia para Rotación
     |--------------------------------------------------------------------------
     |
