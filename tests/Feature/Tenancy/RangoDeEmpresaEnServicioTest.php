@@ -38,7 +38,8 @@ test('cada permiso de empresa de una ruta se vuelve a comprobar con actorRankFor
     $conRango = $fuentes->filter(fn (string $c) => str_contains($c, 'actorRankFor('));
     // Los exportadores e importadores declaran su permiso; el servicio lo recheca con actorRankFor(..., ->permission()).
     $declarados = $fuentes->filter(fn (string $c) => preg_match('/function permission\(\): string/', $c) === 1);
-    $exportRecheca = str_contains(File::get(app_path('Services/ExportService.php')), 'actorRankFor($this->tenant->require(), $user, $exporter->permission())');
+    $exportService = app_path('Services/ExportService.php'); // el módulo export es quitable
+    $exportRecheca = File::exists($exportService) && str_contains(File::get($exportService), 'actorRankFor($this->tenant->require(), $user, $exporter->permission())');
 
     $sinRecheque = [];
 

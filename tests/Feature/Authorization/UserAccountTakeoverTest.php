@@ -72,7 +72,7 @@ test('un manager no cambia la contraseña de quien tiene un permiso que él no t
         ->assertForbidden();
 
     expect($soporte->fresh()->password)->toBe($hash);
-})->with(['tenants.access-any', 'users.impersonate']);
+})->with(['tenants.access-any', 'roles.delete']);
 
 test('un manager no edita a un miembro de una empresa a la que no pertenece', function () {
     $manager = conRolDe('manager');
