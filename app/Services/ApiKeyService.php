@@ -18,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Spatie\Permission\Exceptions\PermissionDoesNotExist;
 
 /**
  * ApiKeyService
@@ -83,8 +84,9 @@ class ApiKeyService implements ApiKeyServiceInterface
             throw new BusinessLogicException('Las API Keys de prueba no están permitidas en producción', 'TEST_KEY_IN_PRODUCTION');
         }
 
-        // Validar scopes
+        // Validar scopes (formato y que el dueño pueda concederlos)
         $this->validateScopes($scopes);
+        $this->assertScopesGrantable($user, $scopes);
 
         // Generar key completa con prefijo
         $prefix = config('api-keys.prefixes.'.$environment) ?? config('api-keys.prefixes.live');
@@ -134,6 +136,10 @@ class ApiKeyService implements ApiKeyServiceInterface
         // Validar scopes si se proporcionan
         if (isset($data['scopes'])) {
             $this->validateScopes($data['scopes']);
+
+            if ($apiKey->user !== null) {
+                $this->assertScopesGrantable($apiKey->user, $data['scopes']);
+            }
         }
 
         // Guardar valores anteriores para auditoría
@@ -473,6 +479,44 @@ class ApiKeyService implements ApiKeyServiceInterface
             // Validar contra lista de scopes disponibles si está configurada
             if (! empty($availableScopes) && ! in_array($scope, $availableScopes)) {
                 throw BusinessLogicException::ruleViolation("El scope '{$scope}' no está disponible");
+            }
+        }
+    }
+
+    /**
+     * Una key nunca da más de lo que tiene su dueño: cada scope debe ser un permiso que el usuario tiene
+     * (`checkPermissionTo`, estricto) o uno de `api-keys.self_scopes` (datos propios, como `profile.read`).
+     * El comodín `*` solo lo concede un admin.
+     *
+     * @param  list<string>  $scopes
+     *
+     * @throws BusinessLogicException Si algún scope supera los permisos del dueño
+     */
+    protected function assertScopesGrantable(User $user, array $scopes): void
+    {
+        if ($user->isAdmin()) {
+            return;
+        }
+
+        $selfScopes = (array) config('api-keys.self_scopes', []);
+
+        foreach ($scopes as $scope) {
+            if ($scope === '*') {
+                throw BusinessLogicException::ruleViolation('Solo un administrador puede crear una API Key con el scope "*"', 'API_KEY_SCOPE_NOT_ALLOWED');
+            }
+
+            if (in_array($scope, $selfScopes, true)) {
+                continue;
+            }
+
+            try {
+                $granted = $user->checkPermissionTo($scope, 'api');
+            } catch (PermissionDoesNotExist) {
+                $granted = false;
+            }
+
+            if (! $granted) {
+                throw BusinessLogicException::ruleViolation("No puedes conceder el scope '{$scope}': no tienes ese permiso", 'API_KEY_SCOPE_NOT_ALLOWED');
             }
         }
     }

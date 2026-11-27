@@ -62,6 +62,7 @@ return [
         'tests/Concurrency/InvitacionYAltaConcurrenteTest.php',
         'tests/Feature/Hallazgos/TenancyOperacionesTest.php',
         'tests/Feature/I18n/AjustesRegionalesDelTenantTest.php',
+        'tests/Feature/Tenancy/RangoDeEmpresaEnServicioTest.php',
         'tests/Feature/Tenancy/Aislamiento/AjustesAislamientoTest.php',
         'tests/Feature/Tenancy/Aislamiento/ArchivosAislamientoTest.php',
         'tests/Feature/Tenancy/Aislamiento/AuditoriaAislamientoTest.php',

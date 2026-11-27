@@ -78,7 +78,7 @@ test('ensureWithin lanza plan_limit_reached al pasarse y check informa', functio
 });
 
 test('crear API keys por la API respeta el límite del plan con 403 plan_limit_reached', function () {
-    $h = plHeaders($this, $this->a);
+    $h = plHeaders($this, $this->a, ['api-keys.manage']);
 
     $this->asHeaders($h)->postJson('/api-keys', ['name' => 'k1'])->assertCreated();
     $this->asHeaders($h)->postJson('/api-keys', ['name' => 'k2'])->assertCreated();
@@ -87,7 +87,7 @@ test('crear API keys por la API respeta el límite del plan con 403 plan_limit_r
         ->assertJsonPath('limit', 2);
 
     // El tenant B tiene su propio cupo
-    $hb = plHeaders($this, $this->b);
+    $hb = plHeaders($this, $this->b, ['api-keys.manage']);
     $this->asHeaders($hb)->postJson('/api-keys', ['name' => 'b1'])->assertCreated();
 
     // Subir el plan lo desbloquea
@@ -96,7 +96,7 @@ test('crear API keys por la API respeta el límite del plan con 403 plan_limit_r
 });
 
 test('rotar una key en el tope no se bloquea', function () {
-    $h = plHeaders($this, $this->a);
+    $h = plHeaders($this, $this->a, ['api-keys.manage']);
     $id = $this->asHeaders($h)->postJson('/api-keys', ['name' => 'k1'])->json('data.api_key.id');
     $this->asHeaders($h)->postJson('/api-keys', ['name' => 'k2'])->assertCreated();
 

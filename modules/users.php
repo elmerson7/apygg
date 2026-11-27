@@ -40,6 +40,7 @@ return [
         'tests/Feature/Modulos/UserPreferenciasTest.php',
         'tests/Feature/Modulos/UsersTest.php',
         'tests/Feature/UserControllerTest.php',
+        'tests/Feature/Users/UsuarioSinCacheTest.php',
         'tests/Unit/UserServiceTest.php',
         'tests/Feature/Hallazgos/DocumentoIdentidadOpcionalTest.php',
     ],

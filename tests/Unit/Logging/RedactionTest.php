@@ -57,3 +57,19 @@ test('ApiLogger no guarda tokens ni contraseñas del request ni de la response',
         ->and($stored)->not->toContain('REFRESH-TOKEN-VALUE')
         ->and($log->request_body['email'])->toBe('a***@b***.com');
 });
+
+test('oculta el code de un OTP, un TOTP o un código de recuperación y conserva los códigos de error', function () {
+    $out = Redactor::redact([
+        'login' => ['email' => 'x', 'code' => '48213907'],
+        'totp' => ['code' => 123456],
+        'recovery' => ['code' => 'AbCdEfGhIj-KlMnOpQrSt'],
+        'error' => ['code' => 'validation_error', 'status' => 422],
+        'sql' => ['code' => '23505'],
+    ]);
+
+    expect($out['login']['code'])->toBe(Redactor::MASK)
+        ->and($out['totp']['code'])->toBe(Redactor::MASK)
+        ->and($out['recovery']['code'])->toBe(Redactor::MASK)
+        ->and($out['error']['code'])->toBe('validation_error')
+        ->and($out['sql']['code'])->toBe('23505');
+});

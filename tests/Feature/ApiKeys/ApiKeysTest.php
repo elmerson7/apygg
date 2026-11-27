@@ -19,6 +19,15 @@ function akUsuario(): User
 {
     $user = User::factory()->create();
     $user->assignRole(Role::where('name', 'user')->first());
+    $user->givePermissionTo('api-keys.manage');
+
+    return $user;
+}
+
+function akAdmin(): User
+{
+    $user = User::factory()->create();
+    $user->assignRole('admin');
 
     return $user;
 }
@@ -59,13 +68,15 @@ test('una key sin scopes no tiene acceso a nada', function () {
 });
 
 test('una key con otro scope recibe 403', function () {
-    [$key] = akCrear(akUsuario(), ['users.read']);
+    $user = akUsuario();
+    $user->givePermissionTo('users.read');
+    [$key] = akCrear($user, ['users.read']);
 
     $this->getJson('/api-key/whoami', ['X-API-Key' => $key])->assertForbidden();
 });
 
 test('el scope comodin da acceso explicito total', function () {
-    [$key] = akCrear(akUsuario(), ['*']);
+    [$key] = akCrear(akAdmin(), ['*']);
 
     $this->getJson('/api-key/whoami', ['X-API-Key' => $key])->assertOk();
 });
@@ -152,4 +163,53 @@ test('un usuario no puede revocar la key de otro', function () {
     [, $modelo] = akCrear(akUsuario(), ['profile.read']);
 
     $this->withHeaders(akJwt(akUsuario()))->deleteJson("/api-keys/{$modelo->id}")->assertForbidden();
+});
+
+// H2: una key nunca da más que su dueño.
+
+test('sin api-keys.manage no se crea ni se rota una key por la API', function () {
+    $user = User::factory()->create();
+    $user->assignRole('user');
+    [, $modelo] = akCrear($user, ['profile.read']);
+
+    $this->withHeaders(akJwt($user))->postJson('/api-keys', ['name' => 'Nueva'])->assertForbidden();
+    $this->withHeaders(akJwt($user))->postJson("/api-keys/{$modelo->id}/rotate")->assertForbidden();
+});
+
+test('un usuario no crea una key con un scope que no tiene como permiso', function (string $scope) {
+    $user = akUsuario();
+
+    $this->withHeaders(akJwt($user))
+        ->postJson('/api-keys', ['name' => 'Escalada', 'scopes' => [$scope]])
+        ->assertUnprocessable()
+        ->assertJsonPath('business_code', 'API_KEY_SCOPE_NOT_ALLOWED');
+
+    expect(ApiKey::query()->where('user_id', $user->id)->count())->toBe(0);
+})->with(['*', 'users.delete', 'users.read']);
+
+test('un usuario crea una key con un scope que sí tiene y con los scopes de datos propios', function () {
+    $user = akUsuario();
+    $user->givePermissionTo('users.read');
+
+    $this->withHeaders(akJwt($user))
+        ->postJson('/api-keys', ['name' => 'Lectura', 'scopes' => ['users.read', 'profile.read']])
+        ->assertCreated();
+});
+
+test('rotar una key no conserva scopes que el dueño ya no tiene', function () {
+    $user = akUsuario();
+    $user->givePermissionTo('users.read');
+    [, $modelo] = akCrear($user, ['users.read']);
+    $user->revokePermissionTo('users.read');
+
+    $this->withHeaders(akJwt($user))
+        ->postJson("/api-keys/{$modelo->id}/rotate")
+        ->assertUnprocessable()
+        ->assertJsonPath('business_code', 'API_KEY_SCOPE_NOT_ALLOWED');
+});
+
+test('un admin sí crea una key con el comodín', function () {
+    $this->withHeaders(akJwt(akAdmin()))
+        ->postJson('/api-keys', ['name' => 'Total', 'scopes' => ['*']])
+        ->assertCreated();
 });

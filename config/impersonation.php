@@ -38,5 +38,12 @@ return [
         '* api-keys*',
         'POST admin/impersonate/[0-9]*', // stop sí se permite
         '* admin/maintenance*',
+        // Privilegios y accesos que sobrevivirían a la impersonación (soporte se invita, sube un rol o
+        // deja un webhook o una suscripción a su nombre). Se puede leer, no cambiar.
+        'POST roles*', 'PUT roles/*', 'DELETE roles/*', 'POST permissions*', 'PUT permissions/*', 'DELETE permissions/*',
+        'POST tenants', 'POST tenant/invitations*', 'DELETE tenant/invitations/*',
+        'POST tenant/members/*', 'PATCH tenant/members/*', 'DELETE tenant/members/*',
+        'POST webhooks*', 'PUT webhooks/*', 'DELETE webhooks/*',
+        'POST tenant/billing/*', 'PUT tenant/billing/*', 'PATCH tenant/billing/*', 'DELETE tenant/billing/*', // module:billing
     ],
 ];

@@ -2,8 +2,10 @@
 
 namespace App\Policies;
 
+use App\Enums\TenantMembershipStatus;
 use App\Models\User;
 use App\Services\LogService;
+use Illuminate\Support\Facades\DB;
 
 /**
  * UserPolicy
@@ -68,7 +70,8 @@ class UserPolicy
             $allowed = true;
         } else {
             $allowed = $user->can('users.update')
-                && (! $model->isAdmin() || $user->isAdmin());
+                && (! $model->isAdmin() || $user->isAdmin())
+                && $this->outranksOrEquals($user, $model);
         }
 
         if ($allowed && $user->id !== $model->id) {
@@ -79,6 +82,37 @@ class UserPolicy
         }
 
         return $allowed;
+    }
+
+    /**
+     * ¿Puede `$actor` administrar la cuenta de `$target`? Misma regla que RolePolicy::assign: nadie
+     * toma el control (email, contraseña) de alguien con más privilegios que los suyos.
+     *
+     * - Un admin puede con cualquiera (el caso admin → admin ya lo filtra quien llama).
+     * - Si no, cada permiso efectivo del objetivo (directo o por rol: dueño de empresa, soporte con
+     *   `tenants.access-any`, `users.impersonate`...) debe tenerlo también el actor.
+     * - Y el objetivo no puede ser miembro activo de una empresa en la que el actor no lo es.
+     */
+    private function outranksOrEquals(User $actor, User $target): bool
+    {
+        if ($actor->isAdmin()) {
+            return true;
+        }
+
+        foreach ($target->getAllPermissions()->pluck('name') as $permission) {
+            if (! $actor->checkPermissionTo($permission)) {
+                return false;
+            }
+        }
+
+        $active = TenantMembershipStatus::Active->value;
+        $actorTenants = DB::table('tenant_user')->where('user_id', $actor->getKey())->where('status', $active)->pluck('tenant_id');
+
+        return ! DB::table('tenant_user')
+            ->where('user_id', $target->getKey())
+            ->where('status', $active)
+            ->whereNotIn('tenant_id', $actorTenants)
+            ->exists();
     }
 
     /**

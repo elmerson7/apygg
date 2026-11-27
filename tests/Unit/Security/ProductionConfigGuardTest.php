@@ -62,5 +62,15 @@ test('la plantilla .env.production.example cumple su propia validación', functi
 
     expect($env)->toContain('APP_DEBUG=false')->toContain('LOG_LEVEL=warning')
         ->and($env)->not->toMatch('/^(JWT_SECRET|DB_PASSWORD|MEILISEARCH_KEY)=\S/m')
-        ->and($env)->toMatch('/^SENTRY_TRACES_SAMPLE_RATE=0\.\d+$/m');
+        ->and($env)->toMatch('/^SENTRY_TRACES_SAMPLE_RATE=0\.\d+$/m')
+        ->and($env)->toMatch('/^AUTH_REQUIRE_SESSION=true$/m');
+});
+
+test('rechaza el secreto de Reverb de ejemplo y lo ignora si Reverb no está configurado', function () {
+    $conSecreto = fn (?string $secret) => configSegura(['app' => ['slug' => 'miapp'], 'reverb' => ['apps' => ['apps' => [['secret' => $secret]]]]]);
+
+    expect(implode(' ', ProductionConfigGuard::problems($conSecreto('miapp-secret-seguro'))))->toContain('REVERB_APP_SECRET')
+        ->and(implode(' ', ProductionConfigGuard::problems($conSecreto('corto'))))->toContain('REVERB_APP_SECRET')
+        ->and(ProductionConfigGuard::problems($conSecreto(null)))->toBe([])
+        ->and(ProductionConfigGuard::problems($conSecreto(str_repeat('r', 40))))->toBe([]);
 });

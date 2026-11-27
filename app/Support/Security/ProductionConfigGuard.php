@@ -57,6 +57,15 @@ final class ProductionConfigGuard
             $problems[] = 'MEILISEARCH_KEY vacía o por defecto (masterKey)';
         }
 
+        // Reverb solo cuenta si está configurado (secreto no vacío): el de .env.example firma los canales privados.
+        foreach ((array) $config->get('reverb.apps.apps', []) as $app) {
+            $secret = is_array($app) ? (string) ($app['secret'] ?? '') : '';
+            if ($secret !== '' && self::isWeak($config, $secret, 16)) {
+                $problems[] = 'REVERB_APP_SECRET por defecto (el de .env.example) o con menos de 16 caracteres';
+                break;
+            }
+        }
+
         if ((string) $config->get('sentry.dsn') !== '') {
             foreach (['traces_sample_rate' => 'SENTRY_TRACES_SAMPLE_RATE', 'profiles_sample_rate' => 'SENTRY_PROFILES_SAMPLE_RATE'] as $key => $env) {
                 $rate = $config->get("sentry.{$key}");
@@ -95,7 +104,9 @@ final class ProductionConfigGuard
 
     private static function isWeak(Repository $config, string $value, int $minLength = 1): bool
     {
-        $weak = [...self::WEAK_VALUES, strtolower((string) $config->get('app.slug', ''))];
+        $slug = strtolower((string) $config->get('app.slug', ''));
+        // `<slug>-secret-seguro` es el REVERB_APP_SECRET de .env.example (make init lo renombra con el slug).
+        $weak = [...self::WEAK_VALUES, $slug, $slug.'-secret-seguro'];
 
         return in_array(strtolower($value), $weak, true) || strlen($value) < $minLength;
     }

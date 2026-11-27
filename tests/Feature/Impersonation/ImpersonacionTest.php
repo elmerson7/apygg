@@ -144,6 +144,19 @@ test('las rutas sensibles quedan bloqueadas con code estable', function (string 
     ['POST', '/user/2fa/setup'],
     ['DELETE', '/user/2fa'],
     ['DELETE', '/user/sessions'],
+    // H3: lo que sobreviviría a la impersonación (invitarse, subir un rol, webhooks, cobros)
+    ['POST', '/tenant/invitations'],
+    ['DELETE', '/tenant/invitations/1'],
+    ['PATCH', '/tenant/members/1'],
+    ['DELETE', '/tenant/members/1'],
+    ['POST', '/tenant/members/1/suspend'],
+    ['POST', '/tenants'],
+    ['POST', '/webhooks'],
+    ['PUT', '/webhooks/1'],
+    ['POST', '/tenant/billing/subscription'], // module:billing
+    ['POST', '/tenant/billing/subscription/change'], // module:billing
+    ['POST', '/roles'],
+    ['PUT', '/roles/1/permissions'],
 ]);
 
 test('las rutas normales siguen funcionando impersonando', function () {

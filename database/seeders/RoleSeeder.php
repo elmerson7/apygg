@@ -69,6 +69,7 @@ class RoleSeeder extends Seeder
                 'permissions' => [
                     'users.read', 'users.create', 'users.update', 'users.manage-roles',
                     'roles.read', 'roles.create', 'roles.update',
+                    'api-keys.manage',
                 ],
             ],
             // Roles DEL TENANT (multi-tenancy.onboarding.roles): se asignan al crear/invitar miembros.
@@ -78,6 +79,7 @@ class RoleSeeder extends Seeder
                 'description' => 'Gestiona miembros, invitaciones y ajustes de su empresa',
                 'permissions' => [
                     'tenant-members.read', 'tenant-members.manage', 'tenant-invitations.manage', 'tenant-settings.read', 'tenant-settings.manage', 'tenant-audit.read',
+                    'api-keys.manage',
                     'tenant-members.export', // module:export-import
                     'tenant-billing.read', 'tenant-billing.manage', // module:billing
                 ],
@@ -87,6 +89,7 @@ class RoleSeeder extends Seeder
                 'description' => 'Gestiona miembros, invitaciones y ajustes de su empresa (sin superar su rango)',
                 'permissions' => [
                     'tenant-members.read', 'tenant-members.manage', 'tenant-invitations.manage', 'tenant-settings.read', 'tenant-settings.manage', 'tenant-audit.read',
+                    'api-keys.manage',
                     'tenant-members.export', // module:export-import
                     'tenant-billing.read', 'tenant-billing.manage', // module:billing
                 ],

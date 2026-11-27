@@ -36,8 +36,9 @@ plataforma); a quien también tenga `users.impersonate` (sin cadenas); a quien t
 
 `EnforceImpersonation` (grupo `api`) responde 403 `impersonation_forbidden` en las rutas de
 `config/impersonation.php` → `blocked_routes` (`METODO ruta` con `*`): cambiar o resetear contraseña, editar el
-perfil/usuarios, 2FA (`user/2fa*`), verificación de correo, cierre de sesiones ajenas (`DELETE user/sessions*`), correo, borrar cuenta, API keys, impersonar y el modo
-mantenimiento. **Añade aquí las rutas sensibles de tu proyecto** (pagos, exportaciones de datos personales...).
+perfil/usuarios, 2FA (`user/2fa*`), verificación de correo, cierre de sesiones ajenas (`DELETE user/sessions*`), correo, borrar cuenta, API keys, impersonar, el modo
+mantenimiento y todo lo que sobreviviría a la impersonación: escribir roles y permisos, crear empresas, invitar
+o cambiar miembros, crear o cambiar webhooks y escribir en la suscripción (`tenant/billing/*`). Leer sí se puede. **Añade aquí las rutas sensibles de tu proyecto** (pagos, exportaciones de datos personales...).
 Con el token acotado a una empresa, el middleware fija `X-Tenant` a ella y rechaza otra con 403
 `impersonation_tenant_mismatch` (requiere la estrategia `header` de `multi-tenancy.resolution.strategies`, la
 primera por defecto).

@@ -52,6 +52,7 @@ class PermissionSeeder extends Seeder
 
             // Archivos
             ['name' => 'files.manage', 'display_name' => 'Gestionar Archivos de Otros', 'description' => 'Permite ver, descargar, editar y borrar los archivos de otros usuarios (los propios no lo necesitan)'],
+            ['name' => 'api-keys.manage', 'display_name' => 'Gestionar API Keys', 'description' => 'Permite crear y rotar API Keys propias; cada scope debe ser un permiso que ya tiene (el comodín * solo un admin)'],
 
             // Correo
             ['name' => 'mail.manage', 'display_name' => 'Gestionar Correo', 'description' => 'Permite administrar proveedores, cuentas, plantillas y ajustes de correo'],

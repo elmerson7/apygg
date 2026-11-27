@@ -45,6 +45,7 @@ beforeEach(function () {
     // Una persona que es miembro de A y de B (el caso que más fácilmente mezcla datos)
     $this->user = User::factory()->create();
     $this->user->assignRole(Role::where('name', 'user')->first());
+    $this->user->givePermissionTo('api-keys.manage');
     $this->addMember($this->a, $this->user);
     $this->addMember($this->b, $this->user);
 
@@ -284,7 +285,7 @@ test('la limpieza de secrets antiguos recorre todos los tenants', function () {
 
 // ── API keys ───────────────────────────────────────────────────────────────
 
-function rtKey($test, $tenant, array $scopes = ['*'], string $name = 'k'): array
+function rtKey($test, $tenant, array $scopes = ['profile.read'], string $name = 'k'): array
 {
     return $test->ctx->run($tenant, function () use ($test, $scopes, $name) {
         $r = app(ApiKeyService::class)->create($test->user, $name, $scopes);
@@ -301,8 +302,8 @@ test('una API key creada desde A queda en A', function () {
 });
 
 test('listar, ver, rotar y revocar una API key de B desde A no es posible', function () {
-    [, $keyB] = rtKey($this, $this->b, ['*'], 'de-b');
-    rtKey($this, $this->a, ['*'], 'de-a');
+    [, $keyB] = rtKey($this, $this->b, ['profile.read'], 'de-b');
+    rtKey($this, $this->a, ['profile.read'], 'de-a');
     $h = rtHeaders($this->user, $this->a);
 
     $names = collect($this->withHeaders($h)->getJson('/api-keys')->assertOk()->json('data'))->pluck('name')->all();
@@ -404,7 +405,7 @@ test('con multiempresa apagada los recursos funcionan sin tenant ni cabecera', f
     $this->withHeaders(rtJwt($this->user))->postJson('/webhooks', ['name' => 'webhook', 'url' => 'https://example.com/h', 'events' => ['user.updated']])->assertCreated();
     $this->withHeaders(rtJwt($this->user))->getJson('/api-keys')->assertOk();
     [$key] = (function () {
-        $r = app(ApiKeyService::class)->create($this->user, 'k', ['*']);
+        $r = app(ApiKeyService::class)->create($this->user, 'k', ['profile.read']);
 
         return [$r['key']];
     })();

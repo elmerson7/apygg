@@ -126,16 +126,6 @@ interface FileServiceInterface
     public function detectType(string $mimeType): string;
 
     /**
-     * Subir imagen con procesamiento opcional (resize/formato)
-     *
-     * @param  array<string, mixed>  $options  width, height, quality, format
-     * @return array<string, mixed>
-     */
-    public function uploadImage(UploadedFile $file,
-        string $path = 'images',
-        array $options = []): array;
-
-    /**
      * Eliminar archivo
      */
     public function delete(string $path, ?string $disk = null): bool;

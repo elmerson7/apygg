@@ -221,6 +221,9 @@ return [
     |                  'remove' (borra la clave / sustituye por [REDACTED]).
     | 'keys':          nombre exacto de clave (sin distinguir mayúsculas).
     | 'key_fragments': se oculta toda clave que contenga el fragmento.
+    | 'code_keys':     claves ambiguas (`code`): se ocultan solo si el valor parece un
+    |                  código de un solo uso (6-12 dígitos o código de recuperación 2FA);
+    |                  un código de error (`validation_error`) se conserva.
     | 'patterns':      detectados dentro de cualquier texto: email, card (Luhn),
     |                  phone (internacional con +), jwt, bearer.
     | 'max_depth':     profundidad máxima del recorrido; más abajo = [MAX_DEPTH].
@@ -240,6 +243,7 @@ return [
             'password', 'passwd', '_token', 'secret', 'api_key', 'apikey', 'authorization', 'cookie',
             'recovery_codes', 'private_key', 'card_number', 'cardnumber', 'csrf', 'xsrf', 'iban',
         ],
+        'code_keys' => ['code'],
         'patterns' => ['email', 'card', 'phone', 'jwt', 'bearer', 'stripe'],
         'max_depth' => 8,
         'max_string' => 10000,

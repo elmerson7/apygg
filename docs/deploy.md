@@ -51,8 +51,10 @@ En `DEPLOY_PATH` (p. ej. `/srv/miapp`) crea **solo** el `.env` de Laravel de pro
 - **Validación de arranque** (`App\Support\Security\ProductionConfigGuard`, desde `AppServiceProvider::boot`): con
   `APP_ENV=production` la app **se niega a arrancar** (excepción con la lista de problemas) si hay `APP_DEBUG=true`,
   `JWT_SECRET` vacío/corto/por defecto, `DB_PASSWORD`, `REDIS_PASSWORD` o `MEILISEARCH_KEY` por defecto (`secret`,
-  `masterKey`, la de `compose.env.example`...) o Sentry con DSN y muestreo de trazas/perfiles a 1.0 (100 %). No actúa en
+  `masterKey`, la de `compose.env.example`...), `REVERB_APP_SECRET` de ejemplo o corto (si Reverb está configurado) o Sentry con DSN y muestreo de trazas/perfiles a 1.0 (100 %). No actúa en
   comandos de construcción (`optimize`, `package:discover`...). Apagado de emergencia: `PRODUCTION_GUARD=false` (no lo dejes).
+  Solo actúa con `APP_ENV=production`: **no despliegues con `.env.example`** (trae `APP_ENV=dev` y `APP_DEBUG=true`);
+  parte de `.env.production.example`, que además exige sesiones (`AUTH_REQUIRE_SESSION=true`).
 - Servicios: `app` (Octane), `horizon`, `scheduler`, `reverb` (perfil) y `migrate` (perfil `tools`, un solo uso).
 
 ## 3. Variables (`.env.deploy`, plantilla `.env.deploy.example`; no se versiona)

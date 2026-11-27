@@ -12,6 +12,7 @@ use App\Models\DataExport;
 use App\Models\User;
 use App\Support\Spreadsheet\SpreadsheetWriter;
 use App\Support\Tenancy\TenantContext;
+use App\Support\Tenancy\TenantRoles;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
@@ -54,6 +55,13 @@ class ExportService implements ExportServiceInterface
 
         if ($exporter->requiresTenant() && $tenantId === null) {
             throw ExportImportException::tenantRequired();
+        }
+
+        // El `can()` de arriba no basta en un exportador de empresa: con equipos de Spatie apagados los
+        // roles `tenant-*` son globales y ser dueño en otra empresa lo pasaría aquí. El rol de ESTE tenant
+        // debe conceder el permiso (docs/tenant-onboarding.md).
+        if ($exporter->requiresTenant()) {
+            TenantRoles::actorRankFor($this->tenant->require(), $user, $exporter->permission());
         }
 
         $validated = $exporter->filterRules() === []

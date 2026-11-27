@@ -197,6 +197,20 @@ curl -s -X POST http://localhost:8100/auth/login -H 'Content-Type: application/j
 - Para **producción** no uses los valores de `init` tal cual: define `APP_ENV`, S3 y
   correo reales, y no actives `DEV`.
 
+### Proyecto pequeño (poca RAM)
+
+`make up` arranca siempre `app`, `postgres`, `redis`, `horizon`, `scheduler` y `reverb`. Medido en reposo
+(2026-11-27): Horizon ~170 MB, Reverb ~65 MB y scheduler ~25 MB, además de app ~280 MB, Postgres ~230 MB y Redis
+~120 MB.
+
+- **Horizon y scheduler no se quitan**: todo el correo y los avisos van en cola, y la renovación de cobros, las
+  limpiezas y los reintentos son tareas programadas. Para ahorrar, baja los procesos de Horizon
+  (`config/horizon.php`, `maxProcesses`) en vez de apagarlo.
+- **Reverb solo hace falta con WebSockets** (eventos en tiempo real). Si el proyecto no los usa, quítalo entero:
+  `make module-remove name=reverb` (prueba antes con `DRY=1`). En producción ya va en su propio perfil (`reverb`).
+- Los servicios pesados opcionales nunca arrancan solos: Meilisearch (`SEARCH=1`), ClamAV (`CLAMAV=true`, ~1 GB) y
+  los de desarrollo (`DEV=true`).
+
 ## 5. Recibir mejoras del boilerplate
 
 ```bash

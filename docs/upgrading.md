@@ -17,6 +17,16 @@ impacto en un proyecto existente están en `CHANGELOG.md`.
 
 ## De 1.0.0 a la versión actual (Unreleased)
 
+### Seguridad de cuentas y API Keys (revisión de noviembre)
+
+- `PUT /users/{id}` de otro usuario exige, además de `users.update`, que el actor tenga **todos** los permisos del
+  objetivo y que el objetivo no sea miembro activo de una empresa en la que el actor no está (el admin puede con todos).
+  Cambiar el email o la contraseña de alguien **cierra todas sus sesiones** y anula sus enlaces de restablecimiento.
+- `POST /api-keys` y `/api-keys/{id}/rotate` piden el permiso nuevo `api-keys.manage` (corre `db:seed --class=RoleSeeder`
+  para darlo a `manager`, `tenant-owner` y `tenant-admin`), y cada scope debe ser un permiso del dueño o de
+  `api-keys.self_scopes`; `*` solo un admin. Las keys ya creadas siguen funcionando, pero **revisa las que tengan `*` o
+  scopes que su dueño no tiene** y rótalas o revócalas.
+
 ### `upsert` en modelos con tenant exige `tenant_id` en `uniqueBy`
 
 - Con multiempresa activo, `Modelo::query()->upsert($filas, $uniqueBy, ...)` sobre un modelo con `BelongsToTenant` lanza `CrossTenantViolation` si `$uniqueBy` no incluye `tenant_id`, y con `$update = null` ya no actualiza `tenant_id`. Si tenías un upsert por `id`/`uuid`, cámbialo a una clave única que empiece por `tenant_id` (crea el índice si falta).
