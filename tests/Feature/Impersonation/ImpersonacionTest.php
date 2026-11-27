@@ -153,8 +153,8 @@ test('las rutas sensibles quedan bloqueadas con code estable', function (string 
     ['POST', '/tenants'],
     ['POST', '/webhooks'],
     ['PUT', '/webhooks/1'],
-    ['POST', '/tenant/billing/subscription'],
-    ['POST', '/tenant/billing/subscription/change'],
+    ['POST', '/tenant/billing/subscription'], // module:billing
+    ['POST', '/tenant/billing/subscription/change'], // module:billing
     ['POST', '/roles'],
     ['PUT', '/roles/1/permissions'],
 ]);
